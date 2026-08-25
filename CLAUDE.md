@@ -18,6 +18,20 @@ uso comercial em software fechado — BSD, MIT, Apache-2.0. **Nunca adicione dep
 AGPL** sem levantar a questão antes; ela contamina o produto inteiro. Atribuições obrigatórias
 ficam em `docs/TERCEIROS.md`.
 
+## Para quem é
+
+**Ferramenta de ensino de química orgânica.** O usuário é o aluno; o comprador é a escola. O
+pesquisador é usuário avançado, não cliente — ver `docs/DECISOES.md` D-09.
+
+Consequências ao escrever qualquer interface ou texto:
+
+- Linguagem de missão, pontuação e progresso é para as trilhas Estrutura, Geometria e
+  Propriedade. **Na trilha Otimização não use missão, tique, contador nem conquista** — ali é
+  ferramenta livre, e gamificação lida como brinquedo afasta o usuário avançado.
+- Escreva para quem está aprendendo: o erro explica a química, não o código.
+- **Educação não autoriza imprecisão.** Professor de química é químico. Um erro no app não
+  confunde um usuário, confunde uma sala inteira. As regras D-01 e D-02 valem igual ou mais.
+
 ## Este repositório é um ponto de partida
 
 O que está documentado aqui é o **primeiro modelo** do produto, escrito antes do código de
@@ -51,7 +65,7 @@ Monorepo Turborepo. **Regra de dependência: `core` não depende de ninguém, e 
 `editor2d`.** O núcleo roda em teste de linha de comando, sem navegador.
 
 ```
-apps/web        Next.js 15 App Router — rotas, contas, API
+apps/web        Next.js 16 App Router — rotas, contas, API
 packages/core       grafo · RDKit worker · geometria · descritores
 packages/editor2d   canvas 2D próprio, ferramentas, histórico
 packages/viewer3d   Three.js · dobramento e dinâmica molecular
@@ -64,7 +78,7 @@ tutor são derivados dele e recalculáveis. Nada além do grafo é persistido co
 
 ## Stack
 
-- Next.js 15 (App Router) + TypeScript estrito
+- Next.js 16 (App Router) + TypeScript estrito
 - RDKit.js (WASM) em Web Worker via Comlink — química e geometria (ETKDG + MMFF94)
 - Three.js + React Three Fiber — apenas render, nenhuma química dentro
 - Canvas 2D próprio + Zustand — o editor é escrito à mão, sem lib de desenho molecular
@@ -75,13 +89,17 @@ tutor são derivados dele e recalculáveis. Nada além do grafo é persistido co
 
 - **Idioma:** toda a interface e as mensagens de erro em pt-BR. Erro explica a química, não o
   código: "O átomo de C tem 5 ligações, mas suporta no máximo 4", nunca "valence error".
+- **Código em inglês, texto em português.** Nome de arquivo, pasta, variável, função, tipo,
+  classe de CSS e chave de dado: **sempre em inglês**. Comentário, JSDoc, nome de teste, string
+  de interface e mensagem de erro: **sempre em pt-BR**. `analyze(input)` devolvendo
+  "Não há nenhum átomo para analisar." é o padrão da casa.
 - **Números:** sempre `font-variant-numeric: tabular-nums`. Fórmulas moleculares em mono com
   subscrito real, nunca `C6H6` em texto corrido.
 - **Cores CPK são reservadas aos átomos.** Nenhum botão, link, borda ou estado semântico pode usar
   cor CPK. Se a interface pinta de vermelho, o vermelho deixa de significar oxigênio. O acento da
   marca é turquesa justamente porque nenhum elemento comum é turquesa no CPK.
-- **Tokens:** toda cor, espaço, raio e duração vem de `brand/tokens.css` (move para
-  `packages/ui/` no scaffold). Nenhum hex solto no código.
+- **Tokens:** toda cor, espaço, raio e duração vem de `packages/ui/src/tokens.css`. Nenhum hex
+  solto no código.
 - **Tipografia:** Archivo (display), IBM Plex Sans (interface), IBM Plex Mono (dados).
 - **Temas:** claro e escuro sempre juntos. Nenhuma cor pode ser definida apenas dentro de um
   bloco `@media (prefers-color-scheme)` ou `[data-theme]`.
@@ -113,18 +131,22 @@ pedir e merece ser feita direito.
 
 ## Comandos
 
-<!-- preencher depois do scaffold; rodar /init para Claude descobrir os que existirem -->
-
 ```
-pnpm dev          # app em desenvolvimento
+pnpm dev          # app em desenvolvimento (Turborepo)
+pnpm build        # build de produção
 pnpm test         # Vitest — core roda sem navegador
-pnpm test:e2e     # Playwright
+pnpm test:e2e     # Playwright (desktop e celular)
 pnpm lint
+pnpm typecheck
 ```
+
+O RDKit compilado é copiado de `node_modules` para `apps/web/public/rdkit/` nos passos
+`predev`/`prebuild`. Não versione essa pasta e não edite os arquivos dela à mão.
 
 ## Casos de teste que precisam continuar passando
 
-Estes são os valores de referência conferidos contra a literatura:
+Estes são os valores que o **RDKit** calcula, verificados em
+`packages/core/test/molecules.test.ts`:
 
 | Molécula | Fórmula | Massa | TPSA | Nota |
 |---|---|---|---|---|
@@ -132,11 +154,22 @@ Estes são os valores de referência conferidos contra a literatura:
 | Ácido acético | C2H4O2 | 60,05 | 37,30 | ácido carboxílico |
 | Benzeno | C6H6 | 78,11 | 0 | hexágono regular, 120°, plano |
 | Paracetamol | C8H9NO2 | 151,16 | 49,33 | amida + fenol + aromático |
-| Aspirina | C9H8O4 | 180,16 | 63,60 | ácido + éster + aromático, 3 rotacionáveis |
-| Cafeína | C8H10N4O2 | 194,19 | 58,44 | **imidazol precisa ser aromático** |
+| Aspirina | C9H8O4 | 180,16 | 63,60 | ácido + éster + aromático, **2** rotacionáveis |
+| Cafeína | C8H10N4O2 | 194,19 | **61,82** | **imidazol precisa ser aromático** |
 
 A cafeína é o caso que o protótipo errava com kernel próprio: o anel de cinco com nitrogênio é
 aromático de verdade e um detector caseiro não pega. Com RDKit tem que passar.
+
+**Onde o RDKit diverge do PubChem, o RDKit ganha** — é a mesma regra do D-01 aplicada a
+número de tabela:
+
+- **TPSA da cafeína:** PubChem publica 58,44 Å²; o RDKit calcula 61,82 Å². A diferença vem da
+  percepção de aromaticidade, que muda a contribuição dos nitrogênios na soma de Ertl.
+- **Rotacionáveis da aspirina:** PubChem conta 3; o RDKit, na definição estrita, conta 2 — a
+  ligação do éster não entra. Cada um está certo dentro da própria definição.
+
+A interface mostra o valor do RDKit e diz de quem é a definição. Nunca ajuste o cálculo para
+bater com tabela de terceiro.
 
 ## Ao trabalhar aqui
 

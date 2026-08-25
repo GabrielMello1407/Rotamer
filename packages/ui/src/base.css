@@ -1,0 +1,81 @@
+/* ============================================================================
+   ROTAMER — BASE
+   ----------------------------------------------------------------------------
+   O mínimo que toda página herda. Nenhum valor solto: tudo vem de tokens.css,
+   que precisa ser importado antes deste arquivo.
+   ============================================================================ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  color-scheme: light dark;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink-900);
+  font-family: var(--font-ui);
+  font-size: var(--step-1);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  margin: 0;
+}
+
+h1 {
+  font-size: var(--step-4);
+  letter-spacing: -0.025em;
+}
+
+h2 {
+  font-size: var(--step-3);
+  letter-spacing: -0.018em;
+}
+
+h3 {
+  font-size: var(--step-2);
+  letter-spacing: -0.012em;
+}
+
+p {
+  margin: 0;
+  /* Texto corrido no máximo 66 caracteres. */
+  max-width: 66ch;
+}
+
+a {
+  color: var(--brand-ink);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+/* Movimento é física, não enfeite — e quem pediu menos movimento recebe menos.
+   O dobramento e a vibração desligam junto, na camada do viewer3d. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

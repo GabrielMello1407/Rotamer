@@ -1,0 +1,18 @@
+.toggle {
+  display: inline-flex;
+  gap: var(--sp-1);
+  padding: var(--sp-1);
+  background: var(--sunk);
+  border: 1px solid var(--line);
+  border-radius: var(--r-full);
+}
+
+.option {
+  border-radius: var(--r-full);
+}
+
+.option[aria-pressed='true'] {
+  background: var(--surface);
+  color: var(--brand-ink);
+  box-shadow: var(--shadow-sm);
+}

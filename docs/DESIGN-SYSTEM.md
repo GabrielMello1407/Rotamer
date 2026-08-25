@@ -4,7 +4,7 @@
 > estendido conforme o produto crescer — faltam ainda estados de componente, formulários,
 > tabelas de dados e tudo que só aparece quando as telas existirem.
 
-Fonte da verdade em código: [`brand/tokens.css`](../brand/tokens.css). Nenhum hex solto no
+Fonte da verdade em código: [`packages/ui/src/tokens.css`](../packages/ui/src/tokens.css). Nenhum hex solto no
 código da aplicação.
 
 ## Cor

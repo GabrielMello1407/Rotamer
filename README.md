@@ -25,9 +25,18 @@ aparece no mesmo instante — dobrando-se até encontrar a forma e depois vibran
 molecular real. Junto vêm a fórmula, a massa, os grupos funcionais, os descritores e o veredito
 sobre a missão em curso.
 
-Duas trilhas, um motor: o aluno entra por **Estrutura** ("monte um éster com quatro carbonos") e
-o pesquisador entra por **Otimização** ("reduza o logP mantendo o farmacóforo"). Química medicinal
-é química orgânica aplicada — não são dois produtos.
+**Para quem é.** É uma ferramenta de **ensino de química orgânica**. Quem paga é a escola, o
+cursinho e a instituição de ensino. O pesquisador é usuário avançado bem-vindo — não é o cliente,
+e o produto não finge competir com ChemDraw ou PyMOL. (Ver `docs/DECISOES.md` D-09.)
+
+Uma trilha de profundidade, um motor: o aluno entra por **Estrutura** ("monte um éster com quatro
+carbonos"); o usuário avançado entra por **Otimização** ("reduza o logP mantendo o farmacóforo"),
+sem missão nem pontuação, colando o SMILES do composto que já tem em mãos. Química medicinal é
+química orgânica aplicada — não são dois produtos.
+
+**Rigor não é opcional por ser educação.** Professor de química é químico: se o app afirmar algo
+errado, quem pega é ele. E numa ferramenta de ensino um erro não confunde um usuário, confunde
+uma sala inteira.
 
 ## A regra que não se quebra
 
@@ -47,7 +56,7 @@ declara sua origem: ponto verde para calculado, âmbar para gerado.
 ## Arquitetura
 
 ```
-apps/web            Next.js 15 · App Router · rotas, contas, API
+apps/web            Next.js 16 · App Router · rotas, contas, API
   └── packages/
       editor2d      canvas 2D próprio, ferramentas, histórico
       viewer3d      Three.js · dobramento e dinâmica molecular
@@ -66,7 +75,7 @@ tutor são todos derivados dele e recalculáveis. Nada além do grafo é persist
 
 | Camada | Escolha |
 |---|---|
-| Aplicação | Next.js 15 + TypeScript |
+| Aplicação | Next.js 16 + TypeScript |
 | Química | RDKit.js (WASM) em Web Worker via Comlink |
 | Geometria | RDKit ETKDG + MMFF94 |
 | 3D | Three.js + React Three Fiber |
@@ -104,7 +113,7 @@ Todas medidas contra a superfície do tema e aprovadas em WCAG AA (≥ 4,5:1).
 Tipografia: **Archivo** (display), **IBM Plex Sans** (interface), **IBM Plex Mono** (todo número,
 sempre com `tabular-nums`).
 
-Tokens completos em [`brand/tokens.css`](brand/tokens.css).
+Tokens completos em [`packages/ui/src/tokens.css`](packages/ui/src/tokens.css).
 
 ## Marca
 
@@ -174,5 +183,6 @@ repositório de origem antes do lançamento comercial.
 | [docs/ARQUITETURA.md](docs/ARQUITETURA.md) | Camadas, pacotes, fluxo de dados, modelo de dados |
 | [docs/DESIGN-SYSTEM.md](docs/DESIGN-SYSTEM.md) | Cor, tipografia, forma, movimento, marca |
 | [docs/ROADMAP.md](docs/ROADMAP.md) | Fases até janeiro, riscos e métricas |
+| [docs/DEPLOY.md](docs/DEPLOY.md) | O que já está automatizado e o que falta para o produto ficar no ar |
 | [DEPOIS.md](DEPOIS.md) | Tudo que ficou fora do MVP |
 | [CLAUDE.md](CLAUDE.md) | Instruções permanentes para o Claude Code |

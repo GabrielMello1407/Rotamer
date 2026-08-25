@@ -13,10 +13,11 @@ qualquer ponto, o que existe já é demonstrável.
 
 Nada de química ainda. Só o chão para não ter retrabalho depois.
 
-- [ ] Monorepo Turborepo, TypeScript estrito, ESLint, Vitest, Playwright
-- [ ] `tokens.css` movido para `packages/ui` e primitivos de UI
-- [ ] RDKit.js carregando em worker via Comlink, com teste que sanitiza aspirina
-- [ ] Deploy contínuo e domínio no ar
+- [x] Monorepo Turborepo, TypeScript estrito, ESLint, Vitest, Playwright
+- [x] `tokens.css` movido para `packages/ui` e primitivos de UI
+- [x] RDKit.js carregando em worker via Comlink, com teste que sanitiza aspirina
+- [x] Integração contínua no GitHub Actions — lint, tipos, testes e navegador
+- [ ] Deploy contínuo e domínio no ar — ver `docs/DEPLOY.md`, depende de conta e registrador
 
 **Publica:** página de marca com o símbolo e os tokens.
 
@@ -43,6 +44,9 @@ Onde a sandbox vira produto. Sem isto, tela em branco é produto morto.
 
 - [ ] Motor de missões com `spec` declarativa, avaliada no cliente e reavaliada no servidor
 - [ ] 12 a 15 missões cobrindo Estrutura, Geometria e Propriedade
+- [ ] Colar SMILES para carregar molécula — é o que preenche a tela em branco para quem já
+      chega com um composto em mãos
+- [ ] Trilha Otimização **sem missão, pontuação ou conquista** — ferramenta livre (D-09)
 - [ ] Tutor LLM com schema fechado, indicador de origem, cache e teto de gasto
 - [ ] Contas, progresso salvo, página pública de molécula com SSR e Open Graph
 

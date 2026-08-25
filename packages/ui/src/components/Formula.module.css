@@ -1,0 +1,16 @@
+.formula {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-900);
+  white-space: nowrap;
+}
+
+.formula sub {
+  font-size: 0.72em;
+  vertical-align: baseline;
+  /* Subscrito de verdade, deslocado — não é o `<sub>` do navegador, que
+     bagunça a altura de linha em texto corrido. */
+  position: relative;
+  top: 0.22em;
+  padding-left: 0.02em;
+}

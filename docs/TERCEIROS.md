@@ -12,7 +12,21 @@ Licenças aceitas: MIT, BSD (2 e 3 cláusulas), Apache-2.0, ISC.
 | RDKit / RDKit.js | BSD-3-Clause | química, descritores, geometria | sim — aviso de copyright |
 | Three.js | MIT | render 3D | sim — aviso de copyright |
 | React, Next.js | MIT | aplicação | sim |
+| Comlink | Apache-2.0 | conversa com o Web Worker | sim — aviso e NOTICE |
 | Archivo, IBM Plex | SIL Open Font License 1.1 | tipografia | sim — permite uso comercial e embutir |
+
+## Ferramentas de desenvolvimento
+
+Não vão para o pacote entregue ao usuário, mas entram na conta de licenças do repositório.
+
+| Ferramenta | Licença |
+|---|---|
+| Turborepo | MIT |
+| TypeScript | Apache-2.0 |
+| ESLint, typescript-eslint | MIT |
+| Vitest | MIT |
+| Playwright | Apache-2.0 |
+| pnpm | MIT |
 
 > Confirme cada licença no repositório de origem antes de qualquer lançamento comercial.
 > Este arquivo é um registro de trabalho, não aconselhamento jurídico.

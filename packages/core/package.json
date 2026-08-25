@@ -1,0 +1,29 @@
+{
+  "name": "@rotamer/core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": [
+    "./src/chemistry/worker.ts"
+  ],
+  "exports": {
+    ".": "./src/index.ts",
+    "./chemistry/worker": "./src/chemistry/worker.ts",
+    "./chemistry/client": "./src/chemistry/client.ts",
+    "./chemistry/node": "./src/chemistry/node.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@rdkit/rdkit": "2025.3.4-1.0.0",
+    "comlink": "4.4.2"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.3",
+    "typescript": "5.9.3",
+    "vitest": "4.1.11"
+  }
+}

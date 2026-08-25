@@ -1,0 +1,13 @@
+.number {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  color: var(--ink-900);
+}
+
+.unit {
+  margin-left: 0.25em;
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  color: var(--ink-500);
+}

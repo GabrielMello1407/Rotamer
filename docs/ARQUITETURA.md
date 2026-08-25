@@ -34,7 +34,7 @@ nenhuma afirmação química chega ao usuário sem ter passado pelo motor determ
 ## Pacotes
 
 ```
-apps/web            Next.js 15 App Router — rotas, contas, API
+apps/web            Next.js 16 App Router — rotas, contas, API
 packages/
   core              grafo · RDKit worker · geometria · descritores
   editor2d          canvas 2D próprio, ferramentas, histórico
@@ -56,7 +56,7 @@ lógica para `core`, não criar a dependência.
 
 | Camada | Escolha | Por quê |
 |---|---|---|
-| Aplicação | Next.js 15 (App Router) + TypeScript estrito | SSR nas páginas públicas de molécula, que é o que traz busca orgânica |
+| Aplicação | Next.js 16 (App Router) + TypeScript estrito | SSR nas páginas públicas de molécula, que é o que traz busca orgânica |
 | Química | RDKit.js (WASM) em Web Worker via Comlink | Ver `DECISOES.md` D-02 |
 | Geometria | RDKit ETKDG + MMFF94 | Mesmo worker, mesma fronteira |
 | 3D | Three.js + React Three Fiber | Motor de render apenas — nenhuma química dentro |

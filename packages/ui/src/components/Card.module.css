@@ -1,0 +1,20 @@
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: var(--sp-5);
+}
+
+/* O que flutua sobre a tela ganha sombra; o que está ancorado usa só a linha. */
+.floating {
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-4);
+}

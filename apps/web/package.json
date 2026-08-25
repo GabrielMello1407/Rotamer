@@ -1,0 +1,33 @@
+{
+  "name": "@rotamer/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "predev": "node scripts/copy-rdkit.mjs",
+    "dev": "next dev",
+    "prebuild": "node scripts/copy-rdkit.mjs",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "@rdkit/rdkit": "2025.3.4-1.0.0",
+    "@rotamer/core": "workspace:*",
+    "@rotamer/ui": "workspace:*",
+    "comlink": "4.4.2",
+    "next": "16.3.3",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.62.1",
+    "@types/node": "24.13.3",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.5",
+    "eslint-config-next": "16.3.3",
+    "typescript": "5.9.3"
+  }
+}
