@@ -1,0 +1,68 @@
+.panel {
+  display: grid;
+  gap: var(--sp-3);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: var(--sp-4);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+/* O bloco gerado é o único da tela com a borda âmbar. É proposital: o olho
+   aprende que ali dentro é hipótese, não medida. */
+.answer {
+  display: grid;
+  gap: var(--sp-3);
+  border-left: 3px solid var(--warn);
+  background: var(--warn-wash);
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+  padding: var(--sp-3) var(--sp-4);
+}
+
+.diagnosis {
+  font-size: var(--step-0);
+  color: var(--ink-900);
+  margin: 0;
+}
+
+.suggestions {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  padding-left: var(--sp-5);
+  font-size: var(--step-0);
+  color: var(--ink-700);
+}
+
+.watchOut {
+  font-size: var(--step--1);
+  color: var(--ink-700);
+  margin: 0;
+}
+
+.watchOutLabel {
+  font-weight: 600;
+}
+
+.quiet {
+  font-size: var(--step--1);
+  color: var(--ink-500);
+  margin: 0;
+}
+
+.value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}

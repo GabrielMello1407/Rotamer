@@ -39,9 +39,19 @@
 
 .side {
   display: grid;
-  grid-template-rows: minmax(200px, 42%) minmax(0, 1fr);
+  grid-template-rows: minmax(200px, 38%) minmax(0, 1fr);
   gap: var(--sp-3);
   min-height: 0;
+}
+
+/* Missão e tutor dividem a mesma coluna e rolam juntos: a tela de desenho
+   continua sendo o objeto principal. */
+.panels {
+  display: grid;
+  gap: var(--sp-3);
+  align-content: start;
+  min-height: 0;
+  overflow: auto;
 }
 
 /* Até 900px tudo empilha: a tela de desenho continua sendo o objeto principal,

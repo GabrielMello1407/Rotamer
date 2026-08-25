@@ -296,3 +296,29 @@ volta a fazer sentido quando existir editor de missões para professor — aí a
 dado do usuário, e não conteúdo do produto. Até lá, seria complexidade sem dono.
 
 **Revisar se.** Professor pedir para criar a própria missão. É pedido provável na Fase 4.
+
+---
+
+## D-13 · O tutor não escreve número
+
+**Decisão.** A saída do modelo é JSON de schema fechado com três campos de texto, e **texto com
+dígito é recusado**. Para citar um valor, o modelo escreve uma referência entre chaves —
+`{{tpsa}}`, `{{molarMass}}` — e quem troca a referência pelo número é a interface, com o valor que
+o RDKit calculou.
+
+**Por quê.** O D-01 diz que a IA explica e não decide. Na prática isso vaza pelo texto: basta o
+modelo escrever "a massa é 180,2" com um arredondamento diferente do que está na faixa de métricas
+para a tela se contradizer sozinha — e quem lê não tem como saber qual dos dois está certo. Com
+referência, não existe caminho pelo qual um número gerado chegue à tela.
+
+**Como é imposto.** A validação recusa em vez de corrigir: resposta com dígito solto é descartada
+e o tutor diz que não conseguiu explicar. Quantidade pequena por extenso continua permitida —
+"dois carbonos" não é número na tela, é português.
+
+**O que mais entrou junto.** Cache por `(inchikey, missão, tipo de ajuda)`, porque o mesmo erro na
+mesma missão produz a mesma explicação e ela serve para todo mundo; teto de pedidos por pessoa por
+dia, com degradação para as dicas escritas à mão; e o tutor desligado quando não há chave, sem
+tirar nada do resto do produto.
+
+**Revisar se.** Aparecer necessidade de o tutor citar valor que o núcleo não calcula. Aí a
+resposta é ampliar a lista de referências — nunca liberar o dígito.

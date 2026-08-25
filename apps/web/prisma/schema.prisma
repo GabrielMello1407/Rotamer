@@ -30,9 +30,10 @@ model Profile {
   institution  String?
   createdAt    DateTime @default(now())
 
-  sessions  Session[]
-  molecules Molecule[]
-  attempts  Attempt[]
+  sessions   Session[]
+  molecules  Molecule[]
+  attempts   Attempt[]
+  tutorUsage TutorUsage[]
 }
 
 /// Sessão de navegador. O cookie carrega só o identificador.
@@ -86,4 +87,38 @@ model Attempt {
   /// Onde as pessoas travam é o dado de produto que importa.
   @@index([profileId, questSlug])
   @@index([questSlug, passed])
+}
+
+/// Explicação gerada pelo tutor, guardada para não pagar duas vezes pelo mesmo.
+///
+/// A chave é a molécula, a missão e o tipo de ajuda: o mesmo erro na mesma
+/// missão produz a mesma explicação, e ela serve para todo mundo — o texto fala
+/// da química, não da pessoa.
+model TutorHint {
+  id        String   @id @default(cuid())
+  inchiKey  String
+  questSlug String
+  kind      String
+  /// Saída do modelo já validada contra o schema fechado.
+  payload   Json
+  model     String
+  createdAt DateTime @default(now())
+
+  @@unique([inchiKey, questSlug, kind])
+  @@index([createdAt])
+}
+
+/// Quantos pedidos ao tutor cada pessoa fez em cada dia.
+///
+/// É o teto de gasto: passou do limite, o produto degrada para as dicas
+/// determinísticas, que são escritas à mão e não custam nada.
+model TutorUsage {
+  profileId String
+  /// Data em UTC, sem hora.
+  day       DateTime @db.Date
+  count     Int      @default(0)
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@id([profileId, day])
 }

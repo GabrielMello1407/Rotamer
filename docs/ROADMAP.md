@@ -53,13 +53,16 @@ Onde a sandbox vira produto. Sem isto, tela em branco é produto morto.
 - [x] Colar SMILES para carregar molécula — é o que preenche a tela em branco para quem já
       chega com um composto em mãos
 - [x] Modo ferramenta livre, **sem missão, pontuação ou conquista** (D-09)
-- [ ] Tutor LLM com schema fechado, indicador de origem, cache e teto de gasto — **falta chave
-      do Gemini**
+- [x] Tutor LLM com schema fechado, indicador de origem, cache por molécula/missão/tipo e teto
+      diário — pronto e desligado: sem `GEMINI_API_KEY` ele avisa e devolve o aluno para as
+      dicas escritas à mão
 - [x] Contas, progresso salvo, reavaliação da `spec` no servidor — Postgres local (D-11)
 - [x] Página pública de molécula com SSR e Open Graph — `/m/<smiles>`, sem banco: a molécula é
       função pura da cadeia que está no endereço
 
 **Publica:** v0.1 — o primeiro produto vendável.
+
+Falta só ligar a chave do Gemini para o tutor sair do modo desligado.
 
 ---
 

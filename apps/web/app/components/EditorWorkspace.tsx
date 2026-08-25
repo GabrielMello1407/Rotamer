@@ -2,12 +2,13 @@
 
 import { Editor2D, Toolbar, createEditorStore } from '@rotamer/editor2d';
 import { Viewer3D } from '@rotamer/viewer3d';
-import { useMemo, type ReactElement } from 'react';
+import { useMemo, useState, type ReactElement } from 'react';
 import { useStore } from 'zustand';
 import styles from './EditorWorkspace.module.css';
 import { MoleculeMetrics } from './MoleculeMetrics';
 import { QuestPanel } from './QuestPanel';
 import { ShareLink } from './ShareLink';
+import { TutorPanel } from './TutorPanel';
 import { SmilesInput } from './SmilesInput';
 import { useChemistryClient } from './use-chemistry-client';
 import { useInitialSmiles } from './use-initial-smiles';
@@ -23,6 +24,8 @@ import { useMolecule } from './use-molecule';
 export function EditorWorkspace(): ReactElement {
   const store = useMemo(() => createEditorStore(), []);
   const graph = useStore(store, (state) => state.graph);
+
+  const [questSlug, setQuestSlug] = useState('');
 
   const connection = useChemistryClient();
   const { analysis, geometry, pending } = useMolecule(graph, connection);
@@ -49,7 +52,11 @@ export function EditorWorkspace(): ReactElement {
 
         <div className={styles.side}>
           <Viewer3D geometry={geometry} />
-          <QuestPanel analysis={analysis} />
+
+          <div className={styles.panels}>
+            <QuestPanel analysis={analysis} slug={questSlug} onSlug={setQuestSlug} />
+            <TutorPanel analysis={analysis} questSlug={questSlug === '' ? null : questSlug} />
+          </div>
         </div>
       </div>
     </div>

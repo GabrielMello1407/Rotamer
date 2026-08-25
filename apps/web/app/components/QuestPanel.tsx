@@ -10,6 +10,9 @@ import styles from './QuestPanel.module.css';
 
 export interface QuestPanelProps {
   readonly analysis: AnalysisResult | null;
+  /** A missão escolhida vive fora daqui: o tutor também precisa saber qual é. */
+  readonly slug: string;
+  readonly onSlug: (slug: string) => void;
 }
 
 const TRACK_NAMES: Readonly<Record<Track, string>> = {
@@ -28,8 +31,7 @@ const FREE = '';
  * calculou — nunca de modelo de linguagem. As dicas são escritas junto com a
  * missão e revisadas como conteúdo.
  */
-export function QuestPanel({ analysis }: QuestPanelProps): ReactElement {
-  const [slug, setSlug] = useState<string>(FREE);
+export function QuestPanel({ analysis, slug, onSlug }: QuestPanelProps): ReactElement {
   const [hintsShown, setHintsShown] = useState(0);
   const [outcome, setOutcome] = useState<AttemptOutcome | null>(null);
 
@@ -96,7 +98,7 @@ export function QuestPanel({ analysis }: QuestPanelProps): ReactElement {
         aria-label="Escolher missão"
         data-testid="escolher-missao"
         onChange={(event) => {
-          setSlug(event.target.value);
+          onSlug(event.target.value);
           setHintsShown(0);
           setOutcome(null);
         }}
