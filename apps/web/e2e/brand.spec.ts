@@ -2,14 +2,14 @@ import { expect, test } from '@playwright/test';
 
 test.describe('página de marca', () => {
   test('mostra o símbolo e o wordmark', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/marca');
 
     await expect(page.getByRole('heading', { name: 'Rotamer', level: 1 })).toBeVisible();
     await expect(page.getByRole('img', { name: 'Rotamer' })).toBeVisible();
   });
 
   test('a regra do produto está na tela, com os dois selos de origem', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/marca');
 
     await expect(page.getByText('O núcleo determinístico decide. A IA explica.')).toBeVisible();
     await expect(page.getByText('calculado', { exact: true }).first()).toBeVisible();
@@ -17,7 +17,7 @@ test.describe('página de marca', () => {
   });
 
   test('o RDKit sobe no worker e sanitiza a aspirina', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/marca');
 
     // O WASM carrega depois da primeira pintura: o cabeçalho já está lá antes
     // de a química responder.
@@ -30,7 +30,7 @@ test.describe('página de marca', () => {
   });
 
   test('troca de tema e lembra a escolha', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/marca');
 
     await page.getByRole('button', { name: 'Escuro' }).click();
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');

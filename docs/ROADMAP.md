@@ -27,12 +27,17 @@ Nada de química ainda. Só o chão para não ter retrabalho depois.
 
 O produto inteiro sem conta, sem servidor, sem IA. Tudo no cliente.
 
-- [ ] Editor 2D: desenhar, arrastar-para-criar, ordem de ligação, elemento, mover, apagar,
+- [x] Editor 2D: desenhar, arrastar-para-criar, ordem de ligação, elemento, mover, apagar,
       desfazer, enquadrar
-- [ ] Ponte com RDKit: sanitização, SMILES, InChIKey, descritores, grupos funcionais
-- [ ] Geometria via ETKDG e MMFF94, com dobramento animado e vibração por dinâmica
-- [ ] Sincronia 2D↔3D, temas claro e escuro, responsivo até 390px
-- [ ] Mensagens de erro em português que explicam a química, não o código
+- [x] Ponte com RDKit: sanitização, SMILES, InChIKey, descritores
+- [ ] Grupos funcionais reconhecidos e nomeados na interface
+- [x] Geometria e dobramento animado — conformação do OpenChemLib e MMFF94 real (D-10)
+- [ ] Vibração por dinâmica molecular — **sem caminho barato**: o OpenChemLib expõe energia mas
+      não gradiente. Ou se faz MD com gradiente numérico (~40 ms por passo numa molécula do
+      tamanho da aspirina, trajetória pré-calculada no worker), ou se muda a promessa. Decidir
+      antes de prometer no site.
+- [x] Sincronia 2D↔3D, temas claro e escuro, responsivo até 390px
+- [x] Mensagens de erro em português que explicam a química, não o código
 
 **Publica:** o editor aberto, sem cadastro. Já é demonstrável para qualquer interlocutor.
 

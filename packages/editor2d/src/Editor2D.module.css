@@ -1,0 +1,47 @@
+.frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: var(--surface);
+  border-radius: var(--r-md);
+  border: 1px solid var(--line);
+  overflow: hidden;
+  touch-action: none;
+}
+
+.frame:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: -2px;
+}
+
+.canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+}
+
+.erasing .canvas {
+  cursor: not-allowed;
+}
+
+.panning .canvas {
+  cursor: grabbing;
+}
+
+.hint {
+  position: absolute;
+  inset: auto 0 var(--sp-4) 0;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.hintText {
+  background: var(--sunk);
+  color: var(--ink-500);
+  border: 1px solid var(--line);
+  border-radius: var(--r-full);
+  padding: var(--sp-2) var(--sp-4);
+  font-size: var(--step--1);
+}

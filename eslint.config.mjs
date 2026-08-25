@@ -48,9 +48,11 @@ export default tseslint.config(
     },
   },
 
-  // Regra de dependência: ninguém importa `editor2d`.
+  // Regra de dependência: nenhum pacote importa `editor2d` — só o app, que é
+  // quem monta a tela. A interface de desenho continua substituível sem tocar
+  // em nada abaixo dela.
   {
-    files: ['**/*.{ts,tsx}'],
+    files: ['packages/**/*.{ts,tsx}'],
     ignores: ['packages/editor2d/**'],
     rules: {
       'no-restricted-imports': [
@@ -60,7 +62,7 @@ export default tseslint.config(
             {
               group: ['@rotamer/editor2d', '@rotamer/editor2d/*'],
               message:
-                'Ninguém depende de editor2d. A interface de desenho é substituível — mova a lógica para core.',
+                'Nenhum pacote depende de editor2d — só o app. A interface de desenho é substituível: mova a lógica para core.',
             },
           ],
         },

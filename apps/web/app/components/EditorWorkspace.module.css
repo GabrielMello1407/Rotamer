@@ -1,0 +1,42 @@
+.workspace {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: var(--sp-3);
+  height: 100%;
+  min-height: 0;
+}
+
+.stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 34%);
+  gap: var(--sp-3);
+  min-height: 0;
+}
+
+.canvasArea {
+  position: relative;
+  min-height: 320px;
+}
+
+.toolbar {
+  position: absolute;
+  inset: var(--sp-3) auto auto var(--sp-3);
+  z-index: 1;
+  max-width: calc(100% - var(--sp-6));
+}
+
+.side {
+  display: grid;
+  grid-template-rows: 1fr;
+  gap: var(--sp-3);
+  min-height: 0;
+}
+
+/* Até 900px o 3D vai para baixo: a tela de desenho continua sendo o objeto
+   principal, e ninguém desenha molécula numa faixa de 200px. */
+@media (max-width: 900px) {
+  .stage {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(320px, 58vh) minmax(220px, 34vh);
+  }
+}

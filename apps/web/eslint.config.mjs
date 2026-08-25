@@ -22,8 +22,8 @@ const config = [
       'next-env.d.ts',
       'playwright-report/**',
       'test-results/**',
-      // RDKit compilado, copiado de node_modules no build. Não é código nosso.
-      'public/rdkit/**',
+      // RDKit e tabelas do MMFF94, copiados de node_modules no build.
+      'public/chem/**',
     ],
   },
 ];

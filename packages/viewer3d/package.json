@@ -1,0 +1,29 @@
+{
+  "name": "@rotamer/viewer3d",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": ["*.css"],
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@react-three/drei": "10.7.8",
+    "@react-three/fiber": "9.7.0",
+    "@rotamer/core": "workspace:*",
+    "three": "0.185.1"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.18",
+    "@types/three": "0.185.4",
+    "react": "19.2.8",
+    "typescript": "5.9.3"
+  }
+}
