@@ -70,13 +70,55 @@ Tudo escrito, tudo testado. Para o tutor sair do modo desligado, falta só a cha
 
 A fase que a maioria pula e que decide se o produto serve para alguém.
 
+**Duas coisas precisam existir antes de a primeira sessão acontecer.** Não são funcionalidade;
+são a diferença entre medir e achar:
+
+- [ ] **Telemetria** — Umami auto-hospedado no mesmo VPS, sem cookie. Consta da tabela de stack
+      desde o começo e nunca foi escrita. Sessão de observação sem instrumento vira anedota: dá
+      para ver uma pessoa travar, não dá para saber se ela é a regra.
+- [ ] **Backup do banco** — `pg_dump` diário com retenção, guardado fora da máquina, e uma
+      restauração testada. Está descrito no `DEPLOY.md` e não existe como rotina. Dado de aluno
+      perdido não se recupera com desculpa (D-11).
+
+Tirar pedra do caminho, antes ou junto das sessões — a lista completa e o critério do corte
+estão no `DEPOIS.md`:
+
+- [ ] Templates de anel, rascunho salvo no navegador, exportar SVG e PNG
+- [ ] Pinça e polimento de celular
+- [ ] Busca por nome via PubChem
+- [ ] Centros estereogênicos nas métricas, recuperação de senha, "minhas moléculas"
+
+O contato propriamente dito:
+
 - [ ] Sessões de observação com 3 professores e 8–10 alunos — assistindo, sem explicar nada
 - [ ] Revisão de nomenclatura e linguagem por um químico
-- [ ] Telemetria de onde as pessoas travam
 - [ ] Correções de usabilidade e desempenho em celular fraco
-- [ ] Estereoquímica com cunhas e traços, se a validação apontar para isso
 
 **Publica:** v0.2 corrigida.
+
+**Estereoquímica saiu daqui.** Ela virou v0.3, com fase própria: mexe no grafo, no molblock, na
+percepção CIP e na coerência com a cena 3D, e o `CLAUDE.md` diz que merece ser feita direito.
+Se a validação apontar para ela com força, o que muda é a ordem — não o tamanho do trabalho.
+
+**Pergunta que precisa de resposta antes da primeira sessão:** o produto vai nomear molécula? Hoje
+não nomeia, e não existe motor de nomenclatura IUPAC no escopo. O primeiro professor vai
+perguntar. Não-objetivo declarado ou item de v0.3 — as duas respostas servem; o silêncio, não.
+
+---
+
+## v0.3 · Estereoquímica — ~40h
+
+Não é fase de calendário: é uma entrega grande o suficiente para não caber em nenhuma das outras,
+e pequena o suficiente para não virar projeto.
+
+- [ ] Cunhas e traços no editor 2D, com o grafo carregando a informação
+- [ ] Molblock escrevendo a estereoquímica, e o RDKit devolvendo os descritores CIP
+- [ ] Coerência entre o que está desenhado e o que a cena 3D mostra
+- [ ] Missões que dependem de configuração — é onde a funcionalidade prova que serve
+
+Depende do que a Fase 3 mostrar. Se professor nenhum pedir, o que muda é a prioridade, não a
+existência: o produto assume hoje que estereoquímica não está representada, e isso precisa
+continuar dito em voz alta enquanto for verdade.
 
 ---
 

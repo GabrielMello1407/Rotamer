@@ -149,15 +149,17 @@ para análises clínicas — mesmo país, campo adjacente).
 
 ## Roadmap
 
-| Fase | Semanas | Entrega |
+| Fase | Entrega | Situação |
 |---|---|---|
-| 0 · Fundação | 1–2 | monorepo, tokens, RDKit em worker, deploy |
-| 1 · Núcleo | 3–7 | editor 2D, química, geometria, 3D — tudo no cliente |
-| 2 · Enredo | 8–12 | missões, tutor com guardrails, contas → **MVP v0.1** |
-| 3 · Realidade | 13–16 | validação com professores e alunos, correções |
-| 4 · Comunidade | 17–22 | campanhas abertas, ranking, extensão universitária |
+| 0 · Fundação | monorepo, tokens, RDKit em worker, integração contínua | ✅ |
+| 1 · Núcleo | editor 2D, química, geometria, dobramento e vibração | ✅ |
+| 2 · Enredo | missões, tutor com guardrails, contas, página pública → **v0.1** | ✅ |
+| 3 · Realidade | telemetria, backup, atrito de uso, validação com professores e alunos → v0.2 | — |
+| v0.3 | estereoquímica com cunhas e traços | — |
+| 4 · Comercial | painel do professor, assinatura, material de venda → v1.0 | — |
 
-Cada fase publica algo que vale sozinho. A única data que importa é a Fase 2.
+Cada fase publica algo que vale sozinho. O tutor está escrito e desligado: liga quando a chave do
+Gemini entrar no ambiente. O corte da v0.2 e o critério dele estão em [DEPOIS.md](DEPOIS.md).
 
 ## O que este projeto não faz
 
