@@ -11,7 +11,7 @@ import type { ChemistryConnection } from './use-chemistry-client';
  * É o caminho de volta da página pública para o editor — o professor manda o
  * link, o aluno abre e já pode mexer na estrutura.
  */
-export function useInitialSmiles(store: EditorStore, connection: ChemistryConnection): void {
+export function useInitialSmiles(store: EditorStore, connection: ChemistryConnection): boolean {
   const loaded = useRef(false);
   const client = connection.status === 'ready' ? connection.client : null;
 
@@ -33,4 +33,15 @@ export function useInitialSmiles(store: EditorStore, connection: ChemistryConnec
 
     void open();
   }, [client, store]);
+
+  // Devolve se o endereço traz molécula: quem chega por link não quer o
+  // rascunho de ontem por cima.
+  return hasSmilesInUrl();
+}
+
+function hasSmilesInUrl(): boolean {
+  if (typeof window === 'undefined') return false;
+
+  const smiles = new URLSearchParams(window.location.search).get('smiles');
+  return smiles !== null && smiles.trim() !== '';
 }

@@ -28,4 +28,5 @@ export {
   toScreen,
 } from './geometry2d';
 export { readPalette, colorOf, type EditorPalette } from './palette';
+export { insertRing, ringLabel, RING_KINDS, type RingKind } from './templates';
 export type { Camera, Drag, Hover, Point, Tool, Viewport } from './types';

@@ -5,6 +5,7 @@ import type { ReactElement } from 'react';
 import { useStore } from 'zustand';
 import styles from './Toolbar.module.css';
 import type { EditorStore } from './store';
+import { RING_KINDS, ringLabel, type RingKind } from './templates';
 
 export interface ToolbarProps {
   readonly store: EditorStore;
@@ -47,6 +48,27 @@ export function Toolbar({ store, className }: ToolbarProps): ReactElement {
             }}
           >
             {symbol}
+          </Button>
+        ))}
+      </div>
+
+      <span className={styles.divider} aria-hidden="true" />
+
+      <div className={styles.group}>
+        {RING_KINDS.map((kind) => (
+          <Button
+            key={kind}
+            size="small"
+            variant="secondary"
+            className={styles.ring}
+            title={`Inserir ${ringLabel(kind)}`}
+            aria-label={`Inserir ${ringLabel(kind)}`}
+            data-testid={`anel-${kind}`}
+            onClick={() => {
+              store.getState().addRing(kind);
+            }}
+          >
+            <RingIcon kind={kind} />
           </Button>
         ))}
       </div>
@@ -117,5 +139,37 @@ export function Toolbar({ store, className }: ToolbarProps): ReactElement {
         </Button>
       </div>
     </div>
+  );
+}
+
+/** O ícone do anel: o próprio polígono, com o que o distingue por dentro. */
+function RingIcon({ kind }: { readonly kind: RingKind }): ReactElement {
+  const sides = kind === 'ciclopentano' ? 5 : 6;
+  const points: string[] = [];
+
+  for (let vertex = 0; vertex < sides; vertex += 1) {
+    const angle = -Math.PI / 2 + (2 * Math.PI * vertex) / sides;
+    points.push(`${String(9 + Math.cos(angle) * 7)},${String(9 + Math.sin(angle) * 7)}`);
+  }
+
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+      <polygon
+        points={points.join(' ')}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinejoin="round"
+      />
+      {/* O círculo no meio é como o livro desenha aromático. */}
+      {(kind === 'benzeno' || kind === 'piridina') && (
+        <circle cx="9" cy="9" r="3.4" fill="none" stroke="currentColor" strokeWidth="1.2" />
+      )}
+      {kind === 'piridina' && (
+        <text x="9" y="4.6" textAnchor="middle" fontSize="5.5" fill="currentColor">
+          N
+        </text>
+      )}
+    </svg>
   );
 }

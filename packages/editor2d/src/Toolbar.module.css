@@ -40,3 +40,12 @@
   color: var(--brand-ink);
   border-color: var(--brand);
 }
+
+.ring {
+  padding: var(--sp-1) var(--sp-2);
+  color: var(--ink-700);
+}
+
+.ring:hover:not(:disabled) {
+  color: var(--brand-ink);
+}

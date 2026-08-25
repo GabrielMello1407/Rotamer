@@ -15,6 +15,7 @@ import {
 } from '@rotamer/core';
 import { createStore } from 'zustand/vanilla';
 import { frameGraph } from './geometry2d';
+import { insertRing, type RingKind } from './templates';
 import type { Camera, Drag, Hover, Point, Tool, Viewport } from './types';
 
 export type { Camera, Drag, Hover, Point, Tool, Viewport } from './types';
@@ -68,6 +69,8 @@ export interface EditorState {
   clear: () => void;
 
   addAtomAt: (point: Point) => AtomId;
+  /** Põe um anel pronto no centro da vista. */
+  addRing: (kind: RingKind) => void;
   bondTo: (from: AtomId, to: AtomId) => void;
   bondToNewAtom: (from: AtomId, point: Point) => AtomId;
   eraseAtom: (id: AtomId) => void;
@@ -163,6 +166,12 @@ export function createEditorStore(initial: MoleculeGraph = emptyGraph()) {
 
     clear: () => {
       get().commit(emptyGraph());
+    },
+
+    addRing: (kind) => {
+      const { graph, camera, commit, frame } = get();
+      commit(insertRing(graph, kind, { x: camera.x, y: camera.y }).graph);
+      frame();
     },
 
     addAtomAt: (point) => {

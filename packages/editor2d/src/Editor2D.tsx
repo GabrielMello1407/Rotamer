@@ -14,7 +14,17 @@ import { hoverAt, snapFromAtom, suggestDirection, toGraph } from './geometry2d';
 import { readPalette, type EditorPalette } from './palette';
 import { draw } from './render';
 import { clampScale, type EditorStore } from './store';
-import type { Point, Viewport } from './types';
+import type { Camera, Point, Viewport } from './types';
+
+/** O estado de uma pinça em andamento. */
+interface Pinch {
+  /** Distância entre os dedos quando começou, em pixels. */
+  readonly distance: number;
+  readonly midpoint: Point;
+  /** Ponto do grafo que fica ancorado sob os dedos. */
+  readonly anchor: Point;
+  readonly camera: Camera;
+}
 
 export interface Editor2DProps {
   readonly store: EditorStore;
@@ -52,6 +62,16 @@ export function Editor2D({ store, className }: Editor2DProps): ReactElement {
   const viewportRef = useRef<Viewport>({ width: 0, height: 0 });
   const pointerStartRef = useRef<Point | null>(null);
   const scheduledRef = useRef(false);
+
+  /**
+   * Os dedos na tela e o estado da pinça.
+   *
+   * Em celular não existe roda de mouse: sem dois dedos, não há como enquadrar
+   * uma molécula que cresceu — e escola pública em celular é o caso de uso
+   * declarado, não o caso extremo.
+   */
+  const touchesRef = useRef(new Map<number, Point>());
+  const pinchRef = useRef<Pinch | null>(null);
 
   const tool = useStore(store, (state) => state.tool);
   const dragKind = useStore(store, (state) => state.drag.kind);
@@ -146,10 +166,42 @@ export function Editor2D({ store, className }: Editor2DProps): ReactElement {
     [store],
   );
 
+  /** Começa a pinça quando o segundo dedo encosta. */
+  const startPinch = useCallback((): void => {
+    const [first, second] = [...touchesRef.current.values()];
+    if (!first || !second) return;
+
+    const state = store.getState();
+    state.setDrag({ kind: 'none' });
+    state.setHover(null);
+
+    const midpoint = { x: (first.x + second.x) / 2, y: (first.y + second.y) / 2 };
+
+    pinchRef.current = {
+      distance: Math.hypot(first.x - second.x, first.y - second.y),
+      midpoint,
+      // O ponto do grafo debaixo dos dedos não pode escorregar: é ele que
+      // ancora o zoom.
+      anchor: toGraph(midpoint, state.camera, viewportRef.current),
+      camera: state.camera,
+    };
+  }, [store]);
+
   const handlePointerDown = useCallback(
     (event: ReactPointerEvent<HTMLCanvasElement>): void => {
       event.currentTarget.setPointerCapture(event.pointerId);
       frameRef.current?.focus();
+
+      const rect = event.currentTarget.getBoundingClientRect();
+      touchesRef.current.set(event.pointerId, {
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top,
+      });
+
+      if (touchesRef.current.size >= 2) {
+        startPinch();
+        return;
+      }
 
       const state = store.getState();
       const point = pointAt(event);
@@ -174,12 +226,43 @@ export function Editor2D({ store, className }: Editor2DProps): ReactElement {
         state.setDrag({ kind: 'pan', origin: point, camera: state.camera });
       }
     },
-    [pointAt, store],
+    [pointAt, startPinch, store],
   );
 
   const handlePointerMove = useCallback(
     (event: ReactPointerEvent<HTMLCanvasElement>): void => {
       const state = store.getState();
+
+      if (touchesRef.current.has(event.pointerId)) {
+        const rect = event.currentTarget.getBoundingClientRect();
+        touchesRef.current.set(event.pointerId, {
+          x: event.clientX - rect.left,
+          y: event.clientY - rect.top,
+        });
+      }
+
+      const pinch = pinchRef.current;
+      if (pinch !== null && touchesRef.current.size >= 2) {
+        const [first, second] = [...touchesRef.current.values()];
+        if (!first || !second) return;
+
+        const distance = Math.hypot(first.x - second.x, first.y - second.y);
+        if (distance < 1 || pinch.distance < 1) return;
+
+        const midpoint = { x: (first.x + second.x) / 2, y: (first.y + second.y) / 2 };
+        const scale = clampScale(pinch.camera.scale * (distance / pinch.distance));
+        const viewport = viewportRef.current;
+
+        // Câmera recolocada para o ponto ancorado continuar exatamente debaixo
+        // dos dedos: é o que faz a pinça parecer que move o papel, e não a lente.
+        state.setCamera({
+          x: pinch.anchor.x - (midpoint.x - viewport.width / 2) / scale,
+          y: pinch.anchor.y + (midpoint.y - viewport.height / 2) / scale,
+          scale,
+        });
+        return;
+      }
+
       const dragging = state.drag;
       const point = pointAt(event);
 
@@ -225,6 +308,19 @@ export function Editor2D({ store, className }: Editor2DProps): ReactElement {
 
   const handlePointerUp = useCallback(
     (event: ReactPointerEvent<HTMLCanvasElement>): void => {
+      touchesRef.current.delete(event.pointerId);
+
+      if (pinchRef.current !== null) {
+        // Um dedo saiu: a pinça acaba aqui e o dedo que sobrou não vira traço,
+        // senão toda pinça terminaria desenhando um átomo perdido.
+        if (touchesRef.current.size < 2) {
+          pinchRef.current = null;
+          pointerStartRef.current = null;
+          store.getState().setDrag({ kind: 'none' });
+        }
+        return;
+      }
+
       const state = store.getState();
       const point = pointAt(event);
       const start = pointerStartRef.current;

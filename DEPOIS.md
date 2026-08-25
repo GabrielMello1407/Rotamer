@@ -13,15 +13,11 @@ Regra: se surgiu no meio de outra tarefa, escreva aqui e volte ao que estava faz
 O critério do corte: **o que faz um professor voltar na segunda semana.** Nada aqui é
 funcionalidade nova impressionante — é tirar pedra do caminho de quem já quer usar.
 
-- [ ] **Templates de anel em um clique** — benzeno, ciclohexano, piridina. Já existe missão de
-      fechar anel, e fazer isso à mão num celular é punição.
-- [ ] **Rascunho salvo no navegador** — o grafo é a fonte única e serializável; guardar e
-      recarregar é barato. Hoje trocar de aplicativo no celular perde o trabalho, o que mata o
-      sinal "alguém volta em outro dia".
-- [ ] **Exportar SVG e PNG** — o desenho do RDKit já é gerado no servidor. É o item que liga
-      direto no sinal de sucesso do `README`: uma molécula do Rotamer num slide de aula.
-- [ ] **Pinça e polimento de celular** — hoje só existe zoom por roda de mouse, e escola pública
-      em celular é o caso de uso declarado, não o caso extremo.
+- [x] **Templates de anel em um clique** — benzeno, cicloexano, ciclopentano e piridina.
+- [x] **Rascunho salvo no navegador** — volta ao abrir; link com molécula ganha dele.
+- [x] **Exportar SVG e PNG** — SVG é o desenho do RDKit; PNG é a tela como está.
+- [x] **Pinça** — dois dedos ancorados no ponto do grafo que está embaixo deles. Falta o resto
+      do polimento de celular, que só a Fase 3 vai dizer qual é.
 - [ ] **Busca por nome, via PubChem** — tira o SMILES do caminho de quem sabe "cafeína" e não
       `Cn1cnc2c1c(=O)n(C)c(=O)n2C`. Dado de domínio público; exige atribuição e precisa degradar
       com elegância quando a API estiver fora. **Leva junto a verificação de novidade do

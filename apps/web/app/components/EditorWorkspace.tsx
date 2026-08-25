@@ -5,6 +5,7 @@ import { Viewer3D } from '@rotamer/viewer3d';
 import { useMemo, useState, type ReactElement } from 'react';
 import { useStore } from 'zustand';
 import styles from './EditorWorkspace.module.css';
+import { ExportMenu } from './ExportMenu';
 import { MoleculeMetrics } from './MoleculeMetrics';
 import { NamePanel } from './NamePanel';
 import { QuestPanel } from './QuestPanel';
@@ -12,6 +13,7 @@ import { ShareLink } from './ShareLink';
 import { TutorPanel } from './TutorPanel';
 import { SmilesInput } from './SmilesInput';
 import { useChemistryClient } from './use-chemistry-client';
+import { useDraft } from './use-draft';
 import { useInitialSmiles } from './use-initial-smiles';
 import { useMolecule } from './use-molecule';
 
@@ -31,7 +33,8 @@ export function EditorWorkspace(): ReactElement {
   const connection = useChemistryClient();
   const { analysis, geometry, trajectory, pending } = useMolecule(graph, connection);
 
-  useInitialSmiles(store, connection);
+  const fromLink = useInitialSmiles(store, connection);
+  useDraft(store, !fromLink);
 
   return (
     <div className={styles.workspace}>
@@ -42,6 +45,7 @@ export function EditorWorkspace(): ReactElement {
           waitingForEngine={connection.status === 'loading' && graph.atoms.length > 0}
         />
         <SmilesInput store={store} connection={connection} />
+        <ExportMenu analysis={analysis} connection={connection} />
         <ShareLink analysis={analysis} />
       </div>
 
