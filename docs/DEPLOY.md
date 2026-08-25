@@ -1,52 +1,81 @@
 # Deploy
 
-O que já está pronto no repositório e o que ainda depende de conta, cartão e registrador.
+Alvo: **VPS com PM2**, servindo o Next em modo `standalone` atrás de um proxy. O que já está
+pronto no repositório e o que ainda depende de servidor, domínio e certificado.
 
 ## Já funciona
 
 - **Integração contínua** em `.github/workflows/ci.yml`: a cada push e a cada pull request roda
   `pnpm lint`, `pnpm typecheck`, `pnpm test` e `pnpm test:e2e` (Chromium, perfis desktop e
   celular). O relatório do Playwright sobe como artefato.
-- **Build de produção** do app: `pnpm --filter @rotamer/web build`. O passo `prebuild` copia o
-  RDKit compilado de `node_modules` para `apps/web/public/rdkit/`, então o `.js` e o `.wasm`
-  servidos são sempre da versão que está no `pnpm-lock.yaml`.
+- **Build de produção**: `pnpm --filter @rotamer/web build`. O passo `prebuild` copia o RDKit
+  compilado e as tabelas do MMFF94 de `node_modules` para `apps/web/public/chem/`, então os
+  arquivos servidos são sempre da versão travada no `pnpm-lock.yaml`.
 
-## Falta — precisa de você
+## Falta — precisa de servidor
 
-### 1. Vercel
+### 1. Build para o servidor
 
-O projeto é um monorepo pnpm com Turborepo. Na criação do projeto na Vercel:
+Antes do primeiro deploy, ligar a saída `standalone` no `apps/web/next.config.ts`
+(`output: 'standalone'`): ela empacota o servidor com só as dependências que ele usa, o que
+importa num monorepo pnpm, onde `node_modules` é uma teia de links simbólicos.
 
-| Campo | Valor |
-|---|---|
-| Framework Preset | Next.js |
-| Root Directory | `apps/web` |
-| Install Command | `pnpm install --frozen-lockfile` (padrão) |
-| Build Command | `pnpm build` (padrão — já dispara o `prebuild`) |
-| Node.js Version | 24.x |
+Sequência no servidor:
 
-Marque **Include files outside the Root Directory** — o app importa `packages/core` e
-`packages/ui` do próprio repositório.
+```
+pnpm install --frozen-lockfile
+pnpm --filter @rotamer/web build
+```
 
-Deploy de produção sai de `main`; cada pull request ganha uma URL de pré-visualização.
+### 2. PM2
 
-### 2. Domínio
+O processo é o servidor do Next, não `next start` via pnpm — PM2 precisa enxergar o Node
+diretamente para reiniciar e coletar log direito.
+
+```js
+// ecosystem.config.cjs — a escrever quando o servidor existir
+module.exports = {
+  apps: [
+    {
+      name: 'rotamer',
+      script: 'apps/web/.next/standalone/apps/web/server.js',
+      instances: 'max',        // uma por núcleo; o app é stateless
+      exec_mode: 'cluster',
+      env: { NODE_ENV: 'production', PORT: 3000, HOSTNAME: '127.0.0.1' },
+    },
+  ],
+};
+```
+
+Cuidados do modo `standalone`: `public/` e `.next/static/` **não** entram no pacote e precisam ser
+copiados para dentro de `.next/standalone/apps/web/` depois do build. É lá que mora o
+`public/chem/` — sem ele, o worker sobe e o motor de química não carrega.
+
+`pm2 startup` e `pm2 save` para o app voltar sozinho depois de reiniciar a máquina.
+
+### 3. Proxy e certificado
+
+Nginx ou Caddy na frente, com TLS. Dois pontos que valem atenção:
+
+- **O `.wasm` tem quase 7 MB.** Servir com `Content-Type: application/wasm` e cache longo
+  (`immutable`), senão cada visita paga o download de novo.
+- **Compressão**: o `.js` do RDKit e o `ocl-resources.json` comprimem muito bem; o `.wasm` já vem
+  compacto e não precisa de gzip.
+
+### 4. Domínio
 
 `rotamer.app`, `rotamer.dev` ou `rotamer.org` — ainda **não confirmados no registrador**. Ver a
 ressalva em `DECISOES.md` D-07: DNS sem registro não é o mesmo que disponível no registrador, e
 disponível no registrador não é o mesmo que livre no INPI. Confirme os dois antes de comprar.
 
-Depois de comprado, apontar na Vercel em *Settings → Domains*.
-
-### 3. Variáveis de ambiente
+### 5. Variáveis de ambiente
 
 Nenhuma até aqui. A Fase 2 traz a chave do Gemini e a conexão do Postgres — quando isso chegar,
-elas entram como *Environment Variables* na Vercel e nunca no repositório.
+elas ficam no ambiente do PM2 (arquivo fora do repositório) e nunca versionadas.
 
 ## Cuidados
 
-- **`apps/web/public/rdkit/` não é versionado.** Ele é gerado no build. Se algum dia o build
-  quebrar com "RDKit não expôs initRDKitModule", é sinal de que o `prebuild` não rodou.
-- **O `.wasm` tem quase 7 MB** e é servido como arquivo estático, com cache longo. Ele carrega
-  depois da primeira pintura, dentro do worker — a meta de 3 s para o primeiro desenho num
-  celular fraco em 3G depende disso continuar assim.
+- **`apps/web/public/chem/` não é versionado.** É gerado no build. Se a tela ficar em "carregando
+  o RDKit" para sempre, o primeiro suspeito é o `prebuild` não ter rodado no servidor.
+- **O WASM carrega depois da primeira pintura**, dentro do worker. A meta de 3 s para o primeiro
+  desenho num celular fraco em 3G depende de isso continuar assim.

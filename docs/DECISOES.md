@@ -212,3 +212,46 @@ numa ferramenta de ensino, um erro não confunde um usuário, confunde uma sala 
 
 **Revisar se.** Um laboratório ou uma empresa aparecer disposto a pagar antes de qualquer escola.
 Aí o sinal de mercado vence o raciocínio — mas espere o sinal, não o presuma.
+
+---
+
+## D-10 · A geometria 3D vem do OpenChemLib, não do RDKit
+
+**Decisão.** O RDKit continua respondendo toda pergunta química — validade, valência,
+aromaticidade, fórmula, descritores, InChIKey. A **geometria** — conformação inicial e
+minimização por campo de força — vem do OpenChemLib (BSD-3-Clause), rodando no mesmo worker,
+sempre a partir do molblock que o RDKit já sanitizou.
+
+**O que provocou.** A `ARQUITETURA.md` dizia "Geometria: RDKit ETKDG + MMFF94". Ao implementar,
+o pacote publicado se mostrou incapaz disso: o `@rdkit/rdkit` do npm traz apenas a MinimalLib,
+que gera coordenadas **2D** e nada mais. Verificado em execução — `has_coords()` devolve 2, e não
+existe nenhuma porta para ETKDG, campo de força ou conformação. O plano original não era
+executável com a biblioteca que existe.
+
+**As três saídas avaliadas.**
+
+| Saída | Por que não foi escolhida agora |
+|---|---|
+| Compilar um RDKit WASM próprio com `DGeomHelpers` e `ForceField` | Exige Docker e emscripten, build longo, WASM bem maior e manutenção a cada versão do RDKit. Trava a Fase 1 inteira até o build sair. |
+| Calcular a geometria no servidor | É o escape previsto no D-02, mas quebra o "tudo no cliente" da Fase 1: cada mudança de topologia vira ida ao servidor, e escola com internet ruim é o caso de uso, não o caso extremo. |
+| **OpenChemLib no cliente** | **Escolhida.** |
+
+**Por quê OpenChemLib.** Licença BSD-3-Clause, compatível com produto fechado. Gerador de
+conformações e MMFF94 de verdade, medidos aqui: a aspirina sai de 102,22 para 18,91 kcal/mol, e o
+campo de força custa 0,3 ms para montar. São 1,1 MB de JavaScript mais 1,3 MB de tabelas —
+frações do WASM do RDKit. E devolve energia a cada parada, o que faz o dobramento na tela ser a
+minimização acontecendo, não uma interpolação inventada entre começo e fim.
+
+**Como o D-02 continua valendo.** Não estamos reimplementando química: estamos usando uma segunda
+biblioteca estabelecida para a parte que a primeira não cobre. A fronteira é clara e verificada
+em teste: **o OpenChemLib só recebe estrutura que o RDKit já aprovou**, e nenhum veredito químico
+— validade, aromaticidade, descritor, nota de missão — passa por ele.
+
+**O detalhe que mudou a implementação.** O minimizador do OpenChemLib só escreve coordenadas
+quando converge: pedir "doze iterações e me mostre" roda e não devolve nada. Os quadros do
+dobramento são obtidos apertando o gradiente aos poucos — cada parada é uma geometria real do
+caminho até o mínimo.
+
+**Revisar se.** Sair um build oficial do RDKit.js com ETKDG e MMFF94, ou o OpenChemLib divergir do
+RDKit em algum caso que chegue à tela. Neste caso a troca é barata: a fronteira é uma função só,
+`generateGeometry(molblock)`.

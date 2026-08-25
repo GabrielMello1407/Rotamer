@@ -19,7 +19,8 @@
   },
   "dependencies": {
     "@rdkit/rdkit": "2025.3.4-1.0.0",
-    "comlink": "4.4.2"
+    "comlink": "4.4.2",
+    "openchemlib": "9.25.0"
   },
   "devDependencies": {
     "@types/node": "24.13.3",

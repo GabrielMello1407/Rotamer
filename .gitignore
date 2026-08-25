@@ -31,8 +31,8 @@ Thumbs.db
 CLAUDE.local.md
 .claude/settings.local.json
 
-# WASM do RDKit copiado de node_modules no build
-apps/web/public/rdkit/
+# RDKit e tabelas do MMFF94, copiados de node_modules no build
+apps/web/public/chem/
 
 # gerado pelo Next a cada build
 apps/web/next-env.d.ts

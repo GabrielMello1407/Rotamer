@@ -58,7 +58,7 @@ lógica para `core`, não criar a dependência.
 |---|---|---|
 | Aplicação | Next.js 16 (App Router) + TypeScript estrito | SSR nas páginas públicas de molécula, que é o que traz busca orgânica |
 | Química | RDKit.js (WASM) em Web Worker via Comlink | Ver `DECISOES.md` D-02 |
-| Geometria | RDKit ETKDG + MMFF94 | Mesmo worker, mesma fronteira |
+| Geometria | OpenChemLib: conformação + MMFF94 | O RDKit.js publicado não traz gerador 3D nem campo de força. Ver `DECISOES.md` D-10 |
 | 3D | Three.js + React Three Fiber | Motor de render apenas — nenhuma química dentro |
 | Editor 2D | Canvas 2D próprio + Zustand | É o diferencial; nenhuma lib pronta dá o toque certo |
 | Dados | Postgres + Prisma (Supabase no início) | Auth, storage e banco numa assinatura só; migrar para VPS depois é trivial |

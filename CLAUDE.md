@@ -79,7 +79,8 @@ tutor são derivados dele e recalculáveis. Nada além do grafo é persistido co
 ## Stack
 
 - Next.js 16 (App Router) + TypeScript estrito
-- RDKit.js (WASM) em Web Worker via Comlink — química e geometria (ETKDG + MMFF94)
+- RDKit.js (WASM) em Web Worker via Comlink — toda pergunta química
+- OpenChemLib no mesmo worker — conformação 3D e MMFF94, depois que o RDKit aprovou (D-10)
 - Three.js + React Three Fiber — apenas render, nenhuma química dentro
 - Canvas 2D próprio + Zustand — o editor é escrito à mão, sem lib de desenho molecular
 - Postgres + Prisma (Supabase no MVP)
@@ -140,7 +141,7 @@ pnpm lint
 pnpm typecheck
 ```
 
-O RDKit compilado é copiado de `node_modules` para `apps/web/public/rdkit/` nos passos
+O RDKit compilado é copiado de `node_modules` para `apps/web/public/chem/` nos passos
 `predev`/`prebuild`. Não versione essa pasta e não edite os arquivos dela à mão.
 
 ## Casos de teste que precisam continuar passando

@@ -23,12 +23,12 @@ const NOTHING_DRAWN: ChemistryError = {
  * a química.
  */
 export async function analyze(input: string, options?: RDKitOptions): Promise<AnalysisResult> {
-  if (input.trim() === '') {
+  if (drawsNothing(input)) {
     return { ok: false, error: NOTHING_DRAWN };
   }
 
   const rdkit = await loadRDKit(options);
-  const mol = rdkit.get_mol(input);
+  const mol = parseMol(rdkit, input);
 
   if (mol === null) {
     return { ok: false, error: diagnose(rdkit, input) };
@@ -54,6 +54,11 @@ export async function analyze(input: string, options?: RDKitOptions): Promise<An
 
 /** Monta a molécula a partir do que o RDKit já calculou. */
 function describe(rdkit: RDKitModule, mol: JSMol): Molecule {
+  // Estrutura vinda de SMILES chega sem coordenada nenhuma. O molblock é a
+  // ponte para o editor e para a geometria 3D, e os dois precisam de um
+  // desenho plano de partida — quem faz esse desenho também é o RDKit.
+  if (!mol.has_coords()) mol.set_new_coords();
+
   const inchi = mol.get_inchi();
 
   return {
@@ -121,7 +126,7 @@ function descriptorsOf(mol: JSMol): Descriptors {
  * fica genérica de propósito: melhor não explicar do que explicar errado.
  */
 function diagnose(rdkit: RDKitModule, input: string): ChemistryError {
-  const unsanitized = rdkit.get_mol(input, JSON.stringify({ sanitize: false }));
+  const unsanitized = parseMol(rdkit, input, JSON.stringify({ sanitize: false }));
 
   if (unsanitized === null) {
     return {
@@ -167,6 +172,32 @@ function diagnose(rdkit: RDKitModule, input: string): ChemistryError {
   } finally {
     unsanitized.delete();
   }
+}
+
+/**
+ * Lê a estrutura sem deixar exceção do WebAssembly vazar.
+ *
+ * O RDKit devolve `null` para quase toda entrada ruim, mas em alguns casos —
+ * molblock sem nenhum átomo, por exemplo — ele lança de dentro do WASM, e a
+ * exceção chega aqui como um número sem significado nenhum para o usuário.
+ */
+function parseMol(rdkit: RDKitModule, input: string, details?: string): JSMol | null {
+  try {
+    return details === undefined ? rdkit.get_mol(input) : rdkit.get_mol(input, details);
+  } catch {
+    return null;
+  }
+}
+
+/** Tela em branco não é erro de química: é só nada desenhado ainda. */
+function drawsNothing(input: string): boolean {
+  if (input.trim() === '') return true;
+
+  // Num molblock, a quarta linha conta os átomos nas três primeiras colunas.
+  const counts = input.split(/\r?\n/)[3];
+  if (counts === undefined) return false;
+
+  return Number.parseInt(counts.slice(0, 3).trim(), 10) === 0;
 }
 
 /** Heurística de texto, usada só para escolher a mensagem — nunca para julgar. */

@@ -12,6 +12,7 @@ Licenças aceitas: MIT, BSD (2 e 3 cláusulas), Apache-2.0, ISC.
 | RDKit / RDKit.js | BSD-3-Clause | química, descritores, geometria | sim — aviso de copyright |
 | Three.js | MIT | render 3D | sim — aviso de copyright |
 | React, Next.js | MIT | aplicação | sim |
+| OpenChemLib | BSD-3-Clause | conformação 3D e campo de força MMFF94 | sim — aviso de copyright |
 | Comlink | Apache-2.0 | conversa com o Web Worker | sim — aviso e NOTICE |
 | Archivo, IBM Plex | SIL Open Font License 1.1 | tipografia | sim — permite uso comercial e embutir |
 

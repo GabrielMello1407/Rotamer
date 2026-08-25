@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "predev": "node scripts/copy-rdkit.mjs",
+    "predev": "node scripts/copy-chem.mjs",
     "dev": "next dev",
-    "prebuild": "node scripts/copy-rdkit.mjs",
+    "prebuild": "node scripts/copy-chem.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
@@ -19,6 +19,7 @@
     "@rotamer/ui": "workspace:*",
     "comlink": "4.4.2",
     "next": "16.3.3",
+    "openchemlib": "9.25.0",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },

@@ -51,7 +51,7 @@ export function useChemistry(input: string): ChemistryState {
     const run = async (): Promise<void> => {
       try {
         await ready;
-        await chemistry.configure(new URL('/rdkit/', window.location.href).href);
+        await chemistry.configure(new URL('/chem/', window.location.href).href);
         const version = await chemistry.warmUp();
         const result = await chemistry.analyze(input);
         if (alive) setState({ phase: 'ready', version, result });
