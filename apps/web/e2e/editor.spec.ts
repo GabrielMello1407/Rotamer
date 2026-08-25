@@ -12,22 +12,27 @@ const SCALE = 26;
 /**
  * Um ponto da tela de desenho, medido na hora.
  *
- * A caixa é relida a cada gesto de propósito: a barra de ferramentas embrulha em
- * telas estreitas e empurra o resto, e coordenada guardada de antes erra o alvo
- * no celular.
+ * O centro é o único ponto estável da tela: ele corresponde sempre à posição da
+ * câmera no grafo, mesmo quando a faixa de métricas cresce e encolhe a área de
+ * desenho. Fração de altura não serve — o mesmo 0,68 vira outro ponto do grafo
+ * quando a caixa muda de tamanho.
  */
 async function pointOnCanvas(
   page: Page,
   offsetX = 0,
   offsetY = 0,
 ): Promise<{ x: number; y: number }> {
-  const box = await page.getByTestId('tela-de-desenho').boundingBox();
+  const canvas = page.getByTestId('tela-de-desenho');
+  // Em tela estreita a bancada empilha e a página rola: sem trazer a tela de
+  // desenho para dentro da janela, o clique cai em outro lugar.
+  await canvas.scrollIntoViewIfNeeded();
+
+  const box = await canvas.boundingBox();
   if (!box) throw new Error('a tela de desenho não tem tamanho');
 
-  // Bem abaixo do centro: é onde a barra de ferramentas nunca alcança.
   return {
     x: box.x + box.width / 2 + offsetX,
-    y: box.y + box.height * 0.68 + offsetY,
+    y: box.y + box.height / 2 + offsetY,
   };
 }
 

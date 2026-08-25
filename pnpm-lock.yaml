@@ -35,6 +35,9 @@ importers:
       '@rotamer/editor2d':
         specifier: workspace:*
         version: link:../../packages/editor2d
+      '@rotamer/quests':
+        specifier: workspace:*
+        version: link:../../packages/quests
       '@rotamer/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -119,6 +122,19 @@ importers:
       react:
         specifier: 19.2.8
         version: 19.2.8
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@types/node@24.13.3)(vite@8.2.2(@types/node@24.13.3))
+
+  packages/quests:
+    dependencies:
+      '@rotamer/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
       typescript:
         specifier: 5.9.3
         version: 5.9.3

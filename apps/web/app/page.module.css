@@ -2,7 +2,9 @@
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   gap: var(--sp-4);
-  height: 100dvh;
+  /* Em telas largas tudo cabe numa tela só; em telas estreitas a bancada
+     empilha e a página rola, em vez de espremer a tela de desenho. */
+  min-height: 100dvh;
   padding: var(--sp-4);
   max-width: 1600px;
   margin: 0 auto;

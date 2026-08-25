@@ -1,14 +1,26 @@
 .workspace {
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: auto minmax(0, 1fr);
   gap: var(--sp-3);
   height: 100%;
   min-height: 0;
 }
 
+.top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+/* A faixa de métricas manda no espaço; colar SMILES ocupa a sobra. */
+.top > :first-child {
+  flex: 1 1 420px;
+}
+
 .stage {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 34%);
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 34%);
   gap: var(--sp-3);
   min-height: 0;
 }
@@ -27,16 +39,20 @@
 
 .side {
   display: grid;
-  grid-template-rows: 1fr;
+  grid-template-rows: minmax(200px, 42%) minmax(0, 1fr);
   gap: var(--sp-3);
   min-height: 0;
 }
 
-/* Até 900px o 3D vai para baixo: a tela de desenho continua sendo o objeto
-   principal, e ninguém desenha molécula numa faixa de 200px. */
+/* Até 900px tudo empilha: a tela de desenho continua sendo o objeto principal,
+   e ninguém desenha molécula numa faixa de 200px. */
 @media (max-width: 900px) {
   .stage {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(320px, 58vh) minmax(220px, 34vh);
+    grid-template-rows: minmax(320px, 58vh) auto;
+  }
+
+  .side {
+    grid-template-rows: minmax(240px, 40vh) auto;
   }
 }

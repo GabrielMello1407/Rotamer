@@ -6,6 +6,8 @@ import { useMemo, type ReactElement } from 'react';
 import { useStore } from 'zustand';
 import styles from './EditorWorkspace.module.css';
 import { MoleculeMetrics } from './MoleculeMetrics';
+import { QuestPanel } from './QuestPanel';
+import { SmilesInput } from './SmilesInput';
 import { useChemistryClient } from './use-chemistry-client';
 import { useMolecule } from './use-molecule';
 
@@ -25,11 +27,14 @@ export function EditorWorkspace(): ReactElement {
 
   return (
     <div className={styles.workspace}>
-      <MoleculeMetrics
-        analysis={analysis}
-        pending={pending}
-        waitingForEngine={connection.status === 'loading' && graph.atoms.length > 0}
-      />
+      <div className={styles.top}>
+        <MoleculeMetrics
+          analysis={analysis}
+          pending={pending}
+          waitingForEngine={connection.status === 'loading' && graph.atoms.length > 0}
+        />
+        <SmilesInput store={store} connection={connection} />
+      </div>
 
       <div className={styles.stage}>
         <div className={styles.canvasArea}>
@@ -39,6 +44,7 @@ export function EditorWorkspace(): ReactElement {
 
         <div className={styles.side}>
           <Viewer3D geometry={geometry} />
+          <QuestPanel analysis={analysis} />
         </div>
       </div>
     </div>

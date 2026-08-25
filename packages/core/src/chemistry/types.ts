@@ -1,3 +1,5 @@
+import type { FunctionalGroup } from './groups';
+
 /**
  * Tipos da camada química. Tudo aqui é **calculado**, nunca gerado por modelo de
  * linguagem: quem responde é o RDKit. O tutor lê estes números e explica; não os
@@ -58,6 +60,8 @@ export interface Molecule {
   /** Molblock 2D, entrada da geração de conformação. */
   readonly molblock: string;
   readonly descriptors: Descriptors;
+  /** Grupos funcionais reconhecidos pelo RDKit, do mais específico ao menos. */
+  readonly groups: readonly FunctionalGroup[];
 }
 
 /** Código de erro químico. A interface escolhe o tratamento a partir dele. */

@@ -30,7 +30,7 @@ O produto inteiro sem conta, sem servidor, sem IA. Tudo no cliente.
 - [x] Editor 2D: desenhar, arrastar-para-criar, ordem de ligação, elemento, mover, apagar,
       desfazer, enquadrar
 - [x] Ponte com RDKit: sanitização, SMILES, InChIKey, descritores
-- [ ] Grupos funcionais reconhecidos e nomeados na interface
+- [x] Grupos funcionais reconhecidos por SMARTS no RDKit, com nome em português
 - [x] Geometria e dobramento animado — conformação do OpenChemLib e MMFF94 real (D-10)
 - [ ] Vibração por dinâmica molecular — **sem caminho barato**: o OpenChemLib expõe energia mas
       não gradiente. Ou se faz MD com gradiente numérico (~40 ms por passo numa molécula do
@@ -47,13 +47,16 @@ O produto inteiro sem conta, sem servidor, sem IA. Tudo no cliente.
 
 Onde a sandbox vira produto. Sem isto, tela em branco é produto morto.
 
-- [ ] Motor de missões com `spec` declarativa, avaliada no cliente e reavaliada no servidor
-- [ ] 12 a 15 missões cobrindo Estrutura, Geometria e Propriedade
-- [ ] Colar SMILES para carregar molécula — é o que preenche a tela em branco para quem já
+- [x] Motor de missões com `spec` declarativa — a mesma função avalia no cliente e vai avaliar
+      no servidor, sem duas implementações que podem discordar
+- [x] 14 missões cobrindo Estrutura, Geometria e Propriedade
+- [x] Colar SMILES para carregar molécula — é o que preenche a tela em branco para quem já
       chega com um composto em mãos
-- [ ] Trilha Otimização **sem missão, pontuação ou conquista** — ferramenta livre (D-09)
-- [ ] Tutor LLM com schema fechado, indicador de origem, cache e teto de gasto
-- [ ] Contas, progresso salvo, página pública de molécula com SSR e Open Graph
+- [x] Modo ferramenta livre, **sem missão, pontuação ou conquista** (D-09)
+- [ ] Tutor LLM com schema fechado, indicador de origem, cache e teto de gasto — **falta chave
+      do Gemini**
+- [ ] Contas, progresso salvo, reavaliação da `spec` no servidor — **falta banco**
+- [ ] Página pública de molécula com SSR e Open Graph
 
 **Publica:** v0.1 — o primeiro produto vendável.
 

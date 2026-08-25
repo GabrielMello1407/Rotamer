@@ -1,5 +1,6 @@
 import type { JSMol, RDKitModule } from '@rdkit/rdkit';
 import { elementSymbol, hillFormula, maxValence } from './elements';
+import { detectFunctionalGroups } from './groups';
 import {
   parseJson,
   resolveAtoms,
@@ -68,6 +69,7 @@ function describe(rdkit: RDKitModule, mol: JSMol): Molecule {
     inchiKey: rdkit.get_inchikey_for_inchi(inchi),
     molblock: mol.get_molblock(),
     descriptors: descriptorsOf(mol),
+    groups: detectFunctionalGroups(rdkit, mol),
   };
 }
 

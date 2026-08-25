@@ -1,0 +1,26 @@
+.form {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.field {
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  color: var(--ink-900);
+  background: var(--surface);
+  border: 1px solid var(--line-firm);
+  border-radius: var(--r-sm);
+  padding: var(--sp-2) var(--sp-3);
+  min-width: 200px;
+}
+
+.field::placeholder {
+  color: var(--ink-300);
+}
+
+.error {
+  font-size: var(--step--1);
+  color: var(--danger);
+  max-width: 32ch;
+}

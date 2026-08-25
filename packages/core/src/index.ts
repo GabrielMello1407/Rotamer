@@ -11,6 +11,11 @@ export { analyze } from './chemistry/analysis';
 export { chemistryApi, type ChemistryApi, type GeometryResult } from './chemistry/api';
 export { configureRDKit, loadRDKit, rdkitVersion, type RDKitOptions } from './chemistry/rdkit';
 export { elementSymbol, hillFormula, maxValence } from './chemistry/elements';
+export {
+  detectFunctionalGroups,
+  type FunctionalGroup,
+  type FunctionalGroupId,
+} from './chemistry/groups';
 export type {
   AnalysisResult,
   ChemistryError,
