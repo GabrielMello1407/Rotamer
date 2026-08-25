@@ -44,6 +44,8 @@ export interface Geometry {
 }
 
 export interface GeometryOptions {
+  /** Gerar também a trajetória de vibração. */
+  readonly dynamics?: boolean;
   /**
    * Teto de quadros do dobramento. O dobramento na tela dura ~2 s: mais de uma
    * dúzia de quadros não aparece para ninguém.

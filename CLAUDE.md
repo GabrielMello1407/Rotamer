@@ -81,6 +81,7 @@ tutor são derivados dele e recalculáveis. Nada além do grafo é persistido co
 - Next.js 16 (App Router) + TypeScript estrito
 - RDKit.js (WASM) em Web Worker via Comlink — toda pergunta química
 - OpenChemLib no mesmo worker — conformação 3D e MMFF94, depois que o RDKit aprovou (D-10)
+- Vibração por velocity-Verlet sobre o gradiente numérico do MMFF94, a 300 K (D-14)
 - Three.js + React Three Fiber — apenas render, nenhuma química dentro
 - Canvas 2D próprio + Zustand — o editor é escrito à mão, sem lib de desenho molecular
 - Postgres + Prisma no próprio servidor — container em desenvolvimento, serviço no VPS (D-11)

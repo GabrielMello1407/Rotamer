@@ -6,5 +6,11 @@
  */
 export { Viewer3D, type Viewer3DProps } from './Viewer3D';
 export { Molecule, type MoleculeProps } from './Molecule';
-export { centerOf, radiusOf as moleculeRadius, sampleFolding, FOLD_DURATION } from './folding';
+export {
+  centerOf,
+  radiusOf as moleculeRadius,
+  sampleDynamics,
+  sampleFolding,
+  FOLD_DURATION,
+} from './folding';
 export { readCpk, colorOf, radiusOf as atomRadius, type Cpk } from './cpk';

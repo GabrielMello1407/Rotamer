@@ -1,17 +1,19 @@
 'use client';
 
-import type { Geometry } from '@rotamer/core';
+import type { DynamicsTrajectory, Geometry } from '@rotamer/core';
 import { useFrame } from '@react-three/fiber';
 import { useMemo, useRef, type ReactElement } from 'react';
 import { Color, Matrix4, Quaternion, Vector3, type InstancedMesh } from 'three';
 import { colorOf, radiusOf, type Cpk } from './cpk';
-import { sampleFolding, FOLD_DURATION } from './folding';
+import { sampleDynamics, sampleFolding, FOLD_DURATION } from './folding';
 
 export interface MoleculeProps {
   readonly geometry: Geometry;
   readonly cpk: Cpk;
-  /** Sem movimento: vai direto para a geometria final. */
+  /** Sem movimento: vai direto para a geometria final e não vibra. */
   readonly animate: boolean;
+  /** A vibração, quando o worker já terminou de simular. */
+  readonly trajectory?: DynamicsTrajectory | null | undefined;
   readonly onEnergy?: ((energy: number, done: boolean) => void) | undefined;
 }
 
@@ -27,7 +29,13 @@ const STICK = 0.09;
  * repetidos por matriz. É o que segura 60 fps enquanto o dobramento roda, mesmo
  * em celular fraco.
  */
-export function Molecule({ geometry, cpk, animate, onEnergy }: MoleculeProps): ReactElement {
+export function Molecule({
+  geometry,
+  cpk,
+  animate,
+  trajectory,
+  onEnergy,
+}: MoleculeProps): ReactElement {
   const atomsRef = useRef<InstancedMesh | null>(null);
   const bondsRef = useRef<InstancedMesh | null>(null);
   const startRef = useRef<number | null>(null);
@@ -66,11 +74,18 @@ export function Molecule({ geometry, cpk, animate, onEnergy }: MoleculeProps): R
     const sample = sampleFolding(geometry, elapsed);
     onEnergy?.(sample.energy, sample.done);
 
+    // Terminado o dobramento, a molécula passa a vibrar: mesma física, outro
+    // regime. Quem pediu menos movimento fica na forma final, parada.
+    const positions =
+      sample.done && animate && trajectory
+        ? sampleDynamics(trajectory, elapsed - FOLD_DURATION)
+        : sample.positions;
+
     const positionAt = (index: number): Vector3 =>
       position.set(
-        sample.positions[index * 3] ?? 0,
-        sample.positions[index * 3 + 1] ?? 0,
-        sample.positions[index * 3 + 2] ?? 0,
+        positions[index * 3] ?? 0,
+        positions[index * 3 + 1] ?? 0,
+        positions[index * 3 + 2] ?? 0,
       );
 
     for (let index = 0; index < geometry.atoms.length; index += 1) {

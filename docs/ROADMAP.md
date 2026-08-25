@@ -32,10 +32,8 @@ O produto inteiro sem conta, sem servidor, sem IA. Tudo no cliente.
 - [x] Ponte com RDKit: sanitização, SMILES, InChIKey, descritores
 - [x] Grupos funcionais reconhecidos por SMARTS no RDKit, com nome em português
 - [x] Geometria e dobramento animado — conformação do OpenChemLib e MMFF94 real (D-10)
-- [ ] Vibração por dinâmica molecular — **sem caminho barato**: o OpenChemLib expõe energia mas
-      não gradiente. Ou se faz MD com gradiente numérico (~40 ms por passo numa molécula do
-      tamanho da aspirina, trajetória pré-calculada no worker), ou se muda a promessa. Decidir
-      antes de prometer no site.
+- [x] Vibração por dinâmica molecular — velocity-Verlet sobre o gradiente numérico do MMFF94, a
+      300 K, com a trajetória pré-calculada no worker e cache por InChIKey (D-14)
 - [x] Sincronia 2D↔3D, temas claro e escuro, responsivo até 390px
 - [x] Mensagens de erro em português que explicam a química, não o código
 

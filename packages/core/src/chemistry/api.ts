@@ -1,4 +1,6 @@
 import { generateGeometry } from '../geometry/conformer';
+import { simulateDynamics } from '../geometry/dynamics';
+import type { DynamicsTrajectory } from '../geometry/dynamics';
 import { configureGeometry } from '../geometry/openchemlib';
 import type { Geometry } from '../geometry/types';
 import { analyze } from './analysis';
@@ -6,6 +8,16 @@ import { depict } from './depiction';
 import { scriptFactory } from './browser';
 import { configureRDKit, loadRDKit, rdkitVersion } from './rdkit';
 import type { AnalysisResult, ChemistryError } from './types';
+
+/** Trajetória de vibração, quando foi possível calcular. */
+export type DynamicsResult =
+  | {
+      readonly ok: true;
+      readonly inchiKey: string;
+      /** `null` quando a dinâmica não pôde rodar — a cena mostra a forma parada. */
+      readonly trajectory: DynamicsTrajectory | null;
+    }
+  | { readonly ok: false; readonly error: ChemistryError };
 
 /** Geometria pronta, ou o motivo químico de a molécula não existir. */
 export type GeometryResult =
@@ -31,6 +43,8 @@ export interface ChemistryApi {
   geometry(input: string): Promise<GeometryResult>;
   /** Desenho plano em SVG, do jeito que o RDKit representa a estrutura. */
   depict(input: string): Promise<string | null>;
+  /** Vibração: dinâmica molecular a partir da conformação já minimizada. */
+  dynamics(input: string): Promise<DynamicsResult>;
 }
 
 /**
@@ -42,6 +56,7 @@ export interface ChemistryApi {
  */
 const MAX_CACHED = 64;
 const geometryCache = new Map<string, Geometry>();
+const dynamicsCache = new Map<string, DynamicsTrajectory | null>();
 const analysisCache = new Map<string, AnalysisResult>();
 
 function remember<T>(cache: Map<string, T>, key: string, value: T): T {
@@ -101,5 +116,23 @@ export const chemistryApi: ChemistryApi = {
 
     const geometry = await generateGeometry(molblock);
     return { ok: true, inchiKey, geometry: remember(geometryCache, inchiKey, geometry) };
+  },
+
+  async dynamics(input: string): Promise<DynamicsResult> {
+    // A vibração é em torno do mínimo, então a conformação vem primeiro — e ela
+    // quase sempre já está em cache quando este pedido chega.
+    const conformation = await chemistryApi.geometry(input);
+    if (!conformation.ok) return { ok: false, error: conformation.error };
+
+    const { inchiKey, geometry } = conformation;
+
+    const cached = dynamicsCache.get(inchiKey);
+    if (cached !== undefined) return { ok: true, inchiKey, trajectory: cached };
+
+    const analysis = await chemistryApi.analyze(input);
+    if (!analysis.ok) return { ok: false, error: analysis.error };
+
+    const trajectory = await simulateDynamics(analysis.molecule.molblock, geometry);
+    return { ok: true, inchiKey, trajectory: remember(dynamicsCache, inchiKey, trajectory) };
   },
 };

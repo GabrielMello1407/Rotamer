@@ -87,6 +87,25 @@ test.describe('editor', () => {
     await expect(page.getByTestId('energia')).toBeVisible({ timeout: 30_000 });
   });
 
+  test('a molécula continua se mexendo depois de encontrar a forma', async ({ page }) => {
+    await drawFirstAtom(page);
+    await dragBondRight(page);
+
+    await expect(page.getByTestId('formula')).toHaveText('C2H6', { timeout: 60_000 });
+    await expect(page.getByTestId('energia')).toBeVisible({ timeout: 30_000 });
+
+    const cena = page.getByTestId('cena-3d').locator('canvas');
+
+    // Passado o dobramento, a cena entra em vibração — e vibração é movimento:
+    // dois instantes separados não podem render o mesmo quadro.
+    await page.waitForTimeout(3000);
+    const primeiro = await cena.screenshot();
+    await page.waitForTimeout(700);
+    const segundo = await cena.screenshot();
+
+    expect(Buffer.compare(primeiro, segundo)).not.toBe(0);
+  });
+
   test('valência excedida explica a química, não o código', async ({ page }) => {
     await drawFirstAtom(page);
 

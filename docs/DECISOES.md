@@ -322,3 +322,37 @@ tirar nada do resto do produto.
 
 **Revisar se.** Aparecer necessidade de o tutor citar valor que o núcleo não calcula. Aí a
 resposta é ampliar a lista de referências — nunca liberar o dígito.
+
+---
+
+## D-14 · A vibração é dinâmica molecular de verdade
+
+**Decisão.** Depois que o dobramento chega ao mínimo, a molécula passa a vibrar por integração de
+Newton — velocity-Verlet, passo de meio femtossegundo, banho a 300 K — com as forças saindo do
+**mesmo potencial MMFF94** que encontrou a geometria. A trajetória é pré-calculada no worker e
+entra no cache por InChIKey junto com a conformação.
+
+**O que quase aconteceu.** O `README.md` prometia "vibrando sob dinâmica molecular" desde o
+primeiro dia, e a promessa ficou sem lastro durante toda a Fase 1: o OpenChemLib expõe energia mas
+não expõe gradiente, e reconstruir o campo de força a cada avaliação custava vinte milissegundos
+por passo. A alternativa era animar uma senoide e chamar de vibração — que é exatamente o tipo de
+mentira que o D-01 existe para impedir, só que na física em vez da química.
+
+**O que destravou.** O campo de força guarda as coordenadas num vetor interno; escrevendo nele, a
+energia sai em três microssegundos. Com isso o gradiente por diferença central de uma molécula do
+tamanho da aspirina custa menos de meio milissegundo, e uma trajetória de noventa quadros sai em
+menos de cem.
+
+**O risco, que é real.** Esse vetor não faz parte da API pública do OpenChemLib: é detalhe interno,
+alcançado por um nome minificado que pode mudar na próxima versão. Três defesas:
+
+1. O vetor é **descoberto pelo formato e confirmado pelo comportamento** — precisa ter 3N posições
+   e precisa mudar a energia quando mexido. Nada é assumido pelo nome.
+2. Antes de simular, a energia da montagem é comparada com a do fim do dobramento. Se não bate, a
+   ordem dos átomos não é a mesma e a simulação é abandonada — vibrar a molécula errada é pior do
+   que não vibrar.
+3. Falhou qualquer uma das duas, a cena mostra a forma parada e o produto segue. E o teste
+   `dynamics.test.ts` quebra alto, que é como se descobre no dia da atualização em vez de na aula.
+
+**Revisar se.** O OpenChemLib passar a expor gradiente analítico — aí some o acesso interno e a
+simulação fica mais precisa de graça.

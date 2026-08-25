@@ -28,7 +28,7 @@ export function EditorWorkspace(): ReactElement {
   const [questSlug, setQuestSlug] = useState('');
 
   const connection = useChemistryClient();
-  const { analysis, geometry, pending } = useMolecule(graph, connection);
+  const { analysis, geometry, trajectory, pending } = useMolecule(graph, connection);
 
   useInitialSmiles(store, connection);
 
@@ -51,7 +51,7 @@ export function EditorWorkspace(): ReactElement {
         </div>
 
         <div className={styles.side}>
-          <Viewer3D geometry={geometry} />
+          <Viewer3D geometry={geometry} trajectory={trajectory} />
 
           <div className={styles.panels}>
             <QuestPanel analysis={analysis} slug={questSlug} onSlug={setQuestSlug} />

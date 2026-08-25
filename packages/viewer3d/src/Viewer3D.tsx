@@ -1,6 +1,6 @@
 'use client';
 
-import type { Geometry } from '@rotamer/core';
+import type { DynamicsTrajectory, Geometry } from '@rotamer/core';
 import { OrbitControls } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
 import { useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
@@ -11,6 +11,8 @@ import styles from './Viewer3D.module.css';
 
 export interface Viewer3DProps {
   readonly geometry: Geometry | null;
+  /** A vibração. Chega depois da forma, quando o worker termina de simular. */
+  readonly trajectory?: DynamicsTrajectory | null | undefined;
   /** Texto mostrado quando ainda não há molécula para mostrar. */
   readonly placeholder?: string;
   readonly className?: string | undefined;
@@ -25,6 +27,7 @@ export interface Viewer3DProps {
  */
 export function Viewer3D({
   geometry,
+  trajectory,
   placeholder = 'Desenhe uma estrutura válida para ver a forma dela no espaço.',
   className,
 }: Viewer3DProps): ReactElement {
@@ -100,6 +103,7 @@ export function Viewer3D({
             <Molecule
               geometry={geometry}
               cpk={cpk}
+              trajectory={trajectory}
               animate={!reducedMotion}
               onEnergy={(value) => {
                 setEnergy(value);

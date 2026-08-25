@@ -1,4 +1,4 @@
-import type { FoldingFrame, Geometry } from '@rotamer/core';
+import type { DynamicsTrajectory, FoldingFrame, Geometry } from '@rotamer/core';
 
 /**
  * O dobramento.
@@ -67,6 +67,45 @@ function interpolate(from: FoldingFrame, to: FoldingFrame, t: number): number[] 
     const start = from.positions[index] ?? 0;
     const end = to.positions[index] ?? 0;
     positions[index] = start + (end - start) * t;
+  }
+
+  return positions;
+}
+
+/**
+ * A vibração, depois que o dobramento termina.
+ *
+ * A trajetória é percorrida de ida e volta em laço. Não é truque de animação: os
+ * quadros são os mesmos instantes simulados, e reproduzir a trajetória ao
+ * contrário é tão físico quanto reproduzi-la para a frente — as equações de
+ * Newton não distinguem o sentido do tempo.
+ */
+export function sampleDynamics(
+  trajectory: DynamicsTrajectory,
+  elapsed: number,
+  frameMs = 40,
+): readonly number[] {
+  const total = trajectory.frames.length;
+  if (total === 0) return [];
+
+  const position = elapsed / frameMs;
+  const cycle = Math.max(1, (total - 1) * 2);
+  const wrapped = ((position % cycle) + cycle) % cycle;
+  const forward = wrapped < total - 1;
+  const local = forward ? wrapped : cycle - wrapped;
+
+  const index = Math.min(total - 2, Math.floor(local));
+  const t = local - index;
+
+  const from = trajectory.frames[index];
+  const to = trajectory.frames[index + 1];
+  if (!from || !to) return trajectory.frames[0] ?? [];
+
+  const positions = new Array<number>(from.length);
+  for (let axis = 0; axis < from.length; axis += 1) {
+    const start = from[axis] ?? 0;
+    const end = to[axis] ?? 0;
+    positions[axis] = start + (end - start) * t;
   }
 
   return positions;

@@ -8,7 +8,12 @@
 
 // ---- química ----
 export { analyze } from './chemistry/analysis';
-export { chemistryApi, type ChemistryApi, type GeometryResult } from './chemistry/api';
+export {
+  chemistryApi,
+  type ChemistryApi,
+  type DynamicsResult,
+  type GeometryResult,
+} from './chemistry/api';
 export { depict, type DepictionOptions } from './chemistry/depiction';
 export { configureRDKit, loadRDKit, rdkitVersion, type RDKitOptions } from './chemistry/rdkit';
 export { elementSymbol, hillFormula, maxValence } from './chemistry/elements';
@@ -61,6 +66,11 @@ export {
 
 // ---- geometria ----
 export { generateGeometry } from './geometry/conformer';
+export {
+  simulateDynamics,
+  type DynamicsOptions,
+  type DynamicsTrajectory,
+} from './geometry/dynamics';
 export {
   configureGeometry,
   loadOpenChemLib,

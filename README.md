@@ -78,6 +78,7 @@ tutor são todos derivados dele e recalculáveis. Nada além do grafo é persist
 | Aplicação | Next.js 16 + TypeScript |
 | Química | RDKit.js (WASM) em Web Worker via Comlink |
 | Geometria | OpenChemLib · conformação + MMFF94 |
+| Vibração | Velocity-Verlet sobre o gradiente do MMFF94, a 300 K |
 | 3D | Three.js + React Three Fiber |
 | Editor 2D | Canvas 2D próprio + Zustand |
 | Dados | Postgres + Prisma, na própria infraestrutura |

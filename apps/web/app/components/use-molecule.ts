@@ -5,6 +5,7 @@ import {
   toMolblock,
   topologyKey,
   type AnalysisResult,
+  type DynamicsTrajectory,
   type Geometry,
   type MoleculeGraph,
 } from '@rotamer/core';
@@ -25,11 +26,18 @@ export interface MoleculeReading {
   readonly analysis: AnalysisResult | null;
   /** Conformação da topologia atual, quando ela é válida. */
   readonly geometry: Geometry | null;
+  /** A vibração, que chega depois da forma. */
+  readonly trajectory: DynamicsTrajectory | null;
   /** Verdadeiro enquanto o worker ainda não respondeu sobre este desenho. */
   readonly pending: boolean;
 }
 
-const NOTHING: MoleculeReading = { analysis: null, geometry: null, pending: false };
+const NOTHING: MoleculeReading = {
+  analysis: null,
+  geometry: null,
+  trajectory: null,
+  pending: false,
+};
 
 /**
  * Lê a molécula desenhada: descritores sempre, geometria só quando a topologia
@@ -70,7 +78,7 @@ export function useMolecule(
 
         if (!analysis.ok) {
           shownTopology.current = null;
-          setReading({ analysis, geometry: null, pending: false });
+          setReading({ analysis, geometry: null, trajectory: null, pending: false });
           return;
         }
 
@@ -84,13 +92,26 @@ export function useMolecule(
         const conformation = await client.geometry(molblock);
         if (!alive) return;
 
-        if (conformation.ok) {
-          shownTopology.current = topology;
-          setReading({ analysis, geometry: conformation.geometry, pending: false });
-        } else {
+        if (!conformation.ok) {
           shownTopology.current = null;
-          setReading({ analysis, geometry: null, pending: false });
+          setReading({ analysis, geometry: null, trajectory: null, pending: false });
+          return;
         }
+
+        shownTopology.current = topology;
+        setReading({ analysis, geometry: conformation.geometry, trajectory: null, pending: false });
+
+        // A vibração vem depois: a forma aparece e começa a dobrar enquanto o
+        // worker ainda está integrando a dinâmica. Quando ela chega, a cena
+        // troca de regime sem interromper nada.
+        const vibration = await client.dynamics(molblock);
+        if (!alive || !vibration.ok) return;
+
+        setReading((current) =>
+          current.geometry === conformation.geometry
+            ? { ...current, trajectory: vibration.trajectory }
+            : current,
+        );
       };
 
       void read();
