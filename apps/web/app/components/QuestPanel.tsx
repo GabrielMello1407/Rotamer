@@ -5,7 +5,7 @@ import { CATALOG, evaluateAnalysis, findQuest, type Track } from '@rotamer/quest
 import { Button, Label, SourceBadge } from '@rotamer/ui';
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
-import { saveAttempt, type AttemptOutcome } from '../actions/attempt';
+import { readProgress, saveAttempt, type AttemptOutcome, type QuestProgress } from '../actions/attempt';
 import styles from './QuestPanel.module.css';
 
 export interface QuestPanelProps {
@@ -35,6 +35,8 @@ export function QuestPanel({ analysis, slug, onSlug }: QuestPanelProps): ReactEl
   const [hintsShown, setHintsShown] = useState(0);
   const [outcome, setOutcome] = useState<AttemptOutcome | null>(null);
 
+  const [progress, setProgress] = useState<readonly QuestProgress[]>([]);
+
   const startedAt = useRef<number | null>(null);
   const recorded = useRef<Set<string>>(new Set());
 
@@ -43,6 +45,22 @@ export function QuestPanel({ analysis, slug, onSlug }: QuestPanelProps): ReactEl
     () => (quest ? evaluateAnalysis(quest, analysis) : null),
     [quest, analysis],
   );
+
+  // O que já foi cumprido em visitas anteriores. Sem conta, a lista volta
+  // vazia e a tela simplesmente não mostra progresso nenhum.
+  useEffect(() => {
+    let alive = true;
+
+    const load = async (): Promise<void> => {
+      const saved = await readProgress();
+      if (alive) setProgress(saved);
+    };
+
+    void load();
+    return () => {
+      alive = false;
+    };
+  }, [outcome]);
 
   // O relógio da missão começa quando ela é escolhida, não quando o componente
   // renderiza — daí o efeito em vez de um valor inicial.
@@ -73,6 +91,11 @@ export function QuestPanel({ analysis, slug, onSlug }: QuestPanelProps): ReactEl
     void record();
   }, [quest, result, analysis]);
 
+  const done = useMemo(
+    () => new Set(progress.filter((entry) => entry.passed).map((entry) => entry.questSlug)),
+    [progress],
+  );
+
   const byTrack = useMemo(() => {
     const tracks: Track[] = ['structure', 'geometry', 'property'];
     return tracks.map((track) => ({
@@ -84,7 +107,9 @@ export function QuestPanel({ analysis, slug, onSlug }: QuestPanelProps): ReactEl
   return (
     <section className={styles.panel} aria-label="Missão">
       <div className={styles.header}>
-        <Label>missão</Label>
+        <Label>
+          {done.size === 0 ? 'missão' : `missão · ${String(done.size)} de ${String(CATALOG.length)} cumpridas`}
+        </Label>
         {result?.passed === true && (
           <span className={styles.done} data-testid="missao-cumprida">
             cumprida
@@ -108,7 +133,7 @@ export function QuestPanel({ analysis, slug, onSlug }: QuestPanelProps): ReactEl
           <optgroup key={group.track} label={TRACK_NAMES[group.track]}>
             {group.quests.map((entry) => (
               <option key={entry.slug} value={entry.slug}>
-                {entry.title}
+                {done.has(entry.slug) ? `✓ ${entry.title}` : entry.title}
               </option>
             ))}
           </optgroup>

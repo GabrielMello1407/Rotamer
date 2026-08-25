@@ -53,6 +53,20 @@ test.describe('conta', () => {
     });
   });
 
+  test('o que já foi cumprido aparece na próxima visita', async ({ page }) => {
+    await criarConta(page, novoEmail());
+
+    await page.getByTestId('escolher-missao').selectOption('primeiro-carbono');
+    await desenharUmCarbono(page);
+    await expect(page.getByTestId('progresso-salvo')).toBeVisible({ timeout: 60_000 });
+
+    // Volta com a tela em branco: o progresso vem do banco, não do desenho.
+    await page.reload();
+
+    await expect(page.getByText('cumpridas')).toBeVisible({ timeout: 60_000 });
+    await expect(page.getByTestId('escolher-missao')).toContainText('✓ O primeiro traço');
+  });
+
   test('sem conta, a missão cumprida convida a entrar em vez de guardar', async ({ page }) => {
     await page.goto('/');
     await page.getByTestId('escolher-missao').selectOption('primeiro-carbono');

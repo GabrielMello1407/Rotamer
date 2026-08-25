@@ -58,11 +58,13 @@ Onde a sandbox vira produto. Sem isto, tela em branco é produto morto.
       dicas escritas à mão
 - [x] Contas, progresso salvo, reavaliação da `spec` no servidor — Postgres local (D-11)
 - [x] Página pública de molécula com SSR e Open Graph — `/m/<smiles>`, sem banco: a molécula é
-      função pura da cadeia que está no endereço
+      função pura da cadeia que está no endereço, com imagem de compartilhamento gerada dos
+      mesmos números calculados
 
 **Publica:** v0.1 — o primeiro produto vendável.
 
-Falta só ligar a chave do Gemini para o tutor sair do modo desligado.
+Tudo escrito, tudo testado. Para o tutor sair do modo desligado, falta só a chave do Gemini no
+`.env` — nenhuma outra mudança.
 
 ---
 

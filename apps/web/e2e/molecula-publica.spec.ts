@@ -47,6 +47,25 @@ test.describe('página pública de molécula', () => {
     await expect(og).toHaveAttribute('content', /C9H8O4/);
   });
 
+  test('o link leva imagem própria, gerada com os números calculados', async ({
+    page,
+    request,
+  }) => {
+    await page.goto(`/m/${ASPIRINA}`);
+
+    // Sem imagem, o link colado no grupo da turma vira um retângulo cinza.
+    const meta = page.locator('meta[property="og:image"]');
+    await expect(meta).toHaveAttribute('content', /opengraph-image/);
+
+    const endereco = await meta.getAttribute('content');
+    if (endereco === null) throw new Error('faltou o endereço da imagem');
+
+    const imagem = await request.get(endereco);
+    expect(imagem.status()).toBe(200);
+    expect(imagem.headers()['content-type']).toContain('image/png');
+    expect((await imagem.body()).length).toBeGreaterThan(10_000);
+  });
+
   test('geometria cis atravessa a URL inteira', async ({ page }) => {
     // A barra invertida do SMILES não sobrevive num endereço — o navegador a
     // normaliza antes de a requisição sair. Ela viaja como `~`.
