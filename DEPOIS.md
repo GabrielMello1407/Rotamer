@@ -7,10 +7,11 @@ Regra: se surgiu no meio de outra tarefa, escreva aqui e volte ao que estava faz
 
 ## v0.2 — logo depois do MVP
 
+- [ ] Busca de molécula por nome (PubChem) — o passo seguinte ao colar SMILES
+- [ ] Comparar dois análogos lado a lado, com diferença de descritores destacada
 - [ ] Estereoquímica com cunhas e traços. É a primeira coisa que um químico vai pedir.
 - [ ] Templates de anel no editor (benzeno, ciclohexano, piridina) em um clique
 - [ ] Exportar molécula como PNG e SVG em qualidade de publicação
-- [ ] Importar SMILES colado da área de transferência
 - [ ] Modo apresentação para o professor projetar sem a interface de edição
 
 ## Considerado e adiado

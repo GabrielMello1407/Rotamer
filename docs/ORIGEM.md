@@ -184,6 +184,27 @@ abertos em `DECISOES.md` D-08: nenhuma dependência GPL pode entrar, o modelo de
 comunitárias precisa ser repensado, e a relação com a UENP precisa ser verificada antes de
 qualquer vínculo institucional.
 
+## O público só ficou claro no fim
+
+Durante quase toda a construção o produto foi descrito como "para cientistas" — herança do
+primeiro pivô. Os documentos foram escritos com essa premissa até alguém fazer a pergunta óbvia:
+
+> "qual a necessidade de ter missões, sendo que é para cientistas? isso não faz sentido"
+
+A crítica estava certa e revelou uma contradição que estava escrita no próprio repositório: o
+histórico dizia "cientistas", enquanto o pitch descrevia aluno reprovando em orgânica e listava
+escola e cursinho como compradores.
+
+A resolução inverteu a hierarquia: **o produto é de ensino, e o pesquisador é usuário avançado.**
+Missão continua sendo o coração — não porque gamificação é boa, mas porque tela em branco é
+produto morto e o aluno não chega com molécula na cabeça. O pesquisador chega, e por isso para
+ele a resposta é colar um SMILES, não cumprir uma tarefa.
+
+E ficou uma regra que vale mais que a decisão: **educação não autoriza imprecisão.** Professor de
+química é químico. Num app de ensino, um erro não confunde um usuário — confunde uma sala.
+
+> `DECISOES.md` D-09.
+
 ---
 
 ## O fio que atravessa tudo
@@ -195,6 +216,7 @@ erro cedo o bastante:
 - A cafeína quebrou antes de existir um usuário para ver quebrar.
 - A interface poluída foi criticada quando ainda era protótipo.
 - O nome colidiu antes do domínio comprado e da marca depositada.
+- O público errado foi apontado antes de a Fase 2 ser construída em cima dele.
 
 O produto final vai ser diferente do que está escrito nestes documentos. O que precisa
 sobreviver não são as conclusões — é o hábito de descobrir o erro enquanto ele ainda é barato.

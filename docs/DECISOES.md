@@ -167,3 +167,48 @@ fechado, mantidas as atribuições. Tecnicamente não há impedimento. Ver `TERC
 **Revisar se.** A adoção travar por desconfiança de ferramenta fechada em ambiente acadêmico,
 ou se abrir o núcleo (mantendo fechada a camada de missões e o painel de turma) se mostrar
 melhor para distribuição.
+
+---
+
+## D-09 · Educação é o produto; o pesquisador é usuário avançado, não o cliente
+
+**Decisão.** O Rotamer é uma ferramenta de ensino de química orgânica. O comprador é a escola, o
+cursinho e a instituição de ensino. O pesquisador é um usuário avançado bem-vindo — não é quem
+paga a conta, e o produto para de ser desenhado como se fosse.
+
+**O que provocou.** A pergunta foi direta: *"qual a necessidade de ter missões, sendo que é para
+cientistas?"* E a crítica estava certa — missão com tique verde e contador "3/6" é linguagem de
+aluno; um mestrando lê aquilo como brinquedo educativo e fecha a aba.
+
+Ao investigar, apareceu uma inconsistência nos próprios documentos deste repositório: o
+`ORIGEM.md` registra um pivô "para cientistas", mas o `PITCH.md` descreve um problema de
+educação e lista escola e cursinho como compradores. Os dois não concordavam.
+
+**Por quê educação.**
+
+- **Cientista é mercado ruim para este produto.** Pequeno, cético, e já equipado — ChemDraw e
+  Maestro pagos pela instituição, PyMOL de graça. E o próprio produto declara que não é
+  ferramenta de bancada e não compete com elas. Vender ferramenta científica para quem já tem
+  ferramenta científica é subida íngreme.
+- **Educação tem gap real e defensável.** Nada decente em português, nada que funcione em celular
+  de escola pública, nada que mostre a ligação simples girando ao lado de uma dupla travada.
+- **As missões são justamente o que se vende.** São o que o professor usa para dar aula. Cortá-las
+  para agradar um público que provavelmente não pagaria seria remover a peça que sustenta a
+  receita.
+
+**O que muda no produto.**
+
+1. As missões ficam, e são centrais. Continuam com linguagem de aluno, porque o aluno é o usuário.
+2. A trilha Otimização continua existindo, mas **sem linguagem de missão, pontuação ou conquista**.
+   Para o usuário avançado ela é ferramenta livre, não jogo.
+3. O que preenche a tela em branco para o usuário avançado não é missão — é **importar**. Colar
+   SMILES entra no escopo; busca por nome e comparação de análogos ficam para depois do MVP.
+4. O `PITCH.md` mantém o foco em educação, agora explicitamente.
+
+**O que isso NÃO significa.** Educação não é licença para ser impreciso. **Professor de química é
+químico.** Se o app afirmar algo quimicamente errado, quem pega é ele — e ele não leva mais a
+turma para lá. O rigor do núcleo determinístico (D-01, D-02) vale exatamente igual, talvez mais:
+numa ferramenta de ensino, um erro não confunde um usuário, confunde uma sala inteira.
+
+**Revisar se.** Um laboratório ou uma empresa aparecer disposto a pagar antes de qualquer escola.
+Aí o sinal de mercado vence o raciocínio — mas espere o sinal, não o presuma.

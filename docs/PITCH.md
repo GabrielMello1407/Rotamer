@@ -6,6 +6,10 @@
 
 ---
 
+**Posicionamento:** ferramenta de **ensino** de química orgânica. O usuário é o aluno, o
+comprador é a escola. O pesquisador é usuário avançado bem-vindo, não é o cliente — e o produto
+não compete com ChemDraw, Maestro ou PyMOL. Ver [DECISOES.md](DECISOES.md) D-09.
+
 > Como a ideia chegou até aqui, com os pivôs e os erros pelo caminho: [ORIGEM.md](ORIGEM.md).
 
 ## O problema
@@ -67,9 +71,13 @@ Qualquer um pode plugar uma biblioteca de visualização. O que não se copia r�
 2. **A fronteira rígida entre motor e IA.** O núcleo determinístico decide, a IA só explica.
    É uma decisão de arquitetura, não uma feature — e é o que faz um químico confiar. Concorrente
    que colocar LLM respondendo valência vai errar em público e queimar a confiança.
-3. **Português como cidadão de primeira classe.** Não tradução: nomenclatura, mensagens de erro
+3. **Rigor científico dentro de uma ferramenta de ensino.** A concorrência educacional simplifica
+   a química até ela ficar errada. Aqui o motor é o mesmo que um pesquisador usaria — e isso
+   importa porque **professor de química é químico**: um erro no app não confunde um aluno,
+   queima o produto com quem decide a adoção.
+4. **Português como cidadão de primeira classe.** Não tradução: nomenclatura, mensagens de erro
    que explicam a química, e um corpo de missões alinhado ao currículo brasileiro.
-4. **O acervo de missões e o mapa de dificuldade.** Cada tentativa registrada mostra onde as
+5. **O acervo de missões e o mapa de dificuldade.** Cada tentativa registrada mostra onde as
    pessoas travam. Isso vira dado que ninguém mais tem.
 
 ## Quem paga
@@ -86,6 +94,11 @@ Modelo em camadas, com a base gratuita fazendo o trabalho de distribuição:
 O professor é o canal. Ele adota de graça, leva a turma junto, e a escola compra o painel.
 Venda direta para secretaria de educação existe, mas é ciclo longo — é o segundo movimento,
 não o primeiro.
+
+**Sobre o pesquisador.** Ele usa e é bem-vindo, mas não é o cliente. Não tem missão, não tem
+pontuação: cola o SMILES do composto que já tem e trabalha. O valor dele para o negócio é
+credibilidade — um pós-graduando usando a ferramenta é o argumento que convence o coordenador
+de curso de que aquilo não é brinquedo. Ele é prova social, não linha de receita.
 
 > **A preencher antes de qualquer conversa de investimento:** número de matrículas no ensino
 > médio e em cursos de química no Brasil, ticket praticado por plataformas educacionais
