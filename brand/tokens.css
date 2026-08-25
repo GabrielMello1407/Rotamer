@@ -1,0 +1,176 @@
+/* ============================================================================
+   ROTAMER — DESIGN TOKENS
+   ----------------------------------------------------------------------------
+   A paleta vem do teste de chama: as cores que os elementos emitem quando
+   queimam. Os neutros vêm do cone azul do bico de Bunsen — cinzas frios com
+   viés azul-violeta, nunca cinza puro.
+
+   REGRA INEGOCIÁVEL: as cores CPK (--cpk-*) pertencem aos átomos e a mais
+   nada. Nenhum botão, link, borda ou estado semântico pode usar uma cor CPK.
+   Se a interface pinta de vermelho, o vermelho deixa de significar oxigênio.
+   ============================================================================ */
+
+:root {
+  /* ---- chama: cores puras, para preenchimento e superfície ---- */
+  --flame-litio:      #E01A4F;   /* carmim   */
+  --flame-sodio:      #F5A524;   /* âmbar    */
+  --flame-potassio:   #A855C8;   /* lilás    */
+  --flame-cobre:      #00A98F;   /* turquesa — cor da marca */
+  --flame-bario:      #7FBF3F;   /* verde-maçã */
+  --flame-estroncio:  #F2542D;   /* escarlate */
+  --flame-cesio:      #4C5FD5;   /* azul-violeta */
+
+  /* ---- chama: versões para TEXTO no tema claro (todas ≥ 4.5:1) ---- */
+  --ink-litio:        #DE1A4E;
+  --ink-sodio:        #9F6507;
+  --ink-potassio:     #A24AC5;
+  --ink-cobre:        #00806C;
+  --ink-bario:        #537D29;
+  --ink-estroncio:    #D5350D;
+  --ink-cesio:        #4C5FD5;
+
+  /* ---- neutros: cone azul ---- */
+  --ink-900:  #12131A;
+  --ink-700:  #2E3140;
+  --ink-500:  #5A5D72;
+  --ink-400:  #6E7189;   /* menor tom ainda legível como texto */
+  --ink-300:  #9A9DB2;   /* decorativo — nunca texto corrido */
+
+  --bg:        #F7F8FC;
+  --surface:   #FFFFFF;
+  --sunk:      #F2F3F9;
+  --raised:    #FFFFFF;
+  --line:      #E2E4EF;
+  --line-firm: #CBCEDD;
+
+  /* ---- papéis semânticos ---- */
+  --brand:        var(--flame-cobre);
+  --brand-ink:    var(--ink-cobre);
+  --brand-on:     #062A24;          /* texto sobre --brand: 5,7:1 */
+  --brand-wash:   #DFF5F0;
+
+  --ok:      var(--ink-bario);
+  --ok-wash: #E9F4DF;
+  --warn:      var(--ink-sodio);
+  --warn-wash: #FBF0DC;
+  --danger:      var(--ink-litio);
+  --danger-wash: #FBE3E9;
+  --info:      var(--ink-cesio);
+  --info-wash: #E4E7FB;
+
+  /* ---- CPK: reservado aos átomos ---- */
+  --cpk-h:  #E4E4EC;  --cpk-c:  #4B4655;  --cpk-n:  #2F6FE0;
+  --cpk-o:  #DB3B3B;  --cpk-f:  #4FBE6C;  --cpk-p:  #E08A2F;
+  --cpk-s:  #C9A61E;  --cpk-cl: #2C9E4B;  --cpk-br: #A0522D;
+  --cpk-i:  #8B3FA8;
+
+  /* ---- tipografia ---- */
+  --font-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-ui:      "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono:    "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --step--1: 0.8125rem;   /* 13px — legenda, rótulo   */
+  --step-0:  0.875rem;    /* 14px — interface         */
+  --step-1:  1rem;        /* 16px — corpo             */
+  --step-2:  1.25rem;     /* 20px — subtítulo         */
+  --step-3:  1.625rem;    /* 26px — título de seção   */
+  --step-4:  2.25rem;     /* 36px — título de página  */
+  --step-5:  3.25rem;     /* 52px — display           */
+
+  --track-tight: -0.035em;  /* display e wordmark */
+  --track-flat:   0em;
+  --track-wide:   0.11em;   /* rótulos em caixa alta */
+
+  /* ---- espaço: escala de 4 ---- */
+  --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px;
+  --sp-5: 24px; --sp-6: 32px; --sp-7: 48px; --sp-8: 64px; --sp-9: 96px;
+
+  /* ---- forma ---- */
+  --r-sm: 6px; --r-md: 10px; --r-lg: 14px; --r-xl: 20px; --r-full: 999px;
+
+  --shadow-sm: 0 1px 2px rgba(18,19,26,.06), 0 4px 10px -6px rgba(18,19,26,.16);
+  --shadow-md: 0 1px 1px rgba(18,19,26,.04), 0 4px 12px -4px rgba(18,19,26,.12),
+               0 16px 40px -20px rgba(18,19,26,.22);
+
+  /* ---- movimento ---- */
+  --ease-out:  cubic-bezier(.2,.8,.2,1);
+  --ease-in-out: cubic-bezier(.6,0,.3,1);
+  --t-fast:  120ms;   /* estados de controle          */
+  --t-base:  260ms;   /* painéis, gavetas             */
+  --t-slow:  600ms;   /* transições de contexto       */
+  --t-fold: 2000ms;   /* dobramento da molécula       */
+
+  /* ---- superfície 3D ---- */
+  --stage-top: #F1F3F9;
+  --stage-bot: #E2E5EF;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ink-litio:     #FF6B85;
+    --ink-sodio:     #F7B84B;
+    --ink-potassio:  #C98CE0;
+    --ink-cobre:     #35D8BC;
+    --ink-bario:     #A0DC63;
+    --ink-estroncio: #FF8256;
+    --ink-cesio:     #8B99F5;
+
+    --ink-900: #ECEDF5;
+    --ink-700: #C7CAD9;
+    --ink-500: #9598AE;
+    --ink-400: #7E8196;
+    --ink-300: #676A80;
+
+    --bg:        #0D0E14;
+    --surface:   #171A24;
+    --sunk:      #1F2330;
+    --raised:    #1C202B;
+    --line:      #272B38;
+    --line-firm: #3A3F50;
+
+    --brand:      #00A98F;
+    --brand-ink:  var(--ink-cobre);
+    --brand-on:   #041B17;
+    --brand-wash: #0C302A;
+
+    --ok-wash:     #1A2E12;
+    --warn-wash:   #33270F;
+    --danger-wash: #3A1620;
+    --info-wash:   #1B2044;
+
+    --cpk-c: #7C7589;
+    --cpk-h: #C9C9D6;
+
+    --shadow-sm: 0 1px 2px rgba(0,0,0,.5), 0 4px 12px -6px rgba(0,0,0,.6);
+    --shadow-md: 0 1px 1px rgba(0,0,0,.5), 0 6px 16px -6px rgba(0,0,0,.6),
+                 0 20px 50px -24px rgba(0,0,0,.9);
+
+    --stage-top: #212533;
+    --stage-bot: #101219;
+  }
+}
+
+:root[data-theme="dark"] {
+  --ink-litio:#FF6B85; --ink-sodio:#F7B84B; --ink-potassio:#C98CE0; --ink-cobre:#35D8BC;
+  --ink-bario:#A0DC63; --ink-estroncio:#FF8256; --ink-cesio:#8B99F5;
+  --ink-900:#ECEDF5; --ink-700:#C7CAD9; --ink-500:#9598AE; --ink-400:#7E8196; --ink-300:#676A80;
+  --bg:#0D0E14; --surface:#171A24; --sunk:#1F2330; --raised:#1C202B;
+  --line:#272B38; --line-firm:#3A3F50;
+  --brand:#00A98F; --brand-ink:var(--ink-cobre); --brand-on:#041B17; --brand-wash:#0C302A;
+  --ok-wash:#1A2E12; --warn-wash:#33270F; --danger-wash:#3A1620; --info-wash:#1B2044;
+  --cpk-c:#7C7589; --cpk-h:#C9C9D6;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.5), 0 4px 12px -6px rgba(0,0,0,.6);
+  --shadow-md:0 1px 1px rgba(0,0,0,.5), 0 6px 16px -6px rgba(0,0,0,.6), 0 20px 50px -24px rgba(0,0,0,.9);
+  --stage-top:#212533; --stage-bot:#101219;
+}
+
+/* paleta categórica para gráficos — ordem fixa, nesta sequência */
+:root {
+  --cat-1: var(--flame-cobre);
+  --cat-2: var(--flame-potassio);
+  --cat-3: var(--flame-sodio);
+  --cat-4: var(--flame-cesio);
+  --cat-5: var(--flame-estroncio);
+  --cat-6: var(--flame-bario);
+  --cat-7: var(--flame-litio);
+}

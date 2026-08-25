@@ -1,0 +1,24 @@
+Copyright (c) 2026 Gabriel Mello Moraes. Todos os direitos reservados.
+
+Este software e toda a documentação, identidade visual, marca e materiais
+associados são propriedade exclusiva do titular do direito autoral.
+
+Nenhuma permissão é concedida para usar, copiar, modificar, mesclar, publicar,
+distribuir, sublicenciar ou vender cópias deste software, no todo ou em parte,
+sem autorização prévia por escrito do titular.
+
+O acesso a este repositório não confere qualquer licença, expressa ou implícita.
+
+ESTE SOFTWARE É FORNECIDO "COMO ESTÁ", SEM GARANTIA DE QUALQUER NATUREZA,
+EXPRESSA OU IMPLÍCITA.
+
+---
+
+DEPENDÊNCIAS DE TERCEIROS
+
+Este produto utiliza bibliotecas de código aberto cujas licenças permitem uso
+comercial em software proprietário. As atribuições exigidas por cada licença
+devem ser mantidas em docs/TERCEIROS.md e exibidas na interface do produto.
+
+Confirme a licença de cada dependência no repositório de origem antes de
+qualquer lançamento comercial. Este arquivo não é aconselhamento jurídico.
