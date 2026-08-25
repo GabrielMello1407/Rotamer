@@ -56,7 +56,8 @@ Onde a sandbox vira produto. Sem isto, tela em branco é produto morto.
 - [ ] Tutor LLM com schema fechado, indicador de origem, cache e teto de gasto — **falta chave
       do Gemini**
 - [ ] Contas, progresso salvo, reavaliação da `spec` no servidor — **falta banco**
-- [ ] Página pública de molécula com SSR e Open Graph
+- [x] Página pública de molécula com SSR e Open Graph — `/m/<smiles>`, sem banco: a molécula é
+      função pura da cadeia que está no endereço
 
 **Publica:** v0.1 — o primeiro produto vendável.
 

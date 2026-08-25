@@ -18,6 +18,10 @@ const config: NextConfig = {
     root: monorepoRoot,
   },
 
+  // O RDKit também roda no servidor, na página pública de molécula. O bundle
+  // dele fala com o sistema de arquivos: precisa ficar fora do empacotamento.
+  serverExternalPackages: ['@rdkit/rdkit'],
+
   outputFileTracingRoot: monorepoRoot,
 
   typescript: { ignoreBuildErrors: false },

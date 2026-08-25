@@ -84,3 +84,20 @@ describe('reconhecimento de grupos', () => {
     expect(groups.size).toBe(0);
   });
 });
+
+describe('desenho plano', () => {
+  it('o SVG da estrutura vem do próprio RDKit', async () => {
+    const { depict } = await import('../src/chemistry/depiction');
+    const svg = await depict('CC(=O)Oc1ccccc1C(=O)O');
+
+    expect(svg).toContain('<svg');
+    expect(svg).toContain('</svg>');
+  });
+
+  it('estrutura impossível não vira desenho', async () => {
+    const { depict } = await import('../src/chemistry/depiction');
+
+    expect(await depict('C(C)(C)(C)(C)C')).toBeNull();
+    expect(await depict('   ')).toBeNull();
+  });
+});

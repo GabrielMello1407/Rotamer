@@ -2,6 +2,7 @@ import { generateGeometry } from '../geometry/conformer';
 import { configureGeometry } from '../geometry/openchemlib';
 import type { Geometry } from '../geometry/types';
 import { analyze } from './analysis';
+import { depict } from './depiction';
 import { scriptFactory } from './browser';
 import { configureRDKit, loadRDKit, rdkitVersion } from './rdkit';
 import type { AnalysisResult, ChemistryError } from './types';
@@ -28,6 +29,8 @@ export interface ChemistryApi {
   analyze(input: string): Promise<AnalysisResult>;
   /** Conformação 3D e quadros do dobramento. Só para estrutura válida. */
   geometry(input: string): Promise<GeometryResult>;
+  /** Desenho plano em SVG, do jeito que o RDKit representa a estrutura. */
+  depict(input: string): Promise<string | null>;
 }
 
 /**
@@ -78,6 +81,10 @@ export const chemistryApi: ChemistryApi = {
     if (cached) return cached;
 
     return remember(analysisCache, input, await analyze(input));
+  },
+
+  depict(input: string): Promise<string | null> {
+    return depict(input);
   },
 
   async geometry(input: string): Promise<GeometryResult> {

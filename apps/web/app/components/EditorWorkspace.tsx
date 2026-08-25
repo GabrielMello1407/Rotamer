@@ -7,8 +7,10 @@ import { useStore } from 'zustand';
 import styles from './EditorWorkspace.module.css';
 import { MoleculeMetrics } from './MoleculeMetrics';
 import { QuestPanel } from './QuestPanel';
+import { ShareLink } from './ShareLink';
 import { SmilesInput } from './SmilesInput';
 import { useChemistryClient } from './use-chemistry-client';
+import { useInitialSmiles } from './use-initial-smiles';
 import { useMolecule } from './use-molecule';
 
 /**
@@ -25,6 +27,8 @@ export function EditorWorkspace(): ReactElement {
   const connection = useChemistryClient();
   const { analysis, geometry, pending } = useMolecule(graph, connection);
 
+  useInitialSmiles(store, connection);
+
   return (
     <div className={styles.workspace}>
       <div className={styles.top}>
@@ -34,6 +38,7 @@ export function EditorWorkspace(): ReactElement {
           waitingForEngine={connection.status === 'loading' && graph.atoms.length > 0}
         />
         <SmilesInput store={store} connection={connection} />
+        <ShareLink analysis={analysis} />
       </div>
 
       <div className={styles.stage}>
