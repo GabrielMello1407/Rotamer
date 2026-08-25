@@ -356,3 +356,41 @@ alcançado por um nome minificado que pode mudar na próxima versão. Três defe
 
 **Revisar se.** O OpenChemLib passar a expor gradiente analítico — aí some o acesso interno e a
 simulação fica mais precisa de graça.
+
+---
+
+## D-15 · O produto não nomeia; quem descobre, batiza
+
+**Decisão.** Não existe motor de nomenclatura no Rotamer. O que existe é **autoria**: uma
+estrutura que o RDKit aceitou e que ninguém registrou antes pode receber um apelido de quem a
+desenhou, e esse apelido aparece sempre junto com o nome de quem deu.
+
+**A pergunta que provocou.** "O produto vai nomear molécula?" — levantada na revisão de escopo
+depois da v0.1. Calcular nome IUPAC é um projeto próprio, com armadilhas de numeração,
+ramificação e prioridade de grupo que o RDKit.js não resolve. Fingir que resolve seria repetir o
+erro do kernel próprio, agora na nomenclatura.
+
+**Por que autoria em vez de nomenclatura.** A InChIKey já é a identidade da molécula no produto, e
+o modelo de dados já falava em "crédito de redescoberta". Batizar transforma a mesma chave em algo
+que o aluno entende: se você chegou primeiro naquela estrutura, o nome é seu. É a mecânica do
+produto trabalhando a favor do que ele já sabe fazer.
+
+**As regras, e por que existem.**
+
+- **Apelido não pode parecer nomenclatura.** Fórmula (`C9H8O4`) e palavra sistemática solta
+  (`butanol`) são recusadas, com explicação. Apelido que se passa por nome de verdade é pior do
+  que apelido nenhum: cria no aluno a impressão de que o produto nomeou.
+- **Nunca aparece sozinho.** Em toda tela onde o apelido aparece, "batizada por Fulano" aparece
+  junto. É autoria, e autoria tem dono visível.
+- **Requer conta**, porque um apelido sem responsável não é autoria.
+- **Vale para a estrutura, não para o desenho.** Duas pessoas que cheguem à mesma molécula por
+  caminhos diferentes encontram o mesmo apelido. Quem chegou primeiro fica com ele.
+
+**O limite que precisa ficar dito.** O Rotamer não sabe se o composto existe fora dele. "Ninguém
+batizou" quer dizer "ninguém batizou aqui dentro", e a tela diz isso com essas palavras. A
+verificação de existência real entra junto com a busca por nome no PubChem, na v0.2 — e aí a
+mensagem muda de "ninguém batizou" para "este composto já é conhecido como tal".
+
+**Revisar se.** Aparecer motor de nomenclatura confiável em WebAssembly, ou a busca do PubChem
+mostrar que quase toda estrutura desenhada em sala já é conhecida — o que tornaria o batismo raro
+o bastante para virar conquista em vez de funcionalidade.

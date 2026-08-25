@@ -24,7 +24,9 @@ funcionalidade nova impressionante — é tirar pedra do caminho de quem já que
       em celular é o caso de uso declarado, não o caso extremo.
 - [ ] **Busca por nome, via PubChem** — tira o SMILES do caminho de quem sabe "cafeína" e não
       `Cn1cnc2c1c(=O)n(C)c(=O)n2C`. Dado de domínio público; exige atribuição e precisa degradar
-      com elegância quando a API estiver fora.
+      com elegância quando a API estiver fora. **Leva junto a verificação de novidade do
+      batismo** (D-15): com ela, "ninguém batizou" passa a distinguir composto inédito de
+      composto conhecido.
 - [ ] **Centros estereogênicos nas métricas** — o número já é calculado pelo RDKit e não aparece
       em tela nenhuma. Meia hora de trabalho para avisar o químico que o assunto existe antes de
       a ferramenta resolvê-lo.
@@ -42,10 +44,10 @@ merece ser feita direito; espremer junto com oito itens pequenos é exatamente c
 
 ## Perguntas em aberto
 
-- **O produto vai nomear molécula?** Hoje não nomeia nada: não há motor de nomenclatura IUPAC, e
-  a busca do PubChem resolveria só o sentido nome → estrutura. O primeiro professor vai perguntar
-  por que o nome não aparece. Precisa virar não-objetivo declarado ou item de v0.3 — as duas
-  respostas servem, o silêncio não.
+- ~~O produto vai nomear molécula?~~ **Respondido (D-15):** não calcula nomenclatura; registra
+  autoria. Estrutura válida que ninguém batizou pode receber apelido de quem a desenhou, sempre
+  exibido com o nome de quem deu. Falta a parte que depende do PubChem: hoje "ninguém batizou"
+  quer dizer "ninguém batizou aqui dentro", e o produto não sabe se o composto já existe lá fora.
 - **Acessibilidade do canvas.** Desenhar exige ponteiro; teclado só tem atalhos. Compra
   institucional costuma exigir acessibilidade, e isso pode virar bloqueio de venda antes de virar
   pedido de usuário.

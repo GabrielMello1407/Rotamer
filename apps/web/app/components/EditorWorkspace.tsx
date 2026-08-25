@@ -6,6 +6,7 @@ import { useMemo, useState, type ReactElement } from 'react';
 import { useStore } from 'zustand';
 import styles from './EditorWorkspace.module.css';
 import { MoleculeMetrics } from './MoleculeMetrics';
+import { NamePanel } from './NamePanel';
 import { QuestPanel } from './QuestPanel';
 import { ShareLink } from './ShareLink';
 import { TutorPanel } from './TutorPanel';
@@ -54,6 +55,10 @@ export function EditorWorkspace(): ReactElement {
           <Viewer3D geometry={geometry} trajectory={trajectory} />
 
           <div className={styles.panels}>
+            <NamePanel
+              key={analysis?.ok === true ? analysis.molecule.inchiKey : 'sem-molecula'}
+              analysis={analysis}
+            />
             <QuestPanel analysis={analysis} slug={questSlug} onSlug={setQuestSlug} />
             <TutorPanel analysis={analysis} questSlug={questSlug === '' ? null : questSlug} />
           </div>

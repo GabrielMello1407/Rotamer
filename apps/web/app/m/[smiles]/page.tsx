@@ -2,6 +2,7 @@ import { Formula, Label, Logo, NumberValue, SourceBadge } from '@rotamer/ui';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { ReactElement } from 'react';
+import { readName } from '../../actions/naming';
 import { analyzeOnServer, depictOnServer } from '../../../lib/chemistry-server';
 import { decodeSmiles } from '../../../lib/molecule-url';
 import styles from './page.module.css';
@@ -55,6 +56,9 @@ export default async function MoleculePage({ params }: PageProps): Promise<React
     depictOnServer(input),
   ]);
 
+  // O apelido é autoria dentro do Rotamer, e aparece sempre com quem deu.
+  const named = analysis.ok ? await readName(analysis.molecule.inchiKey) : null;
+
   return (
     <main className={styles.page}>
       <header className={styles.top}>
@@ -77,6 +81,15 @@ export default async function MoleculePage({ params }: PageProps): Promise<React
             </span>
             <NumberValue value={analysis.molecule.descriptors.molarMass} unit="g/mol" />
           </div>
+
+          {named !== null && (
+            <p className={styles.named} data-testid="apelido">
+              <span className={styles.namedName}>{named.name}</span>
+              <span className={styles.namedBy}>
+                apelido dado por {named.by} dentro do Rotamer — não é nomenclatura
+              </span>
+            </p>
+          )}
 
           <div className={styles.stage}>
             {depiction !== null && (

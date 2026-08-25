@@ -34,6 +34,7 @@ model Profile {
   molecules  Molecule[]
   attempts   Attempt[]
   tutorUsage TutorUsage[]
+  namedBy    MoleculeName[]
 }
 
 /// Sessão de navegador. O cookie carrega só o identificador.
@@ -121,4 +122,28 @@ model TutorUsage {
   profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   @@id([profileId, day])
+}
+
+/// O apelido que alguém deu a uma estrutura dentro do Rotamer.
+///
+/// A chave é a InChIKey: batizar é por molécula, não por desenho, então duas
+/// pessoas que cheguem à mesma estrutura por caminhos diferentes disputam o
+/// mesmo nome — e quem chegou primeiro fica com ele.
+///
+/// **Não é nomenclatura.** O produto não calcula nome IUPAC e não afirma que
+/// este é o nome do composto; é autoria dentro do Rotamer, sempre exibida com
+/// quem deu (D-15).
+model MoleculeName {
+  inchiKey  String   @id
+  name      String
+  profileId String
+  /// Guardados para a tela poder mostrar do que se trata sem recalcular nada.
+  formula   String
+  smiles    String
+  createdAt DateTime @default(now())
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@index([createdAt])
 }

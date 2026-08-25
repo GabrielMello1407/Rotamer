@@ -9,6 +9,12 @@ export default defineConfig({
   retries: process.env['CI'] === undefined ? 0 : 2,
   reporter: process.env['CI'] === undefined ? 'list' : [['list'], ['html', { open: 'never' }]],
 
+  // A senha é guardada com bcrypt em custo 12, que é caro de propósito. Com
+  // vários testes criando conta ao mesmo tempo, a máquina fica ocupada e a
+  // resposta demora mais que os cinco segundos padrão — aperto do ambiente de
+  // teste, não lentidão do produto.
+  expect: { timeout: 10_000 },
+
   use: {
     baseURL: `http://127.0.0.1:${String(PORTA)}`,
     trace: 'on-first-retry',

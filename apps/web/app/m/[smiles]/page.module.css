@@ -139,3 +139,23 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* O apelido vem sempre com a autoria: é o que o separa de nomenclatura. */
+.named {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin: calc(var(--sp-5) * -1) 0 0;
+}
+
+.namedName {
+  font-family: var(--font-display);
+  font-size: var(--step-3);
+  letter-spacing: -0.018em;
+}
+
+.namedBy {
+  font-size: var(--step--1);
+  color: var(--ink-500);
+}
