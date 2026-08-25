@@ -80,7 +80,7 @@ tutor são todos derivados dele e recalculáveis. Nada além do grafo é persist
 | Geometria | OpenChemLib · conformação + MMFF94 |
 | 3D | Three.js + React Three Fiber |
 | Editor 2D | Canvas 2D próprio + Zustand |
-| Dados | Postgres + Prisma (Supabase no MVP) |
+| Dados | Postgres + Prisma, na própria infraestrutura |
 | LLM | Gemini, rota de servidor, saída em JSON de schema fechado |
 
 ### Desempenho

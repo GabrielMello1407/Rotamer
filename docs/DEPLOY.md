@@ -68,10 +68,42 @@ Nginx ou Caddy na frente, com TLS. Dois pontos que valem atenção:
 ressalva em `DECISOES.md` D-07: DNS sem registro não é o mesmo que disponível no registrador, e
 disponível no registrador não é o mesmo que livre no INPI. Confirme os dois antes de comprar.
 
-### 5. Variáveis de ambiente
+### 5. Banco
 
-Nenhuma até aqui. A Fase 2 traz a chave do Gemini e a conexão do Postgres — quando isso chegar,
-elas ficam no ambiente do PM2 (arquivo fora do repositório) e nunca versionadas.
+Postgres na própria máquina, sem serviço gerenciado (D-11). Em desenvolvimento sobe pelo
+`docker-compose.yml` da raiz:
+
+```
+docker compose up -d
+cp apps/web/.env.example apps/web/.env    # e preencha SESSION_SECRET
+pnpm --filter @rotamer/web exec prisma migrate dev
+```
+
+No servidor, a migração roda **antes** de o PM2 recarregar o processo:
+
+```
+pnpm --filter @rotamer/web exec prisma migrate deploy
+pm2 reload rotamer
+```
+
+O que passa a ser nosso, e precisa de rotina antes do primeiro aluno:
+
+- **Backup.** `pg_dump` diário com retenção, guardado fora da máquina. Banco sem backup testado
+  é banco sem backup.
+- **Atualização de versão maior.** Postgres não sobe de major sozinho; agende.
+- **Acesso.** O banco escuta em `localhost`; nada de expor a 5432 na internet.
+
+### 6. Variáveis de ambiente
+
+Todas em `apps/web/.env.example`, que é o arquivo que documenta o que existe. No servidor elas
+ficam no ambiente do PM2, num arquivo fora do repositório:
+
+| Variável | Para que serve |
+|---|---|
+| `DATABASE_URL` | conexão do Postgres |
+| `SESSION_SECRET` | assina o cookie de sessão — um por ambiente, gerado com `randomBytes(32)` |
+| `GEMINI_API_KEY` | tutor. Sem ela, o tutor não aparece; o resto do produto funciona igual |
+| `TUTOR_DAILY_LIMIT` | teto de pedidos por usuário por dia |
 
 ## Cuidados
 

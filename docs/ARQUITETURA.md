@@ -61,7 +61,7 @@ lógica para `core`, não criar a dependência.
 | Geometria | OpenChemLib: conformação + MMFF94 | O RDKit.js publicado não traz gerador 3D nem campo de força. Ver `DECISOES.md` D-10 |
 | 3D | Three.js + React Three Fiber | Motor de render apenas — nenhuma química dentro |
 | Editor 2D | Canvas 2D próprio + Zustand | É o diferencial; nenhuma lib pronta dá o toque certo |
-| Dados | Postgres + Prisma (Supabase no início) | Auth, storage e banco numa assinatura só; migrar para VPS depois é trivial |
+| Dados | Postgres + Prisma, na própria infraestrutura | Container em desenvolvimento, serviço no VPS ao lado do PM2. Ver `DECISOES.md` D-11 |
 | LLM | Gemini, rota de servidor, JSON de schema fechado | Schema fechado impede o modelo de inventar campo químico |
 | Telemetria | Umami auto-hospedado | Sem cookies, LGPD simples |
 
@@ -70,7 +70,7 @@ lógica para `core`, não criar a dependência.
 | Tabela | Campos que importam | Nota |
 |---|---|---|
 | `molecule` | `id, owner_id, graph jsonb, smiles, inchikey, descriptors jsonb, public` | `inchikey` com índice único por dono — é como se detecta duplicata e se dá crédito de redescoberta |
-| `quest` | `id, slug, track, difficulty, spec jsonb, hints jsonb` | `spec` é predicado declarativo avaliado no cliente e **reavaliado no servidor** |
+| ~~`quest`~~ | — | O catálogo vive no código, versionado junto com o motor que o avalia (D-12). A tentativa guarda o `slug`. |
 | `attempt` | `id, user_id, quest_id, molecule_id, score, passed, elapsed_ms` | É o dado de produto: onde as pessoas travam vira o mapa de dificuldade |
 | `profile` | `id, display_name, track_progress jsonb, institution` | `institution` permite ranking por turma sem criar entidade de turma cedo demais |
 | `campaign` | `id, owner_id, title, brief, constraints jsonb, opens_at, closes_at` | Fase posterior — já modelado para evitar migração dolorosa |

@@ -40,6 +40,28 @@ jobs:
   ponta-a-ponta:
     name: navegador
     runs-on: ubuntu-latest
+
+    # Postgres local, o mesmo do docker-compose.yml e o mesmo que vai rodar no
+    # VPS: sem serviço gerenciado em lugar nenhum.
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: rotamer
+          POSTGRES_PASSWORD: rotamer
+          POSTGRES_DB: rotamer
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U rotamer -d rotamer"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://rotamer:rotamer@localhost:5432/rotamer?schema=public
+      SESSION_SECRET: ci-nao-e-producao
+
     steps:
       - uses: actions/checkout@v4
 
@@ -51,6 +73,8 @@ jobs:
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
+
+      - run: pnpm --filter @rotamer/web exec prisma migrate deploy
 
       - run: pnpm --filter @rotamer/web exec playwright install --with-deps chromium
 

@@ -1,6 +1,9 @@
 import { Logo } from '@rotamer/ui';
 import Link from 'next/link';
 import type { ReactElement } from 'react';
+import { currentProfile } from '../lib/auth';
+import { hasDatabase } from '../lib/db';
+import { AccountMenu } from './components/AccountMenu';
 import { EditorWorkspace } from './components/EditorWorkspace';
 import { ThemeToggle } from './components/ThemeToggle';
 import styles from './page.module.css';
@@ -10,7 +13,11 @@ import styles from './page.module.css';
  *
  * Sem cadastro, sem porta de entrada: quem abre o endereço já pode desenhar.
  */
-export default function EditorPage(): ReactElement {
+export default async function EditorPage(): Promise<ReactElement> {
+  // Sem banco configurado, a parte de conta simplesmente não aparece — o
+  // editor continua inteiro.
+  const profile = hasDatabase() ? await currentProfile() : null;
+
   return (
     <main className={styles.page}>
       <header className={styles.top}>
@@ -28,6 +35,7 @@ export default function EditorPage(): ReactElement {
           <Link className={styles.link} href="/marca">
             Marca e tokens
           </Link>
+          <AccountMenu displayName={profile?.displayName ?? null} />
           <ThemeToggle />
         </div>
       </header>

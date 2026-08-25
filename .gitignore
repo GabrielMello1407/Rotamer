@@ -36,3 +36,6 @@ apps/web/public/chem/
 
 # gerado pelo Next a cada build
 apps/web/next-env.d.ts
+
+# cliente do Prisma, gerado a partir do schema
+apps/web/generated/

@@ -55,7 +55,7 @@ Onde a sandbox vira produto. Sem isto, tela em branco é produto morto.
 - [x] Modo ferramenta livre, **sem missão, pontuação ou conquista** (D-09)
 - [ ] Tutor LLM com schema fechado, indicador de origem, cache e teto de gasto — **falta chave
       do Gemini**
-- [ ] Contas, progresso salvo, reavaliação da `spec` no servidor — **falta banco**
+- [x] Contas, progresso salvo, reavaliação da `spec` no servidor — Postgres local (D-11)
 - [x] Página pública de molécula com SSR e Open Graph — `/m/<smiles>`, sem banco: a molécula é
       função pura da cadeia que está no endereço
 

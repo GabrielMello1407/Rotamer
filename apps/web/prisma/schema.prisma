@@ -1,0 +1,89 @@
+// Modelo de dados do Rotamer.
+//
+// O grafo é a única fonte de verdade: fórmula, descritores e geometria são
+// derivados dele e recalculáveis. O que é guardado aqui é o mínimo — o grafo, e
+// o rastro do que a pessoa fez com ele.
+//
+// Diferença consciente em relação ao `docs/ARQUITETURA.md`: não existe tabela
+// `quest`. O catálogo de missões vive no código, versionado junto com as
+// condições que ele avalia — uma missão no banco poderia discordar da `spec` que
+// o motor executa, e aí a nota mudaria sem ninguém ter mexido em nada. A
+// tentativa guarda o `slug`.
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// Quem usa: aluno, professor, pesquisador.
+model Profile {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  displayName  String
+  /// Permite ranking por turma sem criar entidade de turma cedo demais.
+  institution  String?
+  createdAt    DateTime @default(now())
+
+  sessions  Session[]
+  molecules Molecule[]
+  attempts  Attempt[]
+}
+
+/// Sessão de navegador. O cookie carrega só o identificador.
+model Session {
+  id        String   @id
+  profileId String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@index([expiresAt])
+}
+
+/// Uma molécula salva. O grafo é o que importa; o resto é derivado dele.
+model Molecule {
+  id          String   @id @default(cuid())
+  ownerId     String?
+  graph       Json
+  smiles      String
+  inchiKey    String
+  formula     String
+  descriptors Json
+  isPublic    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  owner    Profile?  @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  attempts Attempt[]
+
+  /// É por aqui que se detecta duplicata e se dá crédito de redescoberta.
+  @@unique([ownerId, inchiKey])
+  @@index([inchiKey])
+}
+
+/// Uma tentativa de missão, com a nota reavaliada no servidor.
+model Attempt {
+  id         String   @id @default(cuid())
+  profileId  String
+  /// Slug da missão no catálogo em código.
+  questSlug  String
+  moleculeId String
+  score      Int
+  passed     Boolean
+  elapsedMs  Int
+  createdAt  DateTime @default(now())
+
+  profile  Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  molecule Molecule @relation(fields: [moleculeId], references: [id], onDelete: Cascade)
+
+  /// Onde as pessoas travam é o dado de produto que importa.
+  @@index([profileId, questSlug])
+  @@index([questSlug, passed])
+}

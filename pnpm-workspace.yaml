@@ -2,10 +2,12 @@ packages:
   - apps/*
   - packages/*
 
-# Único pacote com script de instalação nativo — vem do resolvedor de imports do
-# eslint-config-next. Sem isto o lint do app não resolve os aliases.
 allowBuilds:
+  # O resolvedor de imports do eslint-config-next e o motor do Prisma são os
+  # únicos pacotes com script de instalação nativo.
   unrs-resolver: true
+  '@prisma/engines': true
+  prisma: true
 
 # pnpm 11 segura versões recém-publicadas por alguns dias. Estas foram
 # verificadas e liberadas na fundação do projeto.
@@ -23,3 +25,13 @@ minimumReleaseAgeExclude:
   - eslint-config-next@16.3.3
   - eslint@9.39.5
   - next@16.3.3
+  - '@prisma/adapter-pg@7.10.0'
+  - '@prisma/client-runtime-utils@7.10.0'
+  - '@prisma/client@7.10.0'
+  - '@prisma/config@7.10.0'
+  - '@prisma/debug@7.10.0'
+  - '@prisma/driver-adapter-utils@7.10.0'
+  - '@prisma/engines@7.10.0'
+  - '@prisma/fetch-engine@7.10.0'
+  - '@prisma/get-platform@7.10.0'
+  - prisma@7.10.0

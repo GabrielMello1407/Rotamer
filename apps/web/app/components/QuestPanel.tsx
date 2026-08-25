@@ -3,7 +3,9 @@
 import type { AnalysisResult } from '@rotamer/core';
 import { CATALOG, evaluateAnalysis, findQuest, type Track } from '@rotamer/quests';
 import { Button, Label, SourceBadge } from '@rotamer/ui';
-import { useMemo, useState, type ReactElement } from 'react';
+import Link from 'next/link';
+import { useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
+import { saveAttempt, type AttemptOutcome } from '../actions/attempt';
 import styles from './QuestPanel.module.css';
 
 export interface QuestPanelProps {
@@ -29,12 +31,45 @@ const FREE = '';
 export function QuestPanel({ analysis }: QuestPanelProps): ReactElement {
   const [slug, setSlug] = useState<string>(FREE);
   const [hintsShown, setHintsShown] = useState(0);
+  const [outcome, setOutcome] = useState<AttemptOutcome | null>(null);
+
+  const startedAt = useRef<number | null>(null);
+  const recorded = useRef<Set<string>>(new Set());
 
   const quest = slug === FREE ? undefined : findQuest(slug);
   const result = useMemo(
     () => (quest ? evaluateAnalysis(quest, analysis) : null),
     [quest, analysis],
   );
+
+  // O relógio da missão começa quando ela é escolhida, não quando o componente
+  // renderiza — daí o efeito em vez de um valor inicial.
+  useEffect(() => {
+    startedAt.current = Date.now();
+  }, [slug]);
+
+  // A tentativa vai para o servidor com o desenho, nunca com a nota: lá o
+  // molblock passa de novo pelo RDKit e a mesma spec é reavaliada. Nota que
+  // chega pronta do navegador não vale nada.
+  useEffect(() => {
+    if (!quest || result?.passed !== true || analysis === null || !analysis.ok) return;
+
+    const key = `${quest.slug}:${analysis.molecule.inchiKey}`;
+    if (recorded.current.has(key)) return;
+    recorded.current.add(key);
+
+    const record = async (): Promise<void> => {
+      setOutcome(
+        await saveAttempt({
+          questSlug: quest.slug,
+          molblock: analysis.molecule.molblock,
+          elapsedMs: Date.now() - (startedAt.current ?? Date.now()),
+        }),
+      );
+    };
+
+    void record();
+  }, [quest, result, analysis]);
 
   const byTrack = useMemo(() => {
     const tracks: Track[] = ['structure', 'geometry', 'property'];
@@ -63,6 +98,7 @@ export function QuestPanel({ analysis }: QuestPanelProps): ReactElement {
         onChange={(event) => {
           setSlug(event.target.value);
           setHintsShown(0);
+          setOutcome(null);
         }}
       >
         <option value={FREE}>Sem missão — ferramenta livre</option>
@@ -113,6 +149,22 @@ export function QuestPanel({ analysis }: QuestPanelProps): ReactElement {
               {hint}
             </p>
           ))}
+
+          {outcome?.status === 'saved' && (
+            <p className={styles.hint} data-testid="progresso-salvo">
+              Progresso salvo. Nota conferida no servidor: {outcome.score} de 100.
+            </p>
+          )}
+
+          {outcome?.status === 'anonymous' && (
+            <p className={styles.hint}>
+              <Link href="/entrar">Entre na sua conta</Link> para guardar o que já cumpriu.
+            </p>
+          )}
+
+          {outcome?.status === 'rejected' && (
+            <p className={styles.hint}>{outcome.reason}</p>
+          )}
 
           <div className={styles.footer}>
             <p className={styles.score}>

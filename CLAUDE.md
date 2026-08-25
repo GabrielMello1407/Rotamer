@@ -83,7 +83,7 @@ tutor são derivados dele e recalculáveis. Nada além do grafo é persistido co
 - OpenChemLib no mesmo worker — conformação 3D e MMFF94, depois que o RDKit aprovou (D-10)
 - Three.js + React Three Fiber — apenas render, nenhuma química dentro
 - Canvas 2D próprio + Zustand — o editor é escrito à mão, sem lib de desenho molecular
-- Postgres + Prisma (Supabase no MVP)
+- Postgres + Prisma no próprio servidor — container em desenvolvimento, serviço no VPS (D-11)
 - Gemini via rota de servidor para o tutor
 
 ## Convenções

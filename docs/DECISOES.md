@@ -255,3 +255,44 @@ caminho até o mínimo.
 **Revisar se.** Sair um build oficial do RDKit.js com ETKDG e MMFF94, ou o OpenChemLib divergir do
 RDKit em algum caso que chegue à tela. Neste caso a troca é barata: a fronteira é uma função só,
 `generateGeometry(molblock)`.
+
+---
+
+## D-11 · Postgres local, sem serviço gerenciado
+
+**Decisão.** O banco é Postgres rodando na própria infraestrutura: container em
+desenvolvimento, serviço no VPS ao lado do PM2. Nada de Supabase.
+
+**Por quê.** Decisão do titular. O que o Supabase entregava no plano original — banco, auth e
+storage numa assinatura só — deixa de valer quando o deploy já é um VPS com PM2: o Postgres passa
+a ser um serviço a mais na mesma máquina, e a autenticação vira umas duzentas linhas de sessão
+com cookie, que é código que dá para ler inteiro numa tarde.
+
+**O que muda.** A `ARQUITETURA.md` dizia "Postgres + Prisma (Supabase no início)". Continua
+Postgres + Prisma; some o intermediário. A única coisa que troca entre ambientes é a
+`DATABASE_URL`.
+
+**O que ganhamos junto.** Sem dependência de terceiro no caminho do login, sem cota de linhas, e
+o dado de aluno fica onde a instituição consegue apontar — o que importa quando o comprador é
+escola.
+
+**O que perdemos.** Backup, réplica e atualização de versão passam a ser nossos. Vale escrever
+isso no `DEPLOY.md` antes de existir o primeiro aluno, não depois.
+
+---
+
+## D-12 · O catálogo de missões vive no código, não no banco
+
+**Decisão.** Não existe tabela `quest`. As missões são um módulo TypeScript versionado junto com
+o motor que as avalia; a tentativa guarda o `slug`.
+
+**Por quê.** A `spec` da missão é código executável: condições sobre descritores que o RDKit
+calcula. Guardar isso no banco criaria duas fontes — a linha na tabela e a função que a interpreta
+— e elas podem discordar. Missão editada no banco mudaria a nota de todo mundo sem nenhum commit,
+sem revisão e sem teste. Enunciado de missão é conteúdo de aula: passa por revisão como código.
+
+**A ressalva da `ARQUITETURA.md`.** O documento previa a tabela `quest` com `spec jsonb`. Isso
+volta a fazer sentido quando existir editor de missões para professor — aí a missão passa a ser
+dado do usuário, e não conteúdo do produto. Até lá, seria complexidade sem dono.
+
+**Revisar se.** Professor pedir para criar a própria missão. É pedido provável na Fase 4.

@@ -1,0 +1,29 @@
+# Banco de desenvolvimento.
+#
+# É Postgres local, sem serviço gerenciado: em produção o mesmo banco roda no
+# VPS, ao lado do PM2, e a única coisa que muda é a DATABASE_URL. Quem preferir
+# instalar o Postgres direto na máquina não precisa deste arquivo.
+services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: rotamer-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: rotamer
+      POSTGRES_PASSWORD: rotamer
+      POSTGRES_DB: rotamer
+      # Ordenação e acentuação em português: nome de aluno com acento precisa
+      # ordenar direito.
+      LANG: pt_BR.utf8
+    ports:
+      - '5432:5432'
+    volumes:
+      - rotamer-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U rotamer -d rotamer']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  rotamer-postgres:

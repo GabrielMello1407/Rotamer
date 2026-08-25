@@ -1,0 +1,19 @@
+.menu {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.name {
+  font-size: var(--step-0);
+  color: var(--ink-700);
+}
+
+.link {
+  font-size: var(--step-0);
+  color: var(--ink-500);
+}
+
+.link:hover {
+  color: var(--brand-ink);
+}
