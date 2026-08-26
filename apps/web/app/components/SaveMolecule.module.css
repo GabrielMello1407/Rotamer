@@ -3,6 +3,14 @@
   gap: var(--sp-2);
 }
 
+/* Guardou: o próximo passo fica ao lado do aviso, não escondido na barra. */
+.done {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
 .ok {
   margin: 0;
   font-size: var(--step--1);

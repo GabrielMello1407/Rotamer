@@ -49,8 +49,9 @@
 
 .metrics {
   position: absolute;
-  /* Termina onde a cena começa: as duas coisas moram no pé da tela. */
-  inset: auto calc(min(400px, 40%) + var(--sp-5)) var(--sp-4) 0;
+  /* Começa depois do trilho e termina onde a cena começa: as três coisas moram
+     no pé da tela, e nenhuma pode passar por cima do alvo de clique da outra. */
+  inset: auto calc(min(400px, 40%) + var(--sp-5)) var(--sp-4) calc(46px + var(--sp-5));
   display: flex;
   justify-content: center;
   padding: 0 var(--sp-4);

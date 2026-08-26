@@ -245,8 +245,8 @@ export function Toolbar({ store, className }: ToolbarProps): ReactElement {
         </RailButton>
 
         <RailButton
-          label="Começar de novo"
-          name="Limpar"
+          label="Nova molécula — limpa a tela, e Ctrl+Z traz de volta"
+          name="Nova molécula"
           pressed={false}
           disabled={!hasAtoms}
           onClick={() => {

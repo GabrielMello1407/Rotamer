@@ -28,6 +28,8 @@ export interface AnalysisDrawerProps {
   /** Qual modo está em exibição na cena. */
   readonly selectedMode: number | null;
   readonly onSelectMode: (index: number | null) => void;
+  /** Limpar a tela para começar outra estrutura. */
+  readonly onNew: () => void;
   readonly connection: ChemistryConnection;
   readonly store: EditorStore;
   readonly tab: DrawerTab;
@@ -59,6 +61,7 @@ export function AnalysisDrawer({
   unsupported,
   selectedMode,
   onSelectMode,
+  onNew,
   connection,
   store,
   tab,
@@ -160,7 +163,7 @@ export function AnalysisDrawer({
                 <section className={styles.section}>
                   <h3 className={styles.heading}>Guardar e levar</h3>
                   <div className={styles.row}>
-                    <SaveMolecule analysis={analysis} />
+                    <SaveMolecule analysis={analysis} onNew={onNew} />
                     <ExportMenu analysis={analysis} connection={connection} />
                     <ShareLink analysis={analysis} />
                   </div>

@@ -92,4 +92,37 @@ test.describe('estante', () => {
     await page.goto('/minhas');
     await expect(page).toHaveURL(/\/entrar/);
   });
+  test('guardar e começar outra: a tela esvazia e a molécula continua na estante', async ({
+    page,
+  }) => {
+    await criarConta(page);
+    await carregar(page, 'CC(=O)Oc1ccccc1C(=O)O');
+    await expect(page.getByTestId('formula')).toHaveText('C9H8O4', { timeout: 60_000 });
+
+    await page.getByTestId('guardar-molecula').click();
+    await expect(page.getByTestId('molecula-guardada')).toBeVisible({ timeout: 30_000 });
+
+    // O passo seguinte fica ali, no momento em que a pessoa acabou uma coisa.
+    await page.getByTestId('comecar-outra').click();
+
+    // A tela em branco não mostra fórmula nenhuma, e a faixa volta ao convite.
+    await expect(page.getByTestId('formula')).toBeHidden({ timeout: 30_000 });
+    await expect(page.getByTestId('metricas')).toContainText('Desenhe uma estrutura');
+
+    // E o que foi guardado continua guardado.
+    await page.goto('/minhas');
+    await expect(page.getByTestId('guardada-C9H8O4')).toBeVisible({ timeout: 30_000 });
+  });
+
+  test('começar outra é reversível: desfazer traz o desenho de volta', async ({ page }) => {
+    await page.goto('/');
+    await carregar(page, 'CCO');
+    await expect(page.getByTestId('formula')).toHaveText('C2H6O', { timeout: 60_000 });
+
+    await page.getByRole('button', { name: 'Nova molécula' }).click();
+    await expect(page.getByTestId('formula')).toBeHidden({ timeout: 30_000 });
+
+    await page.getByRole('button', { name: 'Desfazer' }).click();
+    await expect(page.getByTestId('formula')).toHaveText('C2H6O', { timeout: 60_000 });
+  });
 });

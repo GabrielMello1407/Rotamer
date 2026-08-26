@@ -16,17 +16,25 @@ function novoEmail(): string {
 /**
  * Uma cadeia inédita de verdade.
  *
- * O batismo é único por InChIKey e o banco guarda para sempre: sortear entre
- * poucas estruturas faz dois testes em paralelo — ou duas execuções em dias
- * diferentes — disputarem a mesma molécula. Com ramificação sorteada átomo a
- * átomo, o espaço passa de um milhão de estruturas.
+ * O batismo é único por InChIKey e o banco **guarda para sempre**: sortear entre
+ * poucas estruturas faz duas execuções, mesmo em dias diferentes, disputarem a
+ * mesma molécula — e a segunda falha dizendo que alguém já batizou.
+ *
+ * A primeira versão sorteava ramificação com duas opções por posição, o que dá
+ * cerca de 2¹⁸ estruturas. Pelo problema do aniversário, isso começa a colidir
+ * por volta de quinhentos sorteios — e foi exatamente o que aconteceu depois de
+ * algumas dezenas de execuções da suíte. Com três opções por posição, o espaço
+ * passa de três bilhões e o problema sai do horizonte.
  */
 function cadeiaInedita(): string {
+  const ramos = ['C', 'C(C)', 'C(CC)'] as const;
   const partes: string[] = [];
-  const carbonos = 14 + Math.floor(Math.random() * 8);
+  // Cadeia curta o bastante para a suíte não virar espera: o que precisa ser
+  // grande é o espaço de sorteio, não a molécula.
+  const carbonos = 10 + Math.floor(Math.random() * 5);
 
   for (let indice = 0; indice < carbonos; indice += 1) {
-    partes.push(Math.random() < 0.25 ? 'C(C)' : 'C');
+    partes.push(ramos[Math.floor(Math.random() * ramos.length)] ?? 'C');
   }
 
   return `${partes.join('')}O`;

@@ -317,6 +317,9 @@ export function EditorWorkspace({
             unsupported={geometry?.unsupported ?? []}
             selectedMode={selectedMode}
             onSelectMode={selectMode}
+            onNew={() => {
+              store.getState().clear();
+            }}
             connection={connection}
             store={store}
             tab={tab}

@@ -158,6 +158,24 @@ export function useMolecule(
           return;
         }
 
+        /*
+         * Os números aparecem antes da forma.
+         *
+         * Fórmula, massa e descritores já estão prontos; esperar a conformação
+         * para mostrá-los faz a faixa ficar vazia enquanto o campo de força
+         * trabalha — e numa molécula de sessenta átomos isso são segundos de
+         * tela parada com a resposta já calculada do lado de dentro.
+         */
+        setReading((current) => ({
+          ...current,
+          analysis,
+          geometry: null,
+          trajectory: null,
+          modes: null,
+          geometryError: null,
+          pending: true,
+        }));
+
         const conformation = await client.geometry(molblock);
         if (!alive) return;
 

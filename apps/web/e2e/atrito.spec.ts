@@ -65,7 +65,7 @@ test.describe('rascunho', () => {
     await page.getByTestId('anel-benzene').click();
     await expect(page.getByTestId('formula')).toHaveText('C6H6', { timeout: 60_000 });
 
-    await page.getByRole('button', { name: 'Limpar' }).click();
+    await page.getByRole('button', { name: 'Nova molécula' }).click();
     await page.waitForTimeout(1200);
     await page.reload();
 
