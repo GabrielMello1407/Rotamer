@@ -11,8 +11,13 @@
  * nunca de uma cópia versionada à mão que envelhece sem ninguém notar.
  */
 import { createRequire } from 'node:module';
-import { copyFile, mkdir, readFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { brotliCompress, constants, gzip } from 'node:zlib';
+import { promisify } from 'node:util';
+
+const comprimirBrotli = promisify(brotliCompress);
+const comprimirGzip = promisify(gzip);
 
 const require = createRequire(import.meta.url);
 
@@ -33,6 +38,42 @@ const oclPkg = JSON.parse(await readFile(path.join(oclDist, '..', 'package.json'
 
 await copyFile(path.join(oclDist, 'resources.json'), path.join(target, 'ocl-resources.json'));
 
+/**
+ * Versões comprimidas, ao lado do original.
+ *
+ * O `.wasm` do RDKit tem 6,7 MB e encolhe 71% com gzip — a ideia de que "wasm já
+ * vem compacto" é falsa, e custaria quarenta segundos de espera a um aluno em
+ * rede lenta. Brotli aperta mais um pouco.
+ *
+ * Servidor que sabe servir arquivo pré-comprimido (Caddy com `precompressed br
+ * gzip`) entrega estes; quem não sabe continua entregando o original. Nenhum dos
+ * dois quebra.
+ */
+const paraComprimir = ['RDKit_minimal.js', 'RDKit_minimal.wasm', 'ocl-resources.json'];
+const economia = [];
+
+for (const file of paraComprimir) {
+  const origem = path.join(target, file);
+  const bruto = await readFile(origem);
+
+  const br = await comprimirBrotli(bruto, {
+    params: {
+      [constants.BROTLI_PARAM_QUALITY]: 11,
+      [constants.BROTLI_PARAM_SIZE_HINT]: bruto.length,
+    },
+  });
+  const gz = await comprimirGzip(bruto, { level: 9 });
+
+  await writeFile(`${origem}.br`, br);
+  await writeFile(`${origem}.gz`, gz);
+
+  const original = (await stat(origem)).size;
+  economia.push(
+    `${file}: ${Math.round(original / 1024)} KB -> br ${Math.round(br.length / 1024)} KB`,
+  );
+}
+
 console.log(
   `copiado para public/chem/: RDKit ${rdkitPkg.version}, OpenChemLib ${oclPkg.version}`,
 );
+console.log(`pré-comprimido: ${economia.join(', ')}`);

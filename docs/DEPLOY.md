@@ -55,12 +55,34 @@ copiados para dentro de `.next/standalone/apps/web/` depois do build. É lá que
 
 ### 3. Proxy e certificado
 
-Nginx ou Caddy na frente, com TLS. Dois pontos que valem atenção:
+Nginx ou Caddy na frente, com TLS. O que decide a primeira aula é o que acontece com
+`public/chem/` — **medido**, não estimado:
 
-- **O `.wasm` tem quase 7 MB.** Servir com `Content-Type: application/wasm` e cache longo
-  (`immutable`), senão cada visita paga o download de novo.
-- **Compressão**: o `.js` do RDKit e o `ocl-resources.json` comprimem muito bem; o `.wasm` já vem
-  compacto e não precisa de gzip.
+| Arquivo | Original | gzip | brotli |
+|---|---|---|---|
+| `RDKit_minimal.wasm` | 6753 KB | 1998 KB (−70%) | **1437 KB (−79%)** |
+| `ocl-resources.json` | 1320 KB | 457 KB | 375 KB |
+| `RDKit_minimal.js` | 125 KB | 29 KB | 26 KB |
+
+**Correção de uma afirmação que estava errada aqui:** o `.wasm` **não** vem compacto. Ele encolhe
+71% com gzip. Servi-lo sem compressão custa cerca de quarenta segundos a mais para um aluno num
+celular fraco em 3G — medido com throttling de 400 kbps.
+
+O `prebuild` já grava `.br` e `.gz` ao lado de cada arquivo. Caddy serve o pré-comprimido:
+
+```
+handle_path /chem/* {
+  root * /caminho/rotamer/apps/web/public/chem
+  file_server {
+    precompressed br gzip
+  }
+  header Cache-Control "public, max-age=31536000, immutable"
+}
+```
+
+O `next.config.ts` já manda `immutable` para `/chem/*`, o que resolve a revisita mesmo sem
+proxy: **medido em 605 ms com o motor em cache, contra 6,9 s na primeira visita**. Numa turma de
+trinta alunos na mesma sala, é a diferença entre a aula começar e a aula esperar.
 
 ### 4. Domínio
 

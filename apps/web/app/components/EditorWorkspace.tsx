@@ -2,7 +2,7 @@
 
 import { fromMolblock } from '@rotamer/core';
 import { Editor2D, Toolbar, createEditorStore } from '@rotamer/editor2d';
-import { Viewer3D } from '@rotamer/viewer3d';
+import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
 import { useStore } from 'zustand';
 import { AnalysisDrawer, type DrawerTab } from './AnalysisDrawer';
@@ -15,6 +15,19 @@ import { useInitialSmiles } from './use-initial-smiles';
 import { useMolecule } from './use-molecule';
 import type { NormalModes } from '@rotamer/core';
 import { track } from '../../lib/track';
+
+/**
+ * A cena 3D chega depois.
+ *
+ * Three.js, o renderizador e os controles são o pedaço mais pesado do pacote, e
+ * nada disso é necessário para a primeira coisa que a pessoa faz: desenhar. Com
+ * o carregamento adiado, o traço fica disponível antes — e num celular fraco em
+ * 3G essa diferença é de segundos.
+ */
+const Viewer3D = dynamic(
+  () => import('@rotamer/viewer3d').then((entrada) => entrada.Viewer3D),
+  { ssr: false },
+);
 
 export interface EditorWorkspaceProps {
   /** Quem está identificado, quando há banco e sessão. */

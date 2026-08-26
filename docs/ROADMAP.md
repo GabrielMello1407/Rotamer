@@ -98,7 +98,10 @@ O contato propriamente dito:
 
 - [ ] Sessões de observação com 3 professores e 8–10 alunos — assistindo, sem explicar nada
 - [ ] Revisão de nomenclatura e linguagem por um químico
-- [ ] Correções de usabilidade e desempenho em celular fraco
+- [x] Desempenho em celular fraco, medido com throttling (Pixel 5, CPU 4×, 400 kbps): cena 3D
+      carregada sob demanda derrubou a primeira pintura de 11,7 s para 6,9 s; `immutable` no motor
+      levou a revisita a 0,6 s; e o `.wasm` passou a ser entregue pré-comprimido em brotli (6753 →
+      1437 KB). Falta o resto: correções de usabilidade que só as sessões vão apontar.
 
 **Publica:** v0.2 corrigida.
 
@@ -134,7 +137,9 @@ continuar dito em voz alta enquanto for verdade.
 ## Fase 4 · Comercial — ~120h
 
 - [x] Painel do professor: turmas, acompanhamento de quem travou onde (D-22)
-- [ ] Camadas de assinatura e cobrança
+- [ ] Camadas de assinatura e cobrança — **adiado de propósito** até as sessões da Fase 3 (D-08).
+      Escola pública compra por empenho, não com cartão; escolher a forma de cobrar antes de saber
+      o que se cobra é construir a parte mais cara no escuro.
 - [x] Landing page e material de venda — `/escolas`, com a estrutura desenhada pelo RDKit no
       servidor na hora e a lista do que o produto **não** faz com o mesmo destaque do resto
 - [ ] Campanhas privadas para laboratório (ver ressalva em `DECISOES.md` D-08)

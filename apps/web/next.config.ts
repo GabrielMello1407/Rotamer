@@ -24,6 +24,28 @@ const config: NextConfig = {
 
   outputFileTracingRoot: monorepoRoot,
 
+  /**
+   * O motor de química é imutável por versão.
+   *
+   * `RDKit_minimal.wasm` tem 6,7 MB (2 MB comprimido) e `ocl-resources.json`
+   * mais 1,3 MB. Servidos com `max-age=0`, cada visita revalida e, na primeira
+   * aula de uma turma inteira, cada aluno paga o download de novo.
+   *
+   * Os arquivos são copiados do `node_modules` no `prebuild` e só mudam quando a
+   * versão do RDKit muda — que é exatamente o caso em que `immutable` vale: o
+   * conteúdo daquele caminho não muda sem o pacote mudar junto.
+   */
+  headers() {
+    return Promise.resolve([
+      {
+        source: '/chem/:file*',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
+      },
+    ]);
+  },
+
   typescript: { ignoreBuildErrors: false },
 };
 

@@ -148,6 +148,18 @@ uma base gratuita fazendo a distribuição.
 **O que isso permite.** RDKit é BSD-3 e Three.js é MIT — ambas permitem uso comercial em produto
 fechado, mantidas as atribuições. Tecnicamente não há impedimento. Ver `TERCEIROS.md`.
 
+**Atualização — a cobrança fica para depois do contato com escola de verdade (26/08/2026).** A
+camada de assinatura estava na Fase 4 e foi **adiada de propósito**. O comprador declarado é a
+escola pública, que não compra com cartão: compra por empenho, com nota fiscal, num processo que
+nenhum checkout self-service atende. Construir gateway agora seria escolher a forma de cobrar
+antes de saber o que se cobra, por quê e de quem — e escopo estourando é o risco número um do
+projeto.
+
+Quando a Fase 3 acontecer, a pergunta volta com resposta de professor de verdade. O caminho que
+parece certo hoje é **licença por código**: a escola paga por fora e recebe um código que libera a
+camada paga para as contas dela, com a mesma mecânica que já move turma e troca de senha. Mas isso
+se decide depois de ouvir, não antes.
+
 **O que isso exige atenção:**
 
 1. **Nenhuma dependência GPL ou AGPL entra.** Uma só contamina o produto inteiro. Verificar
