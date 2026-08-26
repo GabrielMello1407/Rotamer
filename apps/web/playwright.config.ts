@@ -1,4 +1,15 @@
+import { existsSync } from 'node:fs';
 import { defineConfig, devices } from '@playwright/test';
+
+/*
+ * O `.env` também aqui, não só no Next.
+ *
+ * A suíte precisa saber o que está configurado para escolher o que cobrir: com
+ * chave do Gemini, o teste que vale é o tutor respondendo; sem chave, é o tutor
+ * se desligando e devolvendo o aluno para as dicas escritas. Os dois são
+ * verdade, e nenhum dos dois é verdade sempre.
+ */
+if (existsSync('.env')) process.loadEnvFile('.env');
 
 const PORTA = 3100;
 

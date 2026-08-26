@@ -64,8 +64,14 @@ Onde a sandbox vira produto. Sem isto, tela em branco é produto morto.
 
 **Publica:** v0.1 — o primeiro produto vendável.
 
-Tudo escrito, tudo testado. Para o tutor sair do modo desligado, falta só a chave do Gemini no
-`.env` — nenhuma outra mudança.
+Tudo escrito, tudo testado. **O tutor está ligado**: com a `GEMINI_API_KEY` no `.env`, ele
+responde de verdade — verificado ponta a ponta, resposta em cerca de 7 s, dentro do schema
+fechado e marcada em âmbar na tela. Nenhuma outra configuração foi necessária.
+
+Uma armadilha que apareceu na hora de ligar: **modelo do Gemini sai de circulação**. O
+`gemini-2.5-flash` que estava no código passou a responder 404 para chave nova, e o efeito na
+tela era o tutor calar como se não houvesse chave. O padrão agora é `gemini-3.6-flash`, e existe
+`GEMINI_MODEL` no `.env` para trocar sem tocar no código.
 
 ---
 

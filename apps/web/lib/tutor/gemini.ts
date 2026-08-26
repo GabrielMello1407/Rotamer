@@ -11,7 +11,19 @@ import { tutorHintSchema, type TutorHint } from './schema';
  */
 
 const ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models';
-const DEFAULT_MODEL = 'gemini-2.5-flash';
+/*
+ * O modelo padrão, trocável por `GEMINI_MODEL`.
+ *
+ * Versão fixa, e não um apelido como `gemini-flash-latest`: o tutor tem schema
+ * fechado e prompt afinado, e trocar de modelo sem querer é trocar o
+ * comportamento sem querer. O apelido também some sob demanda alta — medido
+ * aqui: 503 em 41 s, enquanto a versão fixa respondeu em 7 s.
+ *
+ * Modelo antigo não fica só ruim: some. O `gemini-2.5-flash` que estava aqui
+ * passou a devolver 404 para chave nova, e o tutor caía nas dicas escritas sem
+ * ninguém entender por quê.
+ */
+const DEFAULT_MODEL = 'gemini-3.6-flash';
 const TIMEOUT_MS = 20_000;
 
 /** O mesmo schema, na forma que a API entende — força o JSON já na geração. */
