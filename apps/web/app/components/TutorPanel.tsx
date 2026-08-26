@@ -3,6 +3,7 @@
 import type { AnalysisResult } from '@rotamer/core';
 import { Button, Label, SourceBadge } from '@rotamer/ui';
 import { Fragment, useState, type ReactElement, type ReactNode } from 'react';
+import { track } from '../../lib/track';
 import { askTutor, type TutorOutcome } from '../actions/tutor';
 import type { HintKind } from '../../lib/tutor/prompt';
 import type { ReferenceKey } from '../../lib/tutor/schema';
@@ -64,6 +65,7 @@ export function TutorPanel({ analysis, questSlug }: TutorPanelProps): ReactEleme
             disabled={!ready || asking}
             data-testid={`tutor-${entry.kind}`}
             onClick={() => {
+              track('tutor-pedido');
               ask(entry.kind);
             }}
           >

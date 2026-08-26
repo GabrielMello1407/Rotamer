@@ -13,6 +13,7 @@ import { useChemistryClient } from './use-chemistry-client';
 import { useDraft } from './use-draft';
 import { useInitialSmiles } from './use-initial-smiles';
 import { useMolecule } from './use-molecule';
+import { track } from '../../lib/track';
 
 export interface EditorWorkspaceProps {
   /** Quem está identificado, quando há banco e sessão. */
@@ -62,6 +63,17 @@ export function EditorWorkspace({
 
   const fromLink = useInitialSmiles(store, connection);
   useDraft(store, !fromLink);
+
+  // A primeira estrutura válida da visita: é o número que diz se quem abriu a
+  // página chegou a desenhar alguma coisa.
+  const reachedRef = useRef(false);
+
+  useEffect(() => {
+    if (reachedRef.current || analysis?.ok !== true) return;
+
+    reachedRef.current = true;
+    track('primeira-molecula');
+  }, [analysis]);
 
   // O átomo que o RDKit culpou pelo erro vira marca no desenho: a mensagem fala
   // de um átomo, e sem isto ninguém sabe qual dos dois oxigênios é o culpado.
@@ -177,7 +189,10 @@ export function EditorWorkspace({
         showAccount={showAccount}
         panelOpen={panelOpen}
         onPanel={openPanel}
-        onExample={setWanted}
+        onExample={(smiles) => {
+          track('exemplo-carregado');
+          setWanted(smiles);
+        }}
       />
 
       <div className={styles.stage}>

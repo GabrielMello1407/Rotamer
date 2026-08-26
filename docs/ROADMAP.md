@@ -73,20 +73,24 @@ A fase que a maioria pula e que decide se o produto serve para alguém.
 **Duas coisas precisam existir antes de a primeira sessão acontecer.** Não são funcionalidade;
 são a diferença entre medir e achar:
 
-- [ ] **Telemetria** — Umami auto-hospedado no mesmo VPS, sem cookie. Consta da tabela de stack
-      desde o começo e nunca foi escrita. Sessão de observação sem instrumento vira anedota: dá
-      para ver uma pessoa travar, não dá para saber se ela é a regra.
-- [ ] **Backup do banco** — `pg_dump` diário com retenção, guardado fora da máquina, e uma
-      restauração testada. Está descrito no `DEPLOY.md` e não existe como rotina. Dado de aluno
-      perdido não se recupera com desculpa (D-11).
+- [x] **Telemetria** — Umami auto-hospedado no mesmo VPS, sem cookie. Escrita e desligada: sem
+      `UMAMI_SCRIPT_URL` o script nem é carregado. A lista de momentos medidos é fechada em
+      `apps/web/lib/track.ts` — primeira molécula, missão cumprida, molécula guardada, pedido ao
+      tutor, exemplo carregado. Falta subir o Umami no VPS.
+- [x] **Backup do banco** — `scripts/backup-db.sh` (despejo diário, conferência de que o arquivo
+      abre, cópia fora da máquina, retenção) e `scripts/restore-db.sh` (ensaio num banco separado,
+      com as contagens que dizem se o backup vale). Falta pendurar no cron do VPS e fazer o
+      primeiro ensaio (D-11).
 
 Tirar pedra do caminho, antes ou junto das sessões — a lista completa e o critério do corte
 estão no `DEPOIS.md`:
 
-- [ ] Templates de anel, rascunho salvo no navegador, exportar SVG e PNG
-- [ ] Pinça e polimento de celular
-- [ ] Busca por nome via PubChem
-- [ ] Centros estereogênicos nas métricas, recuperação de senha, "minhas moléculas"
+- [x] Templates de anel, rascunho salvo no navegador, exportar SVG e PNG
+- [x] Pinça e polimento de celular
+- [x] Busca por nome via PubChem
+- [x] Centros estereogênicos nas métricas e "minhas moléculas"
+- [ ] Recuperação de senha — falta decidir o caminho: e-mail por SMTP ou código emitido pelo
+      professor. A escolha muda o que precisa existir no servidor.
 
 O contato propriamente dito:
 

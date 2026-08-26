@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Archivo, IBM_Plex_Mono, IBM_Plex_Sans } from 'next/font/google';
 import type { ReactElement, ReactNode } from 'react';
+import { Telemetry } from './components/Telemetry';
 import '@rotamer/ui/tokens.css';
 import '@rotamer/ui/base.css';
 
@@ -62,6 +63,7 @@ export default function RootLayout({
     <html lang="pt-BR" className={fontVariables} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_BEFORE_PAINT }} />
+        <Telemetry />
       </head>
       <body>{children}</body>
     </html>

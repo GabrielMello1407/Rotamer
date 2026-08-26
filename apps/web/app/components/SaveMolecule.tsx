@@ -5,6 +5,7 @@ import { Button } from '@rotamer/ui';
 import Link from 'next/link';
 import { useState, useTransition, type ReactElement } from 'react';
 import { saveMolecule } from '../actions/library';
+import { track } from '../../lib/track';
 import styles from './SaveMolecule.module.css';
 
 export interface SaveMoleculeProps {
@@ -46,9 +47,14 @@ export function SaveMolecule({ analysis }: SaveMoleculeProps): ReactElement | nu
           startTransition(async () => {
             const outcome = await saveMolecule({ molblock });
 
-            if (outcome.status === 'saved') setState({ kind: 'saved' });
-            else if (outcome.status === 'anonymous') setState({ kind: 'anonymous' });
-            else setState({ kind: 'rejected', reason: outcome.reason });
+            if (outcome.status === 'saved') {
+              track('molecula-guardada');
+              setState({ kind: 'saved' });
+            } else if (outcome.status === 'anonymous') {
+              setState({ kind: 'anonymous' });
+            } else {
+              setState({ kind: 'rejected', reason: outcome.reason });
+            }
           });
         }}
       >

@@ -88,10 +88,35 @@ pm2 reload rotamer
 
 O que passa a ser nosso, e precisa de rotina antes do primeiro aluno:
 
-- **Backup.** `pg_dump` diário com retenção, guardado fora da máquina. Banco sem backup testado
-  é banco sem backup.
+- **Backup.** `scripts/backup-db.sh`, diário, com retenção e cópia fora da máquina.
 - **Atualização de versão maior.** Postgres não sobe de major sozinho; agende.
 - **Acesso.** O banco escuta em `localhost`; nada de expor a 5432 na internet.
+
+### 5.1 Backup e restauração
+
+Dois scripts, e um ensaio que precisa acontecer antes do primeiro aluno (D-11).
+
+```
+# uma vez por dia, às 3h, pelo crontab do usuário que roda o app
+0 3 * * * DATABASE_URL='postgresql://...' BACKUP_REMOTE='usuario@outra-maquina:/backups/rotamer/' /caminho/rotamer/scripts/backup-db.sh >> /var/log/rotamer-backup.log 2>&1
+```
+
+O script despeja em formato próprio do Postgres, **confere que o arquivo abre** (`pg_restore
+--list`), manda a cópia para fora da máquina e apaga o que passou de 30 dias. Qualquer passo que
+falhe aborta com erro — o cron manda o e-mail, e silêncio deixa de ser sinal de que deu certo.
+
+Backup na mesma máquina do banco não é backup: sem `BACKUP_REMOTE`, o incêndio leva os dois.
+
+**O ensaio.** Uma vez por mês, e sempre depois de mudar o schema:
+
+```
+DATABASE_URL='postgresql://...' ./scripts/restore-db.sh /var/backups/rotamer/rotamer-<carimbo>.dump
+```
+
+Ele restaura num banco separado (`rotamer_ensaio`), nunca por cima da produção — para isso é
+preciso pedir explicitamente, com `RESTORE_CONFIRMO=sim`. No fim, o script imprime as três
+contagens que dizem se o backup vale alguma coisa: perfis, tentativas e batismos. Backup que
+nunca foi restaurado é arquivo, não garantia.
 
 ### 6. Variáveis de ambiente
 
@@ -104,6 +129,8 @@ ficam no ambiente do PM2, num arquivo fora do repositório:
 | `SESSION_SECRET` | assina o cookie de sessão — um por ambiente, gerado com `randomBytes(32)` |
 | `GEMINI_API_KEY` | tutor. Sem ela, o tutor não aparece; o resto do produto funciona igual |
 | `TUTOR_DAILY_LIMIT` | teto de pedidos por usuário por dia |
+| `UMAMI_SCRIPT_URL` | telemetria. Sem ela, nenhum script de medição é carregado |
+| `UMAMI_WEBSITE_ID` | identificador do site no Umami |
 
 ## Cuidados
 
@@ -111,3 +138,18 @@ ficam no ambiente do PM2, num arquivo fora do repositório:
   o RDKit" para sempre, o primeiro suspeito é o `prebuild` não ter rodado no servidor.
 - **O WASM carrega depois da primeira pintura**, dentro do worker. A meta de 3 s para o primeiro
   desenho num celular fraco em 3G depende de isso continuar assim.
+
+## Telemetria
+
+**Umami auto-hospedado, no mesmo VPS, sem cookie.** Ele existe porque sessão de observação sem
+instrumento vira anedota: dá para ver uma pessoa travar, não dá para saber se ela é a regra.
+
+O que se mede são momentos do produto — primeira molécula válida, missão cumprida, molécula
+guardada, pedido ao tutor, exemplo carregado — e a lista desses momentos é fechada em
+`apps/web/lib/track.ts`, para não aparecer evento inventado no meio do código.
+
+O que **não** sai daqui: nome, e-mail, molécula desenhada, SMILES, InChIKey. O script respeita
+"não me rastreie" do navegador, e sem as duas variáveis de ambiente ele nem é carregado.
+
+O Umami é MIT e roda ao lado do app, atrás do mesmo Caddy — dado de aluno não sai do nosso
+servidor.

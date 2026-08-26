@@ -46,3 +46,12 @@ Não vão para o pacote entregue ao usuário, mas entram na conta de licenças d
 1. Verifique a licença **antes** de instalar.
 2. Se for GPL ou AGPL, pare e procure alternativa.
 3. Se for aceita, acrescente uma linha na tabela acima no mesmo commit.
+
+## Umami
+
+**Licença MIT.** Telemetria auto-hospedada, sem cookie, rodando no nosso VPS. Não é dependência
+do pacote: é um script servido pelo nosso próprio domínio, carregado só quando
+`UMAMI_SCRIPT_URL` está configurada.
+
+Nenhum dado de aluno sai do servidor, e a lista de momentos medidos é fechada em
+`apps/web/lib/track.ts`.

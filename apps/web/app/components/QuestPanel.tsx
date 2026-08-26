@@ -5,6 +5,7 @@ import { CATALOG, evaluateAnalysis, findQuest, type Track } from '@rotamer/quest
 import { Button, Label, SourceBadge } from '@rotamer/ui';
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
+import { track } from '../../lib/track';
 import { readProgress, saveAttempt, type AttemptOutcome, type QuestProgress } from '../actions/attempt';
 import styles from './QuestPanel.module.css';
 
@@ -77,6 +78,8 @@ export function QuestPanel({ analysis, slug, onSlug }: QuestPanelProps): ReactEl
     const key = `${quest.slug}:${analysis.molecule.inchiKey}`;
     if (recorded.current.has(key)) return;
     recorded.current.add(key);
+
+    track('missao-cumprida');
 
     const record = async (): Promise<void> => {
       setOutcome(
