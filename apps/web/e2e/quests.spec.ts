@@ -72,7 +72,7 @@ test.describe('colar SMILES', () => {
     await expect(page.getByText('BSYNRYMUTXBXSQ-UHFFFAOYSA-N')).toBeVisible();
   });
 
-  test('SMILES sem sentido explica a química, não o código', async ({ page }) => {
+  test('estrutura impossível explica a química — e não vira busca por nome', async ({ page }) => {
     await page.goto('/');
 
     await page.getByTestId('entrada-smiles').fill('C(C)(C)(C)(C)C');

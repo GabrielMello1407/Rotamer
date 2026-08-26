@@ -14,6 +14,7 @@ Licenças aceitas: MIT, BSD (2 e 3 cláusulas), Apache-2.0, ISC.
 | React, Next.js | MIT | aplicação | sim |
 | OpenChemLib | BSD-3-Clause | conformação 3D e campo de força MMFF94 | sim — aviso de copyright |
 | Comlink | Apache-2.0 | conversa com o Web Worker | sim — aviso e NOTICE |
+| PubChem (NCBI/NLM) | dados de domínio público | busca de molécula por nome e verificação de composto conhecido | sim — crédito ao PubChem na tela onde o dado aparece |
 | Archivo, IBM Plex | SIL Open Font License 1.1 | tipografia | sim — permite uso comercial e embutir |
 
 ## Ferramentas de desenvolvimento
@@ -31,6 +32,9 @@ Não vão para o pacote entregue ao usuário, mas entram na conta de licenças d
 
 > Confirme cada licença no repositório de origem antes de qualquer lançamento comercial.
 > Este arquivo é um registro de trabalho, não aconselhamento jurídico.
+
+> O PubChem é serviço de terceiro, com limite de ritmo e indisponibilidade ocasional. O produto
+> não depende dele para funcionar: sem resposta, a busca por nome avisa e o resto segue igual.
 
 ## Onde as atribuições aparecem
 

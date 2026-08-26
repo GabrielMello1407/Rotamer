@@ -18,14 +18,11 @@ funcionalidade nova impressionante — é tirar pedra do caminho de quem já que
 - [x] **Exportar SVG e PNG** — SVG é o desenho do RDKit; PNG é a tela como está.
 - [x] **Pinça** — dois dedos ancorados no ponto do grafo que está embaixo deles. Falta o resto
       do polimento de celular, que só a Fase 3 vai dizer qual é.
-- [ ] **Busca por nome, via PubChem** — tira o SMILES do caminho de quem sabe "cafeína" e não
-      `Cn1cnc2c1c(=O)n(C)c(=O)n2C`. Dado de domínio público; exige atribuição e precisa degradar
-      com elegância quando a API estiver fora. **Leva junto a verificação de novidade do
-      batismo** (D-15): com ela, "ninguém batizou" passa a distinguir composto inédito de
-      composto conhecido.
-- [ ] **Centros estereogênicos nas métricas** — o número já é calculado pelo RDKit e não aparece
-      em tela nenhuma. Meia hora de trabalho para avisar o químico que o assunto existe antes de
-      a ferramenta resolvê-lo.
+- [x] **Busca por nome, via PubChem** — um campo só: o RDKit tenta ler como estrutura, e o que
+      ele não lê vira consulta de nome. Levou junto a verificação de novidade do batismo (D-15):
+      composto já conhecido não se batiza, e a tela mostra o nome que o PubChem registra.
+- [x] **Centros estereogênicos nas métricas** — com a ressalva "sem configuração" do lado,
+      enquanto o editor não representar cunhas e traços.
 - [ ] **Recuperação de senha** — numa turma de trinta, alguém esquece na primeira semana.
 - [ ] **"Minhas moléculas"** — a tabela existe e só é escrita por tentativa de missão. A conta
       guarda progresso e não guarda o trabalho.

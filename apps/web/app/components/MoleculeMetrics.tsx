@@ -83,6 +83,23 @@ export function MoleculeMetrics({
       </div>
 
       <div className={styles.metric}>
+        <Label>estereocentros</Label>
+        <span className={styles.stereo} data-testid="estereocentros">
+          <NumberValue value={descriptors.stereocenters} decimals={0} />
+          {descriptors.unspecifiedStereocenters > 0 && (
+            <span
+              className={styles.stereoNote}
+              title="O editor ainda não representa cunhas e traços: a configuração não está definida no desenho."
+            >
+              {descriptors.unspecifiedStereocenters === descriptors.stereocenters
+                ? 'sem configuração'
+                : `${String(descriptors.unspecifiedStereocenters)} sem configuração`}
+            </span>
+          )}
+        </span>
+      </div>
+
+      <div className={styles.metric}>
         <Label>InChIKey</Label>
         <span className={styles.key}>{molecule.inchiKey}</span>
       </div>

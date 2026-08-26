@@ -50,3 +50,17 @@
   font-size: var(--step--1);
   color: var(--ink-400);
 }
+
+.stereo {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+}
+
+/* O produto ainda não representa cunhas e traços. Enquanto for assim, o número
+   precisa vir com a ressalva do lado — não depois, numa nota de rodapé. */
+.stereoNote {
+  font-size: var(--step--1);
+  color: var(--warn);
+  white-space: nowrap;
+}

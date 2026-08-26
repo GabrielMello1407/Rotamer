@@ -1,9 +1,10 @@
 'use client';
 
-import { fromMolblock } from '@rotamer/core';
+import { fromMolblock, type ChemistryErrorCode } from '@rotamer/core';
 import type { EditorStore } from '@rotamer/editor2d';
 import { Button } from '@rotamer/ui';
 import { useEffect, useState, type FormEvent, type ReactElement } from 'react';
+import { findByName } from '../actions/search';
 import styles from './SmilesInput.module.css';
 import type { ChemistryConnection } from './use-chemistry-client';
 
@@ -13,41 +14,95 @@ export interface SmilesInputProps {
 }
 
 /**
- * Carregar molécula colando SMILES.
+ * Trazer molécula de fora: por SMILES ou por nome.
  *
- * É o que preenche a tela em branco para quem já chega com o composto em mãos
- * — o usuário avançado não quer missão, quer importar (ver `DECISOES.md` D-09).
+ * Um campo só, porque para quem usa é a mesma intenção — "quero esta molécula
+ * na tela". O que decide o caminho é o RDKit: se ele lê o texto como estrutura,
+ * carrega direto; se não lê, o texto vira consulta de nome no PubChem.
  *
- * Quem lê o SMILES e desenha o esqueleto plano é o RDKit; o que chega aqui é o
- * molblock já sanitizado, que vira grafo.
+ * A ordem importa. `CCO` é etanol para o RDKit e também é um nome plausível de
+ * catálogo em algum lugar — perguntar primeiro ao motor determinístico evita
+ * ida à rede e evita ambiguidade.
+ *
+ * E "não consegui ler" não é tudo igual: `C(C)(C)(C)(C)C` **é** uma estrutura,
+ * só que impossível, e a explicação certa para ela é a química. Só texto que
+ * nem parece estrutura vira consulta de nome.
  */
+
+/**
+ * Erros que dizem "isto é uma estrutura, e ela não existe".
+ *
+ * Nesses casos a mensagem do motor determinístico é melhor do que qualquer
+ * coisa que a busca por nome pudesse dizer.
+ */
+const STRUCTURE_ERRORS: readonly ChemistryErrorCode[] = [
+  'valence_exceeded',
+  'impossible_aromaticity',
+  'invalid_structure',
+];
+
 export function SmilesInput({ store, connection }: SmilesInputProps): ReactElement {
   const [text, setText] = useState('');
   const [queued, setQueued] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [note, setNote] = useState<string | null>(null);
 
   const client = connection.status === 'ready' ? connection.client : null;
 
-  // Colar antes de o motor subir não é erro: a molécula fica na fila e entra
+  // Colar antes de o motor subir não é erro: o pedido fica na fila e entra
   // assim que o worker responde. Num celular fraco essa espera é a regra.
   useEffect(() => {
     if (queued === null || !client) return;
 
     let alive = true;
+
     const load = async (): Promise<void> => {
-      const result = await client.analyze(queued);
+      const asStructure = await client.analyze(queued);
       if (!alive) return;
 
-      if (!result.ok) {
-        setError(result.error.message);
+      if (asStructure.ok) {
+        store.getState().commit(fromMolblock(asStructure.molecule.molblock));
+        store.getState().frame();
+        setError(null);
+        setNote(null);
+        setText('');
         setQueued(null);
         return;
       }
 
-      store.getState().commit(fromMolblock(result.molecule.molblock));
-      store.getState().frame();
-      setError(null);
-      setText('');
+      // Estrutura impossível não vira busca por nome: quem explica é a química.
+      if (STRUCTURE_ERRORS.includes(asStructure.error.code)) {
+        setNote(null);
+        setError(asStructure.error.message);
+        setQueued(null);
+        return;
+      }
+
+      // Não parece estrutura: então é nome.
+      const found = await findByName(queued);
+      if (!alive) return;
+
+      if (found.status === 'found') {
+        const structure = await client.analyze(found.compound.smiles);
+        if (!alive) return;
+
+        if (structure.ok) {
+          store.getState().commit(fromMolblock(structure.molecule.molblock));
+          store.getState().frame();
+          setError(null);
+          setNote(
+            found.compound.title === null
+              ? `Encontrado no PubChem (CID ${String(found.compound.cid)}).`
+              : `${found.compound.title} — PubChem CID ${String(found.compound.cid)}.`,
+          );
+          setText('');
+          setQueued(null);
+          return;
+        }
+      }
+
+      setNote(null);
+      setError(messageFor(found.status, queued, asStructure.ok ? null : asStructure.error.message));
       setQueued(null);
     };
 
@@ -60,11 +115,12 @@ export function SmilesInput({ store, connection }: SmilesInputProps): ReactEleme
   const submit = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault();
 
-    const smiles = text.trim();
-    if (smiles === '') return;
+    const entry = text.trim();
+    if (entry === '') return;
 
     setError(null);
-    setQueued(smiles);
+    setNote(null);
+    setQueued(entry);
   };
 
   const waiting = queued !== null;
@@ -77,15 +133,22 @@ export function SmilesInput({ store, connection }: SmilesInputProps): ReactEleme
         onChange={(event) => {
           setText(event.target.value);
         }}
-        placeholder="Colar SMILES"
-        aria-label="Carregar molécula a partir de SMILES"
+        placeholder="SMILES ou nome"
+        aria-label="Carregar molécula por SMILES ou por nome"
         data-testid="entrada-smiles"
         spellCheck={false}
         autoComplete="off"
       />
       <Button type="submit" size="small" variant="secondary" disabled={waiting}>
-        {waiting ? 'Carregando…' : 'Carregar'}
+        {waiting ? 'Buscando…' : 'Carregar'}
       </Button>
+
+      {note !== null && (
+        <p className={styles.note} data-testid="origem-molecula">
+          {note}
+        </p>
+      )}
+
       {error !== null && (
         <p className={styles.error} data-testid="erro-smiles">
           {error}
@@ -93,4 +156,26 @@ export function SmilesInput({ store, connection }: SmilesInputProps): ReactEleme
       )}
     </form>
   );
+}
+
+/**
+ * A mensagem certa para cada desfecho.
+ *
+ * Quando o texto parece estrutura e o RDKit recusou, quem explica é ele — a
+ * mensagem já fala de química. Quando é nome, a explicação é sobre a busca.
+ */
+function messageFor(
+  status: 'not-found' | 'unavailable' | 'rejected' | 'found',
+  entry: string,
+  chemistryError: string | null,
+): string {
+  if (status === 'unavailable') {
+    return 'O PubChem não respondeu agora. Colar o SMILES continua funcionando.';
+  }
+
+  if (status === 'not-found') {
+    return `Não encontrei "${entry}" no PubChem. Confira a grafia ou cole o SMILES.`;
+  }
+
+  return chemistryError ?? 'Não consegui carregar essa molécula.';
 }

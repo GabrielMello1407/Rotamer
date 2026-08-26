@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { currentProfile } from '../../lib/auth';
 import { analyzeOnServer } from '../../lib/chemistry-server';
 import { db, hasDatabase } from '../../lib/db';
+import { knownCompound } from '../../lib/known-compound';
 import { checkName, normalizeName, NAME_MAX } from '../../lib/molecule-name';
 
 /**
@@ -32,8 +33,23 @@ export type NamingOutcome =
   | { readonly status: 'named'; readonly named: NamedMolecule }
   /** Já tem apelido: quem batizou chegou antes. */
   | { readonly status: 'taken'; readonly named: NamedMolecule }
+  /** O composto já existe fora do Rotamer, e já tem nome de verdade. */
+  | {
+      readonly status: 'known';
+      readonly title: string | null;
+      readonly cid: number;
+    }
   | { readonly status: 'anonymous' }
   | { readonly status: 'rejected'; readonly reason: string };
+
+/** O que se sabe sobre uma estrutura antes de alguém tentar batizá-la. */
+export type NamingState =
+  | { readonly status: 'named'; readonly named: NamedMolecule }
+  | { readonly status: 'known'; readonly title: string | null; readonly cid: number }
+  /** Confirmado inédito: o PubChem respondeu e não conhece esta estrutura. */
+  | { readonly status: 'free'; readonly verified: true }
+  /** Livre aqui dentro, mas o PubChem não respondeu — não sabemos lá fora. */
+  | { readonly status: 'free'; readonly verified: false };
 
 export async function nameMolecule(input: {
   molblock: string;
@@ -59,6 +75,13 @@ export async function nameMolecule(input: {
 
   const existing = await readName(inchiKey);
   if (existing !== null) return { status: 'taken', named: existing };
+
+  // Composto que já existe lá fora não se batiza: ele já tem nome, e dar
+  // apelido a ele seria justamente a confusão que o D-15 evita.
+  const known = await knownCompound(inchiKey);
+  if (known.status === 'conhecido') {
+    return { status: 'known', title: known.title, cid: known.cid };
+  }
 
   try {
     const row = await db.moleculeName.create({
@@ -97,4 +120,20 @@ export async function readName(inchiKey: string): Promise<NamedMolecule | null> 
   if (row === null) return null;
 
   return { name: row.name, by: row.profile.displayName, at: row.createdAt.toISOString() };
+}
+
+/**
+ * O estado de batismo de uma estrutura: já batizada, já conhecida lá fora, ou
+ * livre — e, se livre, se a gente conseguiu confirmar isso.
+ */
+export async function readNamingState(inchiKey: string): Promise<NamingState> {
+  const named = await readName(inchiKey);
+  if (named !== null) return { status: 'named', named };
+
+  const known = await knownCompound(inchiKey);
+  if (known.status === 'conhecido') {
+    return { status: 'known', title: known.title, cid: known.cid };
+  }
+
+  return { status: 'free', verified: known.status === 'inedito' };
 }

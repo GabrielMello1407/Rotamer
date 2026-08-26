@@ -147,3 +147,30 @@ model MoleculeName {
   @@index([profileId])
   @@index([createdAt])
 }
+
+/// O que o PubChem já respondeu, guardado.
+///
+/// A consulta é externa e sai da nossa mão: pode estar fora, pode limitar o
+/// ritmo, e não faz sentido perguntar duas vezes a mesma coisa. `found = false`
+/// também é resposta, e também vale guardar.
+model PubChemName {
+  query     String   @id
+  found     Boolean
+  cid       Int?
+  smiles    String?
+  title     String?
+  formula   String?
+  checkedAt DateTime @default(now())
+}
+
+/// Se uma estrutura já é conhecida lá fora, por InChIKey.
+///
+/// É o que separa "ninguém batizou aqui dentro" de "este composto já existe e
+/// tem nome" — a diferença que o batismo precisa saber (D-15).
+model PubChemKnown {
+  inchiKey  String   @id
+  known     Boolean
+  cid       Int?
+  title     String?
+  checkedAt DateTime @default(now())
+}

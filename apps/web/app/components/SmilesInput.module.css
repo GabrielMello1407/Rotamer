@@ -24,3 +24,9 @@
   color: var(--danger);
   max-width: 32ch;
 }
+
+.note {
+  font-size: var(--step--1);
+  color: var(--ink-500);
+  max-width: 40ch;
+}

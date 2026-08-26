@@ -127,6 +127,19 @@ export default async function MoleculePage({ params }: PageProps): Promise<React
                   />
                 </div>
                 <div className={styles.fact}>
+                  <Label>estereocentros</Label>
+                  <span className={styles.stereo} data-testid="estereocentros">
+                    <NumberValue
+                      value={analysis.molecule.descriptors.stereocenters}
+                      decimals={0}
+                    />
+                    {analysis.molecule.descriptors.unspecifiedStereocenters > 0 && (
+                      <span className={styles.stereoNote}>sem configuração</span>
+                    )}
+                  </span>
+                </div>
+
+                <div className={styles.fact}>
                   <Label>doadores de H</Label>
                   <NumberValue value={analysis.molecule.descriptors.hbDonors} decimals={0} />
                 </div>

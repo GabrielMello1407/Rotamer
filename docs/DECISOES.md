@@ -394,3 +394,9 @@ mensagem muda de "ninguém batizou" para "este composto já é conhecido como ta
 **Revisar se.** Aparecer motor de nomenclatura confiável em WebAssembly, ou a busca do PubChem
 mostrar que quase toda estrutura desenhada em sala já é conhecida — o que tornaria o batismo raro
 o bastante para virar conquista em vez de funcionalidade.
+
+**Atualização — a verificação existe.** A consulta ao PubChem por InChIKey entrou junto com a
+busca por nome: composto já conhecido não recebe apelido, e a tela mostra o nome registrado lá
+com o CID. Quando o PubChem não responde, o produto **diz que não sabe** e o batismo continua
+valendo aqui dentro, com a ressalva na tela — três estados, não dois, porque "não consegui
+verificar" não é "é inédito".

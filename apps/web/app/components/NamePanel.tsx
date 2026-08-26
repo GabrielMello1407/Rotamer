@@ -4,7 +4,12 @@ import type { AnalysisResult } from '@rotamer/core';
 import { Button, Label } from '@rotamer/ui';
 import Link from 'next/link';
 import { useEffect, useState, type FormEvent, type ReactElement } from 'react';
-import { nameMolecule, readName, type NamedMolecule } from '../actions/naming';
+import {
+  nameMolecule,
+  readNamingState,
+  type NamedMolecule,
+  type NamingState,
+} from '../actions/naming';
 import { NAME_MAX } from '../../lib/molecule-name';
 import styles from './NamePanel.module.css';
 
@@ -20,6 +25,7 @@ export interface NamePanelProps {
  * apelido nunca aparece sem o nome de quem deu.
  */
 export function NamePanel({ analysis }: NamePanelProps): ReactElement | null {
+  const [state, setState] = useState<NamingState | null>(null);
   const [named, setNamed] = useState<NamedMolecule | null>(null);
   const [text, setText] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -36,8 +42,11 @@ export function NamePanel({ analysis }: NamePanelProps): ReactElement | null {
 
     let alive = true;
     const load = async (): Promise<void> => {
-      const found = await readName(inchiKey);
-      if (alive) setNamed(found);
+      const found = await readNamingState(inchiKey);
+      if (!alive) return;
+
+      setState(found);
+      if (found.status === 'named') setNamed(found.named);
     };
 
     void load();
@@ -63,6 +72,8 @@ export function NamePanel({ analysis }: NamePanelProps): ReactElement | null {
         setNamed(outcome.named);
         setText('');
         setError(outcome.status === 'taken' ? 'Alguém batizou primeiro.' : null);
+      } else if (outcome.status === 'known') {
+        setState(outcome);
       } else if (outcome.status === 'anonymous') {
         setAnonymous(true);
       } else {
@@ -74,6 +85,23 @@ export function NamePanel({ analysis }: NamePanelProps): ReactElement | null {
 
     void run();
   };
+
+  // Composto que já existe lá fora não recebe apelido: ele já tem nome.
+  if (named === null && state?.status === 'known') {
+    return (
+      <section className={styles.panel} aria-label="Composto conhecido">
+        <Label>já existe lá fora</Label>
+        <p className={styles.named} data-testid="composto-conhecido">
+          {state.title !== null && <span className={styles.name}>{state.title}</span>}
+          <span className={styles.by}>PubChem CID {state.cid}</span>
+        </p>
+        <p className={styles.quiet}>
+          Esta estrutura já é um composto conhecido, então não há o que batizar. O nome acima é o
+          que o PubChem registra — o Rotamer não calcula nomenclatura.
+        </p>
+      </section>
+    );
+  }
 
   if (named !== null) {
     return (
@@ -92,7 +120,11 @@ export function NamePanel({ analysis }: NamePanelProps): ReactElement | null {
 
   return (
     <section className={styles.panel} aria-label="Batizar a molécula">
-      <Label>ninguém batizou esta estrutura</Label>
+      <Label>
+        {state?.status === 'free' && state.verified
+          ? 'estrutura inédita'
+          : 'ninguém batizou esta estrutura'}
+      </Label>
 
       <form className={styles.form} onSubmit={submit}>
         <input
@@ -125,9 +157,9 @@ export function NamePanel({ analysis }: NamePanelProps): ReactElement | null {
       )}
 
       <p className={styles.quiet}>
-        Vale para a estrutura, não para o desenho: quem chegar a ela por outro caminho encontra o
-        mesmo apelido. E ainda não sabemos se este composto já existe fora do Rotamer — a
-        verificação entra junto com a busca por nome.
+        {state?.status === 'free' && state.verified
+          ? 'O PubChem não conhece esta estrutura. Vale para a estrutura, não para o desenho: quem chegar a ela por outro caminho encontra o mesmo apelido.'
+          : 'Vale para a estrutura, não para o desenho. Não consegui confirmar no PubChem se este composto já existe lá fora — o batismo continua valendo aqui dentro.'}
       </p>
     </section>
   );
