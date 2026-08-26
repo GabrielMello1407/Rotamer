@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { openAnalysis, openQuests } from './painel';
 
 /**
  * A missão fecha o laço do produto: o aluno lê o enunciado, desenha, e o
@@ -21,6 +22,7 @@ async function drawOneCarbon(page: Page): Promise<void> {
 test.describe('missões', () => {
   test('a primeira missão é cumprida com um átomo', async ({ page }) => {
     await page.goto('/');
+    await openQuests(page);
     await page.getByTestId('escolher-missao').selectOption('primeiro-carbono');
 
     await expect(page.getByTestId('objetivos')).toContainText('a fórmula é CH4');
@@ -34,6 +36,7 @@ test.describe('missões', () => {
 
   test('objetivo não cumprido mantém a missão em aberto', async ({ page }) => {
     await page.goto('/');
+    await openQuests(page);
     await page.getByTestId('escolher-missao').selectOption('alcool-de-dois-carbonos');
 
     await drawOneCarbon(page);
@@ -45,6 +48,7 @@ test.describe('missões', () => {
 
   test('a dica aparece só quando pedida, e é escrita à mão', async ({ page }) => {
     await page.goto('/');
+    await openQuests(page);
     await page.getByTestId('escolher-missao').selectOption('acido-do-vinagre');
 
     await expect(page.getByText('Um clique, um átomo.')).toBeHidden();
@@ -55,6 +59,7 @@ test.describe('missões', () => {
 
   test('sem missão, a tela vira ferramenta livre', async ({ page }) => {
     await page.goto('/');
+    await openQuests(page);
 
     await expect(page.getByText('Desenhe o que quiser')).toBeVisible();
     await expect(page.getByTestId('objetivos')).toBeHidden();
@@ -65,6 +70,7 @@ test.describe('colar SMILES', () => {
   test('carrega a aspirina inteira na tela', async ({ page }) => {
     await page.goto('/');
 
+    await openAnalysis(page);
     await page.getByTestId('entrada-smiles').fill('CC(=O)Oc1ccccc1C(=O)O');
     await page.getByRole('button', { name: 'Carregar' }).click();
 
@@ -75,6 +81,7 @@ test.describe('colar SMILES', () => {
   test('estrutura impossível explica a química — e não vira busca por nome', async ({ page }) => {
     await page.goto('/');
 
+    await openAnalysis(page);
     await page.getByTestId('entrada-smiles').fill('C(C)(C)(C)(C)C');
     await page.getByRole('button', { name: 'Carregar' }).click();
 

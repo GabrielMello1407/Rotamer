@@ -1,0 +1,258 @@
+.drawer {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  height: 100%;
+  min-height: 0;
+  background: var(--raised);
+  border-left: 1px solid var(--line);
+}
+
+.tabs {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--line);
+}
+
+.tab {
+  height: 28px;
+  padding: 0 var(--sp-3);
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--ink-500);
+  font-family: var(--font-ui);
+  font-size: var(--step--1);
+  cursor: pointer;
+}
+
+.tab:hover {
+  color: var(--ink-900);
+}
+
+.tab[aria-selected='true'] {
+  background: var(--brand-wash);
+  border-color: var(--brand);
+  color: var(--brand-ink);
+}
+
+.spacer {
+  flex: 1;
+}
+
+.close {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--ink-400);
+  cursor: pointer;
+}
+
+.close:hover {
+  background: var(--surface);
+  color: var(--ink-900);
+}
+
+.icon {
+  width: 15px;
+  height: 15px;
+}
+
+.body {
+  display: grid;
+  align-content: start;
+  gap: var(--sp-4);
+  padding: var(--sp-4);
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+}
+
+.section {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.heading {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-400);
+  font-weight: 500;
+}
+
+.quiet {
+  margin: 0;
+  font-size: var(--step--1);
+  color: var(--ink-500);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: 3px var(--sp-3);
+  border: 1px solid color-mix(in srgb, var(--ok) 40%, transparent);
+  border-radius: var(--r-full);
+  background: var(--ok-wash);
+  color: var(--ok);
+  font-size: var(--step--1);
+}
+
+.count {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--step--2);
+  opacity: 0.8;
+}
+
+.list {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+}
+
+.rowItem {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: 3px 0;
+}
+
+.term {
+  font-size: var(--step--1);
+  color: var(--ink-500);
+}
+
+.definition {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--step--1);
+  color: var(--ink-900);
+  text-align: right;
+}
+
+/* Chave e SMILES quebram; número nunca. */
+.wrap {
+  word-break: break-all;
+  text-align: right;
+  max-width: 60%;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.errorCard {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+  border: 1px solid color-mix(in srgb, var(--danger) 40%, transparent);
+  border-radius: var(--r-md);
+  background: var(--danger-wash);
+}
+
+.errorTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--step-1);
+  color: var(--danger);
+}
+
+.errorMessage {
+  margin: 0;
+  font-size: var(--step-0);
+  color: var(--ink-900);
+}
+
+.errorFix {
+  margin: 0;
+  font-size: var(--step--1);
+  color: var(--ink-700);
+}
+
+.gauge {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.gaugeLabel {
+  font-size: var(--step--1);
+  color: var(--ink-500);
+}
+
+.track {
+  height: 4px;
+  border-radius: var(--r-full);
+  background: var(--sunk);
+  overflow: hidden;
+}
+
+.fill {
+  display: block;
+  height: 100%;
+  background: var(--ok);
+}
+
+.over {
+  background: var(--warn);
+}
+
+.gaugeValue {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--step--1);
+  color: var(--ink-700);
+}
+
+.limit {
+  color: var(--ink-400);
+}
+
+.footnote {
+  margin: 0;
+  font-size: var(--step--1);
+  line-height: 1.5;
+  color: var(--ink-500);
+}
+
+.link {
+  color: var(--brand-ink);
+  text-decoration: none;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+/* O rodapé do painel: tema e a página da marca, longe do que é química. */
+.tail {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding-top: var(--sp-2);
+  border-top: 1px solid var(--line);
+  font-size: var(--step--1);
+}

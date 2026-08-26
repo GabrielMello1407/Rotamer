@@ -20,6 +20,16 @@ const BASE = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug';
 const TIMEOUT_MS = 5000;
 
 /**
+ * O teto de uma consulta inteira, somando todas as idas.
+ *
+ * Uma pergunta pode precisar de duas chamadas — achar o composto e depois o
+ * título. Com o serviço lento, cada uma consumiria os cinco segundos e quem
+ * está batizando uma molécula esperaria dez por uma resposta que é só um
+ * "não sei". O orçamento é da pergunta, não de cada ida.
+ */
+const BUDGET_MS = 6000;
+
+/**
  * O disjuntor.
  *
  * Depois de algumas recusas seguidas, o PubChem para de ser chamado por um
@@ -97,13 +107,18 @@ interface CidResponse {
   readonly IdentifierList?: { readonly CID?: readonly number[] };
 }
 
-async function ask(path: string): Promise<Response | null> {
+async function ask(path: string, deadline: number): Promise<Response | null> {
   if (circuitOpen()) return null;
+
+  // Sem tempo no orçamento, nem começa: abrir conexão para abortar no meio é
+  // trabalho para os dois lados e resposta para nenhum.
+  const remaining = deadline - Date.now();
+  if (remaining <= 0) return null;
 
   const controller = new AbortController();
   const timer = setTimeout(() => {
     controller.abort();
-  }, TIMEOUT_MS);
+  }, Math.min(TIMEOUT_MS, remaining));
 
   try {
     const response = await fetch(`${BASE}${path}`, { headers: HEADERS, signal: controller.signal });
@@ -140,10 +155,12 @@ export async function findCompoundByName(name: string): Promise<Lookup<CompoundB
   const query = encodeURIComponent(name.trim());
   if (query === '') return { status: 'nao-encontrado' };
 
+  const deadline = Date.now() + BUDGET_MS;
+
   let sawNotFound = false;
 
   for (const properties of PROPERTY_SETS) {
-    const response = await ask(`/compound/name/${query}/property/${properties}/JSON`);
+    const response = await ask(`/compound/name/${query}/property/${properties}/JSON`, deadline);
 
     // Sem resposta quer dizer rede caída ou disjuntor aberto: tentar outro
     // formato de propriedade não vai mudar isso.
@@ -192,7 +209,11 @@ export interface KnownCompound {
 
 /** A estrutura já existe lá fora? Responde pela InChIKey. */
 export async function findCompoundByInchiKey(inchiKey: string): Promise<Lookup<KnownCompound>> {
-  const response = await ask(`/compound/inchikey/${encodeURIComponent(inchiKey)}/cids/JSON`);
+  const deadline = Date.now() + BUDGET_MS;
+  const response = await ask(
+    `/compound/inchikey/${encodeURIComponent(inchiKey)}/cids/JSON`,
+    deadline,
+  );
   if (response === null) return { status: 'indisponivel' };
   if (response.status === 404) return { status: 'nao-encontrado' };
   if (!response.ok) return { status: 'indisponivel' };
@@ -201,12 +222,12 @@ export async function findCompoundByInchiKey(inchiKey: string): Promise<Lookup<K
   const cid = body?.IdentifierList?.CID?.[0];
   if (cid === undefined) return { status: 'nao-encontrado' };
 
-  return { status: 'ok', value: { cid, title: await titleOf(cid) } };
+  return { status: 'ok', value: { cid, title: await titleOf(cid, deadline) } };
 }
 
 /** O nome que o PubChem dá ao composto. Falhou, segue sem nome. */
-async function titleOf(cid: number): Promise<string | null> {
-  const response = await ask(`/compound/cid/${String(cid)}/property/Title/JSON`);
+async function titleOf(cid: number, deadline: number): Promise<string | null> {
+  const response = await ask(`/compound/cid/${String(cid)}/property/Title/JSON`, deadline);
   if (response === null || !response.ok) return null;
 
   const body = (await response.json().catch(() => null)) as PropertyResponse | null;

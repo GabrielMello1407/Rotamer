@@ -1,3 +1,5 @@
+@import './cpk.css';
+
 /* ============================================================================
    ROTAMER — DESIGN TOKENS
    ----------------------------------------------------------------------------
@@ -58,11 +60,7 @@
   --info:      var(--ink-cesio);
   --info-wash: #E4E7FB;
 
-  /* ---- CPK: reservado aos átomos ---- */
-  --cpk-h:  #E4E4EC;  --cpk-c:  #4B4655;  --cpk-n:  #2F6FE0;
-  --cpk-o:  #DB3B3B;  --cpk-f:  #4FBE6C;  --cpk-p:  #E08A2F;
-  --cpk-s:  #C9A61E;  --cpk-cl: #2C9E4B;  --cpk-br: #A0522D;
-  --cpk-i:  #8B3FA8;
+  /* ---- CPK: reservado aos átomos, os 118 em cpk.css ---- */
 
   /* ---- tipografia ---- */
   --font-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
@@ -139,9 +137,6 @@
     --danger-wash: #3A1620;
     --info-wash:   #1B2044;
 
-    --cpk-c: #7C7589;
-    --cpk-h: #C9C9D6;
-
     --shadow-sm: 0 1px 2px rgba(0,0,0,.5), 0 4px 12px -6px rgba(0,0,0,.6);
     --shadow-md: 0 1px 1px rgba(0,0,0,.5), 0 6px 16px -6px rgba(0,0,0,.6),
                  0 20px 50px -24px rgba(0,0,0,.9);
@@ -159,7 +154,6 @@
   --line:#272B38; --line-firm:#3A3F50;
   --brand:#00A98F; --brand-ink:var(--ink-cobre); --brand-on:#041B17; --brand-wash:#0C302A;
   --ok-wash:#1A2E12; --warn-wash:#33270F; --danger-wash:#3A1620; --info-wash:#1B2044;
-  --cpk-c:#7C7589; --cpk-h:#C9C9D6;
   --shadow-sm:0 1px 2px rgba(0,0,0,.5), 0 4px 12px -6px rgba(0,0,0,.6);
   --shadow-md:0 1px 1px rgba(0,0,0,.5), 0 6px 16px -6px rgba(0,0,0,.6), 0 20px 50px -24px rgba(0,0,0,.9);
   --stage-top:#212533; --stage-bot:#101219;

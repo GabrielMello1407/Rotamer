@@ -1,68 +1,155 @@
-.workspace {
+.shell {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  gap: var(--sp-3);
-  height: 100%;
+  height: 100dvh;
   min-height: 0;
-}
-
-.top {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--sp-3);
-}
-
-/* A faixa de métricas manda no espaço; colar SMILES ocupa a sobra. */
-.top > :first-child {
-  flex: 1 1 420px;
+  background: var(--bg);
 }
 
 .stage {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(300px, 34%);
-  gap: var(--sp-3);
+  grid-template-columns: minmax(0, 1fr) 0;
   min-height: 0;
+}
+
+/* O painel aberto empurra a tela de desenho em vez de cobrir: quem está
+   desenhando continua vendo a molécula inteira enquanto lê os números. */
+.stage:has(> aside) {
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 27%);
 }
 
 .canvasArea {
   position: relative;
-  min-height: 320px;
+  min-height: 0;
+  overflow: hidden;
 }
 
-.toolbar {
+/* A tela de desenho é a página: sem moldura, sem cantos, sem margem. */
+.canvasArea > :first-child {
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: 0;
+  background: var(--bg);
+}
+
+.rail {
   position: absolute;
-  inset: var(--sp-3) auto auto var(--sp-3);
+  inset: 0 auto 0 var(--sp-3);
+  display: flex;
+  align-items: center;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.rail > * {
+  pointer-events: auto;
+  max-height: calc(100% - var(--sp-6));
+}
+
+.metrics {
+  position: absolute;
+  /* Termina onde a cena começa: as duas coisas moram no pé da tela. */
+  inset: auto calc(min(400px, 40%) + var(--sp-5)) var(--sp-4) 0;
+  display: flex;
+  justify-content: center;
+  padding: 0 var(--sp-4);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.metrics > * {
+  pointer-events: auto;
+}
+
+.viewer {
+  position: absolute;
+  inset: auto var(--sp-4) var(--sp-4) auto;
+  width: min(400px, 40%);
+  height: min(320px, 44%);
+  transition:
+    width var(--t-mid) var(--ease-out),
+    height var(--t-mid) var(--ease-out);
   z-index: 1;
-  max-width: calc(100% - var(--sp-6));
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
 }
 
-.side {
-  display: grid;
-  grid-template-rows: minmax(200px, 38%) minmax(0, 1fr);
-  gap: var(--sp-3);
-  min-height: 0;
+/* Com a cena ampliada, a faixa de números recua junto: número escrito por cima
+   de molécula não é número nem molécula. */
+.canvasArea:has(.viewerWide) .metrics {
+  right: calc(min(52%, 720px) + var(--sp-5));
 }
 
-/* Missão e tutor dividem a mesma coluna e rolam juntos: a tela de desenho
-   continua sendo o objeto principal. */
-.panels {
-  display: grid;
-  gap: var(--sp-3);
-  align-content: start;
-  min-height: 0;
-  overflow: auto;
+/* Ampliada, a cena toma metade da bancada — não a tela inteira. O desenho
+   continua visível ao lado, que é o ponto de ter as duas coisas juntas. */
+.viewerWide {
+  inset: var(--sp-4) var(--sp-4) var(--sp-4) auto;
+  width: min(52%, 720px);
+  height: auto;
 }
 
-/* Até 900px tudo empilha: a tela de desenho continua sendo o objeto principal,
-   e ninguém desenha molécula numa faixa de 200px. */
+/* Tela estreita: o painel entra embaixo, a cena encolhe e a barra deita no pé.
+ *
+ * Embaixo, e não por cima: no celular a pessoa escolhe a missão e desenha em
+ * seguida. Painel cobrindo a tela de desenho faria escolher a missão significar
+ * não poder desenhar. */
 @media (max-width: 900px) {
-  .stage {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(320px, 58vh) auto;
+  .shell {
+    height: auto;
+    min-height: 100dvh;
   }
 
-  .side {
-    grid-template-rows: minmax(240px, 40vh) auto;
+  .stage,
+  .stage:has(> aside) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Com o painel aberto, a tela de desenho cede altura para ele; sozinha, ela
+     ocupa o que sobrar da janela. */
+  .stage:has(> aside) .canvasArea {
+    height: min(60vh, 520px);
+  }
+
+  .stage > aside {
+    border-left: none;
+    border-top: 1px solid var(--line);
+    height: auto;
+  }
+
+  /* No celular o painel cresce e quem rola é a página. `clip` no eixo x porque
+     `visible` nos dois eixos deixaria uma chave InChI comprida empurrar a
+     página inteira para o lado. */
+  .stage > aside > :last-child {
+    overflow-x: clip;
+    overflow-y: visible;
+  }
+
+  .rail {
+    inset: auto 0 calc(var(--sp-4) + 76px) 0;
+    justify-content: center;
+  }
+
+  .rail > * {
+    max-width: calc(100% - var(--sp-6));
+  }
+
+  .viewer {
+    width: 46%;
+    height: 32%;
+    inset: var(--sp-3) var(--sp-3) auto auto;
+  }
+
+  .viewerWide {
+    inset: var(--sp-3);
+    width: auto;
+    height: auto;
+  }
+
+  .metrics {
+    inset: auto 0 var(--sp-3) 0;
+    padding: 0 var(--sp-2);
+    justify-content: flex-start;
   }
 }

@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { openAnalysis } from './painel';
 
 /**
  * O batismo: o produto não calcula nome de composto, mas registra autoria.
@@ -41,6 +42,7 @@ async function criarConta(page: Page): Promise<void> {
 }
 
 async function carregar(page: Page, smiles: string): Promise<void> {
+  await openAnalysis(page);
   await page.getByTestId('entrada-smiles').fill(smiles);
   await page.getByRole('button', { name: 'Carregar' }).click();
   await expect(page.getByTestId('formula')).toBeVisible({ timeout: 60_000 });

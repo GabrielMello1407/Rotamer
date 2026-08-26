@@ -35,7 +35,7 @@ describe('geometria do anel', () => {
   });
 
   it('fecha o anel: cada átomo tem dois vizinhos', () => {
-    const { graph, atoms } = insertRing(emptyGraph(), 'cicloexano', { x: 0, y: 0 });
+    const { graph, atoms } = insertRing(emptyGraph(), 'cyclohexane', { x: 0, y: 0 });
 
     for (const atom of atoms) {
       const vizinhos = graph.bonds.filter((bond) => bond.from === atom || bond.to === atom);
@@ -44,8 +44,8 @@ describe('geometria do anel', () => {
   });
 
   it('entra onde foi pedido, sem apagar o que já estava lá', () => {
-    const primeiro = insertRing(emptyGraph(), 'benzeno', { x: 0, y: 0 });
-    const segundo = insertRing(primeiro.graph, 'ciclopentano', { x: 10, y: 0 });
+    const primeiro = insertRing(emptyGraph(), 'benzene', { x: 0, y: 0 });
+    const segundo = insertRing(primeiro.graph, 'cyclopentane', { x: 10, y: 0 });
 
     expect(segundo.graph.atoms).toHaveLength(11);
     expect(segundo.graph.bonds).toHaveLength(11);
@@ -62,7 +62,7 @@ describe('geometria do anel', () => {
 
 describe('o que o RDKit lê do anel', () => {
   it('benzeno é C6H6 e aromático', async () => {
-    const { graph } = insertRing(emptyGraph(), 'benzeno', { x: 0, y: 0 });
+    const { graph } = insertRing(emptyGraph(), 'benzene', { x: 0, y: 0 });
     const resultado = await analyze(toMolblock(graph));
 
     expect(resultado.ok).toBe(true);
@@ -73,7 +73,7 @@ describe('o que o RDKit lê do anel', () => {
   });
 
   it('cicloexano é C6H12 e não é aromático', async () => {
-    const { graph } = insertRing(emptyGraph(), 'cicloexano', { x: 0, y: 0 });
+    const { graph } = insertRing(emptyGraph(), 'cyclohexane', { x: 0, y: 0 });
     const resultado = await analyze(toMolblock(graph));
 
     expect(resultado.ok).toBe(true);
@@ -85,7 +85,7 @@ describe('o que o RDKit lê do anel', () => {
   });
 
   it('piridina é C5H5N, aromática e heterocíclica', async () => {
-    const { graph } = insertRing(emptyGraph(), 'piridina', { x: 0, y: 0 });
+    const { graph } = insertRing(emptyGraph(), 'pyridine', { x: 0, y: 0 });
     const resultado = await analyze(toMolblock(graph));
 
     expect(resultado.ok).toBe(true);
@@ -97,7 +97,7 @@ describe('o que o RDKit lê do anel', () => {
   });
 
   it('ciclopentano é C5H10', async () => {
-    const { graph } = insertRing(emptyGraph(), 'ciclopentano', { x: 0, y: 0 });
+    const { graph } = insertRing(emptyGraph(), 'cyclopentane', { x: 0, y: 0 });
     const resultado = await analyze(toMolblock(graph));
 
     expect(resultado.ok).toBe(true);

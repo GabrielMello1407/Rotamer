@@ -25,22 +25,125 @@
   font-size: var(--step-0);
 }
 
+.controls {
+  position: absolute;
+  inset: var(--sp-2) var(--sp-2) auto var(--sp-2);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  pointer-events: none;
+}
+
+.controls > * {
+  pointer-events: auto;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.control {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  height: 26px;
+  padding: 0 var(--sp-2);
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--ink-500);
+  font-family: var(--font-ui);
+  font-size: var(--step--1);
+  cursor: pointer;
+  transition:
+    background-color var(--t-fast) var(--ease-out),
+    color var(--t-fast) var(--ease-out),
+    border-color var(--t-fast) var(--ease-out);
+}
+
+.control:hover {
+  background: var(--raised);
+  color: var(--ink-900);
+}
+
+.control[aria-pressed='true'] {
+  background: var(--brand-wash);
+  border-color: var(--brand);
+  color: var(--brand-ink);
+}
+
+.icon {
+  width: 13px;
+  height: 13px;
+}
+
 .energy {
   position: absolute;
-  inset: auto var(--sp-3) var(--sp-3) auto;
+  inset: auto auto var(--sp-2) var(--sp-3);
   display: flex;
   align-items: baseline;
   gap: var(--sp-2);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--r-full);
-  padding: var(--sp-1) var(--sp-3);
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   font-size: var(--step--1);
   color: var(--ink-700);
+  margin: 0;
 }
 
 .energyLabel {
   color: var(--ink-400);
+}
+
+/* O nome do átomo aceso. O símbolo vai na cor CPK dele — é o átomo escrito, não
+   um estado da interface. */
+.hovered {
+  position: absolute;
+  inset: auto var(--sp-3) var(--sp-2) auto;
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  margin: 0;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--step--1);
+}
+
+.hoveredSymbol {
+  font-weight: 600;
+  color: var(--ink-900);
+}
+
+.hoveredSymbol[data-element='H'] { color: var(--cpk-ink-h); }
+.hoveredSymbol[data-element='C'] { color: var(--cpk-ink-c); }
+.hoveredSymbol[data-element='N'] { color: var(--cpk-ink-n); }
+.hoveredSymbol[data-element='O'] { color: var(--cpk-ink-o); }
+.hoveredSymbol[data-element='F'] { color: var(--cpk-ink-f); }
+.hoveredSymbol[data-element='P'] { color: var(--cpk-ink-p); }
+.hoveredSymbol[data-element='S'] { color: var(--cpk-ink-s); }
+.hoveredSymbol[data-element='Cl'] { color: var(--cpk-ink-cl); }
+.hoveredSymbol[data-element='Br'] { color: var(--cpk-ink-br); }
+.hoveredSymbol[data-element='I'] { color: var(--cpk-ink-i); }
+
+/* Tela estreita: os controles viram só ícone. O nome deles está no rótulo
+   acessível e no `title`; a cena é que precisa do espaço. */
+@media (max-width: 720px) {
+  .control {
+    padding: 0 var(--sp-1);
+  }
+
+  .label {
+    display: none;
+  }
+
+  .icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* Uma linha só: número que quebra em duas vira ruído em cima da molécula. */
+  .energy,
+  .hovered {
+    font-size: var(--step--2);
+    white-space: nowrap;
+  }
 }

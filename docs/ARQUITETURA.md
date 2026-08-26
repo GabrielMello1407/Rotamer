@@ -27,6 +27,10 @@ e permite trocar a implementação de qualquer camada derivada sem migração de
               ◄────────────── nunca escreve ──────────────────────┘
 ```
 
+Cada átomo que sai da geometria carrega o índice do átomo do grafo que o originou (`source`), e o
+hidrogênio acrescentado pelo campo de força carrega o do vizinho em que está pendurado. É por
+esse índice que o vértice do desenho e a esfera da cena acendem juntos, nos dois sentidos (D-18).
+
 O caminho de volta está desenhado justamente porque **não existe**. O tutor lê as métricas e a
 cena e não tem como alterar o grafo, os descritores ou a nota. É a garantia estrutural de que
 nenhuma afirmação química chega ao usuário sem ter passado pelo motor determinístico.

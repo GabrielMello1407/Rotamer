@@ -62,6 +62,15 @@ export interface Molecule {
   readonly descriptors: Descriptors;
   /** Grupos funcionais reconhecidos pelo RDKit, do mais específico ao menos. */
   readonly groups: readonly FunctionalGroup[];
+  /**
+   * Hidrogênios implícitos de cada átomo, na ordem em que eles aparecem na
+   * estrutura.
+   *
+   * É o que permite o desenho escrever `OH` em vez de `O` solto — sem isso o
+   * ácido da aspirina aparece na tela com cara de éter. Quem conta é o RDKit; o
+   * editor só escreve o que ele contou.
+   */
+  readonly atomHydrogens: readonly number[];
 }
 
 /** Código de erro químico. A interface escolhe o tratamento a partir dele. */

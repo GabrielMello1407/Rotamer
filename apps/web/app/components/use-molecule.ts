@@ -50,6 +50,7 @@ const NOTHING: MoleculeReading = {
 export function useMolecule(
   graph: MoleculeGraph,
   connection: ChemistryConnection,
+  onHydrogens?: (hydrogens: ReadonlyMap<number, number>) => void,
 ): MoleculeReading {
   const [reading, setReading] = useState<MoleculeReading>(NOTHING);
 
@@ -75,6 +76,19 @@ export function useMolecule(
 
         const analysis = await client.analyze(molblock);
         if (!alive) return;
+
+        // Os hidrogênios voltam para o desenho: é o que faz o rótulo escrever
+        // `OH` em vez de `O`. A ordem é a mesma do molblock, que saiu do grafo.
+        if (analysis.ok && onHydrogens) {
+          onHydrogens(
+            new Map(
+              graph.atoms.map((atom, index) => [
+                atom.id,
+                analysis.molecule.atomHydrogens[index] ?? 0,
+              ]),
+            ),
+          );
+        }
 
         if (!analysis.ok) {
           shownTopology.current = null;
@@ -121,7 +135,7 @@ export function useMolecule(
       alive = false;
       clearTimeout(timer);
     };
-  }, [molblock, topology, empty, client]);
+  }, [molblock, topology, empty, client, graph.atoms, onHydrogens]);
 
   // Tela em branco não guarda leitura antiga: apagar tudo apaga os números.
   return empty ? NOTHING : reading;

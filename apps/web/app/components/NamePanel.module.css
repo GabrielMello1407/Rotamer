@@ -26,14 +26,25 @@
   color: var(--ink-500);
 }
 
+/* Campo e botão lado a lado, sempre.
+ *
+ * Deixar o botão descer para baixo do campo quando falta um pixel de largura
+ * faz o alvo do clique andar sozinho enquanto a análise atualiza. Em painel
+ * estreito quem encolhe é o campo. */
 .form {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  align-items: center;
   gap: var(--sp-2);
 }
 
+.form > button {
+  flex: none;
+}
+
 .field {
-  flex: 1 1 180px;
+  flex: 1 1 120px;
+  min-width: 0;
   font-family: var(--font-ui);
   font-size: var(--step-0);
   color: var(--ink-900);

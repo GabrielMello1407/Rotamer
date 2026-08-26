@@ -79,11 +79,45 @@ inteira fica ambígua justo onde precisa ser exata. Foi por isso que o acento da
 turquesa: nenhum elemento comum é turquesa no CPK. As duas paletas vivem em camadas separadas
 e nunca se encontram.
 
+**Os 118, em duas formas.** `packages/ui/src/cpk.css` traz a paleta CPK/Jmol inteira em dois
+conjuntos:
+
+| Token | Para quê |
+|---|---|
+| `--cpk-c`, `--cpk-fe`, … | o átomo **desenhado**: a esfera da cena 3D |
+| `--cpk-ink-c`, `--cpk-ink-fe`, … | o átomo **escrito**: rótulo no desenho, letra na barra, símbolo na tabela |
+
+A esfera do hidrogênio é branca e continua branca; a letra H, não — a variante `ink` é a mesma
+cor levada até 4,5:1 contra a superfície do tema. O matiz nunca muda com o tema, só a claridade.
+
+**O símbolo do elemento é átomo.** A letra `O` na barra de ferramentas e na tabela periódica pode
+ser vermelha: ali ela *é* o oxigênio, não um estado da interface. O que nunca pode receber cor
+CPK é o fundo, a borda ou o estado do botão — seleção e foco são sempre turquesa.
+
 ### Séries de gráfico
 
 Ordem fixa: cobre, potássio, sódio, césio, estrôncio, bário, lítio. Ordenada para que vizinhos
 permaneçam distinguíveis em deuteranopia — a primeira separação é matiz-luminosidade, não só
 matiz. Acima de sete séries, agrupe em "outros" em vez de inventar a oitava cor.
+
+## Bancada
+
+A tela de desenho é a página. Tudo o mais se apoia nas bordas dela:
+
+| Onde | O quê | Por quê |
+|---|---|---|
+| Faixa de cima, 46 px | marca, fórmula, massa, estado, exemplos, missões, análise | as três coisas que precisam ser vistas sempre |
+| Borda esquerda, em pé | ferramentas, elementos, anéis, histórico | barra deitada rouba a altura que falta à molécula |
+| Pé, centrado | massa, TPSA, rotáveis, anéis, doadores/aceitadores, Lipinski | os números que mudam a cada traço |
+| Canto inferior direito | cena 3D flutuante, com vibração, volume, hidrogênios e recentrar | vizinha do desenho, não uma aba longe dele |
+| Painel lateral, fechado por padrão | análise completa, missões, tutor, batismo, SMILES | apoio, não objeto |
+
+Ampliar a cena 3D **não** toma a tela: ela cresce para metade da bancada e o desenho continua
+visível ao lado — ver a fórmula plana e a forma no espaço ao mesmo tempo é o produto.
+
+Enquadrar desconta o que está por cima: barra, faixa e cena viram margem, e a molécula é centrada
+no espaço livre. No celular tudo empilha — desenho em cima, painel embaixo — porque escolher uma
+missão não pode significar não poder desenhar.
 
 ## Tipografia
 

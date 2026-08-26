@@ -1,4 +1,5 @@
 import { expect, test, type APIRequestContext } from '@playwright/test';
+import { openAnalysis } from './painel';
 
 /**
  * Busca por nome e verificação de novidade.
@@ -26,6 +27,7 @@ test.describe('busca por nome', () => {
     test.skip(!(await pubchemResponde(request)), 'o PubChem não está respondendo agora');
 
     await page.goto('/');
+    await openAnalysis(page);
     await page.getByTestId('entrada-smiles').fill('caffeine');
     await page.getByRole('button', { name: 'Carregar' }).click();
 
@@ -37,6 +39,7 @@ test.describe('busca por nome', () => {
     test.skip(!(await pubchemResponde(request)), 'o PubChem não está respondendo agora');
 
     await page.goto('/');
+    await openAnalysis(page);
     await page.getByTestId('entrada-smiles').fill('xyzabcnaoexiste');
     await page.getByRole('button', { name: 'Carregar' }).click();
 
@@ -49,6 +52,7 @@ test.describe('busca por nome', () => {
     test.skip(!(await pubchemResponde(request)), 'o PubChem não está respondendo agora');
 
     await page.goto('/');
+    await openAnalysis(page);
     await page.getByTestId('entrada-smiles').fill('CC(=O)Oc1ccccc1C(=O)O');
     await page.getByRole('button', { name: 'Carregar' }).click();
     await expect(page.getByTestId('formula')).toHaveText('C9H8O4', { timeout: 60_000 });
@@ -63,6 +67,7 @@ test.describe('busca por nome', () => {
 test.describe('SMILES continua tendo prioridade', () => {
   test('texto que o RDKit lê como estrutura não vai à rede', async ({ page }) => {
     await page.goto('/');
+    await openAnalysis(page);
     await page.getByTestId('entrada-smiles').fill('CCO');
     await page.getByRole('button', { name: 'Carregar' }).click();
 

@@ -1,6 +1,6 @@
-.toolbar {
+.rail {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   align-items: center;
   gap: var(--sp-2);
   padding: var(--sp-2);
@@ -8,44 +8,132 @@
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
   box-shadow: var(--shadow-sm);
+  max-height: 100%;
+  overflow: auto;
+  scrollbar-width: none;
+}
+
+.rail::-webkit-scrollbar {
+  display: none;
 }
 
 .group {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: var(--sp-1);
+  gap: 2px;
+  /* Nem o grupo nem os botões encolhem: espremidos, eles se sobrepõem e um
+     acaba clicando pelo outro. Quando não cabe, a barra rola. */
+  flex: none;
 }
 
 .divider {
-  width: 1px;
-  align-self: stretch;
+  width: 18px;
+  height: 1px;
   background: var(--line);
-  margin: 0 var(--sp-1);
+  flex: none;
 }
 
+.button {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex: none;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--ink-500);
+  cursor: pointer;
+  transition:
+    background-color var(--t-fast) var(--ease-out),
+    color var(--t-fast) var(--ease-out),
+    border-color var(--t-fast) var(--ease-out);
+}
+
+.button:hover:not(:disabled) {
+  background: var(--surface);
+  color: var(--ink-900);
+}
+
+.button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.button[aria-pressed='true'] {
+  background: var(--brand-wash);
+  border-color: var(--brand);
+  color: var(--brand-ink);
+}
+
+.icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* O símbolo do elemento é o próprio átomo escrito: aqui a cor CPK está no lugar
+   dela, porque o vermelho continua querendo dizer oxigênio. O estado de seleção
+   fica por conta do turquesa da marca, no fundo e na borda — nunca na letra. */
 .element {
-  min-width: 34px;
   font-family: var(--font-mono);
-  font-weight: 500;
+  font-size: var(--step--1);
+  font-weight: 600;
+  color: var(--ink-500);
 }
 
-.element[aria-pressed='true'] {
-  background: var(--brand-wash);
-  color: var(--brand-ink);
-  border-color: var(--brand);
+.element[data-element='C'] {
+  color: var(--cpk-ink-c);
+}
+.element[data-element='O'] {
+  color: var(--cpk-ink-o);
+}
+.element[data-element='N'] {
+  color: var(--cpk-ink-n);
+}
+.element[data-element='S'] {
+  color: var(--cpk-ink-s);
+}
+.element[data-element='P'] {
+  color: var(--cpk-ink-p);
+}
+.element[data-element='F'] {
+  color: var(--cpk-ink-f);
+}
+.element[data-element='Cl'] {
+  color: var(--cpk-ink-cl);
+}
+.element[data-element='Br'] {
+  color: var(--cpk-ink-br);
+}
+.element[data-element='I'] {
+  color: var(--cpk-ink-i);
 }
 
-.tool[aria-pressed='true'] {
-  background: var(--brand-wash);
-  color: var(--brand-ink);
-  border-color: var(--brand);
+/* Elemento vindo da tabela: o símbolo pode ter dois caracteres. */
+.chosen {
+  font-size: 11px;
 }
 
-.ring {
-  padding: var(--sp-1) var(--sp-2);
-  color: var(--ink-700);
-}
+/* Tela estreita: a barra deita no pé da tela de desenho e quebra em duas
+   linhas. Rolar de lado esconderia justamente desfazer e limpar, que são os
+   botões que a pessoa procura quando errou. */
+@media (max-width: 720px) {
+  .rail {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 100%;
+    overflow: visible;
+  }
 
-.ring:hover:not(:disabled) {
-  color: var(--brand-ink);
+  .group {
+    flex-direction: row;
+  }
+
+  .divider {
+    width: 1px;
+    height: 18px;
+  }
 }

@@ -73,6 +73,10 @@ packages/quests     missões declarativas e pontuação
 packages/ui         tokens e componentes
 ```
 
+**O átomo aceso é um só nas duas telas.** Cada átomo da geometria carrega `source`, o índice do
+átomo do grafo que o originou; hidrogênio acrescentado pelo campo de força aponta para o vizinho
+(D-18). É o que liga o vértice do desenho à esfera da cena.
+
 **O grafo é a única fonte de verdade.** Fórmula, descritores, coordenadas 3D, nota e texto do
 tutor são derivados dele e recalculáveis. Nada além do grafo é persistido como estado do usuário.
 
@@ -99,7 +103,11 @@ tutor são derivados dele e recalculáveis. Nada além do grafo é persistido co
   subscrito real, nunca `C6H6` em texto corrido.
 - **Cores CPK são reservadas aos átomos.** Nenhum botão, link, borda ou estado semântico pode usar
   cor CPK. Se a interface pinta de vermelho, o vermelho deixa de significar oxigênio. O acento da
-  marca é turquesa justamente porque nenhum elemento comum é turquesa no CPK.
+  marca é turquesa justamente porque nenhum elemento comum é turquesa no CPK. Os 118 elementos
+  estão em `packages/ui/src/cpk.css`, em dois conjuntos: `--cpk-*` é a esfera desenhada, e
+  `--cpk-ink-*` é a mesma cor legível contra a superfície, para quando o elemento aparece escrito
+  (D-17). O símbolo do elemento pode ser colorido — ele *é* o átomo; o fundo e a borda do botão,
+  nunca.
 - **Tokens:** toda cor, espaço, raio e duração vem de `packages/ui/src/tokens.css`. Nenhum hex
   solto no código.
 - **Tipografia:** Archivo (display), IBM Plex Sans (interface), IBM Plex Mono (dados).

@@ -1,9 +1,9 @@
 'use client';
 
 import type { DynamicsTrajectory, Geometry } from '@rotamer/core';
-import { useFrame } from '@react-three/fiber';
-import { useMemo, useRef, type ReactElement } from 'react';
-import { Color, Matrix4, Quaternion, Vector3, type InstancedMesh } from 'three';
+import { useFrame, type ThreeEvent } from '@react-three/fiber';
+import { useEffect, useMemo, useRef, type ReactElement } from 'react';
+import { Color, Matrix4, Quaternion, Vector3, type InstancedMesh, type Mesh } from 'three';
 import { colorOf, radiusOf, type Cpk } from './cpk';
 import { sampleDynamics, sampleFolding, FOLD_DURATION } from './folding';
 
@@ -15,6 +15,14 @@ export interface MoleculeProps {
   /** A vibração, quando o worker já terminou de simular. */
   readonly trajectory?: DynamicsTrajectory | null | undefined;
   readonly onEnergy?: ((energy: number, done: boolean) => void) | undefined;
+  /** Preenchimento de espaço: a esfera cresce até o raio de van der Waals. */
+  readonly spaceFilling?: boolean;
+  /** Os hidrogênios podem sair da cena sem sair da física. */
+  readonly showHydrogens?: boolean;
+  /** O átomo do desenho que está aceso agora. */
+  readonly highlight?: number | null | undefined;
+  /** Qual átomo do desenho está sob o cursor, ou `null` ao sair. */
+  readonly onHover?: ((source: number | null) => void) | undefined;
 }
 
 const UP = new Vector3(0, 1, 0);
@@ -22,12 +30,19 @@ const UP = new Vector3(0, 1, 0);
 /** Espessura da vareta, em ångström. */
 const STICK = 0.09;
 
+/** Quanto a esfera cresce no modo volume. Bola-e-vareta é ~0,4 do raio real. */
+const SPACE_FILLING = 2.4;
+
 /**
  * A molécula em bola-e-vareta.
  *
  * Átomos e ligações são malhas instanciadas: uma esfera e um cilindro só,
  * repetidos por matriz. É o que segura 60 fps enquanto o dobramento roda, mesmo
  * em celular fraco.
+ *
+ * O que some da cena — hidrogênio escondido, vareta no modo volume — some
+ * encolhendo a instância, nunca refazendo a lista. Índice de átomo é o mesmo em
+ * todo lugar: nas posições, na trajetória e no desenho 2D.
  */
 export function Molecule({
   geometry,
@@ -35,9 +50,14 @@ export function Molecule({
   animate,
   trajectory,
   onEnergy,
+  spaceFilling = false,
+  showHydrogens = true,
+  highlight,
+  onHover,
 }: MoleculeProps): ReactElement {
   const atomsRef = useRef<InstancedMesh | null>(null);
   const bondsRef = useRef<InstancedMesh | null>(null);
+  const haloRef = useRef<Mesh | null>(null);
   const startRef = useRef<number | null>(null);
 
   const matrix = useMemo(() => new Matrix4(), []);
@@ -46,15 +66,23 @@ export function Molecule({
   const rotation = useMemo(() => new Quaternion(), []);
   const direction = useMemo(() => new Vector3(), []);
 
-  const atomColors = useMemo(() => {
-    const colors = new Float32Array(geometry.atoms.length * 3);
+  /**
+   * A cor de cada átomo, pintada instância por instância.
+   *
+   * Malha instanciada não aceita cor por atributo comum: quem pinta é
+   * `setColorAt`, e é preciso avisar que mudou. Sem isso as esferas saem pretas
+   * — e átomo preto é justamente o que a regra CPK existe para evitar.
+   */
+  useEffect(() => {
+    const atoms = atomsRef.current;
+    if (!atoms) return;
+
+    const color = new Color();
     geometry.atoms.forEach((atom, index) => {
-      const color = new Color(colorOf(cpk, atom.element));
-      colors[index * 3] = color.r;
-      colors[index * 3 + 1] = color.g;
-      colors[index * 3 + 2] = color.b;
+      atoms.setColorAt(index, color.set(colorOf(cpk, atom.element)));
     });
-    return colors;
+
+    if (atoms.instanceColor !== null) atoms.instanceColor.needsUpdate = true;
   }, [geometry.atoms, cpk]);
 
   const atomRadii = useMemo(
@@ -88,8 +116,13 @@ export function Molecule({
         positions[index * 3 + 2] ?? 0,
       );
 
+    const visible = (index: number): boolean =>
+      showHydrogens || geometry.atoms[index]?.element !== 'H';
+
     for (let index = 0; index < geometry.atoms.length; index += 1) {
-      const radius = atomRadii[index] ?? 0.38;
+      const base = atomRadii[index] ?? 0.38;
+      const radius = visible(index) ? base * (spaceFilling ? SPACE_FILLING : 1) : 0;
+
       matrix.compose(
         positionAt(index).clone(),
         rotation.identity(),
@@ -100,6 +133,7 @@ export function Molecule({
     atoms.instanceMatrix.needsUpdate = true;
 
     geometry.bonds.forEach((bond, index) => {
+      const hidden = spaceFilling || !visible(bond.from) || !visible(bond.to);
       const start = positionAt(bond.from).clone();
       const end = positionAt(bond.to).clone();
 
@@ -111,33 +145,74 @@ export function Molecule({
       matrix.compose(
         start.clone().add(end).multiplyScalar(0.5),
         rotation,
-        scale.set(STICK, length, STICK),
+        hidden ? scale.set(0, 0, 0) : scale.set(STICK, length, STICK),
       );
       bonds.setMatrixAt(index, matrix);
     });
     bonds.instanceMatrix.needsUpdate = true;
+
+    // O halo acompanha o átomo aceso quadro a quadro: a molécula está vibrando,
+    // e um anel parado ao lado de uma esfera que se mexe não indica nada.
+    const halo = haloRef.current;
+    if (halo) {
+      const index =
+        highlight === null || highlight === undefined
+          ? -1
+          : geometry.atoms.findIndex((atom) => atom.source === highlight);
+
+      halo.visible = index >= 0;
+      if (index >= 0) {
+        const radius = (atomRadii[index] ?? 0.38) * (spaceFilling ? SPACE_FILLING : 1) + 0.16;
+        halo.position.copy(positionAt(index));
+        halo.scale.setScalar(radius);
+      }
+    }
   });
+
+  const report = (event: ThreeEvent<PointerEvent>): void => {
+    if (!onHover) return;
+    event.stopPropagation();
+
+    const index = event.instanceId;
+    if (index === undefined) return;
+
+    const atom = geometry.atoms[index];
+    if (atom) onHover(atom.source);
+  };
 
   return (
     <group>
       <instancedMesh
+        // A chave força uma malha nova quando a molécula muda de tamanho: a
+        // contagem de instâncias é fixada na criação.
+        key={`atomos-${String(geometry.atoms.length)}`}
         ref={atomsRef}
         args={[undefined, undefined, Math.max(1, geometry.atoms.length)]}
         castShadow={false}
+        onPointerMove={report}
+        onPointerOut={() => {
+          onHover?.(null);
+        }}
       >
         <sphereGeometry args={[1, 24, 16]} />
-        <meshStandardMaterial vertexColors roughness={0.35} metalness={0.05} />
-        <instancedBufferAttribute
-          attach="instanceColor"
-          args={[atomColors, 3]}
-          count={geometry.atoms.length}
-        />
+        <meshStandardMaterial roughness={0.32} metalness={0.05} />
       </instancedMesh>
 
-      <instancedMesh ref={bondsRef} args={[undefined, undefined, Math.max(1, geometry.bonds.length)]}>
-        <cylinderGeometry args={[1, 1, 1, 12]} />
-        <meshStandardMaterial color={cpk.bond} roughness={0.5} metalness={0.05} />
+      <instancedMesh
+        key={`ligacoes-${String(geometry.bonds.length)}`}
+        ref={bondsRef}
+        args={[undefined, undefined, Math.max(1, geometry.bonds.length)]}
+      >
+        <cylinderGeometry args={[1, 1, 1, 16]} />
+        <meshStandardMaterial color={cpk.bond} roughness={0.45} metalness={0.05} />
       </instancedMesh>
+
+      {/* O halo é turquesa de propósito: nenhum elemento é turquesa no CPK, então
+          ele nunca vai ser confundido com um átomo. */}
+      <mesh ref={haloRef} visible={false} raycast={() => null}>
+        <sphereGeometry args={[1, 24, 16]} />
+        <meshBasicMaterial color={cpk.highlight} transparent opacity={0.28} depthWrite={false} />
+      </mesh>
     </group>
   );
 }

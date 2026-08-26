@@ -70,6 +70,7 @@ function describe(rdkit: RDKitModule, mol: JSMol): Molecule {
     molblock: mol.get_molblock(),
     descriptors: descriptorsOf(mol),
     groups: detectFunctionalGroups(rdkit, mol),
+    atomHydrogens: hydrogensOf(mol),
   };
 }
 
@@ -92,6 +93,12 @@ function formulaOf(mol: JSMol): string {
   }
 
   return hillFormula(counts);
+}
+
+/** Quantos hidrogênios o RDKit completou em cada átomo. */
+function hydrogensOf(mol: JSMol): number[] {
+  const document = parseJson<JsonDocument>(mol.get_json());
+  return resolveAtoms(document).map((atom) => atom.implicitHydrogens);
 }
 
 /** Traduz o mapa de descritores do RDKit para os nomes usados no produto. */

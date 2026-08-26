@@ -400,3 +400,66 @@ busca por nome: composto já conhecido não recebe apelido, e a tela mostra o no
 com o CID. Quando o PubChem não responde, o produto **diz que não sabe** e o batismo continua
 valendo aqui dentro, com a ressalva na tela — três estados, não dois, porque "não consegui
 verificar" não é "é inédito".
+
+
+---
+
+## D-16 · A bancada é a tela inteira; o resto entra quando chamado
+
+**Decisão.** A tela de desenho ocupa toda a janela. Em cima, uma faixa fina com a fórmula, a
+massa e o estado da estrutura; à esquerda, a barra de ferramentas em pé; no pé, os números que
+mudam a cada traço; no canto, a cena 3D flutuando. Análise, missões, tutor, batismo e SMILES
+moram num painel lateral que começa fechado.
+
+**Por quê.** A versão anterior dividia a janela em duas colunas fixas e uma faixa de cabeçalho
+alta: a molécula ficava com menos de metade da tela e, num notebook, o hexágono do benzeno saía
+do tamanho de uma moeda. O que precisa de espaço é o desenho — é nele que se trabalha. Fórmula,
+massa e o veredito "válida" são as três coisas que precisam estar visíveis **sempre**, e cabem
+numa faixa de 46 px.
+
+**O que isso obriga.** Enquadrar passou a descontar o que está por cima da tela: a barra em pé, a
+faixa de números e a cena 3D viram margens, e a molécula é centrada no espaço que sobra, não no
+centro geométrico da janela. Sem isso, "enquadrar" jogaria metade da estrutura atrás da cena.
+
+**No celular** o painel entra embaixo da tela de desenho, não por cima: escolher a missão não
+pode significar não poder desenhar.
+
+---
+
+## D-17 · A cor de elemento tem duas formas: a esfera e a letra
+
+**Decisão.** Os 118 elementos têm cor CPK em `packages/ui/src/cpk.css`, em dois conjuntos:
+`--cpk-*` é a cor do átomo desenhado — a esfera na cena 3D — e `--cpk-ink-*` é a mesma cor levada
+até 4,5:1 contra a superfície do tema, para quando o elemento aparece **escrito**.
+
+**Por quê.** A esfera do hidrogênio é branca, e tem que continuar branca: é assim em toda a
+literatura. Mas a letra H escrita em branco sobre papel branco não existe. Ou se aceita um
+hidrogênio cinza na cena — errado para quem conhece a convenção — ou se aceita um rótulo
+ilegível no desenho. Com dois tokens, nenhum dos dois.
+
+**De onde vêm os valores.** Os dez elementos da orgânica mantêm os tons já ajustados do produto.
+Os outros cento e oito são a paleta CPK/Jmol, a mesma que PyMOL e Avogadro usam — inventar
+paleta própria faria o aluno ver aqui um enxofre de cor que não existe em nenhum outro lugar. O
+que muda por tema é só a claridade; o matiz nunca.
+
+**A regra continua valendo.** Cor CPK só aparece em átomo — inclusive quando o átomo é uma letra
+na barra de ferramentas ou na tabela periódica. Seleção, foco e estado seguem sendo turquesa.
+
+---
+
+## D-18 · O átomo aceso é um só, nas duas telas
+
+**Decisão.** Passar o cursor sobre um vértice do desenho acende a esfera correspondente na cena
+3D, e vice-versa. A cena diz de que elemento se trata e qual átomo do desenho ele é.
+
+**Como.** Cada átomo da geometria carrega `source`: o índice do átomo do grafo que o originou. Os
+hidrogênios que o campo de força acrescentou não existem no desenho, então apontam para o vizinho
+em que estão pendurados — apontar um H na cena acende o carbono dele, que é o que a pessoa está
+procurando.
+
+**Por que importa.** As duas telas mostram a mesma molécula, e até aqui não havia como saber que
+esfera era que traço. Numa cadeia com quatro carbonos parecidos, essa correspondência é a
+diferença entre a cena 3D ser informação e ser enfeite.
+
+**O halo é turquesa** — a cor da marca — justamente porque nenhum elemento é turquesa no CPK: o
+destaque nunca vai ser lido como um átomo de outro elemento.

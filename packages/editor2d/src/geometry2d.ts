@@ -6,11 +6,32 @@ import type { Camera, Hover, Point, Viewport } from './types';
  * e prender o traço nos ângulos que a química usa.
  */
 
-/** Raio de acerto de um átomo, em ångström. */
+/**
+ * O quanto se pode errar o alvo, em ångström.
+ *
+ * São mínimos: o valor de verdade depende do zoom, porque o dedo erra em pixel,
+ * não em ångström. Numa molécula afastada, um alvo de 0,45 Å vira um alvo de
+ * quatro pixels — impossível de acertar com o polegar.
+ */
 const ATOM_HIT = 0.45;
-
-/** Distância máxima até a linha da ligação para contar como acerto. */
 const BOND_HIT = 0.28;
+
+/** Alvo mínimo em pixels. Abaixo disto, desenhar no celular vira sorte. */
+const ATOM_HIT_PX = 16;
+const BOND_HIT_PX = 10;
+
+export interface HitTolerance {
+  readonly atom: number;
+  readonly bond: number;
+}
+
+/** A folga de acerto para o zoom atual. */
+export function toleranceFor(camera: Camera): HitTolerance {
+  return {
+    atom: Math.max(ATOM_HIT, ATOM_HIT_PX / camera.scale),
+    bond: Math.max(BOND_HIT, BOND_HIT_PX / camera.scale),
+  };
+}
 
 /**
  * Ângulos de 30 em 30 graus.
@@ -41,16 +62,25 @@ export function distance(first: Point, second: Point): number {
 }
 
 /** O átomo sob o ponto, se houver. O último desenhado ganha. */
-export function atomAt(graph: MoleculeGraph, point: Point): AtomId | null {
-  for (let index = graph.atoms.length - 1; index >= 0; index -= 1) {
-    const atom = graph.atoms[index];
-    if (atom && distance(atom, point) <= ATOM_HIT) return atom.id;
+export function atomAt(graph: MoleculeGraph, point: Point, tolerance = ATOM_HIT): AtomId | null {
+  let closest: AtomId | null = null;
+  let best = tolerance;
+
+  // Com folga grande, dois átomos podem caber no alvo: vence o mais perto, não
+  // o último desenhado.
+  for (const atom of graph.atoms) {
+    const reach = distance(atom, point);
+    if (reach <= best) {
+      best = reach;
+      closest = atom.id;
+    }
   }
-  return null;
+
+  return closest;
 }
 
 /** A ligação sob o ponto, se houver — e sem contar as pontas, que são átomos. */
-export function bondAt(graph: MoleculeGraph, point: Point): BondId | null {
+export function bondAt(graph: MoleculeGraph, point: Point, tolerance = BOND_HIT): BondId | null {
   for (let index = graph.bonds.length - 1; index >= 0; index -= 1) {
     const bond = graph.bonds[index];
     if (!bond) continue;
@@ -59,17 +89,17 @@ export function bondAt(graph: MoleculeGraph, point: Point): BondId | null {
     const to = graph.atoms.find((atom) => atom.id === bond.to);
     if (!from || !to) continue;
 
-    if (distanceToSegment(point, from, to) <= BOND_HIT) return bond.id;
+    if (distanceToSegment(point, from, to) <= tolerance) return bond.id;
   }
   return null;
 }
 
 /** O que está sob o ponto: átomo tem prioridade sobre ligação. */
-export function hoverAt(graph: MoleculeGraph, point: Point): Hover {
-  const atom = atomAt(graph, point);
+export function hoverAt(graph: MoleculeGraph, point: Point, tolerance?: HitTolerance): Hover {
+  const atom = atomAt(graph, point, tolerance?.atom);
   if (atom !== null) return { kind: 'atom', id: atom };
 
-  const bond = bondAt(graph, point);
+  const bond = bondAt(graph, point, tolerance?.bond);
   if (bond !== null) return { kind: 'bond', id: bond };
 
   return null;
@@ -166,11 +196,35 @@ function direction(origin: Point, angle: number): Point {
   };
 }
 
+/**
+ * Cantos da tela que estão cobertos por outra coisa — barra de ferramentas,
+ * faixa de números, cena 3D. Enquadrar sem contar com eles põe metade da
+ * molécula atrás de um painel.
+ */
+export interface Insets {
+  readonly left: number;
+  readonly right: number;
+  readonly top: number;
+  readonly bottom: number;
+}
+
+const NO_INSETS: Insets = { left: 0, right: 0, top: 0, bottom: 0 };
+
+/**
+ * Quanto o enquadramento pode ampliar.
+ *
+ * Um átomo sozinho, enquadrado sem teto, viraria uma letra de trinta
+ * centímetros. O teto é generoso o bastante para molécula pequena aparecer
+ * grande e baixo o bastante para o traço continuar parecendo traço.
+ */
+const FRAME_MAX_SCALE = 52;
+
 /** Câmera que enquadra a molécula inteira com folga. */
 export function frameGraph(
   graph: MoleculeGraph,
   viewport: Viewport,
   fallbackScale: number,
+  insets: Insets = NO_INSETS,
 ): Camera {
   if (graph.atoms.length === 0) {
     return { x: 0, y: 0, scale: fallbackScale };
@@ -187,15 +241,25 @@ export function frameGraph(
   const width = Math.max(maxX - minX, BOND_LENGTH * 2);
   const height = Math.max(maxY - minY, BOND_LENGTH * 2);
 
+  // A área que sobra depois de descontar o que está por cima da tela.
+  const usableWidth = Math.max(120, viewport.width - insets.left - insets.right);
+  const usableHeight = Math.max(120, viewport.height - insets.top - insets.bottom);
+
   const margin = 2.4;
   const scale = Math.min(
-    viewport.width / (width + margin),
-    viewport.height / (height + margin),
+    FRAME_MAX_SCALE,
+    usableWidth / (width + margin),
+    usableHeight / (height + margin),
   );
 
+  // O centro da molécula vai para o centro da área livre, não para o centro da
+  // tela: é a diferença entre a molécula caber e a molécula ficar atrás da cena.
+  const centerX = insets.left + usableWidth / 2;
+  const centerY = insets.top + usableHeight / 2;
+
   return {
-    x: (minX + maxX) / 2,
-    y: (minY + maxY) / 2,
+    x: (minX + maxX) / 2 - (centerX - viewport.width / 2) / scale,
+    y: (minY + maxY) / 2 + (centerY - viewport.height / 2) / scale,
     scale,
   };
 }

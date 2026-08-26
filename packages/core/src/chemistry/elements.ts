@@ -28,6 +28,20 @@ export function elementSymbol(atomicNumber: number): string {
   return SYMBOLS[atomicNumber] ?? `Z${String(atomicNumber)}`;
 }
 
+const NUMBERS = new Map<string, number>(
+  SYMBOLS.map((symbol, index) => [symbol, index] as const).filter(([symbol]) => symbol !== ''),
+);
+
+/**
+ * Número atômico a partir do símbolo, ou `null` para o que não é elemento.
+ *
+ * Serve para descrever — qual período da tabela, que tamanho desenhar a esfera.
+ * Nada aqui decide química.
+ */
+export function atomicNumber(symbol: string): number | null {
+  return NUMBERS.get(symbol) ?? null;
+}
+
 /**
  * Valência máxima do elemento **neutro**, usada só para escrever a mensagem de
  * erro em português. Quando o átomo tem carga ou o elemento não está aqui, a

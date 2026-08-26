@@ -14,7 +14,7 @@ import {
   type MoleculeGraph,
 } from '@rotamer/core';
 import { createStore } from 'zustand/vanilla';
-import { frameGraph } from './geometry2d';
+import { frameGraph, type Insets } from './geometry2d';
 import { insertRing, type RingKind } from './templates';
 import type { Camera, Drag, Hover, Point, Tool, Viewport } from './types';
 
@@ -44,16 +44,40 @@ export interface EditorState {
   element: string;
   hover: Hover;
   drag: Drag;
+  /**
+   * Hidrogênios de cada átomo, contados pelo RDKit.
+   *
+   * Chega depois do traço, junto com a análise, e é o que faz o desenho
+   * escrever `OH` em vez de `O`. Some a cada mudança do grafo: número velho num
+   * desenho novo é pior que número nenhum.
+   */
+  hydrogens: ReadonlyMap<AtomId, number>;
+  /**
+   * O átomo aceso agora, venha o cursor de onde vier.
+   *
+   * As duas telas mostram a mesma molécula: apontar uma esfera no espaço tem
+   * que acender o vértice do desenho, e apontar o vértice tem que acender a
+   * esfera. Sem isso, quem olha para a forma 3D não sabe qual traço ela é.
+   */
+  focus: AtomId | null;
+  /** O átomo que o RDKit apontou como culpado do erro, para marcar na tela. */
+  flagged: AtomId | null;
   camera: Camera;
   /** Tamanho da área de desenho, informado pelo componente do canvas. */
   viewport: Viewport;
+  /** Bordas da tela cobertas por painel, barra ou pela cena 3D. */
+  insets: Insets;
 
   setTool: (tool: Tool) => void;
   setElement: (element: string) => void;
   setHover: (hover: Hover) => void;
   setDrag: (drag: Drag) => void;
   setCamera: (camera: Camera) => void;
+  setHydrogens: (hydrogens: ReadonlyMap<AtomId, number>) => void;
+  setFocus: (focus: AtomId | null) => void;
+  setFlagged: (flagged: AtomId | null) => void;
   setViewport: (viewport: Viewport) => void;
+  setInsets: (insets: Insets) => void;
   /** Enquadra a molécula inteira com folga. */
   frame: () => void;
 
@@ -91,8 +115,12 @@ export function createEditorStore(initial: MoleculeGraph = emptyGraph()) {
     element: 'C',
     hover: null,
     drag: { kind: 'none' },
+    hydrogens: new Map<AtomId, number>(),
+    focus: null,
+    flagged: null,
     camera: { x: 0, y: 0, scale: DEFAULT_SCALE },
     viewport: { width: 0, height: 0 },
+    insets: { left: 0, right: 0, top: 0, bottom: 0 },
 
     setTool: (tool) => {
       set({ tool });
@@ -112,10 +140,22 @@ export function createEditorStore(initial: MoleculeGraph = emptyGraph()) {
     setViewport: (viewport) => {
       set({ viewport });
     },
+    setInsets: (insets) => {
+      set({ insets });
+    },
+    setHydrogens: (hydrogens) => {
+      set({ hydrogens });
+    },
+    setFocus: (focus) => {
+      if (get().focus !== focus) set({ focus });
+    },
+    setFlagged: (flagged) => {
+      if (get().flagged !== flagged) set({ flagged });
+    },
     frame: () => {
-      const { graph, viewport, camera, setCamera } = get();
+      const { graph, viewport, camera, insets, setCamera } = get();
       if (viewport.width === 0 || viewport.height === 0) return;
-      setCamera(frameGraph(graph, viewport, camera.scale));
+      setCamera(frameGraph(graph, viewport, camera.scale, insets));
     },
 
     commit: (graph) => {
@@ -126,11 +166,13 @@ export function createEditorStore(initial: MoleculeGraph = emptyGraph()) {
         graph,
         past: [...past.slice(-(MAX_HISTORY - 1)), previous],
         future: [],
+        hydrogens: new Map<AtomId, number>(),
+        flagged: null,
       });
     },
 
     amend: (graph) => {
-      set({ graph });
+      set({ graph, hydrogens: new Map<AtomId, number>(), flagged: null });
     },
 
     closeUndoStep: (before) => {

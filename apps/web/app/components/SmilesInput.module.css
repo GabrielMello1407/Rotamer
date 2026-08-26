@@ -1,7 +1,13 @@
 .form {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--sp-2);
+}
+
+/* O botão nunca desce sozinho: alvo de clique que anda é alvo que some. */
+.form > button {
+  flex: none;
 }
 
 .field {
@@ -12,7 +18,8 @@
   border: 1px solid var(--line-firm);
   border-radius: var(--r-sm);
   padding: var(--sp-2) var(--sp-3);
-  min-width: 200px;
+  flex: 1 1 140px;
+  min-width: 0;
 }
 
 .field::placeholder {

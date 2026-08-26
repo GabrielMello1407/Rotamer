@@ -12,6 +12,16 @@ export interface GeometryAtom {
   readonly x: number;
   readonly y: number;
   readonly z: number;
+  /**
+   * Qual átomo do desenho deu origem a este, pela posição na lista do grafo.
+   *
+   * É o que liga as duas telas: apontar uma esfera no espaço e saber que vértice
+   * do desenho ela é. Os hidrogênios que o campo de força precisou acrescentar
+   * não existem no desenho, então apontam para o átomo em que estão pendurados —
+   * passar o mouse num hidrogênio acende o carbono dele, que é o que a pessoa
+   * está procurando.
+   */
+  readonly source: number;
 }
 
 export interface GeometryBond {

@@ -101,3 +101,29 @@ describe('desenho plano', () => {
     expect(await depict('   ')).toBeNull();
   });
 });
+
+describe('hidrogênios de cada átomo', () => {
+  it('o RDKit conta o que o desenho não mostra', async () => {
+    const resultado = await analyze('CCO');
+    if (!resultado.ok) throw new Error('etanol deveria ser válido');
+
+    // Etanol: CH3, CH2, OH — três, dois, um.
+    expect(resultado.molecule.atomHydrogens).toEqual([3, 2, 1]);
+  });
+
+  it('é isso que permite escrever OH em vez de O solto', async () => {
+    const resultado = await analyze('CC(=O)O');
+    if (!resultado.ok) throw new Error('ácido acético deveria ser válido');
+
+    // CH3, C da carbonila, O da dupla, OH.
+    expect(resultado.molecule.atomHydrogens).toEqual([3, 0, 0, 1]);
+  });
+
+  it('a contagem tem um número por átomo pesado, na ordem da estrutura', async () => {
+    const resultado = await analyze('Cn1cnc2c1c(=O)n(C)c(=O)n2C');
+    if (!resultado.ok) throw new Error('cafeína deveria ser válida');
+
+    expect(resultado.molecule.atomHydrogens).toHaveLength(14);
+    expect(resultado.molecule.atomHydrogens.reduce((total, n) => total + n, 0)).toBe(10);
+  });
+});

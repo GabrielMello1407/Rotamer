@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { openQuests } from './painel';
 
 /**
  * O tutor é a única parte da tela que pode estar errada — e por isso é a única
@@ -19,6 +20,7 @@ async function desenharUmCarbono(page: Page): Promise<void> {
 test.describe('tutor', () => {
   test('só aceita pergunta depois de existir molécula', async ({ page }) => {
     await page.goto('/');
+    await openQuests(page);
 
     await expect(page.getByTestId('tutor-proximo-passo')).toBeDisabled();
     await expect(
@@ -34,6 +36,7 @@ test.describe('tutor', () => {
   }) => {
     await page.goto('/');
     await desenharUmCarbono(page);
+    await openQuests(page);
 
     await expect(page.getByTestId('tutor-proximo-passo')).toBeEnabled({ timeout: 60_000 });
     await page.getByTestId('tutor-proximo-passo').click();

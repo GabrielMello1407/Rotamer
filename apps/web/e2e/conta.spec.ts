@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { openQuests } from './painel';
 
 /**
  * A conta é opcional: o editor inteiro funciona sem ela. O que ela guarda é o
@@ -44,6 +45,7 @@ test.describe('conta', () => {
   }) => {
     await criarConta(page, novoEmail());
 
+    await openQuests(page);
     await page.getByTestId('escolher-missao').selectOption('primeiro-carbono');
     await desenharUmCarbono(page);
 
@@ -56,6 +58,7 @@ test.describe('conta', () => {
   test('o que já foi cumprido aparece na próxima visita', async ({ page }) => {
     await criarConta(page, novoEmail());
 
+    await openQuests(page);
     await page.getByTestId('escolher-missao').selectOption('primeiro-carbono');
     await desenharUmCarbono(page);
     await expect(page.getByTestId('progresso-salvo')).toBeVisible({ timeout: 60_000 });
@@ -63,12 +66,14 @@ test.describe('conta', () => {
     // Volta com a tela em branco: o progresso vem do banco, não do desenho.
     await page.reload();
 
+    await openQuests(page);
     await expect(page.getByText('cumpridas')).toBeVisible({ timeout: 60_000 });
     await expect(page.getByTestId('escolher-missao')).toContainText('✓ O primeiro traço');
   });
 
   test('sem conta, a missão cumprida convida a entrar em vez de guardar', async ({ page }) => {
     await page.goto('/');
+    await openQuests(page);
     await page.getByTestId('escolher-missao').selectOption('primeiro-carbono');
     await desenharUmCarbono(page);
 

@@ -33,6 +33,29 @@ describe('conformação', () => {
     expect(espalhamento).toBeGreaterThan(0.3);
   });
 
+  it('cada átomo da cena aponta para o átomo do desenho que o originou', async () => {
+    const geometry = await geometryOf('CCO');
+
+    // Os três do desenho vêm primeiro, na mesma ordem em que foram desenhados.
+    expect(geometry.atoms.slice(0, 3).map((atom) => atom.element)).toEqual(['C', 'C', 'O']);
+    expect(geometry.atoms.slice(0, 3).map((atom) => atom.source)).toEqual([0, 1, 2]);
+
+    // Os hidrogênios não existem no desenho: cada um aponta para o átomo em que
+    // está pendurado. É o que faz apontar um H na cena acender o carbono certo.
+    const pendurados = new Map<number, number>();
+    for (const atom of geometry.atoms) {
+      if (atom.element !== 'H') continue;
+      pendurados.set(atom.source, (pendurados.get(atom.source) ?? 0) + 1);
+    }
+
+    // CH3–CH2–OH: três, dois e um.
+    expect([...pendurados.entries()].sort((a, b) => a[0] - b[0])).toEqual([
+      [0, 3],
+      [1, 2],
+      [2, 1],
+    ]);
+  });
+
   it('as ligações têm comprimento de ligação de verdade', async () => {
     const geometry = await geometryOf('CCO');
 

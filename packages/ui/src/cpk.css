@@ -1,0 +1,248 @@
+/*
+ * CPK — a cor de cada um dos 118 elementos.
+ *
+ * REGRA INEGOCIÁVEL: estas cores pertencem aos átomos e a mais nada. Nenhum
+ * botão, link, borda ou estado semântico pode usar uma delas. Se a interface
+ * pinta de vermelho, o vermelho deixa de significar oxigênio.
+ *
+ * De onde vêm: os dez elementos da orgânica mantêm os tons já ajustados do
+ * produto, medidos contra as duas superfícies. Os outros cento e oito são a
+ * paleta CPK/Jmol — a mesma que PyMOL, Avogadro e a literatura usam. Inventar
+ * paleta própria faria o aluno ver aqui um enxofre de cor que não existe em
+ * nenhum outro lugar.
+ *
+ * O que muda por tema é só a claridade, nunca o matiz: sobre papel branco os
+ * quase-brancos escurecem, sobre superfície escura os quase-pretos clareiam.
+ * Enxofre continua amarelo, iodo continua roxo, ferro continua laranja.
+ */
+
+/*
+ * A mesma cor, escrita.
+ *
+ * A esfera de hidrogênio é branca e tem que continuar branca; a letra H escrita
+ * em branco sobre papel branco não existe. Estes tons são os mesmos elementos
+ * levados até 4,5:1 contra a superfície do tema — o matiz continua o do
+ * elemento, muda só o quanto ele aguenta ser lido. Esfera usa `--cpk-*`, texto
+ * usa `--cpk-ink-*`.
+ */
+
+:root {
+  --cpk-h: #E4E4EC; --cpk-he: #B8D9D9; --cpk-li: #CC80FF; --cpk-be: #AFE600;
+  --cpk-b: #FFB5B5; --cpk-c: #4B4655; --cpk-n: #2F6FE0; --cpk-o: #DB3B3B;
+  --cpk-f: #4FBE6C; --cpk-ne: #AAD8E9; --cpk-na: #AB5CF2; --cpk-mg: #83F200;
+  --cpk-al: #BFA6A6; --cpk-si: #F0C8A0; --cpk-p: #E08A2F; --cpk-s: #C9A61E;
+  --cpk-cl: #2C9E4B; --cpk-ar: #80D1E3; --cpk-k: #8F40D4; --cpk-ca: #3AF200;
+  --cpk-sc: #CFCFCF; --cpk-ti: #BFC2C7; --cpk-v: #A6A6AB; --cpk-cr: #8A99C7;
+  --cpk-mn: #9C7AC7; --cpk-fe: #E06633; --cpk-co: #F090A0; --cpk-ni: #50D050;
+  --cpk-cu: #C88033; --cpk-zn: #7D80B0; --cpk-ga: #C28F8F; --cpk-ge: #668F8F;
+  --cpk-as: #BD80E3; --cpk-se: #FFA100; --cpk-br: #A0522D; --cpk-kr: #5CB8D1;
+  --cpk-rb: #702EB0; --cpk-sr: #00F200; --cpk-y: #85E6E6; --cpk-zr: #94E0E0;
+  --cpk-nb: #73C2C9; --cpk-mo: #54B5B5; --cpk-tc: #3B9E9E; --cpk-ru: #248F8F;
+  --cpk-rh: #0A7D8C; --cpk-pd: #006985; --cpk-ag: #C0C0C0; --cpk-cd: #F2CE88;
+  --cpk-in: #A67573; --cpk-sn: #668080; --cpk-sb: #9E63B5; --cpk-te: #D47A00;
+  --cpk-i: #8B3FA8; --cpk-xe: #429EB0; --cpk-cs: #57178F; --cpk-ba: #00C900;
+  --cpk-la: #70D4FF; --cpk-ce: #D9D9A9; --cpk-pr: #B8D9A9; --cpk-nd: #B3E6B3;
+  --cpk-pm: #93E6B3; --cpk-sm: #81E6B3; --cpk-eu: #5CF2BD; --cpk-gd: #42F2BD;
+  --cpk-tb: #2EF2BD; --cpk-dy: #1DF2BD; --cpk-ho: #00F294; --cpk-er: #00E675;
+  --cpk-tm: #00D452; --cpk-yb: #00BF38; --cpk-lu: #00AB24; --cpk-hf: #4DC2FF;
+  --cpk-ta: #4DA6FF; --cpk-w: #2194D6; --cpk-re: #267DAB; --cpk-os: #266696;
+  --cpk-ir: #175487; --cpk-pt: #D0D0E0; --cpk-au: #FFD123; --cpk-hg: #B8B8D0;
+  --cpk-tl: #A6544D; --cpk-pb: #575961; --cpk-bi: #9E4FB5; --cpk-po: #AB5C00;
+  --cpk-at: #754F45; --cpk-rn: #428296; --cpk-fr: #420066; --cpk-ra: #007D00;
+  --cpk-ac: #70ABFA; --cpk-th: #00BAFF; --cpk-pa: #00A1FF; --cpk-u: #008FFF;
+  --cpk-np: #0080FF; --cpk-pu: #006BFF; --cpk-am: #545CF2; --cpk-cm: #785CE3;
+  --cpk-bk: #8A4FE3; --cpk-cf: #A136D4; --cpk-es: #B31FD4; --cpk-fm: #B31FBA;
+  --cpk-md: #B30DA6; --cpk-no: #BD0D87; --cpk-lr: #C70066; --cpk-rf: #CC0059;
+  --cpk-db: #D1004F; --cpk-sg: #D90045; --cpk-bh: #E00038; --cpk-hs: #E6002E;
+  --cpk-mt: #EB0026; --cpk-ds: #C9C9C9; --cpk-rg: #C9C9C9; --cpk-cn: #C9C9C9;
+  --cpk-nh: #C9C9C9; --cpk-fl: #C9C9C9; --cpk-mc: #C9C9C9; --cpk-lv: #C9C9C9;
+  --cpk-ts: #C9C9C9; --cpk-og: #C9C9C9;
+  --cpk-ink-h: #6D6D71; --cpk-ink-he: #677A7A; --cpk-ink-li: #935CB8;
+  --cpk-ink-be: #628100; --cpk-ink-b: #8F6565; --cpk-ink-c: #4B4655;
+  --cpk-ink-n: #2F6FE0; --cpk-ink-o: #D23939; --cpk-ink-f: #368149;
+  --cpk-ink-ne: #5F7982; --cpk-ink-na: #9651D5; --cpk-ink-mg: #447E00;
+  --cpk-ink-al: #827171; --cpk-ink-si: #86705A; --cpk-ink-p: #A16322;
+  --cpk-ink-s: #897114; --cpk-ink-cl: #25853F; --cpk-ink-ar: #4D7D88;
+  --cpk-ink-k: #8F40D4; --cpk-ink-ca: #208800; --cpk-ink-sc: #747474;
+  --cpk-ink-ti: #737477; --cpk-ink-v: #717174; --cpk-ink-cr: #697497;
+  --cpk-ink-mn: #8366A7; --cpk-ink-fe: #BC562B; --cpk-ink-co: #A3626D;
+  --cpk-ink-ni: #338533; --cpk-ink-cu: #A06629; --cpk-ink-zn: #6E719B;
+  --cpk-ink-ga: #936D6D; --cpk-ink-ge: #567878; --cpk-ink-as: #9061AD;
+  --cpk-ink-se: #A36700; --cpk-ink-br: #A0522D; --cpk-ink-kr: #3F7D8E;
+  --cpk-ink-rb: #702EB0; --cpk-ink-sr: #008800; --cpk-ink-y: #457878;
+  --cpk-ink-zr: #537D7D; --cpk-ink-nb: #4A7C81; --cpk-ink-mo: #397B7B;
+  --cpk-ink-tc: #2F7E7E; --cpk-ink-ru: #207E7E; --cpk-ink-rh: #0A7D8C;
+  --cpk-ink-pd: #006985; --cpk-ink-ag: #737373; --cpk-ink-cd: #88734C;
+  --cpk-ink-in: #926765; --cpk-ink-sn: #627B7B; --cpk-ink-sb: #985FAE;
+  --cpk-ink-te: #AA6200; --cpk-ink-i: #8B3FA8; --cpk-ink-xe: #357E8D;
+  --cpk-ink-cs: #57178F; --cpk-ink-ba: #008900; --cpk-ink-la: #3F778F;
+  --cpk-ink-ce: #717158; --cpk-ink-pr: #677A5F; --cpk-ink-nd: #5D785D;
+  --cpk-ink-pm: #4C785D; --cpk-ink-sm: #488164; --cpk-ink-eu: #307E62;
+  --cpk-ink-gd: #227E62; --cpk-ink-tb: #187E62; --cpk-ink-dy: #0F7E62;
+  --cpk-ink-ho: #008853; --cpk-ink-er: #008142; --cpk-ink-tm: #008834;
+  --cpk-ink-yb: #008A28; --cpk-ink-lu: #00891D; --cpk-ink-hf: #317CA3;
+  --cpk-ink-ta: #3778B8; --cpk-ink-w: #1C7CB4; --cpk-ink-re: #267DAB;
+  --cpk-ink-os: #266696; --cpk-ink-ir: #175487; --cpk-ink-pt: #74747D;
+  --cpk-ink-au: #856D12; --cpk-ink-hg: #6E6E7D; --cpk-ink-tl: #A6544D;
+  --cpk-ink-pb: #575961; --cpk-ink-bi: #9E4FB5; --cpk-ink-po: #AB5C00;
+  --cpk-ink-at: #754F45; --cpk-ink-rn: #3F7D90; --cpk-ink-fr: #420066;
+  --cpk-ink-ra: #007D00; --cpk-ink-ac: #4C74AA; --cpk-ink-th: #007EAD;
+  --cpk-ink-pa: #007AC2; --cpk-ink-u: #0078D6; --cpk-ink-np: #0071E0;
+  --cpk-ink-pu: #006BFF; --cpk-ink-am: #545CF2; --cpk-ink-cm: #785CE3;
+  --cpk-ink-bk: #8A4FE3; --cpk-ink-cf: #A136D4; --cpk-ink-es: #B31FD4;
+  --cpk-ink-fm: #B31FBA; --cpk-ink-md: #B30DA6; --cpk-ink-no: #BD0D87;
+  --cpk-ink-lr: #C70066; --cpk-ink-rf: #CC0059; --cpk-ink-db: #D1004F;
+  --cpk-ink-sg: #D90045; --cpk-ink-bh: #E00038; --cpk-ink-hs: #E6002E;
+  --cpk-ink-mt: #EB0026; --cpk-ink-ds: #717171; --cpk-ink-rg: #717171;
+  --cpk-ink-cn: #717171; --cpk-ink-nh: #717171; --cpk-ink-fl: #717171;
+  --cpk-ink-mc: #717171; --cpk-ink-lv: #717171; --cpk-ink-ts: #717171;
+  --cpk-ink-og: #717171;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --cpk-h: #C9C9D6; --cpk-he: #D9FFFF; --cpk-li: #CC80FF; --cpk-be: #C2FF00;
+    --cpk-b: #FFB5B5; --cpk-c: #7C7589; --cpk-n: #2F6FE0; --cpk-o: #DB3B3B;
+    --cpk-f: #4FBE6C; --cpk-ne: #B3E3F5; --cpk-na: #AB5CF2; --cpk-mg: #8AFF00;
+    --cpk-al: #BFA6A6; --cpk-si: #F0C8A0; --cpk-p: #E08A2F; --cpk-s: #C9A61E;
+    --cpk-cl: #2C9E4B; --cpk-ar: #80D1E3; --cpk-k: #A05DDA; --cpk-ca: #3DFF00;
+    --cpk-sc: #E6E6E6; --cpk-ti: #BFC2C7; --cpk-v: #A6A6AB; --cpk-cr: #8A99C7;
+    --cpk-mn: #9C7AC7; --cpk-fe: #E06633; --cpk-co: #F090A0; --cpk-ni: #50D050;
+    --cpk-cu: #C88033; --cpk-zn: #7D80B0; --cpk-ga: #C28F8F; --cpk-ge: #668F8F;
+    --cpk-as: #BD80E3; --cpk-se: #FFA100; --cpk-br: #A0522D; --cpk-kr: #5CB8D1;
+    --cpk-rb: #9B6DC8; --cpk-sr: #00FF00; --cpk-y: #94FFFF; --cpk-zr: #94E0E0;
+    --cpk-nb: #73C2C9; --cpk-mo: #54B5B5; --cpk-tc: #3B9E9E; --cpk-ru: #248F8F;
+    --cpk-rh: #228A98; --cpk-pd: #33879D; --cpk-ag: #C0C0C0; --cpk-cd: #FFD98F;
+    --cpk-in: #A67573; --cpk-sn: #6E8686; --cpk-sb: #A36BB9; --cpk-te: #D47A00;
+    --cpk-i: #8B3FA8; --cpk-xe: #429EB0; --cpk-cs: #9A74BC; --cpk-ba: #00C900;
+    --cpk-la: #70D4FF; --cpk-ce: #FFFFC7; --cpk-pr: #D9FFC7; --cpk-nd: #C7FFC7;
+    --cpk-pm: #A3FFC7; --cpk-sm: #8FFFC7; --cpk-eu: #61FFC7; --cpk-gd: #45FFC7;
+    --cpk-tb: #30FFC7; --cpk-dy: #1FFFC7; --cpk-ho: #00FF9C; --cpk-er: #00E675;
+    --cpk-tm: #00D452; --cpk-yb: #00BF38; --cpk-lu: #00AB24; --cpk-hf: #4DC2FF;
+    --cpk-ta: #4DA6FF; --cpk-w: #2194D6; --cpk-re: #3184AF; --cpk-os: #5185AB;
+    --cpk-ir: #5D87AB; --cpk-pt: #D0D0E0; --cpk-au: #FFD123; --cpk-hg: #B8B8D0;
+    --cpk-tl: #B36E68; --cpk-pb: #818288; --cpk-bi: #A861BC; --cpk-po: #B36C1A;
+    --cpk-at: #987B74; --cpk-rn: #4B889B; --cpk-fr: #9773AB; --cpk-ra: #269026;
+    --cpk-ac: #70ABFA; --cpk-th: #00BAFF; --cpk-pa: #00A1FF; --cpk-u: #008FFF;
+    --cpk-np: #0080FF; --cpk-pu: #1A7AFF; --cpk-am: #656CF3; --cpk-cm: #866CE6;
+    --cpk-bk: #9661E6; --cpk-cf: #AF54DA; --cpk-es: #C24CDD; --cpk-fm: #C24CC8;
+    --cpk-md: #C64ABC; --cpk-no: #CE4AA5; --cpk-lr: #D84C94; --cpk-rf: #DB4C8B;
+    --cpk-db: #DC407B; --cpk-sg: #E24074; --cpk-bh: #E63360; --cpk-hs: #EB3358;
+    --cpk-mt: #EE2647; --cpk-ds: #C9C9C9; --cpk-rg: #C9C9C9; --cpk-cn: #C9C9C9;
+    --cpk-nh: #C9C9C9; --cpk-fl: #C9C9C9; --cpk-mc: #C9C9C9; --cpk-lv: #C9C9C9;
+    --cpk-ts: #C9C9C9; --cpk-og: #C9C9C9;
+    --cpk-ink-h: #C9C9D6; --cpk-ink-he: #D9FFFF; --cpk-ink-li: #CC80FF;
+    --cpk-ink-be: #C2FF00; --cpk-ink-b: #FFB5B5; --cpk-ink-c: #868092;
+    --cpk-ink-n: #4880E4; --cpk-ink-o: #DF5353; --cpk-ink-f: #4FBE6C;
+    --cpk-ink-ne: #B3E3F5; --cpk-ink-na: #AB5CF2; --cpk-ink-mg: #8AFF00;
+    --cpk-ink-al: #BFA6A6; --cpk-ink-si: #F0C8A0; --cpk-ink-p: #E08A2F;
+    --cpk-ink-s: #C9A61E; --cpk-ink-cl: #2C9E4B; --cpk-ink-ar: #80D1E3;
+    --cpk-ink-k: #A86ADD; --cpk-ink-ca: #3DFF00; --cpk-ink-sc: #E6E6E6;
+    --cpk-ink-ti: #BFC2C7; --cpk-ink-v: #A6A6AB; --cpk-ink-cr: #8A99C7;
+    --cpk-ink-mn: #9C7AC7; --cpk-ink-fe: #E06633; --cpk-ink-co: #F090A0;
+    --cpk-ink-ni: #50D050; --cpk-ink-cu: #C88033; --cpk-ink-zn: #7D80B0;
+    --cpk-ink-ga: #C28F8F; --cpk-ink-ge: #668F8F; --cpk-ink-as: #BD80E3;
+    --cpk-ink-se: #FFA100; --cpk-ink-br: #B37557; --cpk-ink-kr: #5CB8D1;
+    --cpk-ink-rb: #9F73CA; --cpk-ink-sr: #00FF00; --cpk-ink-y: #94FFFF;
+    --cpk-ink-zr: #94E0E0; --cpk-ink-nb: #73C2C9; --cpk-ink-mo: #54B5B5;
+    --cpk-ink-tc: #3B9E9E; --cpk-ink-ru: #2D9393; --cpk-ink-rh: #2B8F9C;
+    --cpk-ink-pd: #4391A5; --cpk-ink-ag: #C0C0C0; --cpk-ink-cd: #FFD98F;
+    --cpk-ink-in: #AA7B79; --cpk-ink-sn: #748B8B; --cpk-ink-sb: #A771BC;
+    --cpk-ink-te: #D47A00; --cpk-ink-i: #A76DBD; --cpk-ink-xe: #429EB0;
+    --cpk-ink-cs: #9A74BC; --cpk-ink-ba: #00C900; --cpk-ink-la: #70D4FF;
+    --cpk-ink-ce: #FFFFC7; --cpk-ink-pr: #D9FFC7; --cpk-ink-nd: #C7FFC7;
+    --cpk-ink-pm: #A3FFC7; --cpk-ink-sm: #8FFFC7; --cpk-ink-eu: #61FFC7;
+    --cpk-ink-gd: #45FFC7; --cpk-ink-tb: #30FFC7; --cpk-ink-dy: #1FFFC7;
+    --cpk-ink-ho: #00FF9C; --cpk-ink-er: #00E675; --cpk-ink-tm: #00D452;
+    --cpk-ink-yb: #00BF38; --cpk-ink-lu: #00AB24; --cpk-ink-hf: #4DC2FF;
+    --cpk-ink-ta: #4DA6FF; --cpk-ink-w: #2194D6; --cpk-ink-re: #418EB5;
+    --cpk-ink-os: #588AAE; --cpk-ink-ir: #5D87AB; --cpk-ink-pt: #D0D0E0;
+    --cpk-ink-au: #FFD123; --cpk-ink-hg: #B8B8D0; --cpk-ink-tl: #B6746E;
+    --cpk-ink-pb: #818288; --cpk-ink-bi: #AB67BF; --cpk-ink-po: #B9782C;
+    --cpk-ink-at: #9C807A; --cpk-ink-rn: #528D9F; --cpk-ink-fr: #9B79AE;
+    --cpk-ink-ra: #379937; --cpk-ink-ac: #70ABFA; --cpk-ink-th: #00BAFF;
+    --cpk-ink-pa: #00A1FF; --cpk-ink-u: #008FFF; --cpk-ink-np: #0080FF;
+    --cpk-ink-pu: #237FFF; --cpk-ink-am: #7178F4; --cpk-ink-cm: #8B72E7;
+    --cpk-ink-bk: #9A67E7; --cpk-ink-cf: #B562DD; --cpk-ink-es: #C453DE;
+    --cpk-ink-fm: #C453CA; --cpk-ink-md: #CB58C1; --cpk-ink-no: #D258AC;
+    --cpk-ink-lr: #DA5398; --cpk-ink-rf: #DC5390; --cpk-ink-db: #DF4F86;
+    --cpk-ink-sg: #E3487A; --cpk-ink-bh: #E8436D; --cpk-ink-hs: #ED4365;
+    --cpk-ink-mt: #F0405D; --cpk-ink-ds: #C9C9C9; --cpk-ink-rg: #C9C9C9;
+    --cpk-ink-cn: #C9C9C9; --cpk-ink-nh: #C9C9C9; --cpk-ink-fl: #C9C9C9;
+    --cpk-ink-mc: #C9C9C9; --cpk-ink-lv: #C9C9C9; --cpk-ink-ts: #C9C9C9;
+    --cpk-ink-og: #C9C9C9;
+  }
+}
+
+:root[data-theme='dark'] {
+  --cpk-h: #C9C9D6; --cpk-he: #D9FFFF; --cpk-li: #CC80FF; --cpk-be: #C2FF00;
+  --cpk-b: #FFB5B5; --cpk-c: #7C7589; --cpk-n: #2F6FE0; --cpk-o: #DB3B3B;
+  --cpk-f: #4FBE6C; --cpk-ne: #B3E3F5; --cpk-na: #AB5CF2; --cpk-mg: #8AFF00;
+  --cpk-al: #BFA6A6; --cpk-si: #F0C8A0; --cpk-p: #E08A2F; --cpk-s: #C9A61E;
+  --cpk-cl: #2C9E4B; --cpk-ar: #80D1E3; --cpk-k: #A05DDA; --cpk-ca: #3DFF00;
+  --cpk-sc: #E6E6E6; --cpk-ti: #BFC2C7; --cpk-v: #A6A6AB; --cpk-cr: #8A99C7;
+  --cpk-mn: #9C7AC7; --cpk-fe: #E06633; --cpk-co: #F090A0; --cpk-ni: #50D050;
+  --cpk-cu: #C88033; --cpk-zn: #7D80B0; --cpk-ga: #C28F8F; --cpk-ge: #668F8F;
+  --cpk-as: #BD80E3; --cpk-se: #FFA100; --cpk-br: #A0522D; --cpk-kr: #5CB8D1;
+  --cpk-rb: #9B6DC8; --cpk-sr: #00FF00; --cpk-y: #94FFFF; --cpk-zr: #94E0E0;
+  --cpk-nb: #73C2C9; --cpk-mo: #54B5B5; --cpk-tc: #3B9E9E; --cpk-ru: #248F8F;
+  --cpk-rh: #228A98; --cpk-pd: #33879D; --cpk-ag: #C0C0C0; --cpk-cd: #FFD98F;
+  --cpk-in: #A67573; --cpk-sn: #6E8686; --cpk-sb: #A36BB9; --cpk-te: #D47A00;
+  --cpk-i: #8B3FA8; --cpk-xe: #429EB0; --cpk-cs: #9A74BC; --cpk-ba: #00C900;
+  --cpk-la: #70D4FF; --cpk-ce: #FFFFC7; --cpk-pr: #D9FFC7; --cpk-nd: #C7FFC7;
+  --cpk-pm: #A3FFC7; --cpk-sm: #8FFFC7; --cpk-eu: #61FFC7; --cpk-gd: #45FFC7;
+  --cpk-tb: #30FFC7; --cpk-dy: #1FFFC7; --cpk-ho: #00FF9C; --cpk-er: #00E675;
+  --cpk-tm: #00D452; --cpk-yb: #00BF38; --cpk-lu: #00AB24; --cpk-hf: #4DC2FF;
+  --cpk-ta: #4DA6FF; --cpk-w: #2194D6; --cpk-re: #3184AF; --cpk-os: #5185AB;
+  --cpk-ir: #5D87AB; --cpk-pt: #D0D0E0; --cpk-au: #FFD123; --cpk-hg: #B8B8D0;
+  --cpk-tl: #B36E68; --cpk-pb: #818288; --cpk-bi: #A861BC; --cpk-po: #B36C1A;
+  --cpk-at: #987B74; --cpk-rn: #4B889B; --cpk-fr: #9773AB; --cpk-ra: #269026;
+  --cpk-ac: #70ABFA; --cpk-th: #00BAFF; --cpk-pa: #00A1FF; --cpk-u: #008FFF;
+  --cpk-np: #0080FF; --cpk-pu: #1A7AFF; --cpk-am: #656CF3; --cpk-cm: #866CE6;
+  --cpk-bk: #9661E6; --cpk-cf: #AF54DA; --cpk-es: #C24CDD; --cpk-fm: #C24CC8;
+  --cpk-md: #C64ABC; --cpk-no: #CE4AA5; --cpk-lr: #D84C94; --cpk-rf: #DB4C8B;
+  --cpk-db: #DC407B; --cpk-sg: #E24074; --cpk-bh: #E63360; --cpk-hs: #EB3358;
+  --cpk-mt: #EE2647; --cpk-ds: #C9C9C9; --cpk-rg: #C9C9C9; --cpk-cn: #C9C9C9;
+  --cpk-nh: #C9C9C9; --cpk-fl: #C9C9C9; --cpk-mc: #C9C9C9; --cpk-lv: #C9C9C9;
+  --cpk-ts: #C9C9C9; --cpk-og: #C9C9C9;
+  --cpk-ink-h: #C9C9D6; --cpk-ink-he: #D9FFFF; --cpk-ink-li: #CC80FF;
+  --cpk-ink-be: #C2FF00; --cpk-ink-b: #FFB5B5; --cpk-ink-c: #868092;
+  --cpk-ink-n: #4880E4; --cpk-ink-o: #DF5353; --cpk-ink-f: #4FBE6C;
+  --cpk-ink-ne: #B3E3F5; --cpk-ink-na: #AB5CF2; --cpk-ink-mg: #8AFF00;
+  --cpk-ink-al: #BFA6A6; --cpk-ink-si: #F0C8A0; --cpk-ink-p: #E08A2F;
+  --cpk-ink-s: #C9A61E; --cpk-ink-cl: #2C9E4B; --cpk-ink-ar: #80D1E3;
+  --cpk-ink-k: #A86ADD; --cpk-ink-ca: #3DFF00; --cpk-ink-sc: #E6E6E6;
+  --cpk-ink-ti: #BFC2C7; --cpk-ink-v: #A6A6AB; --cpk-ink-cr: #8A99C7;
+  --cpk-ink-mn: #9C7AC7; --cpk-ink-fe: #E06633; --cpk-ink-co: #F090A0;
+  --cpk-ink-ni: #50D050; --cpk-ink-cu: #C88033; --cpk-ink-zn: #7D80B0;
+  --cpk-ink-ga: #C28F8F; --cpk-ink-ge: #668F8F; --cpk-ink-as: #BD80E3;
+  --cpk-ink-se: #FFA100; --cpk-ink-br: #B37557; --cpk-ink-kr: #5CB8D1;
+  --cpk-ink-rb: #9F73CA; --cpk-ink-sr: #00FF00; --cpk-ink-y: #94FFFF;
+  --cpk-ink-zr: #94E0E0; --cpk-ink-nb: #73C2C9; --cpk-ink-mo: #54B5B5;
+  --cpk-ink-tc: #3B9E9E; --cpk-ink-ru: #2D9393; --cpk-ink-rh: #2B8F9C;
+  --cpk-ink-pd: #4391A5; --cpk-ink-ag: #C0C0C0; --cpk-ink-cd: #FFD98F;
+  --cpk-ink-in: #AA7B79; --cpk-ink-sn: #748B8B; --cpk-ink-sb: #A771BC;
+  --cpk-ink-te: #D47A00; --cpk-ink-i: #A76DBD; --cpk-ink-xe: #429EB0;
+  --cpk-ink-cs: #9A74BC; --cpk-ink-ba: #00C900; --cpk-ink-la: #70D4FF;
+  --cpk-ink-ce: #FFFFC7; --cpk-ink-pr: #D9FFC7; --cpk-ink-nd: #C7FFC7;
+  --cpk-ink-pm: #A3FFC7; --cpk-ink-sm: #8FFFC7; --cpk-ink-eu: #61FFC7;
+  --cpk-ink-gd: #45FFC7; --cpk-ink-tb: #30FFC7; --cpk-ink-dy: #1FFFC7;
+  --cpk-ink-ho: #00FF9C; --cpk-ink-er: #00E675; --cpk-ink-tm: #00D452;
+  --cpk-ink-yb: #00BF38; --cpk-ink-lu: #00AB24; --cpk-ink-hf: #4DC2FF;
+  --cpk-ink-ta: #4DA6FF; --cpk-ink-w: #2194D6; --cpk-ink-re: #418EB5;
+  --cpk-ink-os: #588AAE; --cpk-ink-ir: #5D87AB; --cpk-ink-pt: #D0D0E0;
+  --cpk-ink-au: #FFD123; --cpk-ink-hg: #B8B8D0; --cpk-ink-tl: #B6746E;
+  --cpk-ink-pb: #818288; --cpk-ink-bi: #AB67BF; --cpk-ink-po: #B9782C;
+  --cpk-ink-at: #9C807A; --cpk-ink-rn: #528D9F; --cpk-ink-fr: #9B79AE;
+  --cpk-ink-ra: #379937; --cpk-ink-ac: #70ABFA; --cpk-ink-th: #00BAFF;
+  --cpk-ink-pa: #00A1FF; --cpk-ink-u: #008FFF; --cpk-ink-np: #0080FF;
+  --cpk-ink-pu: #237FFF; --cpk-ink-am: #7178F4; --cpk-ink-cm: #8B72E7;
+  --cpk-ink-bk: #9A67E7; --cpk-ink-cf: #B562DD; --cpk-ink-es: #C453DE;
+  --cpk-ink-fm: #C453CA; --cpk-ink-md: #CB58C1; --cpk-ink-no: #D258AC;
+  --cpk-ink-lr: #DA5398; --cpk-ink-rf: #DC5390; --cpk-ink-db: #DF4F86;
+  --cpk-ink-sg: #E3487A; --cpk-ink-bh: #E8436D; --cpk-ink-hs: #ED4365;
+  --cpk-ink-mt: #F0405D; --cpk-ink-ds: #C9C9C9; --cpk-ink-rg: #C9C9C9;
+  --cpk-ink-cn: #C9C9C9; --cpk-ink-nh: #C9C9C9; --cpk-ink-fl: #C9C9C9;
+  --cpk-ink-mc: #C9C9C9; --cpk-ink-lv: #C9C9C9; --cpk-ink-ts: #C9C9C9;
+  --cpk-ink-og: #C9C9C9;
+}

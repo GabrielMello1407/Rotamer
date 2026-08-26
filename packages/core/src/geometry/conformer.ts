@@ -38,7 +38,7 @@ export async function generateGeometry(
   options: GeometryOptions = {},
 ): Promise<Geometry> {
   const ocl = await loadOpenChemLib();
-  const conformer = buildConformer(ocl, molblock);
+  const { molecule: conformer, drawn } = buildConformer(ocl, molblock);
 
   const field = new ocl.ForceFieldMMFF94(conformer, 'MMFF94');
 
@@ -54,7 +54,7 @@ export async function generateGeometry(
   }
 
   return {
-    atoms: atomsOf(conformer),
+    atoms: atomsOf(conformer, sourcesOf(conformer, drawn)),
     bonds: bondsOf(conformer),
     frames,
     energy: frames[frames.length - 1]?.energy ?? 0,
@@ -84,8 +84,18 @@ function ladderFor(maxFrames: number | undefined): number[] {
 /** Molécula do OpenChemLib, do jeito que este módulo a usa. */
 type OclMolecule = ReturnType<OpenChemLib['Molecule']['fromMolfile']>;
 
-function buildConformer(ocl: OpenChemLib, molblock: string): OclMolecule {
+interface Conformer {
+  readonly molecule: OclMolecule;
+  /**
+   * Quantos átomos vieram do desenho, antes de o campo de força acrescentar os
+   * hidrogênios. Os primeiros índices são, um a um, os átomos do grafo.
+   */
+  readonly drawn: number;
+}
+
+function buildConformer(ocl: OpenChemLib, molblock: string): Conformer {
   const molecule = ocl.Molecule.fromMolfile(molblock);
+  const drawn = molecule.getAllAtoms();
 
   // Hidrogênio implícito não existe em 3D: sem ele o campo de força não tem o
   // que segurar e os ângulos saem errados.
@@ -99,7 +109,36 @@ function buildConformer(ocl: OpenChemLib, molblock: string): OclMolecule {
     throw new Error('não foi possível encontrar um arranjo tridimensional para esta estrutura');
   }
 
-  return conformer;
+  return { molecule: conformer, drawn };
+}
+
+/**
+ * De cada átomo da cena para o átomo do desenho que o originou.
+ *
+ * Os `drawn` primeiros saíram do molblock na mesma ordem, porque nem o RDKit nem
+ * o OpenChemLib reordenam o que leem. Os hidrogênios acrescentados depois herdam
+ * o índice do vizinho — eles só existem por causa dele.
+ */
+function sourcesOf(molecule: OclMolecule, drawn: number): number[] {
+  const total = molecule.getAllAtoms();
+  const sources = new Array<number>(total);
+
+  for (let atom = 0; atom < total; atom += 1) {
+    sources[atom] = atom < drawn ? atom : -1;
+  }
+
+  for (let bond = 0; bond < molecule.getAllBonds(); bond += 1) {
+    const first = molecule.getBondAtom(0, bond);
+    const second = molecule.getBondAtom(1, bond);
+
+    if ((sources[first] ?? -1) < 0 && (sources[second] ?? -1) >= 0) {
+      sources[first] = sources[second] ?? 0;
+    } else if ((sources[second] ?? -1) < 0 && (sources[first] ?? -1) >= 0) {
+      sources[second] = sources[first] ?? 0;
+    }
+  }
+
+  return sources.map((source) => (source < 0 ? 0 : source));
 }
 
 function positionsOf(molecule: OclMolecule): number[] {
@@ -115,7 +154,7 @@ function positionsOf(molecule: OclMolecule): number[] {
   return positions;
 }
 
-function atomsOf(molecule: OclMolecule): GeometryAtom[] {
+function atomsOf(molecule: OclMolecule, sources: readonly number[]): GeometryAtom[] {
   const total = molecule.getAllAtoms();
   const atoms: GeometryAtom[] = [];
 
@@ -125,6 +164,7 @@ function atomsOf(molecule: OclMolecule): GeometryAtom[] {
       x: molecule.getAtomX(atom),
       y: molecule.getAtomY(atom),
       z: molecule.getAtomZ(atom),
+      source: sources[atom] ?? 0,
     });
   }
 

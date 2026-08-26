@@ -21,7 +21,7 @@ import type { Point } from './types';
  * o que faz o RDKit ler ângulos coerentes depois.
  */
 
-export type RingKind = 'benzeno' | 'cicloexano' | 'ciclopentano' | 'piridina';
+export type RingKind = 'benzene' | 'cyclohexane' | 'cyclopentane' | 'pyridine';
 
 interface RingShape {
   /** Quantos vértices. */
@@ -35,26 +35,26 @@ interface RingShape {
 }
 
 const SHAPES: Readonly<Record<RingKind, RingShape>> = {
-  benzeno: {
+  benzene: {
     sides: 6,
     elements: ['C', 'C', 'C', 'C', 'C', 'C'],
     // Kekulé: alternadas. Quem percebe a aromaticidade é o RDKit, depois.
     orders: [2, 1, 2, 1, 2, 1],
     label: 'Benzeno',
   },
-  cicloexano: {
+  cyclohexane: {
     sides: 6,
     elements: ['C', 'C', 'C', 'C', 'C', 'C'],
     orders: [1, 1, 1, 1, 1, 1],
     label: 'Cicloexano',
   },
-  ciclopentano: {
+  cyclopentane: {
     sides: 5,
     elements: ['C', 'C', 'C', 'C', 'C'],
     orders: [1, 1, 1, 1, 1],
     label: 'Ciclopentano',
   },
-  piridina: {
+  pyridine: {
     sides: 6,
     elements: ['N', 'C', 'C', 'C', 'C', 'C'],
     orders: [2, 1, 2, 1, 2, 1],

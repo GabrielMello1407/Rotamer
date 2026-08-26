@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { openAnalysis, openQuests } from './painel';
 
 /**
  * Os itens da v0.2 que existem para tirar pedra do caminho: anel pronto,
@@ -14,31 +15,32 @@ async function abrirEditor(page: Page): Promise<void> {
 test.describe('anéis prontos', () => {
   test('um clique entrega benzeno aromático', async ({ page }) => {
     await abrirEditor(page);
-    await page.getByTestId('anel-benzeno').click();
+    await page.getByTestId('anel-benzene').click();
 
     await expect(page.getByTestId('formula')).toHaveText('C6H6', { timeout: 60_000 });
     // O anel do template é kekulé; quem percebe a aromaticidade é o RDKit.
-    await expect(page.getByTestId('metricas')).toContainText('anéis aromáticos');
+    await expect(page.getByTestId('metricas')).toContainText('1 arom.');
   });
 
   test('cicloexano fecha o anel sem virar aromático', async ({ page }) => {
     await abrirEditor(page);
-    await page.getByTestId('anel-cicloexano').click();
+    await page.getByTestId('anel-cyclohexane').click();
 
     await expect(page.getByTestId('formula')).toHaveText('C6H12', { timeout: 60_000 });
   });
 
   test('piridina traz o nitrogênio junto', async ({ page }) => {
     await abrirEditor(page);
-    await page.getByTestId('anel-piridina').click();
+    await page.getByTestId('anel-pyridine').click();
 
     await expect(page.getByTestId('formula')).toHaveText('C5H5N', { timeout: 60_000 });
   });
 
   test('a missão do benzeno é cumprida com o template', async ({ page }) => {
     await abrirEditor(page);
+    await openQuests(page);
     await page.getByTestId('escolher-missao').selectOption('anel-de-benzeno');
-    await page.getByTestId('anel-benzeno').click();
+    await page.getByTestId('anel-benzene').click();
 
     await expect(page.getByTestId('missao-cumprida')).toBeVisible({ timeout: 60_000 });
   });
@@ -47,7 +49,7 @@ test.describe('anéis prontos', () => {
 test.describe('rascunho', () => {
   test('o desenho volta depois de fechar e abrir', async ({ page }) => {
     await abrirEditor(page);
-    await page.getByTestId('anel-piridina').click();
+    await page.getByTestId('anel-pyridine').click();
     await expect(page.getByTestId('formula')).toHaveText('C5H5N', { timeout: 60_000 });
 
     // Tempo do silêncio antes de gravar.
@@ -60,7 +62,7 @@ test.describe('rascunho', () => {
 
   test('limpar a tela não deixa rascunho para trás', async ({ page }) => {
     await abrirEditor(page);
-    await page.getByTestId('anel-benzeno').click();
+    await page.getByTestId('anel-benzene').click();
     await expect(page.getByTestId('formula')).toHaveText('C6H6', { timeout: 60_000 });
 
     await page.getByRole('button', { name: 'Limpar' }).click();
@@ -73,7 +75,7 @@ test.describe('rascunho', () => {
 
   test('link com molécula ganha do rascunho', async ({ page }) => {
     await abrirEditor(page);
-    await page.getByTestId('anel-benzeno').click();
+    await page.getByTestId('anel-benzene').click();
     await expect(page.getByTestId('formula')).toHaveText('C6H6', { timeout: 60_000 });
     await page.waitForTimeout(1200);
 
@@ -85,10 +87,11 @@ test.describe('rascunho', () => {
 test.describe('levar embora', () => {
   test('o SVG que sai é o desenho do RDKit', async ({ page }) => {
     await abrirEditor(page);
-    await page.getByTestId('anel-benzeno').click();
+    await page.getByTestId('anel-benzene').click();
     await expect(page.getByTestId('formula')).toHaveText('C6H6', { timeout: 60_000 });
 
     const baixando = page.waitForEvent('download');
+    await openAnalysis(page);
     await page.getByTestId('baixar-svg').click();
     const arquivo = await baixando;
 
@@ -97,10 +100,11 @@ test.describe('levar embora', () => {
 
   test('o PNG que sai é a tela como está', async ({ page }) => {
     await abrirEditor(page);
-    await page.getByTestId('anel-cicloexano').click();
+    await page.getByTestId('anel-cyclohexane').click();
     await expect(page.getByTestId('formula')).toHaveText('C6H12', { timeout: 60_000 });
 
     const baixando = page.waitForEvent('download');
+    await openAnalysis(page);
     await page.getByTestId('baixar-png').click();
     const arquivo = await baixando;
 
@@ -111,7 +115,7 @@ test.describe('levar embora', () => {
 test.describe('pinça', () => {
   test('dois dedos afastando aproximam a molécula', async ({ page }) => {
     await abrirEditor(page);
-    await page.getByTestId('anel-benzeno').click();
+    await page.getByTestId('anel-benzene').click();
     await expect(page.getByTestId('formula')).toHaveText('C6H6', { timeout: 60_000 });
 
     const tela = page.getByTestId('tela-de-desenho');
