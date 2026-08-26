@@ -29,6 +29,8 @@ export interface Viewer3DProps {
   readonly onExpand?: ((expanded: boolean) => void) | undefined;
   /** O modo normal em exibição, quando alguém escolheu um. */
   readonly mode?: SelectedMode | null | undefined;
+  /** `R` e `S` de cada centro, pelo índice do átomo no desenho. */
+  readonly stereo?: readonly { readonly source: number; readonly label: string }[];
   /** Voltar para a vibração térmica. */
   readonly onClearMode?: (() => void) | undefined;
 }
@@ -73,6 +75,7 @@ export function Viewer3D({
   onExpand,
   mode,
   onClearMode,
+  stereo,
 }: Viewer3DProps): ReactElement {
   const stageRef = useRef<HTMLDivElement | null>(null);
   // Só o que este componente precisa do controle de órbita. Tipar por estrutura
@@ -214,6 +217,7 @@ export function Viewer3D({
                 onHover={onHover}
                 onEnergy={onEnergy}
                 mode={mode?.displacement ?? null}
+                stereo={stereo}
               />
             </group>
 

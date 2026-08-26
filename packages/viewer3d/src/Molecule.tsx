@@ -3,9 +3,20 @@
 import type { DynamicsTrajectory, Geometry } from '@rotamer/core';
 import { useFrame, type ThreeEvent } from '@react-three/fiber';
 import { memo, useEffect, useMemo, useRef, type ReactElement } from 'react';
-import { Color, Matrix4, Quaternion, Vector3, type InstancedMesh, type Mesh } from 'three';
+import { Html } from '@react-three/drei';
+import {
+  Color,
+  Matrix4,
+  Quaternion,
+  Vector3,
+  type Group,
+  type InstancedMesh,
+  type Mesh,
+} from 'three';
 import { colorOf, radiusOf, type Cpk } from './cpk';
 import { sampleDynamics, sampleFolding, sampleMode, FOLD_DURATION } from './folding';
+import { sticksOf } from './sticks';
+import styles from './Molecule.module.css';
 
 export interface MoleculeProps {
   readonly geometry: Geometry;
@@ -24,6 +35,17 @@ export interface MoleculeProps {
   /** Qual átomo do desenho está sob o cursor, ou `null` ao sair. */
   readonly onHover?: ((source: number | null) => void) | undefined;
   /**
+   * A configuração de cada centro estereogênico, pelo átomo do desenho.
+   *
+   * Cunha e traço não atravessam para cá: eles são notação de **projeção**, um
+   * jeito de escrever profundidade num papel plano. Aqui a profundidade é real,
+   * e desenhar tracejado significaria outra coisa. O que atravessa é a letra —
+   * `R`, `S` — para as duas telas dizerem a mesma coisa sobre o mesmo átomo.
+   */
+  readonly stereo?:
+    | readonly { readonly source: number; readonly label: string }[]
+    | undefined;
+  /**
    * Um modo normal para mostrar sozinho, no lugar da vibração térmica.
    *
    * Deslocamento cartesiano por átomo, já normalizado. Com ele a cena para de
@@ -37,6 +59,12 @@ const UP = new Vector3(0, 1, 0);
 
 /** Espessura da vareta, em ångström. */
 const STICK = 0.09;
+
+/** Vareta de ligação múltipla é mais fina: três grossas viram um tubo só. */
+const MULTIPLE_STICK = 0.062;
+
+/** Distância entre as varetas de uma ligação múltipla, em ångström. */
+const MULTIPLE_GAP = 0.16;
 
 /** Quanto a esfera cresce no modo volume. Bola-e-vareta é ~0,4 do raio real. */
 const SPACE_FILLING = 2.4;
@@ -71,10 +99,12 @@ function MoleculeScene({
   highlight,
   onHover,
   mode,
+  stereo = [],
 }: MoleculeProps): ReactElement {
   const atomsRef = useRef<InstancedMesh | null>(null);
   const bondsRef = useRef<InstancedMesh | null>(null);
   const haloRef = useRef<Mesh | null>(null);
+  const labelsRef = useRef<(Group | null)[]>([]);
 
   /**
    * Dois relógios, não um.
@@ -139,7 +169,15 @@ function MoleculeScene({
     [geometry.atoms],
   );
 
-  useFrame(({ clock }) => {
+  /**
+   * As varetas: uma por ligação simples, duas na dupla, três na tripla.
+   *
+   * A lista é fixa para uma geometria, então ela é montada uma vez — o que muda
+   * a cada quadro é só onde cada vareta está.
+   */
+  const sticks = useMemo(() => sticksOf(geometry), [geometry]);
+
+  useFrame(({ clock, camera }) => {
     const atoms = atomsRef.current;
     const bonds = bondsRef.current;
     if (!atoms || !bonds) return;
@@ -202,7 +240,10 @@ function MoleculeScene({
     }
     atoms.instanceMatrix.needsUpdate = true;
 
-    geometry.bonds.forEach((bond, index) => {
+    sticks.forEach((stick, index) => {
+      const bond = geometry.bonds[stick.bond];
+      if (!bond) return;
+
       const hidden = spaceFilling || !visible(bond.from) || !visible(bond.to);
       const start = positionAt(bond.from).clone();
       const end = positionAt(bond.to).clone();
@@ -211,15 +252,58 @@ function MoleculeScene({
       const length = direction.length();
       if (length < 1e-6) return;
 
-      rotation.setFromUnitVectors(UP, direction.clone().normalize());
+      const axis = direction.clone().normalize();
+      rotation.setFromUnitVectors(UP, axis);
+
+      const middle = start.clone().add(end).multiplyScalar(0.5);
+
+      // A vareta de fora do eixo anda perpendicular à ligação, no plano em que a
+      // ligação está — é o vizinho que diz qual plano é esse.
+      if (stick.offset !== 0) {
+        const reference =
+          stick.reference === null ? null : positionAt(stick.reference).clone().sub(start);
+
+        const semPlano =
+          reference === null || Math.abs(reference.dot(axis)) > reference.length() * 0.99;
+
+        /*
+         * Sem vizinho fora do eixo — uma molécula linear, como o acetileno —
+         * não existe plano químico para respeitar. Aí o critério passa a ser
+         * quem olha: as varetas abrem no plano da tela, senão elas se projetam
+         * umas sobre as outras e a tripla vira uma vareta só.
+         */
+        const guide = semPlano ? camera.getWorldDirection(direction.clone()) : reference;
+
+        const perpendicular = guide.clone().cross(axis).normalize();
+        middle.addScaledVector(perpendicular, stick.offset * MULTIPLE_GAP);
+      }
+
+      const thickness = bond.order === 1 ? STICK : MULTIPLE_STICK;
+
       matrix.compose(
-        start.clone().add(end).multiplyScalar(0.5),
+        middle,
         rotation,
-        hidden ? scale.set(0, 0, 0) : scale.set(STICK, length, STICK),
+        hidden ? scale.set(0, 0, 0) : scale.set(thickness, length, thickness),
       );
       bonds.setMatrixAt(index, matrix);
     });
     bonds.instanceMatrix.needsUpdate = true;
+
+    // As letras de configuração acompanham os átomos: a molécula está vibrando,
+    // e rótulo parado ao lado de átomo que se mexe deixa de apontar para ele.
+    stereo.forEach((entry, index) => {
+      const label = labelsRef.current[index];
+      if (!label) return;
+
+      const atom = geometry.atoms.findIndex((candidate) => candidate.source === entry.source);
+      if (atom < 0) {
+        label.visible = false;
+        return;
+      }
+
+      label.visible = true;
+      label.position.copy(positionAt(atom));
+    });
 
     // O halo acompanha o átomo aceso quadro a quadro: a molécula está vibrando,
     // e um anel parado ao lado de uma esfera que se mexe não indica nada.
@@ -269,13 +353,26 @@ function MoleculeScene({
       </instancedMesh>
 
       <instancedMesh
-        key={`ligacoes-${String(geometry.bonds.length)}`}
+        key={`varetas-${String(sticks.length)}`}
         ref={bondsRef}
-        args={[undefined, undefined, Math.max(1, geometry.bonds.length)]}
+        args={[undefined, undefined, Math.max(1, sticks.length)]}
       >
         <cylinderGeometry args={[1, 1, 1, 16]} />
         <meshStandardMaterial color={cpk.bond} roughness={0.45} metalness={0.05} />
       </instancedMesh>
+
+      {stereo.map((entry, index) => (
+        <group
+          key={entry.source}
+          ref={(node) => {
+            labelsRef.current[index] = node;
+          }}
+        >
+          <Html center distanceFactor={9} className={styles.stereo} zIndexRange={[10, 0]}>
+            {entry.label}
+          </Html>
+        </group>
+      ))}
 
       {/* O halo é turquesa de propósito: nenhum elemento é turquesa no CPK, então
           ele nunca vai ser confundido com um átomo. */}

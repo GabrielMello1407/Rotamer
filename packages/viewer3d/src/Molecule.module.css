@@ -1,0 +1,17 @@
+/* A letra da configuração, dentro da cena.
+ *
+ * Em itálico, como em livro, e sem parênteses — a mesma forma do rótulo no
+ * desenho 2D, para as duas telas dizerem a mesma coisa sobre o mesmo átomo. */
+.stereo {
+  font-family: var(--font-ui);
+  font-style: italic;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--ink-900);
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  border-radius: var(--r-full);
+  padding: 0 5px;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+}

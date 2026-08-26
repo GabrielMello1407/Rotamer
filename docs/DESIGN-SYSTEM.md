@@ -113,6 +113,12 @@ matiz. Acima de sete séries, agrupe em "outros" em vez de inventar a oitava cor
 Nada disso é escolha de estilo: é a convenção de livro, e um aluno que aprende aqui precisa
 reconhecer a mesma coisa no quadro. Quem atribui as letras é o RDKit (D-21).
 
+**Na cena 3D não existe cunha nem traço.** Eles são notação de projeção, e ali a profundidade é
+real; traço pontilhado no espaço significaria ligação de hidrogênio. O que atravessa é a letra `R`
+ou `S`, ao lado do mesmo átomo. **A ordem de ligação, essa sim, atravessa**: dupla são duas varetas
+paralelas e tripla são três, como no modelo de plástico — no plano da ligação quando há um vizinho
+que o defina, e no plano da tela quando a molécula é linear e não há plano químico a respeitar.
+
 ## Bancada
 
 A tela de desenho é a página. Tudo o mais se apoia nas bordas dela:

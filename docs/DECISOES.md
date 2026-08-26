@@ -616,6 +616,13 @@ diferença entre corrigir e adivinhar.
 a geometria 3D é recalculada, o cache por InChIKey separa os enantiômeros, e a cena mostra a forma
 espelhada — verificado por teste, pelo sinal do produto misto dos vizinhos do centro.
 
+**Cunha e traço não atravessam para o 3D — e não deveriam.** Eles são notação de **projeção**: um
+jeito de escrever profundidade num papel que não tem profundidade. Na cena tridimensional a
+profundidade é real, e desenhar um traço pontilhado ali significaria outra coisa — ligação de
+hidrogênio, ligação parcial, interação fraca. O que atravessa é a **letra**: `R` e `S` aparecem ao
+lado do mesmo átomo nas duas telas, e a diferença entre os enantiômeros aparece onde ela existe de
+verdade, que é na forma.
+
 **O que ainda não existe.** Cunha ondulada (`either`, o "não se sabe de que lado") é lida do
 molblock como plano, porque desenhar uma coisa que significa "indefinido" e tratá-la como definida
 seria pior que ignorá-la. Estereoquímica de anel e atropoisomeria não têm tratamento próprio: o

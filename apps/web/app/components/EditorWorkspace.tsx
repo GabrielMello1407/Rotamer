@@ -161,6 +161,21 @@ export function EditorWorkspace({
     return index < 0 ? null : index;
   }, [hover, focus, graph.atoms]);
 
+  /**
+   * Os centros com configuração, para a cena escrever a mesma letra do desenho.
+   *
+   * Cunha e traço ficam no 2D — eles são notação de projeção, e no espaço não há
+   * o que projetar. O que atravessa é a letra.
+   */
+  const stereo = useMemo(() => {
+    if (analysis?.ok !== true) return [];
+
+    return analysis.molecule.stereo.atoms.map((entry) => ({
+      source: entry.index,
+      label: entry.label,
+    }));
+  }, [analysis]);
+
   // E o contrário: a esfera apontada na cena acende o vértice do desenho.
   const onSceneHover = useCallback(
     (source: number | null) => {
@@ -294,6 +309,7 @@ export function EditorWorkspace({
               highlight={highlight}
               onHover={onSceneHover}
               mode={mode}
+              stereo={stereo}
               onClearMode={() => {
                 selectMode(null);
               }}
