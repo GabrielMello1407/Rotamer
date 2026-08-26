@@ -608,3 +608,29 @@ espelhada — verificado por teste, pelo sinal do produto misto dos vizinhos do 
 molblock como plano, porque desenhar uma coisa que significa "indefinido" e tratá-la como definida
 seria pior que ignorá-la. Estereoquímica de anel e atropoisomeria não têm tratamento próprio: o
 RDKit percebe o que dá para perceber do desenho plano, e nada além disso é afirmado.
+
+---
+
+## D-22 · O professor vê onde a turma parou, não o que cada aluno desenhou
+
+**Decisão.** A turma é uma lista de alunos e um código de seis caracteres que o professor escreve
+no quadro. Quem entra digita o código — sem convite por e-mail, pela mesma razão do D-19. O painel
+da turma mostra, por aluno: missões cumpridas, missões em que travou e quando foi a última vez que
+apareceu. E, no topo, **a lista de missões em que mais gente travou**.
+
+**Por que essa é a tela.** A pergunta do professor não é "quem foi melhor" — é "onde a aula
+parou". A primeira coisa da tela é a lista das missões que mais travaram porque é dela que sai o
+assunto da aula seguinte. Ranking de aluno seria fácil de fazer e serviria para outra coisa:
+comparar pessoas.
+
+**Travar = abrir e não cumprir.** Escolher a missão na lista é ato deliberado, e é isso que o
+produto grava — uma linha por pessoa e missão, que reabrir não multiplica. A alternativa que
+parecia melhor, gravar o abandono quando a pessoa troca de missão, não funciona no caso mais
+comum de todos: fechar a aba. Limpeza de efeito não roda quando a aula acaba.
+
+**O que o professor não vê.** As moléculas que o aluno desenhou fora das missões. Elas ficam na
+estante dele, e vigiar trabalho criativo é outra coisa, com outro nome. O que a tela mostra é
+progresso de missão, avaliado no servidor a cada tentativa — nunca a nota que o navegador mandou.
+
+**Turma é do professor que abriu.** Outro professor, mesmo da mesma escola, não abre o quadro de
+uma turma que não é dele: a consulta filtra por dono, e não por papel.

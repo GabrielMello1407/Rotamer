@@ -82,6 +82,35 @@ async function rememberMolecule(
   });
 }
 
+const openSchema = z.object({ questSlug: z.string().min(1).max(80) });
+
+/**
+ * Registra que alguém abriu uma missão.
+ *
+ * É o outro lado da tentativa: o painel da turma precisa saber onde a aula
+ * parou, não só quem chegou ao fim, e "abriu e não cumpriu" é a definição de
+ * travar que ele usa (D-22). Sem conta, não grava nada.
+ */
+export async function openQuest(input: { questSlug: string }): Promise<void> {
+  const parsed = openSchema.safeParse(input);
+  if (!parsed.success) return;
+
+  const profile = await currentProfile();
+  if (profile === null) return;
+
+  if (!findQuest(parsed.data.questSlug)) return;
+
+  await db.questOpen
+    .upsert({
+      where: {
+        profileId_questSlug: { profileId: profile.id, questSlug: parsed.data.questSlug },
+      },
+      create: { profileId: profile.id, questSlug: parsed.data.questSlug },
+      update: {},
+    })
+    .catch(() => null);
+}
+
 export interface QuestProgress {
   readonly questSlug: string;
   readonly bestScore: number;

@@ -1,0 +1,265 @@
+.page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: var(--sp-5) var(--sp-5) var(--sp-8);
+  display: grid;
+  gap: var(--sp-5);
+  align-content: start;
+  min-height: 100dvh;
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+}
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  text-decoration: none;
+  color: inherit;
+}
+
+.wordmark {
+  font-family: var(--font-display);
+  font-size: var(--step-1);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.who {
+  font-size: var(--step--1);
+  color: var(--ink-500);
+}
+
+.heading {
+  font-family: var(--font-display);
+  font-size: var(--step-3);
+  letter-spacing: -0.014em;
+  margin: 0 0 var(--sp-2);
+}
+
+.intro {
+  margin: 0;
+  color: var(--ink-500);
+  font-size: var(--step-0);
+  max-width: 70ch;
+}
+
+.panels {
+  display: grid;
+  gap: var(--sp-5);
+}
+
+.panel {
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--raised);
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: var(--step-1);
+  margin: 0;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  align-items: baseline;
+  gap: var(--sp-4);
+  padding: var(--sp-2) 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.name {
+  font-size: var(--step-0);
+  color: var(--ink-900);
+  text-decoration: none;
+}
+
+a.name:hover {
+  color: var(--brand-ink);
+  text-decoration: underline;
+}
+
+/* O código é para ser lido no quadro do fundo da sala. */
+.code {
+  font-family: var(--font-mono);
+  font-size: var(--step-1);
+  letter-spacing: 0.12em;
+  color: var(--ink-900);
+}
+
+.count,
+.date {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--step--1);
+  color: var(--ink-500);
+  white-space: nowrap;
+}
+
+.form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--sp-2);
+}
+
+.form > button {
+  flex: none;
+}
+
+.field {
+  display: grid;
+  gap: var(--sp-1);
+  flex: 1 1 200px;
+  min-width: 0;
+}
+
+.input {
+  font-family: var(--font-ui);
+  font-size: var(--step-0);
+  color: var(--ink-900);
+  background: var(--sunk);
+  border: 1px solid var(--line-firm);
+  border-radius: var(--r-sm);
+  padding: var(--sp-2) var(--sp-3);
+  width: 100%;
+}
+
+.codeInput {
+  font-family: var(--font-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.quiet,
+.note {
+  margin: 0;
+  font-size: var(--step--1);
+  color: var(--ink-500);
+  line-height: 1.5;
+}
+
+.ok {
+  margin: 0;
+  font-size: var(--step-0);
+  color: var(--ok);
+}
+
+.error {
+  margin: 0;
+  font-size: var(--step-0);
+  color: var(--danger);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--step--1);
+}
+
+.head {
+  text-align: left;
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-400);
+  font-weight: 500;
+  padding: 0 var(--sp-3) var(--sp-2) 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.line {
+  border-bottom: 1px solid var(--line);
+}
+
+.line:last-child {
+  border-bottom: none;
+}
+
+.cell {
+  padding: var(--sp-2) var(--sp-3) var(--sp-2) 0;
+  color: var(--ink-700);
+  vertical-align: baseline;
+}
+
+.number {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.stuck {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.stuckRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  padding: var(--sp-2) 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.stuckRow:last-child {
+  border-bottom: none;
+}
+
+.questName {
+  font-size: var(--step-0);
+  color: var(--ink-900);
+}
+
+/* Quantos travaram: é o número que decide a próxima aula. */
+.stuckCount {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--step--1);
+  color: var(--warn);
+  white-space: nowrap;
+}
+
+/* Tela estreita: a linha empilha. Espremida em quatro colunas, o nome da turma
+   chega a zero de largura e vira um alvo que não dá para tocar. */
+@media (max-width: 720px) {
+  .row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--sp-2);
+  }
+
+  .date {
+    display: none;
+  }
+
+  .table {
+    display: block;
+    overflow-x: auto;
+  }
+}

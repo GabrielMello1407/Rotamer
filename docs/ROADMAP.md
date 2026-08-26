@@ -133,12 +133,16 @@ continuar dito em voz alta enquanto for verdade.
 
 ## Fase 4 · Comercial — ~120h
 
-- [ ] Painel do professor: turmas, acompanhamento de quem travou onde
+- [x] Painel do professor: turmas, acompanhamento de quem travou onde (D-22)
 - [ ] Camadas de assinatura e cobrança
 - [ ] Landing page e material de venda
 - [ ] Campanhas privadas para laboratório (ver ressalva em `DECISOES.md` D-08)
 
 **Publica:** v1.0.
+
+**Pergunta em aberto, anotada no `DEPOIS.md`:** o roadmap inteiro serve ao ensino, e não existe
+trilha de pesquisa. Isso é coerente com o D-09 — pesquisador é usuário avançado, não cliente —
+mas a decisão precisa ser reafirmada ou revista por escrito depois das sessões da Fase 3.
 
 ---
 

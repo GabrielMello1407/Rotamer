@@ -6,7 +6,13 @@ import { Button, Label, SourceBadge } from '@rotamer/ui';
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
 import { track } from '../../lib/track';
-import { readProgress, saveAttempt, type AttemptOutcome, type QuestProgress } from '../actions/attempt';
+import {
+  openQuest,
+  readProgress,
+  saveAttempt,
+  type AttemptOutcome,
+  type QuestProgress,
+} from '../actions/attempt';
 import styles from './QuestPanel.module.css';
 
 export interface QuestPanelProps {
@@ -69,9 +75,26 @@ export function QuestPanel({ analysis, slug, onSlug }: QuestPanelProps): ReactEl
     startedAt.current = Date.now();
   }, [slug]);
 
-  // A tentativa vai para o servidor com o desenho, nunca com a nota: lá o
-  // molblock passa de novo pelo RDKit e a mesma spec é reavaliada. Nota que
-  // chega pronta do navegador não vale nada.
+  /**
+   * Abrir a missão é o que o painel do professor precisa saber.
+   *
+   * Escolher a missão na lista é ato deliberado — e "abriu e não cumpriu" é
+   * exatamente a definição de travar que a tela da turma usa. Gravar abandono na
+   * saída não funcionaria: fechar a aba não roda limpeza de efeito nenhuma, e é
+   * assim que uma aula termina (D-22).
+   */
+  useEffect(() => {
+    if (!quest) return;
+
+    void openQuest({ questSlug: quest.slug });
+  }, [quest]);
+
+  /**
+   * A tentativa cumprida vai para o servidor com o desenho, nunca com a nota.
+   *
+   * Lá o molblock passa de novo pelo RDKit e a mesma `spec` é reavaliada: nota
+   * que chega pronta do navegador não vale nada.
+   */
   useEffect(() => {
     if (!quest || result?.passed !== true || analysis === null || !analysis.ok) return;
 

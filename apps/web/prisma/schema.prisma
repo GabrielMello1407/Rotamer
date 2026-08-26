@@ -41,6 +41,62 @@ model Profile {
   namedBy      MoleculeName[]
   resetCodes   ResetCode[]  @relation("codigoDaConta")
   codesIssued  ResetCode[]  @relation("codigoEmitido")
+  teaching     Classroom[]
+  enrollments  Enrollment[]
+  questsOpened QuestOpen[]
+}
+
+/// Missão que alguém abriu.
+///
+/// "Travar" é abrir e não cumprir — e abrir é ato deliberado, escolhido numa
+/// lista. Gravar isso é o que permite ao painel da turma mostrar onde a aula
+/// parou, e não só quem chegou ao fim (D-22).
+///
+/// Uma linha por pessoa e missão: reabrir não multiplica registro.
+model QuestOpen {
+  profileId String
+  questSlug String
+  openedAt  DateTime @default(now())
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@id([profileId, questSlug])
+  @@index([questSlug])
+}
+
+/// Uma turma.
+///
+/// Existe para o professor ver onde a turma dele travou — que é a pergunta que
+/// faz a escola comprar o produto. Entrar numa turma é o aluno digitar um
+/// código que o professor entrega em sala, pelo mesmo motivo de não haver
+/// e-mail na recuperação de senha (D-19).
+model Classroom {
+  id        String    @id @default(cuid())
+  name      String
+  teacherId String
+  /// Curto e sem caractere ambíguo: ele é ditado em voz alta para trinta pessoas.
+  code      String    @unique
+  createdAt DateTime  @default(now())
+  /// Turma arquivada some da lista sem apagar o histórico de ninguém.
+  archivedAt DateTime?
+
+  teacher     Profile      @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  enrollments Enrollment[]
+
+  @@index([teacherId])
+}
+
+/// Um aluno numa turma.
+model Enrollment {
+  classroomId String
+  profileId   String
+  joinedAt    DateTime @default(now())
+
+  classroom Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  profile   Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@id([classroomId, profileId])
+  @@index([profileId])
 }
 
 /// Código de uso único para trocar a senha, emitido por um professor.
