@@ -5,7 +5,7 @@ import { useFrame, type ThreeEvent } from '@react-three/fiber';
 import { memo, useEffect, useMemo, useRef, type ReactElement } from 'react';
 import { Color, Matrix4, Quaternion, Vector3, type InstancedMesh, type Mesh } from 'three';
 import { colorOf, radiusOf, type Cpk } from './cpk';
-import { sampleDynamics, sampleFolding, FOLD_DURATION } from './folding';
+import { sampleDynamics, sampleFolding, sampleMode, FOLD_DURATION } from './folding';
 
 export interface MoleculeProps {
   readonly geometry: Geometry;
@@ -23,6 +23,14 @@ export interface MoleculeProps {
   readonly highlight?: number | null | undefined;
   /** Qual átomo do desenho está sob o cursor, ou `null` ao sair. */
   readonly onHover?: ((source: number | null) => void) | undefined;
+  /**
+   * Um modo normal para mostrar sozinho, no lugar da vibração térmica.
+   *
+   * Deslocamento cartesiano por átomo, já normalizado. Com ele a cena para de
+   * mostrar a molécula a 300 K e passa a mostrar **um** jeito de vibrar, isolado
+   * dos outros — que é como se ensina espectroscopia.
+   */
+  readonly mode?: readonly number[] | null | undefined;
 }
 
 const UP = new Vector3(0, 1, 0);
@@ -62,6 +70,7 @@ function MoleculeScene({
   showHydrogens = true,
   highlight,
   onHover,
+  mode,
 }: MoleculeProps): ReactElement {
   const atomsRef = useRef<InstancedMesh | null>(null);
   const bondsRef = useRef<InstancedMesh | null>(null);
@@ -120,10 +129,10 @@ function MoleculeScene({
   }, [geometry]);
 
   // A vibração recomeça no quadro zero — que é a própria geometria mínima —
-  // sempre que a trajetória troca ou o movimento é religado.
+  // sempre que a trajetória troca, o modo troca ou o movimento é religado.
   useEffect(() => {
     vibeRef.current = null;
-  }, [trajectory, animate]);
+  }, [trajectory, animate, mode]);
 
   const atomRadii = useMemo(
     () => geometry.atoms.map((atom) => radiusOf(atom.element)),
@@ -159,7 +168,13 @@ function MoleculeScene({
     // regime. Quem pediu menos movimento fica na forma final, parada.
     let positions = sample.positions;
 
-    if (sample.done && animate && trajectory) {
+    if (sample.done && animate && mode) {
+      // Com um modo escolhido, a cena mostra só ele: a molécula deixa de ser
+      // uma amostra térmica e vira o movimento único que aquela frequência
+      // descreve.
+      vibeRef.current ??= now;
+      positions = sampleMode(sample.positions, mode, now - vibeRef.current);
+    } else if (sample.done && animate && trajectory) {
       vibeRef.current ??= now;
       positions = sampleDynamics(trajectory, now - vibeRef.current);
     }

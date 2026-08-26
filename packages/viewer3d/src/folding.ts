@@ -139,3 +139,47 @@ export function radiusOf(geometry: Geometry): number {
 
   return radius;
 }
+
+/**
+ * O desenho de um modo normal, num instante da tela.
+ *
+ * O modo é um movimento harmônico: cada átomo vai e volta ao longo do próprio
+ * vetor de deslocamento, todos em fase, passando juntos pela geometria de
+ * equilíbrio. É por isso que basta uma senoide — não é animação inventada, é a
+ * definição de modo normal.
+ *
+ * Duas coisas são exageradas de propósito, e a interface diz as duas: a
+ * **amplitude**, que na realidade é uma fração de ångström invisível na tela, e
+ * a **velocidade** — um estiramento C–H completa um ciclo a cada 11 fs, e
+ * reproduzir isso em tempo real daria um borrão a 10¹³ Hz. O que está certo é a
+ * forma do movimento: quem anda, para onde, e em que proporção.
+ */
+export function sampleMode(
+  equilibrium: readonly number[],
+  displacement: readonly number[],
+  elapsed: number,
+  periodMs = MODE_PERIOD,
+  amplitude = MODE_AMPLITUDE,
+): readonly number[] {
+  const phase = Math.sin((2 * Math.PI * elapsed) / periodMs) * amplitude;
+
+  const positions = new Array<number>(equilibrium.length);
+  for (let index = 0; index < equilibrium.length; index += 1) {
+    positions[index] = (equilibrium[index] ?? 0) + phase * (displacement[index] ?? 0);
+  }
+
+  return positions;
+}
+
+/** Quanto tempo um ciclo do modo leva na tela, em milissegundos. */
+export const MODE_PERIOD = 1400;
+
+/**
+ * Amplitude do modo na tela, em ångström.
+ *
+ * O deslocamento vem normalizado para o átomo que mais anda valer 1, então este
+ * número é literalmente o quanto esse átomo se afasta do equilíbrio no pico.
+ * Dois décimos de ångström é o suficiente para o olho ver o movimento sem a
+ * molécula parecer que está se desmontando.
+ */
+export const MODE_AMPLITUDE = 0.22;

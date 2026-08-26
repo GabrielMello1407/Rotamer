@@ -49,7 +49,8 @@ e contexto, não como especificação congelada:
 **O núcleo determinístico decide. A IA explica.**
 
 - Validade, valência, fórmula, massa, SMILES, InChIKey, TPSA, logP, anéis, rotacionáveis,
-  aromaticidade, nota de missão → **sempre RDKit ou o motor de missões. Nunca o LLM.**
+  aromaticidade, frequência de modo normal, nota de missão → **sempre RDKit, o campo de força ou o
+  motor de missões. Nunca o LLM.**
 - Por que falhou, o que trocar, se parece sintetizável → LLM, lendo os números já calculados,
   sempre marcado como hipótese na interface.
 - O prompt do tutor recebe os descritores prontos e é instruído a nunca recalcular nem contradizer.
@@ -86,6 +87,8 @@ tutor são derivados dele e recalculáveis. Nada além do grafo é persistido co
 - RDKit.js (WASM) em Web Worker via Comlink — toda pergunta química
 - OpenChemLib no mesmo worker — conformação 3D e MMFF94, depois que o RDKit aprovou (D-10)
 - Vibração por velocity-Verlet sobre o gradiente numérico do MMFF94, a 300 K (D-14)
+- Modos normais por Hessiana numérica do MMFF94, com projeção do corpo rígido — 3N−6, ou 3N−5
+  quando linear (D-20)
 - Three.js + React Three Fiber — apenas render, nenhuma química dentro
 - Canvas 2D próprio + Zustand — o editor é escrito à mão, sem lib de desenho molecular
 - Postgres + Prisma no próprio servidor — container em desenvolvimento, serviço no VPS (D-11)

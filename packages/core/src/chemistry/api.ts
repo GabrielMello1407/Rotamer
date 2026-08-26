@@ -1,6 +1,8 @@
 import { generateGeometry } from '../geometry/conformer';
 import { simulateDynamics } from '../geometry/dynamics';
 import type { DynamicsTrajectory } from '../geometry/dynamics';
+import { normalModes } from '../geometry/modes';
+import type { NormalModes } from '../geometry/modes';
 import { configureGeometry } from '../geometry/openchemlib';
 import type { Geometry } from '../geometry/types';
 import { analyze } from './analysis';
@@ -16,6 +18,16 @@ export type DynamicsResult =
       readonly inchiKey: string;
       /** `null` quando a dinâmica não pôde rodar — a cena mostra a forma parada. */
       readonly trajectory: DynamicsTrajectory | null;
+    }
+  | { readonly ok: false; readonly error: ChemistryError };
+
+/** Modos normais de vibração, quando foi possível calcular. */
+export type ModesResult =
+  | {
+      readonly ok: true;
+      readonly inchiKey: string;
+      /** `null` quando a molécula é grande demais ou o campo de força não abriu. */
+      readonly modes: NormalModes | null;
     }
   | { readonly ok: false; readonly error: ChemistryError };
 
@@ -45,6 +57,8 @@ export interface ChemistryApi {
   depict(input: string): Promise<string | null>;
   /** Vibração: dinâmica molecular a partir da conformação já minimizada. */
   dynamics(input: string): Promise<DynamicsResult>;
+  /** Modos normais: 3N − 6 jeitos de a molécula vibrar, cada um com sua frequência. */
+  modes(input: string): Promise<ModesResult>;
 }
 
 /**
@@ -57,6 +71,7 @@ export interface ChemistryApi {
 const MAX_CACHED = 64;
 const geometryCache = new Map<string, Geometry>();
 const dynamicsCache = new Map<string, DynamicsTrajectory | null>();
+const modesCache = new Map<string, NormalModes | null>();
 const analysisCache = new Map<string, AnalysisResult>();
 
 function remember<T>(cache: Map<string, T>, key: string, value: T): T {
@@ -116,6 +131,24 @@ export const chemistryApi: ChemistryApi = {
 
     const geometry = await generateGeometry(molblock);
     return { ok: true, inchiKey, geometry: remember(geometryCache, inchiKey, geometry) };
+  },
+
+  async modes(input: string): Promise<ModesResult> {
+    // O modo normal existe em torno de um mínimo: a conformação vem primeiro, e
+    // ela quase sempre já está em cache quando este pedido chega.
+    const conformation = await chemistryApi.geometry(input);
+    if (!conformation.ok) return { ok: false, error: conformation.error };
+
+    const { inchiKey, geometry } = conformation;
+
+    const cached = modesCache.get(inchiKey);
+    if (cached !== undefined) return { ok: true, inchiKey, modes: cached };
+
+    const analysis = await chemistryApi.analyze(input);
+    if (!analysis.ok) return { ok: false, error: analysis.error };
+
+    const calculated = await normalModes(analysis.molecule.molblock, geometry);
+    return { ok: true, inchiKey, modes: remember(modesCache, inchiKey, calculated) };
   },
 
   async dynamics(input: string): Promise<DynamicsResult> {

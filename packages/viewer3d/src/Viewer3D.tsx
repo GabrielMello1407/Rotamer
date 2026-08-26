@@ -27,6 +27,21 @@ export interface Viewer3DProps {
    * mais existe na tela nem tem direito de cobrir o desenho inteiro.
    */
   readonly onExpand?: ((expanded: boolean) => void) | undefined;
+  /** O modo normal em exibição, quando alguém escolheu um. */
+  readonly mode?: SelectedMode | null | undefined;
+  /** Voltar para a vibração térmica. */
+  readonly onClearMode?: (() => void) | undefined;
+}
+
+export interface SelectedMode {
+  /** Posição do modo na lista, começando em 1 — é assim que se cita. */
+  readonly number: number;
+  /** Número de onda em cm⁻¹. Negativo quer dizer imaginário. */
+  readonly wavenumber: number;
+  /** Deslocamento cartesiano por átomo, achatado. */
+  readonly displacement: readonly number[];
+  /** `estiramento` ou `dobramento`, pelo que domina o movimento. */
+  readonly kind: string;
 }
 
 /**
@@ -39,6 +54,12 @@ export interface Viewer3DProps {
 /** Abertura vertical da câmera, em graus. */
 const FOV = 38;
 
+/** Número de onda como a espectroscopia escreve: sem separador de milhar. */
+const WAVENUMBER = new Intl.NumberFormat('pt-BR', {
+  maximumFractionDigits: 0,
+  useGrouping: false,
+});
+
 /** Folga em torno da molécula, em ångström. */
 const PADDING = 1.2;
 
@@ -50,6 +71,8 @@ export function Viewer3D({
   highlight,
   onHover,
   onExpand,
+  mode,
+  onClearMode,
 }: Viewer3DProps): ReactElement {
   const stageRef = useRef<HTMLDivElement | null>(null);
   // Só o que este componente precisa do controle de órbita. Tipar por estrutura
@@ -188,6 +211,7 @@ export function Viewer3D({
                 highlight={highlight}
                 onHover={onHover}
                 onEnergy={onEnergy}
+                mode={mode?.displacement ?? null}
               />
             </group>
 
@@ -298,7 +322,38 @@ export function Viewer3D({
         <p className={styles.empty}>{placeholder}</p>
       )}
 
-      {geometry && energy !== null && (
+      {geometry && mode && (
+        <p className={styles.mode} data-testid="modo-em-exibicao">
+          <span className={styles.modeNumber}>modo {mode.number}</span>
+          <span className={styles.modeWave}>
+            {WAVENUMBER.format(mode.wavenumber)}
+            {' cm⁻¹'}
+          </span>
+          <span className={styles.energyLabel}>{mode.kind}</span>
+          <button
+            type="button"
+            className={styles.control}
+            aria-label="Voltar para a vibração térmica"
+            title="Voltar para a vibração térmica"
+            data-testid="sair-do-modo"
+            onClick={() => {
+              onClearMode?.();
+            }}
+          >
+            <svg viewBox="0 0 16 16" aria-hidden="true" className={styles.icon}>
+              <path
+                d="M4 4l8 8M12 4l-8 8"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
+            </svg>
+          </button>
+        </p>
+      )}
+
+      {geometry && energy !== null && !mode && (
         <p className={styles.energy} data-testid="energia">
           <span className={styles.energyLabel}>
             {settled && animate && trajectory ? 'dinâmica' : 'energia'}

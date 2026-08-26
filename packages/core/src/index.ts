@@ -13,6 +13,7 @@ export {
   type ChemistryApi,
   type DynamicsResult,
   type GeometryResult,
+  type ModesResult,
 } from './chemistry/api';
 export { depict, type DepictionOptions } from './chemistry/depiction';
 export { configureRDKit, loadRDKit, rdkitVersion, type RDKitOptions } from './chemistry/rdkit';
@@ -71,6 +72,11 @@ export {
   type DynamicsOptions,
   type DynamicsTrajectory,
 } from './geometry/dynamics';
+export {
+  normalModes,
+  type NormalMode,
+  type NormalModes,
+} from './geometry/modes';
 export {
   configureGeometry,
   loadOpenChemLib,

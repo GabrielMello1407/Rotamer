@@ -4,7 +4,7 @@
  * Motor de render apenas: as coordenadas chegam prontas do worker e nenhuma
  * decisão química acontece aqui dentro.
  */
-export { Viewer3D, type Viewer3DProps } from './Viewer3D';
+export { Viewer3D, type SelectedMode, type Viewer3DProps } from './Viewer3D';
 export { Molecule, type MoleculeProps } from './Molecule';
 export {
   centerOf,

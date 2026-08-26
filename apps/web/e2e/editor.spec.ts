@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { openAnalysis } from './painel';
 
 /**
  * O caminho inteiro do produto num teste só: traço na tela, RDKit no worker,
@@ -222,5 +223,36 @@ test.describe('editor', () => {
 
     expect(assentada).not.toBeNull();
     expect(maior).toBeGreaterThan((assentada ?? 0) + 5);
+  });
+  test('os modos normais são 3N − 6, e a cena mostra um deles sozinho', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.getByTestId('tela-de-desenho')).toBeVisible();
+
+    // Água: três átomos, três modos — uma deformação angular e dois
+    // estiramentos O–H.
+    await openAnalysis(page);
+    await page.getByTestId('entrada-smiles').fill('O');
+    await page.getByRole('button', { name: 'Carregar' }).click();
+    await expect(page.getByTestId('formula')).toHaveText('H2O', { timeout: 60_000 });
+
+    const conta = page.getByTestId('conta-de-modos');
+    await expect(conta).toContainText('3N − 6', { timeout: 60_000 });
+    await expect(conta).toContainText('3 modos');
+
+    // O primeiro é o mais lento: dobrar o ângulo H–O–H.
+    const primeiro = page.getByTestId('modo-1');
+    await expect(primeiro).toContainText('cm⁻¹');
+    await expect(primeiro).toContainText('dobramento');
+
+    await primeiro.click();
+
+    const exibindo = page.getByTestId('modo-em-exibicao');
+    await expect(exibindo).toContainText('modo 1');
+    await expect(exibindo).toContainText('cm⁻¹');
+
+    // E dá para voltar para a vibração térmica.
+    await page.getByTestId('sair-do-modo').click();
+    await expect(exibindo).toBeHidden();
+    await expect(page.getByTestId('energia')).toBeVisible();
   });
 });

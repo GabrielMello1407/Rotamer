@@ -1,0 +1,123 @@
+.section {
+  display: grid;
+  gap: var(--sp-2);
+  justify-items: start;
+}
+
+.heading {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-400);
+  font-weight: 500;
+}
+
+.count {
+  margin: 0;
+  font-size: var(--step--1);
+  color: var(--ink-700);
+}
+
+/* A fórmula é o conteúdo da seção: ela aparece escrita, não subentendida. */
+.formula {
+  font-family: var(--font-mono);
+  color: var(--ink-900);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1px;
+  width: 100%;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 2ch minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: var(--sp-1) var(--sp-2);
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-ui);
+}
+
+.row:hover {
+  background: var(--surface);
+}
+
+.row[aria-pressed='true'] {
+  background: var(--brand-wash);
+  border-color: var(--brand);
+}
+
+.number {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--step--2);
+  color: var(--ink-400);
+  text-align: right;
+}
+
+.wave {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--step-0);
+  color: var(--ink-900);
+}
+
+.unit {
+  color: var(--ink-400);
+  font-size: var(--step--2);
+  margin-left: 4px;
+}
+
+/* Frequência imaginária não é detalhe: ela diz que a geometria não é mínimo. */
+.imaginary {
+  color: var(--warn);
+}
+
+.kind {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  font-size: var(--step--1);
+  color: var(--ink-500);
+  white-space: nowrap;
+}
+
+.share {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-400);
+  font-size: var(--step--2);
+}
+
+.quiet,
+.note {
+  margin: 0;
+  font-size: var(--step--1);
+  color: var(--ink-500);
+  line-height: 1.5;
+}
+
+.warn {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid color-mix(in srgb, var(--warn) 40%, transparent);
+  border-radius: var(--r-sm);
+  background: var(--warn-wash);
+  color: var(--ink-700);
+  font-size: var(--step--1);
+  line-height: 1.5;
+}

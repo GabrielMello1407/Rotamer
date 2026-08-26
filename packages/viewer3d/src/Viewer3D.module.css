@@ -94,6 +94,30 @@
   color: var(--ink-400);
 }
 
+/* O modo normal em exibição, no lugar da energia: quando a cena mostra um modo
+   isolado, a energia instantânea não é o número que interessa. */
+.mode {
+  position: absolute;
+  inset: auto auto var(--sp-2) var(--sp-3);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--step--1);
+  color: var(--ink-700);
+}
+
+.modeNumber {
+  color: var(--brand-ink);
+}
+
+.modeWave {
+  color: var(--ink-900);
+  font-weight: 500;
+}
+
 /* O nome do átomo aceso. O símbolo vai na cor CPK dele — é o átomo escrito, não
    um estado da interface. */
 .hovered {

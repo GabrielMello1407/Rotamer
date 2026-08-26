@@ -8,6 +8,7 @@ import {
   type DynamicsTrajectory,
   type Geometry,
   type MoleculeGraph,
+  type NormalModes,
 } from '@rotamer/core';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ChemistryConnection } from './use-chemistry-client';
@@ -28,6 +29,8 @@ export interface MoleculeReading {
   readonly geometry: Geometry | null;
   /** A vibração, que chega depois da forma. */
   readonly trajectory: DynamicsTrajectory | null;
+  /** Os modos normais, que chegam por último — são os mais caros de calcular. */
+  readonly modes: NormalModes | null;
   /** Verdadeiro enquanto o worker ainda não respondeu sobre este desenho. */
   readonly pending: boolean;
 }
@@ -36,6 +39,7 @@ const NOTHING: MoleculeReading = {
   analysis: null,
   geometry: null,
   trajectory: null,
+  modes: null,
   pending: false,
 };
 
@@ -92,7 +96,7 @@ export function useMolecule(
 
         if (!analysis.ok) {
           shownTopology.current = null;
-          setReading({ analysis, geometry: null, trajectory: null, pending: false });
+          setReading({ analysis, geometry: null, trajectory: null, modes: null, pending: false });
           return;
         }
 
@@ -108,12 +112,18 @@ export function useMolecule(
 
         if (!conformation.ok) {
           shownTopology.current = null;
-          setReading({ analysis, geometry: null, trajectory: null, pending: false });
+          setReading({ analysis, geometry: null, trajectory: null, modes: null, pending: false });
           return;
         }
 
         shownTopology.current = topology;
-        setReading({ analysis, geometry: conformation.geometry, trajectory: null, pending: false });
+        setReading({
+          analysis,
+          geometry: conformation.geometry,
+          trajectory: null,
+          modes: null,
+          pending: false,
+        });
 
         // A vibração vem depois: a forma aparece e começa a dobrar enquanto o
         // worker ainda está integrando a dinâmica. Quando ela chega, a cena
@@ -124,6 +134,18 @@ export function useMolecule(
         setReading((current) =>
           current.geometry === conformation.geometry
             ? { ...current, trajectory: vibration.trajectory }
+            : current,
+        );
+
+        // Os modos normais são a conta mais cara do produto — Hessiana por
+        // diferenças finitas e diagonalização. Vêm por último, e a cena inteira
+        // já está funcionando sem eles.
+        const normal = await client.modes(molblock);
+        if (!alive || !normal.ok) return;
+
+        setReading((current) =>
+          current.geometry === conformation.geometry
+            ? { ...current, modes: normal.modes }
             : current,
         );
       };

@@ -13,6 +13,7 @@ import { useChemistryClient } from './use-chemistry-client';
 import { useDraft } from './use-draft';
 import { useInitialSmiles } from './use-initial-smiles';
 import { useMolecule } from './use-molecule';
+import type { NormalModes } from '@rotamer/core';
 import { track } from '../../lib/track';
 
 export interface EditorWorkspaceProps {
@@ -55,11 +56,50 @@ export function EditorWorkspace({
     [store],
   );
 
-  const { analysis, geometry, trajectory, pending } = useMolecule(
+  const { analysis, geometry, trajectory, modes, pending } = useMolecule(
     graph,
     connection,
     applyHydrogens,
   );
+
+  /**
+   * O modo normal em exibição.
+   *
+   * Escolhido na lista do painel, mostrado sozinho na cena — a molécula deixa de
+   * ser uma amostra a 300 K e passa a ser um movimento só, que é como se estuda
+   * vibração.
+   *
+   * A escolha guarda junto de que lista ela veio: o modo 7 de uma molécula não é
+   * o modo 7 da outra, então trocar de molécula descarta a escolha sozinho, sem
+   * efeito nenhum precisar limpar nada.
+   */
+  const [chosen, setChosen] = useState<{
+    readonly from: NormalModes | null;
+    readonly index: number;
+  } | null>(null);
+
+  const selectedMode = chosen !== null && chosen.from === modes ? chosen.index : null;
+
+  const selectMode = useCallback(
+    (index: number | null) => {
+      setChosen(index === null ? null : { from: modes, index });
+    },
+    [modes],
+  );
+
+  const mode = useMemo(() => {
+    if (selectedMode === null) return null;
+
+    const chosen = modes?.modes[selectedMode];
+    if (!chosen) return null;
+
+    return {
+      number: selectedMode + 1,
+      wavenumber: chosen.wavenumber,
+      displacement: chosen.displacement,
+      kind: chosen.stretch >= chosen.bend ? 'estiramento' : 'dobramento',
+    };
+  }, [selectedMode, modes]);
 
   const fromLink = useInitialSmiles(store, connection);
   useDraft(store, !fromLink);
@@ -225,6 +265,10 @@ export function EditorWorkspace({
               trajectory={trajectory}
               highlight={highlight}
               onHover={onSceneHover}
+              mode={mode}
+              onClearMode={() => {
+                selectMode(null);
+              }}
               onExpand={(wide) => {
                 setSceneWide(wide);
 
@@ -244,6 +288,10 @@ export function EditorWorkspace({
         {panelOpen && (
           <AnalysisDrawer
             analysis={analysis}
+            modes={modes}
+            modesPending={geometry !== null && modes === null}
+            selectedMode={selectedMode}
+            onSelectMode={selectMode}
             connection={connection}
             store={store}
             tab={tab}

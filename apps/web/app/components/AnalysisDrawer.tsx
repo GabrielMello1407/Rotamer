@@ -1,12 +1,13 @@
 'use client';
 
-import type { AnalysisResult, ChemistryError, Descriptors } from '@rotamer/core';
+import type { AnalysisResult, ChemistryError, Descriptors, NormalModes } from '@rotamer/core';
 import type { EditorStore } from '@rotamer/editor2d';
 import { SourceBadge } from '@rotamer/ui';
 import type { ReactElement } from 'react';
 import styles from './AnalysisDrawer.module.css';
 import { ExportMenu } from './ExportMenu';
 import { NamePanel } from './NamePanel';
+import { NormalModesPanel } from './NormalModesPanel';
 import { QuestPanel } from './QuestPanel';
 import { SaveMolecule } from './SaveMolecule';
 import { ShareLink } from './ShareLink';
@@ -19,6 +20,12 @@ export type DrawerTab = 'analysis' | 'quests';
 
 export interface AnalysisDrawerProps {
   readonly analysis: AnalysisResult | null;
+  /** Os modos normais da molécula atual, quando o worker já respondeu. */
+  readonly modes: NormalModes | null;
+  readonly modesPending: boolean;
+  /** Qual modo está em exibição na cena. */
+  readonly selectedMode: number | null;
+  readonly onSelectMode: (index: number | null) => void;
   readonly connection: ChemistryConnection;
   readonly store: EditorStore;
   readonly tab: DrawerTab;
@@ -45,6 +52,10 @@ const NUMBER = new Intl.NumberFormat('pt-BR', {
  */
 export function AnalysisDrawer({
   analysis,
+  modes,
+  modesPending,
+  selectedMode,
+  onSelectMode,
   connection,
   store,
   tab,
@@ -132,6 +143,14 @@ export function AnalysisDrawer({
                 )}
 
                 <Identity molecule={analysis.molecule} />
+
+                <NormalModesPanel
+                  modes={modes}
+                  selected={selectedMode}
+                  onSelect={onSelectMode}
+                  pending={modesPending}
+                />
+
                 <Lipinski descriptors={analysis.molecule.descriptors} />
 
                 <section className={styles.section}>

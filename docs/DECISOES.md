@@ -514,3 +514,45 @@ quem tem conta no produto.
 **Revisar se.** A escola pedir autoatendimento fora da aula, ou o produto ganhar uso individual
 fora de turma — aí o e-mail passa a valer a infraestrutura que custa. O caminho do professor
 continua, porque ele resolve o caso da sala melhor que qualquer link.
+
+---
+
+## D-20 · Modo normal é conta, não animação
+
+**Decisão.** O produto calcula os **modos normais de vibração** de verdade: Hessiana do MMFF94 por
+diferenças finitas, ponderação por massa, projeção dos movimentos de corpo rígido e
+diagonalização. Cada modo aparece na lista com seu número de onda e pode ser mostrado sozinho na
+cena.
+
+**Por que isto e não uma animação bonita.** Vibração molecular tem estrutura: uma molécula com N
+átomos tem exatamente **3N − 6** modos — **3N − 5** se for linear, porque girar em torno do
+próprio eixo não move átomo nenhum. Cada modo tem uma frequência e um desenho de movimento em que
+todos os átomos participam ao mesmo tempo. Isso é conteúdo de aula, e é conferível: o aluno conta
+os átomos, faz a conta e o número tem que bater.
+
+**A dinâmica a 300 K continua existindo** (D-14) — ela é a molécula real, com todos os modos
+sobrepostos, que é o que acontece na natureza. O modo isolado é a decomposição dela. As duas
+coisas na mesma cena, uma de cada vez.
+
+**Onde a projeção entra.** Os seis (ou cinco) movimentos de corpo rígido são removidos do espaço
+**antes** de diagonalizar, e não descartados depois por um limiar escolhido a dedo. É a diferença
+entre a contagem sair certa por construção e sair certa por sorte.
+
+**O que é exagerado, e a tela diz.** Amplitude e velocidade. Um estiramento C–H completa um ciclo
+a cada 11 femtossegundos e a amplitude térmica é uma fração de ångström: em tempo real e em escala
+real, não se vê nada. O que está certo é a forma do movimento — quem anda, para onde, em que
+proporção.
+
+**O que não é nosso.** As frequências são do MMFF94. Campo de força clássico com potencial
+harmônico superestima estiramento em torno de 5% a 10%, e a interface diz isso: o número serve
+para comparar modos entre si, não para conferir tabela de infravermelho.
+
+**O CO₂ é o caso que ensina.** Nele o MMFF94 dá dois modos de dobramento **imaginários** — a
+geometria linear, que é a certa, não é mínimo nesse campo de força; medimos, e a energia cai de
+70,0 para 49,5 kcal/mol ao dobrar. O produto **mostra o número negativo e explica**, em vez de
+esconder ou, pior, dobrar a molécula para agradar o campo de força. Entortar o CO₂ para satisfazer
+uma parametrização ruim seria ensinar química errada com a geometria mais famosa do ensino médio.
+
+**Teto de tamanho.** Cinquenta átomos com hidrogênio. A Hessiana custa 36N² avaliações de energia
+e a diagonalização é O(N³) — acima disso o celular fraco, que é o caso de uso, congela. Passou do
+teto, a tela diz que não calculou.

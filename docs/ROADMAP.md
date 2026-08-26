@@ -34,6 +34,9 @@ O produto inteiro sem conta, sem servidor, sem IA. Tudo no cliente.
 - [x] Geometria e dobramento animado — conformação do OpenChemLib e MMFF94 real (D-10)
 - [x] Vibração por dinâmica molecular — velocity-Verlet sobre o gradiente numérico do MMFF94, a
       300 K, com a trajetória pré-calculada no worker e cache por InChIKey (D-14)
+- [x] Modos normais de vibração — Hessiana, ponderação por massa, projeção do corpo rígido e
+      diagonalização: 3N − 6 modos (3N − 5 se linear), cada um com número de onda e movimento
+      próprio, mostrados um de cada vez na cena (D-20)
 - [x] Sincronia 2D↔3D, temas claro e escuro, responsivo até 390px
 - [x] Mensagens de erro em português que explicam a química, não o código
 
