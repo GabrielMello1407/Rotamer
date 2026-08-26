@@ -8,6 +8,7 @@ import styles from './AnalysisDrawer.module.css';
 import { ExportMenu } from './ExportMenu';
 import { NamePanel } from './NamePanel';
 import { QuestPanel } from './QuestPanel';
+import { SaveMolecule } from './SaveMolecule';
 import { ShareLink } from './ShareLink';
 import { SmilesInput } from './SmilesInput';
 import { ThemeToggle } from './ThemeToggle';
@@ -134,8 +135,9 @@ export function AnalysisDrawer({
                 <Lipinski descriptors={analysis.molecule.descriptors} />
 
                 <section className={styles.section}>
-                  <h3 className={styles.heading}>Levar embora</h3>
+                  <h3 className={styles.heading}>Guardar e levar</h3>
                   <div className={styles.row}>
+                    <SaveMolecule analysis={analysis} />
                     <ExportMenu analysis={analysis} connection={connection} />
                     <ShareLink analysis={analysis} />
                   </div>

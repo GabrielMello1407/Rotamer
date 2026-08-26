@@ -1,0 +1,31 @@
+.save {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.ok {
+  margin: 0;
+  font-size: var(--step--1);
+  color: var(--ok);
+}
+
+.quiet {
+  margin: 0;
+  font-size: var(--step--1);
+  color: var(--ink-500);
+}
+
+.error {
+  margin: 0;
+  font-size: var(--step--1);
+  color: var(--danger);
+}
+
+.link {
+  color: var(--brand-ink);
+  text-decoration: none;
+}
+
+.link:hover {
+  text-decoration: underline;
+}

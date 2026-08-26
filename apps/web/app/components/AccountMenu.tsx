@@ -25,6 +25,9 @@ export function AccountMenu({ displayName }: AccountMenuProps): ReactElement {
 
   return (
     <div className={styles.menu}>
+      <Link className={styles.link} href="/minhas" data-testid="minhas">
+        Minhas moléculas
+      </Link>
       <span className={styles.name} data-testid="conta">
         {displayName}
       </span>
