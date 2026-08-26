@@ -1,6 +1,7 @@
 'use client';
 
 import { Button, Card, Label } from '@rotamer/ui';
+import Link from 'next/link';
 import { useActionState, type ReactElement } from 'react';
 import { signIn, signUp, type AccountState } from '../actions/account';
 import styles from './page.module.css';
@@ -54,6 +55,16 @@ export function AccountForms(): ReactElement {
           <Button type="submit" variant="primary" disabled={signingIn}>
             {signingIn ? 'Entrando…' : 'Entrar'}
           </Button>
+
+          {/* Sem e-mail no caminho: quem esqueceu a senha pede um código ao
+              professor da turma e troca na hora (D-19). */}
+          <p className={styles.note}>
+            Esqueceu a senha?{' '}
+            <Link className={styles.link} href="/senha" data-testid="esqueci-senha">
+              Trocar com o código do professor
+            </Link>
+            .
+          </p>
         </form>
       </Card>
 

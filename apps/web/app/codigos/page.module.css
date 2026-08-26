@@ -1,0 +1,140 @@
+.page {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: var(--sp-7) var(--sp-5) var(--sp-9);
+  display: grid;
+  gap: var(--sp-5);
+  align-content: start;
+  min-height: 100dvh;
+}
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  text-decoration: none;
+  color: inherit;
+}
+
+.wordmark {
+  font-family: var(--font-display);
+  font-size: var(--step-2);
+  font-weight: 700;
+  letter-spacing: -0.014em;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: var(--step-3);
+  letter-spacing: -0.014em;
+  margin: 0 0 var(--sp-2);
+}
+
+.intro {
+  color: var(--ink-500);
+  font-size: var(--step-0);
+  margin: 0;
+}
+
+.form {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.field {
+  display: grid;
+  gap: var(--sp-1);
+}
+
+.input {
+  font-family: var(--font-ui);
+  font-size: var(--step-0);
+  color: var(--ink-900);
+  background: var(--sunk);
+  border: 1px solid var(--line-firm);
+  border-radius: var(--r-sm);
+  padding: var(--sp-2) var(--sp-3);
+  width: 100%;
+}
+
+/* O código é lido de um papel: mono, espaçado, tudo maiúsculo. */
+.code {
+  font-family: var(--font-mono);
+  font-size: var(--step-1);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.error {
+  color: var(--danger);
+  font-size: var(--step--1);
+  background: var(--danger-wash);
+  border-radius: var(--r-sm);
+  padding: var(--sp-2) var(--sp-3);
+  margin: 0;
+}
+
+.done {
+  display: grid;
+  gap: var(--sp-2);
+  justify-items: start;
+}
+
+.ok {
+  color: var(--ok);
+  font-size: var(--step-0);
+  margin: 0;
+}
+
+.note {
+  color: var(--ink-400);
+  font-size: var(--step--1);
+  margin: 0;
+}
+
+.link {
+  color: var(--brand-ink);
+  text-decoration: none;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+.panel {
+  display: grid;
+  gap: var(--sp-4);
+  padding: var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--raised);
+}
+
+.issued {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+  border: 1px solid color-mix(in srgb, var(--ok) 40%, transparent);
+  border-radius: var(--r-md);
+  background: var(--ok-wash);
+}
+
+/* O código é para ser lido em voz alta numa sala com trinta pessoas. */
+.code {
+  font-family: var(--font-mono);
+  font-size: var(--step-4);
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  color: var(--ink-900);
+  margin: 0;
+}
+
+.aviso {
+  margin: 0;
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--sunk);
+  color: var(--ink-700);
+  font-size: var(--step-0);
+}

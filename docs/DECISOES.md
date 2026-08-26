@@ -480,3 +480,37 @@ diferença entre a cena 3D ser informação e ser enfeite.
 
 **O halo é turquesa** — a cor da marca — justamente porque nenhum elemento é turquesa no CPK: o
 destaque nunca vai ser lido como um átomo de outro elemento.
+
+---
+
+## D-19 · Recuperar senha sem e-mail: quem emite o código é o professor
+
+**Decisão.** Quem esqueceu a senha não recebe link por e-mail. Pede um código ao professor da
+turma, digita em `/senha` e troca ali mesmo.
+
+**Por quê.** O comprador é a escola e o usuário é o aluno. Em escola pública, muito aluno não tem
+e-mail próprio; o que tem, não abre na aula — e a aula é justamente o momento em que a senha
+falta. Um fluxo por e-mail transforma "esqueci a senha" em "perdi a aula". Some-se a isso o que o
+e-mail arrasta: conta SMTP, domínio com SPF e DKIM, entrega em caixa de spam e mais um serviço
+externo no caminho crítico de quem já está travado.
+
+**Quem pode emitir.** Três regras, e as três valem no servidor:
+
+1. só conta com papel `professor` emite — e **professor não se autodeclara**: quem promove é
+   `apps/web/scripts/promote-teacher.mjs`, rodado por quem tem acesso ao servidor;
+2. só para conta da **mesma escola**, que precisa estar preenchida nos dois lados;
+3. **nunca para outro professor** — senão o caminho vira escada para tomar a conta de quem emite.
+
+**O código.** Oito caracteres de um alfabeto sem `0`, `O`, `1`, `I` e `L`, porque ele vai ser lido
+de um papel e ditado em voz alta numa sala com trinta pessoas. Vale por 24 horas, serve uma vez
+só, e emitir outro para a mesma conta mata o anterior. No banco fica só o resumo SHA-256 — se o
+banco vazar, os códigos em circulação continuam inúteis, que é o mesmo cuidado tomado com senha e
+com sessão. Trocar a senha encerra as sessões abertas daquela conta.
+
+**O que a tela não conta.** "E-mail não existe", "código errado", "código vencido" e "código já
+usado" recebem a mesma mensagem. Separar os casos transformaria a tela num jeito de descobrir
+quem tem conta no produto.
+
+**Revisar se.** A escola pedir autoatendimento fora da aula, ou o produto ganhar uso individual
+fora de turma — aí o e-mail passa a valer a infraestrutura que custa. O caminho do professor
+continua, porque ele resolve o caso da sala melhor que qualquer link.

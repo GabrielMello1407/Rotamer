@@ -89,8 +89,7 @@ estão no `DEPOIS.md`:
 - [x] Pinça e polimento de celular
 - [x] Busca por nome via PubChem
 - [x] Centros estereogênicos nas métricas e "minhas moléculas"
-- [ ] Recuperação de senha — falta decidir o caminho: e-mail por SMTP ou código emitido pelo
-      professor. A escolha muda o que precisa existir no servidor.
+- [x] Recuperação de senha por código do professor, sem e-mail no caminho (D-19)
 
 O contato propriamente dito:
 

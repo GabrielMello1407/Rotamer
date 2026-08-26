@@ -139,6 +139,25 @@ ficam no ambiente do PM2, num arquivo fora do repositório:
 - **O WASM carrega depois da primeira pintura**, dentro do worker. A meta de 3 s para o primeiro
   desenho num celular fraco em 3G depende de isso continuar assim.
 
+## Contas de professor
+
+Quem emite código de troca de senha precisa ser professor, e professor **não se autodeclara** —
+não existe caminho pela tela para virar um, porque quem emite código pode tomar a conta de um
+aluno (D-19). A promoção acontece no servidor:
+
+```
+cd apps/web
+node scripts/promote-teacher.mjs ana@escola.br --escola "EE Dom Pedro II"
+node scripts/promote-teacher.mjs ana@escola.br --rebaixar
+```
+
+O script fala SQL direto, sem Prisma: o cliente gerado é TypeScript e só existe depois do build.
+Depender do build para promover alguém deixaria o script indisponível justamente no dia em que o
+servidor estivesse quebrado.
+
+Professor sem escola preenchida não emite nada — o código só vale para alguém da mesma escola, e
+o script recusa a promoção quando o campo está vazio.
+
 ## Telemetria
 
 **Umami auto-hospedado, no mesmo VPS, sem cookie.** Ele existe porque sessão de observação sem

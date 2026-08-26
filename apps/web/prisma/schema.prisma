@@ -28,13 +28,45 @@ model Profile {
   displayName  String
   /// Permite ranking por turma sem criar entidade de turma cedo demais.
   institution  String?
+  /// `aluno` ou `professor`. Quem promove é o script `apps/web/scripts/promote-teacher.mjs`,
+  /// rodado por quem tem acesso ao servidor — não existe caminho pela tela, e é
+  /// de propósito: professor que se autodeclara não é professor.
+  role         String   @default("aluno")
   createdAt    DateTime @default(now())
 
-  sessions   Session[]
-  molecules  Molecule[]
-  attempts   Attempt[]
-  tutorUsage TutorUsage[]
-  namedBy    MoleculeName[]
+  sessions     Session[]
+  molecules    Molecule[]
+  attempts     Attempt[]
+  tutorUsage   TutorUsage[]
+  namedBy      MoleculeName[]
+  resetCodes   ResetCode[]  @relation("codigoDaConta")
+  codesIssued  ResetCode[]  @relation("codigoEmitido")
+}
+
+/// Código de uso único para trocar a senha, emitido por um professor.
+///
+/// Não existe e-mail no caminho: em escola pública muito aluno não tem caixa de
+/// entrada própria, e a que tem não abre na aula. Quem recupera a senha é quem
+/// está na sala — o professor emite, entrega em mãos e o código morre no
+/// primeiro uso ou em 24 horas, o que vier antes.
+///
+/// O código nunca é guardado: fica só o resumo dele, como se faz com senha e com
+/// sessão. Se o banco vazar, os códigos em circulação continuam inúteis.
+model ResetCode {
+  id         String    @id @default(cuid())
+  /// SHA-256 do código, em hexadecimal.
+  codeHash   String    @unique
+  profileId  String
+  issuedById String
+  expiresAt  DateTime
+  usedAt     DateTime?
+  createdAt  DateTime  @default(now())
+
+  profile  Profile @relation("codigoDaConta", fields: [profileId], references: [id], onDelete: Cascade)
+  issuedBy Profile @relation("codigoEmitido", fields: [issuedById], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@index([expiresAt])
 }
 
 /// Sessão de navegador. O cookie carrega só o identificador.
