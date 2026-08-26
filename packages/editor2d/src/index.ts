@@ -33,5 +33,6 @@ export { atomLabel, draw, type Scene } from './render';
 export { insertRing, ringLabel, RING_KINDS, type RingKind } from './templates';
 export { PeriodicTable, type PeriodicTableProps } from './PeriodicTable';
 export { Shortcuts, type ShortcutsProps } from './Shortcuts';
+export { ContextMenu, type ContextMenuProps, type MenuEntry } from './ContextMenu';
 export { COMMON_ELEMENTS, PERIODIC_TABLE, type TableEntry } from './elements-table';
 export type { Camera, Drag, Hover, Point, Tool, Viewport } from './types';

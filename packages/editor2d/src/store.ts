@@ -10,9 +10,14 @@ import {
   moveAtom,
   removeAtom,
   removeBond,
+  setBondOrder,
+  setBondWedge,
+  setCharge as setAtomCharge,
   setElement,
   type AtomId,
   type BondId,
+  type BondOrder,
+  type BondWedge,
   type MoleculeGraph,
 } from '@rotamer/core';
 import { createStore } from 'zustand/vanilla';
@@ -127,6 +132,12 @@ export interface EditorState {
   /** Troca a ponta fina de lado, o que troca a configuração do centro. */
   flipWedge: (id: BondId) => void;
   changeElement: (id: AtomId, element: string) => void;
+  /** A ordem escolhida de uma vez, sem passar pelas do meio. */
+  setOrder: (id: BondId, order: BondOrder) => void;
+  /** A estereoquímica escolhida de uma vez. */
+  setWedge: (id: BondId, wedge: BondWedge) => void;
+  /** A carga formal do átomo, para íon e para par que faltou. */
+  setCharge: (id: AtomId, charge: number) => void;
   dragAtomTo: (id: AtomId, point: Point) => void;
 }
 
@@ -299,6 +310,23 @@ export function createEditorStore(initial: MoleculeGraph = emptyGraph()) {
     flipWedge: (id) => {
       const { graph, commit } = get();
       commit(flipBond(graph, id));
+    },
+
+    setOrder: (id, order) => {
+      const { graph, commit } = get();
+      commit(setBondOrder(graph, id, order));
+    },
+
+    setWedge: (id, wedge) => {
+      const { graph, commit } = get();
+      commit(setBondWedge(graph, id, wedge));
+    },
+
+    setCharge: (id, charge) => {
+      const { graph, commit } = get();
+      const atom = findAtom(graph, id);
+      if (!atom || atom.charge === charge) return;
+      commit(setAtomCharge(graph, id, charge));
     },
 
     changeElement: (id, element) => {

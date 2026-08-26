@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { analyze } from '../src/chemistry/analysis';
 import { fromMolblock, toMolblock } from '../src/graph/molfile';
-import { addAtom, addBond, emptyGraph, setBondWedge } from '../src/graph/operations';
+import { addAtom, addBond, emptyGraph, setBondWedge, setCharge } from '../src/graph/operations';
 import type { Molecule } from '../src/chemistry/types';
 
 /**
@@ -274,5 +274,37 @@ describe('geometria de dupla', () => {
     if (!result.ok) throw new Error(result.error.message);
 
     expect(result.molecule.stereo.bonds).toHaveLength(0);
+  });
+});
+
+describe('íons', () => {
+  /**
+   * A carga faz parte da fórmula.
+   *
+   * Sem ela, o amônio aparecia escrito `H4N` — que é uma amônia com um
+   * hidrogênio a mais e não existe. Numa aula, esse desenho ensina errado: é a
+   * carga que explica por que o nitrogênio pode ter quatro ligações.
+   */
+  it('o amônio traz a carga na fórmula, e o RDKit completa o quarto hidrogênio', async () => {
+    const { graph, atomId } = addAtom(emptyGraph(), { element: 'N', x: 0, y: 0 });
+    const result = await analyze(toMolblock(setCharge(graph, atomId, 1)));
+    if (!result.ok) throw new Error(result.error.message);
+
+    expect(result.molecule.formula).toBe('H4N+');
+    expect(result.molecule.smiles).toBe('[NH4+]');
+  });
+
+  it('o acetato traz a carga negativa', async () => {
+    const result = await analyze('CC(=O)[O-]');
+    if (!result.ok) throw new Error(result.error.message);
+
+    expect(result.molecule.formula).toBe('C2H3O2−');
+  });
+
+  it('molécula neutra continua sem sinal nenhum', async () => {
+    const result = await analyze('CCO');
+    if (!result.ok) throw new Error(result.error.message);
+
+    expect(result.molecule.formula).toBe('C2H6O');
   });
 });

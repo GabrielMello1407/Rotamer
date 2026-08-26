@@ -83,11 +83,13 @@ function describe(rdkit: RDKitModule, mol: JSMol): Molecule {
 
 /**
  * Fórmula em notação de Hill, contando os átomos que o RDKit percebeu —
- * inclusive os hidrogênios implícitos que ele mesmo completou.
+ * inclusive os hidrogênios implícitos que ele mesmo completou, e a carga do
+ * conjunto, que faz parte da fórmula de um íon.
  */
 function formulaOf(mol: JSMol): string {
   const document = parseJson<JsonDocument>(mol.get_json());
   const counts = new Map<string, number>();
+  let charge = 0;
 
   const add = (symbol: string, amount: number): void => {
     if (amount <= 0) return;
@@ -97,9 +99,27 @@ function formulaOf(mol: JSMol): string {
   for (const atom of resolveAtoms(document)) {
     add(elementSymbol(atom.atomicNumber), 1);
     add('H', atom.implicitHydrogens);
+    charge += atom.charge;
   }
 
-  return hillFormula(counts);
+  return `${hillFormula(counts)}${chargeSuffix(charge)}`;
+}
+
+/**
+ * A carga escrita ao fim da fórmula: `+`, `2−`, e nada quando o conjunto é
+ * neutro.
+ *
+ * Sem isto, o amônio aparecia como `H4N` — indistinguível de uma amônia que
+ * ganhou um hidrogênio do nada. A carga não é enfeite da fórmula; é o que
+ * explica por que o nitrogênio tem quatro ligações ali.
+ */
+function chargeSuffix(charge: number): string {
+  if (charge === 0) return '';
+
+  const size = Math.abs(charge);
+  const sign = charge > 0 ? '+' : '−';
+
+  return size === 1 ? sign : `${String(size)}${sign}`;
 }
 
 /** Quantos hidrogênios o RDKit completou em cada átomo. */

@@ -1,13 +1,15 @@
 'use client';
 
-import { isEmpty, type MoleculeGraph } from '@rotamer/core';
-import { useCallback, useEffect, useRef } from 'react';
+import { findAtom, findBond, isEmpty, type MoleculeGraph } from '@rotamer/core';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type {
+  MouseEvent as ReactMouseEvent,
   PointerEvent as ReactPointerEvent,
   ReactElement,
   WheelEvent as ReactWheelEvent,
 } from 'react';
 import { useStore } from 'zustand';
+import { ContextMenu, type MenuEntry } from './ContextMenu';
 import styles from './Editor2D.module.css';
 import { shortcutsApply } from './keys';
 import { hoverAt, snapFromAtom, suggestDirection, toGraph, toleranceFor } from './geometry2d';
@@ -15,6 +17,14 @@ import { readPalette, type EditorPalette } from './palette';
 import { draw } from './render';
 import { clampScale, type EditorStore } from './store';
 import type { Camera, Hover, Point, Tool, Viewport } from './types';
+
+/**
+ * Quanto tempo o dedo fica parado antes de o menu aparecer.
+ *
+ * Meio segundo é o que o Android e o iOS usam para o mesmo gesto. Mais curto
+ * abre menu no meio de um traço; mais longo passa por travamento.
+ */
+const LONG_PRESS_MS = 500;
 
 /** O estado de uma pinça em andamento. */
 interface Pinch {
@@ -43,6 +53,183 @@ const CLICK_SLOP_TOUCH = 12;
 function clickSlop(pointerType: string): number {
   return pointerType === 'mouse' ? CLICK_SLOP_MOUSE : CLICK_SLOP_TOUCH;
 }
+
+/**
+ * O que se pode fazer com o que está sob o cursor.
+ *
+ * Três cardápios, porque três coisas podem estar ali: um átomo, uma ligação, ou
+ * o vazio — e no vazio o assunto passa a ser a molécula inteira.
+ *
+ * Cada opção chama a mesma ação do grafo que a barra de ferramentas chama. O
+ * menu é caminho novo, não regra nova: quem diz se o resultado existe continua
+ * sendo o RDKit, depois.
+ */
+function entriesFor(store: EditorStore, graph: MoleculeGraph, target: Hover): MenuEntry[] {
+  const state = store.getState();
+
+  if (target?.kind === 'atom') {
+    const atom = findAtom(graph, target.id);
+    if (!atom) return [];
+
+    return [
+      { kind: 'title', label: `Átomo de ${atom.element}` },
+      {
+        kind: 'elements',
+        active: atom.element,
+        onPick: (symbol) => {
+          state.changeElement(atom.id, symbol);
+        },
+      },
+      { kind: 'divider' },
+      { kind: 'title', label: 'carga formal' },
+      ...CHARGES.map((charge) => ({
+        kind: 'item' as const,
+        label: chargeLabel(charge),
+        active: atom.charge === charge,
+        testId: `menu-carga-${String(charge)}`,
+        onPick: () => {
+          state.setCharge(atom.id, charge);
+        },
+      })),
+      { kind: 'divider' },
+      {
+        kind: 'item',
+        label: 'Apagar o átomo',
+        danger: true,
+        testId: 'menu-apagar-atomo',
+        onPick: () => {
+          state.eraseAtom(atom.id);
+        },
+      },
+    ];
+  }
+
+  if (target?.kind === 'bond') {
+    const bond = findBond(graph, target.id);
+    if (!bond) return [];
+
+    const wedge = bond.wedge ?? 'none';
+
+    return [
+      { kind: 'title', label: 'Ligação' },
+      ...ORDERS.map(([order, label]) => ({
+        kind: 'item' as const,
+        label,
+        active: bond.order === order,
+        testId: `menu-ordem-${String(order)}`,
+        onPick: () => {
+          state.setOrder(bond.id, order);
+        },
+      })),
+      { kind: 'divider' },
+      { kind: 'title', label: 'estereoquímica' },
+      ...WEDGES.map(([kind, label]) => ({
+        kind: 'item' as const,
+        label,
+        active: wedge === kind,
+        testId: `menu-cunha-${kind}`,
+        onPick: () => {
+          state.setWedge(bond.id, kind);
+        },
+      })),
+      // Inverter só faz sentido com cunha: numa ligação no plano não há ponta
+      // fina para trocar de lado.
+      ...(wedge === 'none'
+        ? []
+        : [
+            {
+              kind: 'item' as const,
+              label: 'Inverter a ponta fina',
+              testId: 'menu-inverter-cunha',
+              onPick: () => {
+                state.flipWedge(bond.id);
+              },
+            },
+          ]),
+      { kind: 'divider' },
+      {
+        kind: 'item',
+        label: 'Apagar a ligação',
+        danger: true,
+        testId: 'menu-apagar-ligacao',
+        onPick: () => {
+          state.eraseBond(bond.id);
+        },
+      },
+    ];
+  }
+
+  // No vazio o assunto é a molécula inteira; com a tela vazia não há assunto
+  // nenhum, e o menu não abre.
+  if (isEmpty(graph)) return [];
+
+  return [
+    {
+      kind: 'item',
+      label: 'Enquadrar a molécula',
+      testId: 'menu-enquadrar',
+      onPick: () => {
+        state.frame();
+      },
+    },
+    ...(state.past.length > 0
+      ? [
+          {
+            kind: 'item' as const,
+            label: 'Desfazer',
+            testId: 'menu-desfazer',
+            onPick: () => {
+              store.getState().undo();
+            },
+          },
+        ]
+      : []),
+    ...(state.future.length > 0
+      ? [
+          {
+            kind: 'item' as const,
+            label: 'Refazer',
+            testId: 'menu-refazer',
+            onPick: () => {
+              store.getState().redo();
+            },
+          },
+        ]
+      : []),
+    { kind: 'divider' },
+    {
+      kind: 'item',
+      label: 'Limpar a tela',
+      danger: true,
+      testId: 'menu-limpar',
+      onPick: () => {
+        store.getState().clear();
+      },
+    },
+  ];
+}
+
+/** As cargas que aparecem em aula de orgânica, e nada além delas. */
+const CHARGES = [1, 0, -1] as const;
+
+function chargeLabel(charge: number): string {
+  if (charge === 0) return 'Sem carga';
+  return charge > 0 ? 'Positiva (+1)' : 'Negativa (−1)';
+}
+
+const ORDERS = [
+  [1, 'Simples'],
+  [2, 'Dupla'],
+  [3, 'Tripla'],
+] as const;
+
+/* O texto diz o que a notação significa: cunha e traço são projeção, e a pessoa
+   que está aprendendo ainda não lê "up" e "down" como frente e trás. */
+const WEDGES = [
+  ['none', 'No plano'],
+  ['up', 'Cunha cheia — vem para frente'],
+  ['down', 'Traço — vai para trás'],
+] as const;
 
 /**
  * A dica que fica no pé da tela.
@@ -219,8 +406,32 @@ export function Editor2D({ store, className }: Editor2DProps): ReactElement {
   // ---- redesenho a cada mudança de estado ----
   useEffect(() => store.subscribe(paint), [store, paint]);
 
+  /**
+   * O menu do botão direito.
+   *
+   * Guarda o que estava sob o cursor no momento do clique, e não uma consulta
+   * viva: mexer o mouse com o menu aberto não pode trocar o alvo debaixo dele.
+   */
+  const [menu, setMenu] = useState<{
+    readonly x: number;
+    readonly y: number;
+    readonly target: Hover;
+  } | null>(null);
+
+  /** O dedo parado que vira menu. `null` quando não há espera em curso. */
+  const longPressRef = useRef<number | null>(null);
+
+  const clearLongPress = useCallback((): void => {
+    if (longPressRef.current === null) return;
+
+    window.clearTimeout(longPressRef.current);
+    longPressRef.current = null;
+  }, []);
+
+  useEffect(() => clearLongPress, [clearLongPress]);
+
   const pointAt = useCallback(
-    (event: ReactPointerEvent<HTMLCanvasElement>): Point => {
+    (event: ReactPointerEvent<HTMLCanvasElement> | ReactMouseEvent<HTMLCanvasElement>): Point => {
       const rect = event.currentTarget.getBoundingClientRect();
       const screen = { x: event.clientX - rect.left, y: event.clientY - rect.top };
       return toGraph(screen, store.getState().camera, viewportRef.current);
@@ -251,6 +462,11 @@ export function Editor2D({ store, className }: Editor2DProps): ReactElement {
 
   const handlePointerDown = useCallback(
     (event: ReactPointerEvent<HTMLCanvasElement>): void => {
+      // O botão direito não desenha: ele abre o menu, e quem faz isso é o
+      // `contextmenu`. Sem esta saída, o mesmo gesto abriria o menu e ainda
+      // largaria um átomo atrás dele.
+      if (event.pointerType === 'mouse' && event.button !== 0) return;
+
       event.currentTarget.setPointerCapture(event.pointerId);
       frameRef.current?.focus();
 
@@ -261,6 +477,7 @@ export function Editor2D({ store, className }: Editor2DProps): ReactElement {
       });
 
       if (touchesRef.current.size >= 2) {
+        clearLongPress();
         startPinch();
         return;
       }
@@ -271,6 +488,26 @@ export function Editor2D({ store, className }: Editor2DProps): ReactElement {
 
       const under = hoverAt(state.graph, point, toleranceFor(state.camera));
       state.setHover(under);
+
+      /*
+       * No toque, o menu vem do dedo parado.
+       *
+       * Tablet de escola não tem botão direito, e é em tablet que boa parte das
+       * aulas acontece. Meio segundo parado no mesmo lugar é o gesto que o
+       * sistema todo usa para "me diga as opções disto".
+       */
+      if (event.pointerType !== 'mouse') {
+        const { clientX, clientY } = event;
+
+        clearLongPress();
+        longPressRef.current = window.setTimeout(() => {
+          longPressRef.current = null;
+
+          const now = store.getState();
+          now.setDrag({ kind: 'none' });
+          setMenu({ x: clientX, y: clientY, target: under });
+        }, LONG_PRESS_MS);
+      }
 
       if (state.tool === 'erase') return;
 
@@ -309,12 +546,23 @@ export function Editor2D({ store, className }: Editor2DProps): ReactElement {
         state.setDrag({ kind: 'pan', origin: point, camera: state.camera });
       }
     },
-    [pointAt, startPinch, store],
+    [clearLongPress, pointAt, startPinch, store],
   );
 
   const handlePointerMove = useCallback(
     (event: ReactPointerEvent<HTMLCanvasElement>): void => {
       const state = store.getState();
+
+      // Dedo que anda deixou de estar parado: o menu era espera, o traço é
+      // intenção.
+      const start = pointerStartRef.current;
+      if (
+        longPressRef.current !== null &&
+        start !== null &&
+        Math.hypot(event.clientX - start.x, event.clientY - start.y) > clickSlop(event.pointerType)
+      ) {
+        clearLongPress();
+      }
 
       if (touchesRef.current.has(event.pointerId)) {
         const rect = event.currentTarget.getBoundingClientRect();
@@ -403,6 +651,8 @@ export function Editor2D({ store, className }: Editor2DProps): ReactElement {
         }
         return;
       }
+
+      clearLongPress();
 
       const state = store.getState();
       const point = pointAt(event);
@@ -562,6 +812,29 @@ export function Editor2D({ store, className }: Editor2DProps): ReactElement {
     [store],
   );
 
+  const openMenu = useCallback(
+    (event: ReactMouseEvent<HTMLCanvasElement>): void => {
+      event.preventDefault();
+
+      const state = store.getState();
+      const under = hoverAt(state.graph, pointAt(event), toleranceFor(state.camera));
+
+      state.setDrag({ kind: 'none' });
+      state.setHover(under);
+      setMenu({ x: event.clientX, y: event.clientY, target: under });
+    },
+    [pointAt, store],
+  );
+
+  const closeMenu = useCallback((): void => {
+    setMenu(null);
+  }, []);
+
+  const entries = useMemo(
+    () => (menu === null ? [] : entriesFor(store, graph, menu.target)),
+    [menu, store, graph],
+  );
+
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
     return () => {
@@ -600,12 +873,17 @@ export function Editor2D({ store, className }: Editor2DProps): ReactElement {
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
         onWheel={handleWheel}
+        onContextMenu={openMenu}
       />
 
       {hint !== null && (
         <div className={styles.hint}>
           <p className={styles.hintText}>{hint}</p>
         </div>
+      )}
+
+      {menu !== null && entries.length > 0 && (
+        <ContextMenu x={menu.x} y={menu.y} entries={entries} onClose={closeMenu} />
       )}
     </div>
   );

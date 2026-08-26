@@ -14,3 +14,13 @@
   top: 0.22em;
   padding-left: 0.02em;
 }
+
+/* A carga é expoente, e sobe pelo mesmo motivo pelo qual o índice desce: sem o
+   deslocamento explícito, o `<sup>` do navegador estica a linha inteira. */
+.formula sup {
+  font-size: 0.72em;
+  vertical-align: baseline;
+  position: relative;
+  top: -0.42em;
+  padding-left: 0.04em;
+}

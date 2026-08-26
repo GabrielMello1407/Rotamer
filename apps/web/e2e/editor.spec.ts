@@ -380,3 +380,90 @@ test.describe('atalhos', () => {
     await expect(folha).toBeHidden();
   });
 });
+
+/**
+ * O menu do botão direito.
+ *
+ * As ferramentas da barra são modos: para trocar uma ligação de ordem é preciso
+ * estar na ferramenta certa e clicar no lugar certo. Apontar no que se quer
+ * mudar e ler as opções daquilo é o caminho curto — e é o que se espera de um
+ * editor.
+ */
+test.describe('menu do botão direito', () => {
+  test('no átomo, o menu troca o elemento', async ({ page }) => {
+    await drawFirstAtom(page);
+    await expect(page.getByTestId('formula')).toHaveText('CH4', { timeout: 60_000 });
+
+    const atomo = await pointOnCanvas(page);
+    await page.mouse.click(atomo.x, atomo.y, { button: 'right' });
+
+    const menu = page.getByTestId('menu-contexto');
+    await expect(menu).toContainText('Átomo de C');
+
+    await menu.getByTestId('menu-elemento-O').click();
+    await expect(menu).toBeHidden();
+    await expect(page.getByTestId('formula')).toHaveText('H2O', { timeout: 60_000 });
+  });
+
+  test('no átomo, o menu põe carga — e a fórmula acompanha', async ({ page }) => {
+    await drawFirstAtom(page);
+    await expect(page.getByTestId('formula')).toHaveText('CH4', { timeout: 60_000 });
+
+    const atomo = await pointOnCanvas(page);
+    await page.mouse.click(atomo.x, atomo.y, { button: 'right' });
+    await page.getByTestId('menu-elemento-N').click();
+    await expect(page.getByTestId('formula')).toHaveText('H3N', { timeout: 60_000 });
+
+    await page.mouse.click(atomo.x, atomo.y, { button: 'right' });
+    await page.getByTestId('menu-carga-1').click();
+
+    // Nitrogênio com carga positiva ganha o quarto hidrogênio: é o amônio.
+    await expect(page.getByTestId('formula')).toHaveText('H4N+', { timeout: 60_000 });
+  });
+
+  test('na ligação, o menu escolhe a ordem direto', async ({ page }) => {
+    await drawFirstAtom(page);
+    await dragBondRight(page);
+    await expect(page.getByTestId('formula')).toHaveText('C2H6', { timeout: 60_000 });
+
+    // O meio do traço: é ali que mora a ligação.
+    const meio = await pointOnCanvas(page, 30, 0);
+    await page.mouse.click(meio.x, meio.y, { button: 'right' });
+
+    const menu = page.getByTestId('menu-contexto');
+    await expect(menu).toContainText('Ligação');
+
+    await menu.getByTestId('menu-ordem-3').click();
+    await expect(page.getByTestId('formula')).toHaveText('C2H2', { timeout: 60_000 });
+  });
+
+  test('no vazio, o menu fala da molécula inteira', async ({ page }) => {
+    await drawFirstAtom(page);
+    await dragBondRight(page);
+    await expect(page.getByTestId('formula')).toHaveText('C2H6', { timeout: 60_000 });
+
+    const vazio = await pointOnCanvas(page, -220, -120);
+    await page.mouse.click(vazio.x, vazio.y, { button: 'right' });
+
+    const menu = page.getByTestId('menu-contexto');
+    await expect(menu.getByTestId('menu-enquadrar')).toBeVisible();
+
+    await menu.getByTestId('menu-limpar').click();
+    await expect(page.getByTestId('formula')).toHaveCount(0);
+  });
+
+  test('abrir o menu não desenha nada por baixo dele', async ({ page }) => {
+    await drawFirstAtom(page);
+    await expect(page.getByTestId('formula')).toHaveText('CH4', { timeout: 60_000 });
+
+    const vazio = await pointOnCanvas(page, -200, -100);
+    await page.mouse.click(vazio.x, vazio.y, { button: 'right' });
+    await expect(page.getByTestId('menu-contexto')).toBeVisible();
+
+    await page.keyboard.press('Escape');
+    await expect(page.getByTestId('menu-contexto')).toBeHidden();
+
+    // Continua sendo um carbono só: o botão direito não largou átomo nenhum.
+    await expect(page.getByTestId('formula')).toHaveText('CH4');
+  });
+});
