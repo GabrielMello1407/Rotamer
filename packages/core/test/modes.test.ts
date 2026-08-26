@@ -146,7 +146,7 @@ describe('pela API de química', () => {
 
     if (!first.ok || !second.ok) throw new Error('esperava modos');
 
-    expect(second.modes.modes[0]?.wavenumber).toBe(first.modes.modes[0]?.wavenumber);
+    expect(second.modes?.modes[0]?.wavenumber).toBe(first.modes?.modes[0]?.wavenumber);
     expect(second.inchiKey).toBe(first.inchiKey);
   });
 

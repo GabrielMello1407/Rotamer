@@ -162,3 +162,44 @@ describe('cache por InChIKey', () => {
     expect(resultado.error.message).toBe('O átomo de C tem 5 ligações, mas suporta no máximo 4.');
   });
 });
+
+describe('elemento fora do campo de força', () => {
+  it('o estanho ganha forma no espaço, só que sem relaxamento', async () => {
+    // Tetrametilestanho existe, e o RDKit a aceita. O MMFF94 é que não tem
+    // parâmetro para Sn — mas o gerador de conformações monta o arranjo mesmo
+    // assim, a partir de comprimentos e ângulos de ligação.
+    const analysis = await chemistryApi.analyze('C[Sn](C)(C)C');
+    expect(analysis.ok).toBe(true);
+
+    const result = await chemistryApi.geometry('C[Sn](C)(C)C');
+    if (!result.ok) throw new Error(`esperava geometria: ${result.error.message}`);
+
+    const { geometry } = result;
+    expect(geometry.relaxed).toBe(false);
+    expect(geometry.energy).toBeNull();
+    expect(geometry.unsupported).toEqual(['Sn']);
+
+    // A forma é tridimensional de verdade, e o C–Sn tem comprimento de C–Sn.
+    expect(geometry.atoms).toHaveLength(17);
+    expect(Math.max(...geometry.atoms.map((atom) => Math.abs(atom.z)))).toBeGreaterThan(0.3);
+
+    const carbono = geometry.atoms.findIndex((atom) => atom.element === 'C');
+    const estanho = geometry.atoms.findIndex((atom) => atom.element === 'Sn');
+    const comprimento = distance(geometry, carbono, estanho);
+
+    // C–Sn mede 2,14 Å na tabela.
+    expect(comprimento).toBeGreaterThan(1.9);
+    expect(comprimento).toBeLessThan(2.4);
+  });
+
+  it('sem campo de força não há vibração nem modo — e nenhuma exceção solta', async () => {
+    const vibration = await chemistryApi.dynamics('C[Sn](C)(C)C');
+    const modes = await chemistryApi.modes('C[Sn](C)(C)C');
+
+    if (!vibration.ok || !modes.ok) throw new Error('esperava resposta, não recusa');
+
+    // A molécula existe: o que não existe é o movimento dela.
+    expect(vibration.trajectory).toBeNull();
+    expect(modes.modes).toBeNull();
+  });
+});

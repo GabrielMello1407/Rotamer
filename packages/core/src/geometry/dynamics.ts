@@ -125,6 +125,11 @@ export async function simulateDynamics(
   const molecule = ocl.Molecule.fromMolfile(molblock);
   molecule.addImplicitHydrogens();
 
+  // A vibração é integração de Newton sobre o gradiente da energia. Sem campo de
+  // força não há energia, então não há força, e a molécula aparece parada — com
+  // a forma que o gerador de conformações montou.
+  if (!geometry.relaxed || geometry.energy === null) return null;
+
   const atomCount = geometry.atoms.length;
   if (atomCount === 0 || molecule.getAllAtoms() !== atomCount) return null;
 

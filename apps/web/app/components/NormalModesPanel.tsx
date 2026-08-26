@@ -7,6 +7,8 @@ import styles from './NormalModesPanel.module.css';
 
 export interface NormalModesPanelProps {
   readonly modes: NormalModes | null;
+  /** Elementos sem parâmetro no campo de força, quando é esse o motivo. */
+  readonly unsupported?: readonly string[];
   /** Qual está em exibição na cena, pelo índice na lista. */
   readonly selected: number | null;
   readonly onSelect: (index: number | null) => void;
@@ -37,6 +39,7 @@ const PERCENT = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 });
  */
 export function NormalModesPanel({
   modes,
+  unsupported = [],
   selected,
   onSelect,
   pending,
@@ -46,9 +49,11 @@ export function NormalModesPanel({
       <section className={styles.section} data-testid="modos-normais">
         <h3 className={styles.heading}>Modos normais</h3>
         <p className={styles.quiet}>
-          {pending
-            ? 'Calculando a Hessiana do campo de força…'
-            : 'Os modos aparecem quando a estrutura fecha. Molécula muito grande fica de fora: a conta trava a máquina antes de terminar.'}
+          {unsupported.length > 0
+            ? `O campo de força MMFF94 não tem parâmetros para ${unsupported.join(', ')}. A forma no espaço aparece assim mesmo, montada com comprimentos e ângulos de ligação — o que não existe é a energia, e sem energia não há frequência de vibração.`
+            : pending
+              ? 'Calculando a Hessiana do campo de força…'
+              : 'Os modos aparecem quando a estrutura fecha. Molécula muito grande fica de fora: a conta trava a máquina antes de terminar.'}
         </p>
       </section>
     );

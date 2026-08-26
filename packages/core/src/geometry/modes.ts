@@ -122,6 +122,11 @@ export async function normalModes(
   molblock: string,
   geometry: Geometry,
 ): Promise<NormalModes | null> {
+  // Modo normal é a curvatura da energia em torno de um mínimo. Sem campo de
+  // força não há energia, não há mínimo, e não há modo — a molécula aparece na
+  // tela com a forma que o gerador de conformações montou, parada.
+  if (!geometry.relaxed || geometry.energy === null) return null;
+
   const atomCount = geometry.atoms.length;
   if (atomCount < 2 || atomCount > MAX_ATOMS) return null;
 

@@ -1,4 +1,4 @@
-import { generateGeometry } from '../geometry/conformer';
+import { generateGeometry, GeometryUnavailable } from '../geometry/conformer';
 import { simulateDynamics } from '../geometry/dynamics';
 import type { DynamicsTrajectory } from '../geometry/dynamics';
 import { normalModes } from '../geometry/modes';
@@ -129,8 +129,25 @@ export const chemistryApi: ChemistryApi = {
     const cached = geometryCache.get(inchiKey);
     if (cached) return { ok: true, inchiKey, geometry: cached };
 
-    const geometry = await generateGeometry(molblock);
-    return { ok: true, inchiKey, geometry: remember(geometryCache, inchiKey, geometry) };
+    try {
+      const geometry = await generateGeometry(molblock);
+      return { ok: true, inchiKey, geometry: remember(geometryCache, inchiKey, geometry) };
+    } catch (cause) {
+      // Elemento fora do campo de força já não chega aqui: aquilo vira geometria
+      // sem relaxamento. O que sobra são as falhas em que nem arranjo saiu — e
+      // mesmo essas não podem virar tela de erro, porque a molécula existe e os
+      // descritores continuam valendo.
+      return {
+        ok: false,
+        error: {
+          code: 'geometry_unavailable',
+          message:
+            cause instanceof GeometryUnavailable
+              ? cause.message
+              : 'Não consegui calcular a forma desta molécula no espaço. Os descritores continuam valendo.',
+        },
+      };
+    }
   },
 
   async modes(input: string): Promise<ModesResult> {

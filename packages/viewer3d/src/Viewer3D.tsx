@@ -174,7 +174,9 @@ export function Viewer3D({
     setSettled(done);
   }, []);
 
-  const animate = !reducedMotion && vibrating;
+  // Sem campo de força não há energia nem trajetória: a forma aparece, parada.
+  const relaxed = geometry?.relaxed ?? true;
+  const animate = !reducedMotion && vibrating && relaxed;
 
   // Qual átomo está aceso, para a cena dizer o nome dele em vez de só acender.
   const hovered =
@@ -227,8 +229,13 @@ export function Viewer3D({
 
           <div className={styles.controls} role="group" aria-label="Controles da cena">
             <SceneButton
-              active={vibrating}
-              label="Vibrar"
+              active={vibrating && relaxed}
+              disabled={!relaxed}
+              label={
+                relaxed
+                  ? 'Vibrar'
+                  : `Sem vibração: o campo de força não conhece ${geometry?.unsupported.join(', ') ?? 'este elemento'}`
+              }
               testId="alternar-vibracao"
               onClick={() => {
                 setVibrating((current) => !current);
@@ -353,7 +360,13 @@ export function Viewer3D({
         </p>
       )}
 
-      {geometry && energy !== null && !mode && (
+      {geometry && !relaxed && (
+        <p className={styles.unrelaxed} data-testid="forma-sem-campo">
+          forma aproximada — sem parâmetro de MMFF94 para {geometry.unsupported.join(', ')}
+        </p>
+      )}
+
+      {geometry && relaxed && energy !== null && !mode && (
         <p className={styles.energy} data-testid="energia">
           <span className={styles.energyLabel}>
             {settled && animate && trajectory ? 'dinâmica' : 'energia'}
@@ -387,10 +400,18 @@ interface SceneButtonProps {
   readonly testId: string;
   readonly onClick: () => void;
   readonly children: React.ReactNode;
+  readonly disabled?: boolean;
 }
 
 /** Botão da barra da cena: pequeno, sem moldura até estar ligado. */
-function SceneButton({ active, label, testId, onClick, children }: SceneButtonProps): ReactElement {
+function SceneButton({
+  active,
+  label,
+  testId,
+  onClick,
+  children,
+  disabled = false,
+}: SceneButtonProps): ReactElement {
   return (
     <button
       type="button"
@@ -398,6 +419,7 @@ function SceneButton({ active, label, testId, onClick, children }: SceneButtonPr
       aria-pressed={active}
       aria-label={label}
       title={label}
+      disabled={disabled}
       data-testid={testId}
       onClick={onClick}
     >

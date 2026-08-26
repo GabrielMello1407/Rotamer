@@ -255,4 +255,33 @@ test.describe('editor', () => {
     await expect(exibindo).toBeHidden();
     await expect(page.getByTestId('energia')).toBeVisible();
   });
+  test('elemento fora do campo de força não derruba a tela', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.getByTestId('tela-de-desenho')).toBeVisible();
+
+    // Tetrametilestanho existe e o RDKit a aceita; o MMFF94 é que não tem
+    // parâmetro para o estanho. Isso é limitação nossa, não erro do desenho.
+    await openAnalysis(page);
+    await page.getByTestId('entrada-smiles').fill('C[Sn](C)(C)C');
+    await page.getByRole('button', { name: 'Carregar' }).click();
+
+    await expect(page.getByTestId('formula')).toHaveText('C4H12Sn', { timeout: 60_000 });
+
+    // Os números continuam na tela, e a forma no espaço também: o gerador de
+    // conformações monta o arranjo mesmo sem campo de força.
+    await expect(page.getByTestId('metricas')).toContainText('massa');
+    await expect(page.getByTestId('cena-3d').locator('canvas')).toBeVisible({ timeout: 30_000 });
+
+    // O que falta é dito onde ficaria a energia, e a vibração fica desligada.
+    await expect(page.getByTestId('forma-sem-campo')).toContainText('Sn', { timeout: 30_000 });
+    await expect(page.getByTestId('alternar-vibracao')).toBeDisabled();
+    await expect(page.getByTestId('energia')).toBeHidden();
+
+    // O painel explica a mesma coisa no lugar dos modos normais.
+    await expect(page.getByTestId('modos-normais')).toContainText('não tem parâmetros para Sn');
+
+    // E nenhum erro de programa vazou para a tela.
+    await expect(page.getByTestId('erro-quimico')).toBeHidden();
+    await expect(page.getByText('atom type')).toBeHidden();
+  });
 });

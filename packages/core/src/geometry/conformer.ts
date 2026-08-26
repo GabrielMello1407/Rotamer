@@ -40,7 +40,25 @@ export async function generateGeometry(
   const ocl = await loadOpenChemLib();
   const { molecule: conformer, drawn } = buildConformer(ocl, molblock);
 
-  const field = new ocl.ForceFieldMMFF94(conformer, 'MMFF94');
+  // A ligação não muda com a minimização; a coordenada, sim — por isso os
+  // átomos só são lidos no fim, quando já estão no lugar em que vão aparecer.
+  const sources = sourcesOf(conformer, drawn);
+  const bonds = bondsOf(conformer);
+  const field = openField(ocl, conformer);
+
+  // Sem campo de força, o que existe é o arranjo do gerador de conformações:
+  // comprimentos e ângulos de ligação plausíveis, sem ninguém ter descido a
+  // energia. A forma aparece na tela; a vibração, não.
+  if (field === null) {
+    return {
+      atoms: atomsOf(conformer, sources),
+      bonds,
+      frames: [{ positions: positionsOf(conformer), energy: 0 }],
+      energy: null,
+      relaxed: false,
+      unsupported: unparametrized(conformer),
+    };
+  }
 
   // Quadro zero: o embrulho que saiu do gerador, antes de qualquer relaxamento.
   const frames: FoldingFrame[] = [
@@ -54,10 +72,12 @@ export async function generateGeometry(
   }
 
   return {
-    atoms: atomsOf(conformer, sourcesOf(conformer, drawn)),
-    bonds: bondsOf(conformer),
+    atoms: atomsOf(conformer, sources),
+    bonds,
     frames,
     energy: frames[frames.length - 1]?.energy ?? 0,
+    relaxed: true,
+    unsupported: [],
   };
 }
 
@@ -81,8 +101,65 @@ function ladderFor(maxFrames: number | undefined): number[] {
   return chosen;
 }
 
+/**
+ * A estrutura existe; a forma no espaço, não.
+ *
+ * Erro à parte de propósito: quem chama precisa distinguir "esta molécula não
+ * existe" de "esta molécula existe e o nosso campo de força não dá conta dela".
+ * Confundir as duas coisas seria dizer ao aluno que ele errou quando quem não
+ * alcança somos nós.
+ */
+export class GeometryUnavailable extends Error {
+  constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
+    this.name = 'GeometryUnavailable';
+  }
+}
+
+/**
+ * Elementos que o MMFF94 parametriza.
+ *
+ * A lista **não decide nada** — quem decide é a própria tentativa de montar o
+ * campo de força. Ela existe só para a mensagem poder dizer qual elemento está
+ * fora, em vez de um "não foi possível" que não ensina nada.
+ */
+const PARAMETRIZED = new Set([
+  'H', 'C', 'N', 'O', 'F', 'Si', 'P', 'S', 'Cl', 'Br', 'I',
+  'Li', 'Na', 'K', 'Mg', 'Ca', 'Fe', 'Cu', 'Zn',
+]);
+
+/**
+ * Monta o campo de força, ou `null` quando ele não dá conta desta molécula.
+ *
+ * O OpenChemLib lança uma exceção crua — "Couldn't assign an atom type to atom
+ * 3 (Sn)" — que subiria até a tela como erro de programa. Aqui ela vira ausência
+ * de campo de força, que é o que ela é: a molécula continua existindo e o
+ * arranjo tridimensional também; o que some é a energia, e com ela a vibração.
+ */
+function openField(ocl: OpenChemLib, conformer: OclMolecule): ForceField | null {
+  try {
+    return new ocl.ForceFieldMMFF94(conformer, 'MMFF94');
+  } catch {
+    return null;
+  }
+}
+
+/** Os elementos da molécula que estão fora da lista do MMFF94. */
+function unparametrized(molecule: OclMolecule): string[] {
+  const found = new Set<string>();
+
+  for (let atom = 0; atom < molecule.getAllAtoms(); atom += 1) {
+    const symbol = molecule.getAtomLabel(atom);
+    if (!PARAMETRIZED.has(symbol)) found.add(symbol);
+  }
+
+  return [...found];
+}
+
 /** Molécula do OpenChemLib, do jeito que este módulo a usa. */
 type OclMolecule = ReturnType<OpenChemLib['Molecule']['fromMolfile']>;
+
+type ForceField = InstanceType<OpenChemLib['ForceFieldMMFF94']>;
 
 interface Conformer {
   readonly molecule: OclMolecule;
@@ -106,7 +183,10 @@ function buildConformer(ocl: OpenChemLib, molblock: string): Conformer {
 
   const conformer = generator.getNextConformerAsMolecule();
   if (conformer === null) {
-    throw new Error('não foi possível encontrar um arranjo tridimensional para esta estrutura');
+    throw new GeometryUnavailable(
+      'Não consegui encontrar um arranjo tridimensional para esta estrutura. Ela continua ' +
+        'valendo como fórmula: o que falta é a forma no espaço.',
+    );
   }
 
   return { molecule: conformer, drawn };

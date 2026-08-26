@@ -49,8 +49,28 @@ export interface Geometry {
   readonly bonds: readonly GeometryBond[];
   /** Do embrulho inicial até o mínimo encontrado. O primeiro quadro é o pior. */
   readonly frames: readonly FoldingFrame[];
-  /** Energia do último quadro, em kcal/mol. */
-  readonly energy: number;
+  /**
+   * Energia do último quadro, em kcal/mol — ou `null` quando não houve campo de
+   * força para calcular.
+   */
+  readonly energy: number | null;
+  /**
+   * Se o campo de força chegou a relaxar esta geometria.
+   *
+   * Quando falso, o que existe é o arranjo que o gerador de conformações montou
+   * a partir de comprimentos e ângulos de ligação: a forma está certa em ordem
+   * de grandeza, mas ninguém desceu a energia dela — e sem energia não há
+   * vibração nem modo normal.
+   */
+  readonly relaxed: boolean;
+  /**
+   * Elementos da molécula que o campo de força não parametriza.
+   *
+   * Vazio no caso normal. Quando tem alguma coisa, é isso que explica por que a
+   * geometria não foi relaxada — e é o que a tela mostra, com o símbolo do
+   * elemento, em vez de um "não foi possível".
+   */
+  readonly unsupported: readonly string[];
 }
 
 export interface GeometryOptions {

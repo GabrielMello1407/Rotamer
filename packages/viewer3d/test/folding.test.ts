@@ -16,6 +16,8 @@ function geometryWith(frames: readonly (readonly number[])[]): Geometry {
     bonds: [],
     frames: frames.map((positions, index) => ({ positions, energy: 100 - index * 10 })),
     energy: 100 - (frames.length - 1) * 10,
+    relaxed: true,
+    unsupported: [],
   };
 }
 

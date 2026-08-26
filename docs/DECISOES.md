@@ -258,6 +258,25 @@ RDKit em algum caso que chegue à tela. Neste caso a troca é barata: a fronteir
 
 ---
 
+**Atualização — o campo de força não cobre a tabela periódica, e isso não tira a forma.** O MMFF94
+tem parâmetros para os elementos da orgânica e um punhado de íons; desenhar estanho, tungstênio ou
+qualquer outro fora dessa lista faz o OpenChemLib recusar a montar o campo de força. Antes, a
+exceção crua ("Couldn't assign an atom type to atom 3 (Sn)") subia até a tela como erro de programa
+e derrubava o editor inteiro, com a molécula desenhada junto.
+
+O que se descobriu ao consertar: **o gerador de conformações não depende do campo de força**. Ele
+monta o arranjo tridimensional a partir de comprimentos e ângulos de ligação, e monta bem — o
+tetrametilestanho sai com C–Sn de 2,15 Å, contra 2,14 Å de tabela. Então a separação certa não é
+"tem geometria ou não tem": é **geometria relaxada** contra **geometria montada**.
+
+A `Geometry` passou a dizer isso (`relaxed`, `unsupported`, e `energy` que pode ser `null`), e a
+tela segue a mesma divisão: a forma aparece e gira normalmente; a energia some, porque não existe;
+o botão de vibrar fica desligado, com o motivo no `title`; e o painel de modos normais explica que
+sem energia não há frequência. Cada coisa que sai da tela sai porque deixou de existir, não porque
+o produto desistiu.
+
+---
+
 ## D-11 · Postgres local, sem serviço gerenciado
 
 **Decisão.** O banco é Postgres rodando na própria infraestrutura: container em

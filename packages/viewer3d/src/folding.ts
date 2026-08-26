@@ -34,7 +34,10 @@ export function sampleFolding(
   const last = frames[frames.length - 1];
 
   if (!last) {
-    return { positions: [], energy: geometry.energy, done: true };
+    // Geometria sem quadro nenhum não tem o que mostrar, e sem campo de força
+    // não tem energia — zero aqui nunca chega à tela: a faixa da energia só
+    // aparece quando a geometria foi relaxada.
+    return { positions: [], energy: geometry.energy ?? 0, done: true };
   }
 
   if (frames.length === 1 || elapsed >= duration) {

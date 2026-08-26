@@ -23,6 +23,8 @@ export interface AnalysisDrawerProps {
   /** Os modos normais da molécula atual, quando o worker já respondeu. */
   readonly modes: NormalModes | null;
   readonly modesPending: boolean;
+  /** Elementos que o campo de força não parametriza, quando existirem. */
+  readonly unsupported: readonly string[];
   /** Qual modo está em exibição na cena. */
   readonly selectedMode: number | null;
   readonly onSelectMode: (index: number | null) => void;
@@ -54,6 +56,7 @@ export function AnalysisDrawer({
   analysis,
   modes,
   modesPending,
+  unsupported,
   selectedMode,
   onSelectMode,
   connection,
@@ -146,6 +149,7 @@ export function AnalysisDrawer({
 
                 <NormalModesPanel
                   modes={modes}
+                  unsupported={unsupported}
                   selected={selectedMode}
                   onSelect={onSelectMode}
                   pending={modesPending}

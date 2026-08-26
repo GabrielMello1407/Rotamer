@@ -79,7 +79,16 @@ export type ChemistryErrorCode =
   | 'invalid_syntax'
   | 'valence_exceeded'
   | 'impossible_aromaticity'
-  | 'invalid_structure';
+  | 'invalid_structure'
+  /**
+   * A estrutura existe, mas a forma no espaço não pôde ser calculada.
+   *
+   * É outra categoria de recusa: não é a molécula que está errada, é o campo de
+   * força que não conhece aquele elemento. Fórmula, massa e descritores
+   * continuam valendo — só a cena 3D fica de fora, e a tela precisa dizer isso
+   * sem transformar uma limitação nossa em erro do aluno.
+   */
+  | 'geometry_unavailable';
 
 /** Átomo que causou o erro, quando foi possível apontar um. */
 export interface OffendingAtom {

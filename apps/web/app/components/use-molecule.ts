@@ -31,6 +31,12 @@ export interface MoleculeReading {
   readonly trajectory: DynamicsTrajectory | null;
   /** Os modos normais, que chegam por último — são os mais caros de calcular. */
   readonly modes: NormalModes | null;
+  /**
+   * Por que não há forma no espaço, quando a estrutura é válida mas a geometria
+   * não saiu — elemento fora do campo de força, por exemplo. A cena mostra este
+   * texto no lugar do convite genérico.
+   */
+  readonly geometryError: string | null;
   /** Verdadeiro enquanto o worker ainda não respondeu sobre este desenho. */
   readonly pending: boolean;
 }
@@ -40,6 +46,7 @@ const NOTHING: MoleculeReading = {
   geometry: null,
   trajectory: null,
   modes: null,
+  geometryError: null,
   pending: false,
 };
 
@@ -96,7 +103,14 @@ export function useMolecule(
 
         if (!analysis.ok) {
           shownTopology.current = null;
-          setReading({ analysis, geometry: null, trajectory: null, modes: null, pending: false });
+          setReading({
+            analysis,
+            geometry: null,
+            trajectory: null,
+            modes: null,
+            geometryError: null,
+            pending: false,
+          });
           return;
         }
 
@@ -111,8 +125,17 @@ export function useMolecule(
         if (!alive) return;
 
         if (!conformation.ok) {
+          // A estrutura vale; o que faltou foi a forma. O motivo vai para a
+          // cena em vez de sumir num erro de programa.
           shownTopology.current = null;
-          setReading({ analysis, geometry: null, trajectory: null, modes: null, pending: false });
+          setReading({
+            analysis,
+            geometry: null,
+            trajectory: null,
+            modes: null,
+            geometryError: conformation.error.message,
+            pending: false,
+          });
           return;
         }
 
@@ -122,6 +145,7 @@ export function useMolecule(
           geometry: conformation.geometry,
           trajectory: null,
           modes: null,
+          geometryError: null,
           pending: false,
         });
 

@@ -56,7 +56,7 @@ export function EditorWorkspace({
     [store],
   );
 
-  const { analysis, geometry, trajectory, modes, pending } = useMolecule(
+  const { analysis, geometry, trajectory, modes, geometryError, pending } = useMolecule(
     graph,
     connection,
     applyHydrogens,
@@ -280,7 +280,9 @@ export function EditorWorkspace({
                   });
                 });
               }}
-              placeholder="A forma no espaço aparece assim que a estrutura fechar."
+              placeholder={
+                geometryError ?? 'A forma no espaço aparece assim que a estrutura fechar.'
+              }
             />
           </div>
         </div>
@@ -290,6 +292,7 @@ export function EditorWorkspace({
             analysis={analysis}
             modes={modes}
             modesPending={geometry !== null && modes === null}
+            unsupported={geometry?.unsupported ?? []}
             selectedMode={selectedMode}
             onSelectMode={selectMode}
             connection={connection}
