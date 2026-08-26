@@ -100,6 +100,19 @@ Ordem fixa: cobre, potássio, sódio, césio, estrôncio, bário, lítio. Ordena
 permaneçam distinguíveis em deuteranopia — a primeira separação é matiz-luminosidade, não só
 matiz. Acima de sete séries, agrupe em "outros" em vez de inventar a oitava cor.
 
+## Estereoquímica no desenho
+
+| O quê | Como aparece |
+|---|---|
+| Cunha cheia | triângulo preenchido, ponta fina no centro estereogênico |
+| Cunha tracejada | barras perpendiculares que **crescem** para o fundo — largura igual seria pontilhado, que quer dizer outra coisa |
+| Configuração do centro | `R` ou `S` em itálico, ao lado do átomo, na tinta do texto |
+| Centro em aberto | `?` em itálico, em tom mais claro — existe e ninguém disse de que lado |
+| Geometria da dupla | `E` ou `Z` em itálico, encostado na ligação, do lado de fora |
+
+Nada disso é escolha de estilo: é a convenção de livro, e um aluno que aprende aqui precisa
+reconhecer a mesma coisa no quadro. Quem atribui as letras é o RDKit (D-21).
+
 ## Bancada
 
 A tela de desenho é a página. Tudo o mais se apoia nas bordas dela:

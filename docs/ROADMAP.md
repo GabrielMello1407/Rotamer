@@ -117,10 +117,13 @@ perguntar. Não-objetivo declarado ou item de v0.3 — as duas respostas servem;
 Não é fase de calendário: é uma entrega grande o suficiente para não caber em nenhuma das outras,
 e pequena o suficiente para não virar projeto.
 
-- [ ] Cunhas e traços no editor 2D, com o grafo carregando a informação
-- [ ] Molblock escrevendo a estereoquímica, e o RDKit devolvendo os descritores CIP
-- [ ] Coerência entre o que está desenhado e o que a cena 3D mostra
-- [ ] Missões que dependem de configuração — é onde a funcionalidade prova que serve
+- [x] Cunhas e traços no editor 2D, com o grafo carregando a informação (D-21)
+- [x] Molblock escrevendo a estereoquímica, e o RDKit devolvendo os descritores CIP — `R`, `S`,
+      `E`, `Z` e o `?` do centro que ficou em aberto, escritos ao lado do átomo no desenho
+- [x] Coerência entre o que está desenhado e o que a cena 3D mostra — enantiômeros caem em formas
+      espelhadas, verificado pelo sinal do produto misto no teste do núcleo
+- [x] Missões que dependem de configuração — "Um carbono com lado", que só fecha quando nenhum
+      centro fica sem configuração — é onde a funcionalidade prova que serve
 
 Depende do que a Fase 3 mostrar. Se professor nenhum pedir, o que muda é a prioridade, não a
 existência: o produto assume hoje que estereoquímica não está representada, e isso precisa

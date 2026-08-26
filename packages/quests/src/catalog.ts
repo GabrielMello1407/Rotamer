@@ -210,6 +210,32 @@ export const CATALOG: readonly Quest[] = [
     ],
   },
 
+  {
+    slug: 'centro-com-lado',
+    track: 'structure',
+    difficulty: 3,
+    title: 'Um carbono com lado',
+    brief:
+      'Desenhe um carbono ligado a quatro coisas diferentes e diga de que lado ele é. Sem a cunha, o desenho mostra que existe um centro e não diz qual dos dois espelhos é — e são moléculas diferentes, com cheiro, sabor e efeito diferentes.',
+    goals: [
+      {
+        id: 'centro',
+        label: 'existe um centro estereogênico',
+        condition: { kind: 'descriptor', descriptor: 'stereocenters', min: 1 },
+      },
+      {
+        id: 'definido',
+        label: 'nenhum centro ficou sem configuração',
+        condition: { kind: 'descriptor', descriptor: 'unspecifiedStereocenters', max: 0 },
+      },
+    ],
+    hints: [
+      'Quatro grupos diferentes no mesmo carbono: bromo, cloro, flúor e o hidrogênio que o RDKit completa já servem.',
+      'Na barra de ferramentas, a cunha. Clicando na ligação ela vira cunha cheia (vem para frente), depois tracejada (vai para trás).',
+      'A ponta fina da cunha fica no carbono do centro. Segurando Shift, a cunha vira de lado — e o centro troca de configuração.',
+    ],
+  },
+
   // ---------------------------------------------------------------- geometria
   {
     slug: 'ligacao-que-nao-gira',

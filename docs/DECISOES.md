@@ -575,3 +575,36 @@ uma parametrização ruim seria ensinar química errada com a geometria mais fam
 **Teto de tamanho.** Cinquenta átomos com hidrogênio. A Hessiana custa 36N² avaliações de energia
 e a diagonalização é O(N³) — acima disso o celular fraco, que é o caso de uso, congela. Passou do
 teto, a tela diz que não calculou.
+
+---
+
+## D-21 · Estereoquímica: o desenho decide, o RDKit atribui
+
+**Decisão.** O editor desenha cunha cheia e cunha tracejada, e a informação vive **no grafo** —
+`wedge` é propriedade da ligação, não do traço na tela. O molblock escreve isso na coluna de
+estereoquímica do V2000 (1 para cunha, 6 para traço), e quem lê e atribui `R`, `S`, `E` e `Z` é o
+RDKit, pela regra de Cahn–Ingold–Prelog.
+
+**Por que o RDKit e não nós.** A regra CIP tem casos que ninguém acerta de cabeça — prioridade por
+número atômico, depois por esfera, com duplicação de átomos em ligações múltiplas e desempate por
+configuração. Escrever isso à mão seria exatamente a perícia química que o D-01 proíbe, com o
+agravante de que o erro seria silencioso: um `R` onde devia estar `S` não parece errado em tela
+nenhuma.
+
+**A ponta fina fica no átomo estereogênico.** É por isso que a direção da ligação é parte do dado:
+`from` é a ponta fina, `to` é a larga. Virar a cunha de lado — Shift na ferramenta — troca a
+configuração do centro, e é assim que se desenha o enantiômero sem apagar nada.
+
+**O `?` é resposta, não ausência dela.** Centro que existe e que o desenho não definiu recebe `?`
+ao lado do átomo, em tom mais claro. Sem isso, "estereocentros: 1 — 1 sem configuração" na faixa
+de números não diz **qual** átomo está em aberto, e numa molécula com três centros isso é a
+diferença entre corrigir e adivinhar.
+
+**A cunha entra na chave de topologia.** Trocar a configuração de um centro é trocar de molécula:
+a geometria 3D é recalculada, o cache por InChIKey separa os enantiômeros, e a cena mostra a forma
+espelhada — verificado por teste, pelo sinal do produto misto dos vizinhos do centro.
+
+**O que ainda não existe.** Cunha ondulada (`either`, o "não se sabe de que lado") é lida do
+molblock como plano, porque desenhar uma coisa que significa "indefinido" e tratá-la como definida
+seria pior que ignorá-la. Estereoquímica de anel e atropoisomeria não têm tratamento próprio: o
+RDKit percebe o que dá para perceber do desenho plano, e nada além disso é afirmado.

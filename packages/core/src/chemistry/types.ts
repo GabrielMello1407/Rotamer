@@ -48,6 +48,38 @@ export interface Descriptors {
   readonly unspecifiedStereocenters: number;
 }
 
+/** Um centro estereogênico com configuração atribuída. */
+export interface StereoLabel {
+  /** Índice do átomo na estrutura, começando em zero. */
+  readonly index: number;
+  /** `R`, `S` — ou `?` quando o centro existe e o desenho não disse de que lado. */
+  readonly label: string;
+}
+
+/**
+ * Uma ligação dupla com geometria atribuída.
+ *
+ * Ela é identificada pelos **dois átomos**, não por um índice de ligação: é
+ * assim que o RDKit devolve, e é o que sobrevive a qualquer reordenação.
+ */
+export interface StereoBondLabel {
+  readonly atoms: readonly [number, number];
+  /** `E` ou `Z`, sem parênteses. */
+  readonly label: string;
+}
+
+/**
+ * As configurações que o RDKit atribuiu, lendo as cunhas do desenho.
+ *
+ * Vazio quando não há centro definido — que é o caso da imensa maioria das
+ * estruturas desenhadas em aula, e por isso a tela precisa saber diferenciar
+ * "não tem centro" de "tem centro e ninguém disse de que lado".
+ */
+export interface StereoLabels {
+  readonly atoms: readonly StereoLabel[];
+  readonly bonds: readonly StereoBondLabel[];
+}
+
 /** Uma molécula que passou pela sanitização do RDKit. */
 export interface Molecule {
   /** SMILES canônico — a mesma molécula sempre produz a mesma cadeia. */
@@ -71,6 +103,8 @@ export interface Molecule {
    * editor só escreve o que ele contou.
    */
   readonly atomHydrogens: readonly number[];
+  /** R, S, E e Z atribuídos pelo RDKit a partir das cunhas do desenho. */
+  readonly stereo: StereoLabels;
 }
 
 /** Código de erro químico. A interface escolhe o tratamento a partir dele. */

@@ -26,6 +26,7 @@ export type MeasurableDescriptor = Extract<
   | 'heavyAtoms'
   | 'heteroatoms'
   | 'stereocenters'
+  | 'unspecifiedStereocenters'
 >;
 
 /** Faixa fechada. Sem mínimo é "até tanto"; sem máximo é "pelo menos tanto". */

@@ -87,6 +87,20 @@ export function Toolbar({ store, className }: ToolbarProps): ReactElement {
         </RailButton>
 
         <RailButton
+          label="Cunha e traço: estereoquímica (W)"
+          name="Estereoquímica"
+          pressed={tool === 'stereo'}
+          onClick={() => {
+            store.getState().setTool(tool === 'stereo' ? 'structure' : 'stereo');
+          }}
+        >
+          <svg viewBox="0 0 18 18" aria-hidden="true" className={styles.icon}>
+            {/* A cunha cheia, com a ponta fina no centro estereogênico. */}
+            <path d="M3.5 14.5 14 5.5l1.2 3.6-8.4 6.4z" fill="currentColor" stroke="none" />
+          </svg>
+        </RailButton>
+
+        <RailButton
           label="Apagar átomo ou ligação (E)"
           name="Apagar"
           pressed={tool === 'erase'}

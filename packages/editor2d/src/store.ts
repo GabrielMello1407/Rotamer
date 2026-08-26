@@ -3,6 +3,8 @@ import {
   addBond,
   bondBetween,
   cycleBondOrder,
+  cycleBondWedge,
+  flipBond,
   emptyGraph,
   findAtom,
   moveAtom,
@@ -69,6 +71,15 @@ export interface EditorState {
   focus: AtomId | null;
   /** O átomo que o RDKit apontou como culpado do erro, para marcar na tela. */
   flagged: AtomId | null;
+  /**
+   * A configuração de cada centro — `R`, `S` ou `?` —, atribuída pelo RDKit.
+   *
+   * Chega junto com a análise e some a cada mudança do grafo: letra velha em
+   * desenho novo é pior que letra nenhuma.
+   */
+  stereo: ReadonlyMap<AtomId, string>;
+  /** `E` ou `Z` de cada dupla com geometria definida, pelo identificador dela. */
+  stereoBonds: ReadonlyMap<BondId, string>;
   camera: Camera;
   /** Tamanho da área de desenho, informado pelo componente do canvas. */
   viewport: Viewport;
@@ -83,6 +94,10 @@ export interface EditorState {
   setHydrogens: (hydrogens: ReadonlyMap<AtomId, number>) => void;
   setFocus: (focus: AtomId | null) => void;
   setFlagged: (flagged: AtomId | null) => void;
+  setStereo: (
+    stereo: ReadonlyMap<AtomId, string>,
+    bonds: ReadonlyMap<BondId, string>,
+  ) => void;
   setViewport: (viewport: Viewport) => void;
   setInsets: (insets: Insets) => void;
   /** Enquadra a molécula inteira com folga. */
@@ -107,6 +122,10 @@ export interface EditorState {
   eraseAtom: (id: AtomId) => void;
   eraseBond: (id: BondId) => void;
   cycleBond: (id: BondId) => void;
+  /** Plano → cunha cheia → tracejada → plano. */
+  cycleWedge: (id: BondId) => void;
+  /** Troca a ponta fina de lado, o que troca a configuração do centro. */
+  flipWedge: (id: BondId) => void;
   changeElement: (id: AtomId, element: string) => void;
   dragAtomTo: (id: AtomId, point: Point) => void;
 }
@@ -125,6 +144,8 @@ export function createEditorStore(initial: MoleculeGraph = emptyGraph()) {
     hydrogens: new Map<AtomId, number>(),
     focus: null,
     flagged: null,
+    stereo: new Map<AtomId, string>(),
+    stereoBonds: new Map<BondId, string>(),
     camera: { x: 0, y: 0, scale: DEFAULT_SCALE },
     viewport: { width: 0, height: 0 },
     insets: { left: 0, right: 0, top: 0, bottom: 0 },
@@ -159,6 +180,9 @@ export function createEditorStore(initial: MoleculeGraph = emptyGraph()) {
     setFlagged: (flagged) => {
       if (get().flagged !== flagged) set({ flagged });
     },
+    setStereo: (stereo, stereoBonds) => {
+      set({ stereo, stereoBonds });
+    },
     frame: () => {
       const { graph, viewport, camera, insets, setCamera } = get();
       if (viewport.width === 0 || viewport.height === 0) return;
@@ -174,12 +198,20 @@ export function createEditorStore(initial: MoleculeGraph = emptyGraph()) {
         past: [...past.slice(-(MAX_HISTORY - 1)), previous],
         future: [],
         hydrogens: new Map<AtomId, number>(),
+        stereo: new Map<AtomId, string>(),
+        stereoBonds: new Map<BondId, string>(),
         flagged: null,
       });
     },
 
     amend: (graph) => {
-      set({ graph, hydrogens: new Map<AtomId, number>(), flagged: null });
+      set({
+        graph,
+        hydrogens: new Map<AtomId, number>(),
+        stereo: new Map<AtomId, string>(),
+        stereoBonds: new Map<BondId, string>(),
+        flagged: null,
+      });
     },
 
     closeUndoStep: (before) => {
@@ -257,6 +289,16 @@ export function createEditorStore(initial: MoleculeGraph = emptyGraph()) {
     cycleBond: (id) => {
       const { graph, commit } = get();
       commit(cycleBondOrder(graph, id));
+    },
+
+    cycleWedge: (id) => {
+      const { graph, commit } = get();
+      commit(cycleBondWedge(graph, id));
+    },
+
+    flipWedge: (id) => {
+      const { graph, commit } = get();
+      commit(flipBond(graph, id));
     },
 
     changeElement: (id, element) => {

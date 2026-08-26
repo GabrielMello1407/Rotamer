@@ -1,5 +1,5 @@
 import { emptyGraph } from './operations';
-import type { BondOrder, GraphAtom, GraphBond, MoleculeGraph } from './types';
+import type { BondOrder, BondWedge, GraphAtom, GraphBond, MoleculeGraph } from './types';
 
 /**
  * Tradução entre o grafo e o molblock V2000 — o formato que o RDKit lê.
@@ -25,7 +25,7 @@ export function toMolblock(graph: MoleculeGraph): string {
     const from = indexByAtom.get(bond.from);
     const to = indexByAtom.get(bond.to);
     if (from === undefined || to === undefined) continue;
-    lines.push(`${count(from)}${count(to)}${count(bond.order)}  0`);
+    lines.push(`${count(from)}${count(to)}${count(bond.order)}${count(stereoFlag(bond.wedge))}`);
   }
 
   for (const line of chargeLines(graph, indexByAtom)) {
@@ -75,7 +75,14 @@ export function fromMolblock(molblock: string): MoleculeGraph {
     if (from === null || to === null || order === null) continue;
     if (order !== 1 && order !== 2 && order !== 3) continue;
 
-    bonds.push({ id: atomCount + index + 1, from, to, order });
+    const wedge = wedgeOf(readInt(line, 9, 12));
+    bonds.push({
+      id: atomCount + index + 1,
+      from,
+      to,
+      order,
+      ...(wedge === 'none' ? {} : { wedge }),
+    });
   }
 
   const charged = applyCharges(atoms, lines);
@@ -156,6 +163,27 @@ function readFloat(line: string, start: number, end: number): number | null {
   if (text === '') return null;
   const value = Number.parseFloat(text);
   return Number.isNaN(value) ? null : value;
+}
+
+/**
+ * A quarta coluna do bloco de ligações: 1 é cunha cheia, 6 é tracejada.
+ *
+ * São os números do formato V2000, os mesmos que o RDKit lê e escreve. A ponta
+ * fina fica no primeiro átomo da linha — por isso a ordem `from`/`to` importa.
+ */
+function stereoFlag(wedge: BondWedge | undefined): number {
+  if (wedge === 'up') return 1;
+  if (wedge === 'down') return 6;
+  return 0;
+}
+
+function wedgeOf(flag: number | null): BondWedge {
+  if (flag === 1) return 'up';
+  if (flag === 6) return 'down';
+
+  // 4 é "either" — cunha ondulada, que diz "não se sabe". O produto ainda não
+  // desenha isso, e tratar como plano é mais honesto do que inventar um lado.
+  return 'none';
 }
 
 /** A ordem de ligação como o molblock a escreve. */

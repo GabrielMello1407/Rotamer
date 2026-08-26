@@ -56,10 +56,19 @@ export function EditorWorkspace({
     [store],
   );
 
+  // E a configuração de cada centro, que o desenho escreve ao lado do átomo.
+  const applyStereo = useCallback(
+    (atoms: ReadonlyMap<number, string>, bonds: ReadonlyMap<number, string>) => {
+      store.getState().setStereo(atoms, bonds);
+    },
+    [store],
+  );
+
   const { analysis, geometry, trajectory, modes, geometryError, pending } = useMolecule(
     graph,
     connection,
     applyHydrogens,
+    applyStereo,
   );
 
   /**

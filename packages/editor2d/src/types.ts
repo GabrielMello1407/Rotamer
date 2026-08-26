@@ -3,15 +3,19 @@ import type { AtomId, BondId, MoleculeGraph } from '@rotamer/core';
 /** Tipos que o estado e as contas de tela compartilham. */
 
 /**
- * `structure` desenha, `move` arrasta, `erase` apaga.
+ * `structure` desenha, `move` arrasta, `stereo` põe cunha, `erase` apaga.
  *
  * Em `move`, arrastar um átomo move o átomo e arrastar o vazio move a vista —
  * é a mesma intenção, "pegar e levar", e quem desenha não deveria ter que
  * escolher entre duas ferramentas para isso. No modo desenho o átomo também se
  * move, mas segurando Shift; a ferramenta existe porque atalho de teclado não
  * existe no celular e ninguém adivinha Shift.
+ *
+ * `stereo` é ferramenta própria porque clicar numa ligação já faz outra coisa —
+ * trocar a ordem. Estereoquímica não pode ser um modo escondido dentro de um
+ * gesto que já significa outra coisa.
  */
-export type Tool = 'structure' | 'move' | 'erase';
+export type Tool = 'structure' | 'move' | 'stereo' | 'erase';
 
 /** Ponto em coordenadas do grafo (ångström), salvo onde estiver dito o contrário. */
 export interface Point {

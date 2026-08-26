@@ -1,4 +1,4 @@
-import type { AtomId, GraphAtom, MoleculeGraph } from '@rotamer/core';
+import type { AtomId, BondId, GraphAtom, MoleculeGraph } from '@rotamer/core';
 import { toScreen } from './geometry2d';
 import { colorOf, type EditorPalette } from './palette';
 import type { Camera, Drag, Hover, Point, Viewport } from './types';
@@ -28,6 +28,15 @@ export interface Scene {
   readonly focus: AtomId | null;
   /** O átomo que o RDKit culpou pelo erro. Ganha o círculo tracejado. */
   readonly flagged: AtomId | null;
+  /**
+   * A configuração de cada centro, atribuída pelo RDKit: `R`, `S` ou `?`.
+   *
+   * O ponto de interrogação é resposta, não ausência dela: existe um centro ali
+   * e o desenho não disse de que lado. É o que aponta onde falta a cunha.
+   */
+  readonly stereo: ReadonlyMap<AtomId, string>;
+  /** `E` ou `Z` de cada dupla com geometria definida. */
+  readonly stereoBonds: ReadonlyMap<BondId, string>;
 }
 
 /**
@@ -56,6 +65,7 @@ export function draw(context: CanvasRenderingContext2D, scene: Scene): void {
   drawBonds(context, scene);
   drawDragPreview(context, scene);
   drawAtoms(context, scene);
+  drawBondStereo(context, scene);
 }
 
 function drawBonds(context: CanvasRenderingContext2D, scene: Scene): void {
@@ -77,6 +87,19 @@ function drawBonds(context: CanvasRenderingContext2D, scene: Scene): void {
     const gap = MULTIPLE_GAP * camera.scale;
 
     if (bond.order === 1) {
+      // A cunha sai do plano do papel: cheia vem em direção a quem olha,
+      // tracejada vai para trás. A ponta fina fica no átomo estereogênico, que é
+      // sempre o `from` — virar a cunha troca a configuração do centro.
+      if (bond.wedge === 'up') {
+        wedge(context, start, end, gap);
+        continue;
+      }
+
+      if (bond.wedge === 'down') {
+        hashes(context, start, end, gap, width);
+        continue;
+      }
+
       line(context, start, end);
       continue;
     }
@@ -107,6 +130,122 @@ function drawBonds(context: CanvasRenderingContext2D, scene: Scene): void {
     line(context, start, end);
     line(context, shift(start, offset), shift(end, offset));
     line(context, shift(start, negate(offset)), shift(end, negate(offset)));
+  }
+}
+
+/**
+ * `E` ou `Z` ao lado da dupla.
+ *
+ * Fica depois dos átomos porque o rótulo do átomo abre um disco branco por cima
+ * do que já foi desenhado — a letra da dupla, escrita antes, sumiria embaixo
+ * dele quando a dupla encosta num heteroátomo.
+ */
+function drawBondStereo(context: CanvasRenderingContext2D, scene: Scene): void {
+  const { graph, camera, viewport, palette, stereoBonds } = scene;
+  if (stereoBonds.size === 0) return;
+
+  const size = Math.max(10, camera.scale * 0.34);
+  context.font = `italic 600 ${String(size)}px ${palette.font}`;
+  context.fillStyle = palette.ink;
+  context.textAlign = 'center';
+  context.textBaseline = 'middle';
+
+  for (const bond of graph.bonds) {
+    const label = stereoBonds.get(bond.id);
+    if (label === undefined) continue;
+
+    const from = graph.atoms.find((atom) => atom.id === bond.from);
+    const to = graph.atoms.find((atom) => atom.id === bond.to);
+    if (!from || !to) continue;
+
+    const start = toScreen(from, camera, viewport);
+    const end = toScreen(to, camera, viewport);
+    const middle = { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 };
+
+    // Encostada na ligação, do lado de fora: dentro ela cairia em cima da
+    // segunda linha da dupla.
+    const offset = perpendicular(start, end, size * 1.1);
+    context.fillText(label, middle.x + offset.x, middle.y + offset.y);
+  }
+}
+
+/**
+ * A letra da configuração, ao lado do centro.
+ *
+ * Em livro ela aparece em itálico — `(R)`, `(S)` — e aqui aparece sem
+ * parênteses, encostada no átomo, porque a tela tem menos espaço que a página e
+ * o parêntese não carrega informação nenhuma.
+ *
+ * Quem atribuiu foi o RDKit, pela regra de Cahn–Ingold–Prelog. O editor só
+ * escreve o que ele disse.
+ */
+function drawStereo(
+  context: CanvasRenderingContext2D,
+  scene: Scene,
+  atom: GraphAtom,
+  center: Point,
+  size: number,
+): void {
+  const label = scene.stereo.get(atom.id);
+  if (label === undefined) return;
+
+  const font = Math.max(10, size * 0.52);
+  context.font = `italic 600 ${String(font)}px ${scene.palette.font}`;
+  context.fillStyle = label === '?' ? scene.palette.inkSoft : scene.palette.ink;
+  context.textAlign = 'left';
+  context.fillText(label, center.x + size * 0.55, center.y - size * 0.5);
+  context.textAlign = 'center';
+}
+
+/**
+ * A cunha cheia: triângulo com a ponta no átomo estereogênico.
+ *
+ * Ela é preenchida com a mesma tinta do traço — em livro a cunha é sólida, e
+ * contorno vazado seria outra convenção, de outra coisa.
+ */
+function wedge(
+  context: CanvasRenderingContext2D,
+  start: Point,
+  end: Point,
+  width: number,
+): void {
+  const offset = perpendicular(start, end, width * 0.75);
+
+  context.beginPath();
+  context.moveTo(start.x, start.y);
+  context.lineTo(end.x + offset.x, end.y + offset.y);
+  context.lineTo(end.x - offset.x, end.y - offset.y);
+  context.closePath();
+
+  context.fillStyle = context.strokeStyle;
+  context.fill();
+}
+
+/**
+ * A cunha tracejada: barras perpendiculares que crescem em direção ao fundo.
+ *
+ * Crescer é o que dá a perspectiva — a barra mais larga é a mais distante de
+ * quem olha. Barras de largura igual seriam só um traço pontilhado, que quer
+ * dizer outra coisa em química.
+ */
+function hashes(
+  context: CanvasRenderingContext2D,
+  start: Point,
+  end: Point,
+  width: number,
+  stroke: number,
+): void {
+  const length = Math.hypot(end.x - start.x, end.y - start.y);
+  const count = Math.max(3, Math.min(8, Math.round(length / 7)));
+
+  context.lineWidth = stroke * 0.9;
+
+  for (let index = 1; index <= count; index += 1) {
+    const t = index / count;
+    const center = { x: start.x + (end.x - start.x) * t, y: start.y + (end.y - start.y) * t };
+    const offset = perpendicular(start, end, width * 0.75 * t);
+
+    line(context, shift(center, offset), shift(center, negate(offset)));
   }
 }
 
@@ -158,6 +297,8 @@ function drawAtoms(context: CanvasRenderingContext2D, scene: Scene): void {
       context.fillStyle = colorOf(palette, atom.element);
       context.fill();
 
+      drawStereo(context, scene, atom, center, size);
+
       if (highlighted) {
         context.beginPath();
         context.arc(center.x, center.y, dot + 5, 0, Math.PI * 2);
@@ -191,6 +332,8 @@ function drawAtoms(context: CanvasRenderingContext2D, scene: Scene): void {
       context.fillStyle = palette.inkSoft;
       context.fillText(chargeLabel(atom.charge), center.x + half * 0.95, center.y - half * 0.8);
     }
+
+    drawStereo(context, scene, atom, center, size);
 
     // O anel do destaque vem depois do rótulo — desenhado antes, o disco que
     // abre espaço para a letra apagaria justamente o anel.

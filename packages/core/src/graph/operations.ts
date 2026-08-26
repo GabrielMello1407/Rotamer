@@ -2,6 +2,7 @@ import type {
   AtomId,
   BondId,
   BondOrder,
+  BondWedge,
   GraphAtom,
   GraphBond,
   MoleculeGraph,
@@ -159,6 +160,74 @@ export function cycleBondOrder(graph: MoleculeGraph, id: BondId): MoleculeGraph 
 }
 
 /**
+ * Põe, tira ou troca a cunha de uma ligação.
+ *
+ * A cunha só faz sentido em ligação simples: uma dupla não sai do plano por
+ * conta própria, e marcar cunha nela é escrever uma coisa que o RDKit vai
+ * descartar. Pedir cunha numa dupla não faz nada.
+ */
+export function setBondWedge(
+  graph: MoleculeGraph,
+  id: BondId,
+  wedge: BondWedge,
+): MoleculeGraph {
+  const bond = findBond(graph, id);
+  if (!bond || bond.order !== 1) return graph;
+
+  return {
+    atoms: graph.atoms,
+    bonds: graph.bonds.map((current) => (current.id === id ? withWedge(current, wedge) : current)),
+    nextId: graph.nextId,
+  };
+}
+
+/**
+ * A ligação com a cunha trocada.
+ *
+ * Sem cunha, a propriedade **não existe** em vez de existir valendo `undefined`:
+ * é a diferença entre "esta ligação está no plano" e "alguém marcou nada aqui",
+ * e o molblock escreve as duas do mesmo jeito só por sorte.
+ */
+function withWedge(bond: GraphBond, wedge: BondWedge): GraphBond {
+  const base = { id: bond.id, from: bond.from, to: bond.to, order: bond.order };
+  return wedge === 'none' ? base : { ...base, wedge };
+}
+
+/**
+ * Plano → cunha cheia → tracejada → plano. É o clique repetido com a ferramenta
+ * de estereoquímica.
+ */
+export function cycleBondWedge(graph: MoleculeGraph, id: BondId): MoleculeGraph {
+  const bond = findBond(graph, id);
+  if (!bond) return graph;
+
+  const next: BondWedge =
+    bond.wedge === 'up' ? 'down' : bond.wedge === 'down' ? 'none' : 'up';
+
+  return setBondWedge(graph, id, next);
+}
+
+/**
+ * Troca a ponta fina de lado.
+ *
+ * A cunha é assimétrica: a ponta fina fica no átomo estereogênico, e virá-la
+ * troca a configuração do centro. Sem isto, desenhar o enantiômero exigiria
+ * apagar a ligação e refazê-la na outra direção.
+ */
+export function flipBond(graph: MoleculeGraph, id: BondId): MoleculeGraph {
+  const bond = findBond(graph, id);
+  if (!bond) return graph;
+
+  return {
+    atoms: graph.atoms,
+    bonds: graph.bonds.map((current) =>
+      current.id === id ? { ...current, from: current.to, to: current.from } : current,
+    ),
+    nextId: graph.nextId,
+  };
+}
+
+/**
  * Só a topologia importa para saber se a geometria precisa ser recalculada.
  * Arrastar átomo muda o grafo, mas não muda a molécula — e conformação é cara.
  */
@@ -172,7 +241,10 @@ export function topologyKey(graph: MoleculeGraph): string {
     .map((bond) => {
       const [first, second] =
         bond.from < bond.to ? [bond.from, bond.to] : [bond.to, bond.from];
-      return `${String(first)}-${String(second)}:${String(bond.order)}`;
+      // A cunha entra na chave: trocar a configuração de um centro é trocar de
+      // molécula, e a geometria 3D precisa ser recalculada.
+      const wedge = bond.wedge === undefined ? '' : `:${bond.from}${bond.wedge}`;
+      return `${String(first)}-${String(second)}:${String(bond.order)}${wedge}`;
     })
     .sort((a, b) => a.localeCompare(b, 'en'))
     .join(',');

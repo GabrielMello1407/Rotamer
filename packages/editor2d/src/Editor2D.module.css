@@ -29,6 +29,10 @@
   cursor: grab;
 }
 
+.stereo .canvas {
+  cursor: pointer;
+}
+
 .panning .canvas,
 .dragging .canvas {
   cursor: grabbing;

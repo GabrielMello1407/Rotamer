@@ -203,3 +203,66 @@ describe('elemento fora do campo de força', () => {
     expect(modes.modes).toBeNull();
   });
 });
+
+describe('estereoquímica no espaço', () => {
+  /**
+   * O que está desenhado tem que ser o que aparece na cena.
+   *
+   * Cunha cheia e cunha tracejada são enantiômeros — a mesma molécula refletida
+   * no espelho. Se a geometria 3D ignorasse a cunha, os dois desenhos cairiam na
+   * mesma forma, e o produto estaria mostrando a molécula errada para metade dos
+   * casos.
+   */
+  function chirality(geometry: Geometry, center: number): number {
+    const neighbours = geometry.bonds
+      .filter((bond) => bond.from === center || bond.to === center)
+      .map((bond) => (bond.from === center ? bond.to : bond.from))
+      .slice(0, 3);
+
+    const [first, second, third] = neighbours;
+    if (first === undefined || second === undefined || third === undefined) {
+      throw new Error('o centro precisa de três vizinhos para ter sinal');
+    }
+
+    const at = (index: number): readonly [number, number, number] => {
+      const atom = geometry.atoms[index];
+      const middle = geometry.atoms[center];
+      if (!atom || !middle) throw new Error('átomo fora da geometria');
+
+      return [atom.x - middle.x, atom.y - middle.y, atom.z - middle.z];
+    };
+
+    const [ax, ay, az] = at(first);
+    const [bx, by, bz] = at(second);
+    const [cx, cy, cz] = at(third);
+
+    // Produto misto: o sinal diz de que lado do plano dos outros três está o
+    // primeiro vizinho — é a quiralidade da geometria, em uma conta só.
+    return ax * (by * cz - bz * cy) - ay * (bx * cz - bz * cx) + az * (bx * cy - by * cx);
+  }
+
+  it('cunha cheia e tracejada dão formas espelhadas no espaço', async () => {
+    const cheia = await geometryOf('F[C@H](Cl)Br');
+    const tracejada = await geometryOf('F[C@@H](Cl)Br');
+
+    const carbono = cheia.atoms.findIndex((atom) => atom.element === 'C');
+    expect(carbono).toBeGreaterThanOrEqual(0);
+
+    const primeiro = chirality(cheia, carbono);
+    const segundo = chirality(tracejada, carbono);
+
+    // Sinais opostos: as duas formas são imagens especulares uma da outra.
+    expect(Math.abs(primeiro)).toBeGreaterThan(1);
+    expect(Math.sign(primeiro)).toBe(-Math.sign(segundo));
+  }, 60_000);
+
+  it('o mesmo enantiômero pedido duas vezes cai na mesma forma', async () => {
+    const primeira = await geometryOf('F[C@H](Cl)Br');
+    const segunda = await geometryOf('F[C@H](Cl)Br');
+    const carbono = primeira.atoms.findIndex((atom) => atom.element === 'C');
+
+    expect(Math.sign(chirality(primeira, carbono))).toBe(
+      Math.sign(chirality(segunda, carbono)),
+    );
+  }, 60_000);
+});

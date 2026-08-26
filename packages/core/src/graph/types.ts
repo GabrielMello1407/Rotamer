@@ -16,6 +16,19 @@ export type BondId = number;
 /** Ordem de ligação. Aromático não entra aqui: quem percebe isso é o RDKit. */
 export type BondOrder = 1 | 2 | 3;
 
+/**
+ * Cunha e traço: como a ligação sai do plano do papel.
+ *
+ * `up` é a cunha cheia — a ligação vem na direção de quem olha. `down` é a
+ * tracejada — ela vai para trás. A ponta fina fica **sempre no átomo `from`**,
+ * que é o átomo estereogênico; virar a cunha ao contrário troca a configuração,
+ * e é por isso que a direção é parte do dado e não do desenho.
+ *
+ * Quem lê isso e diz se o centro é R ou S é o RDKit. O editor só registra o que
+ * foi desenhado.
+ */
+export type BondWedge = 'none' | 'up' | 'down';
+
 /** Comprimento padrão de uma ligação simples, em ångström. */
 export const BOND_LENGTH = 1.5;
 
@@ -35,6 +48,8 @@ export interface GraphBond {
   readonly from: AtomId;
   readonly to: AtomId;
   readonly order: BondOrder;
+  /** Cunha cheia, tracejada, ou no plano. Ausente é o mesmo que `none`. */
+  readonly wedge?: BondWedge;
 }
 
 export interface MoleculeGraph {

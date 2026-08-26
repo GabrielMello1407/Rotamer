@@ -62,6 +62,10 @@ export function useMolecule(
   graph: MoleculeGraph,
   connection: ChemistryConnection,
   onHydrogens?: (hydrogens: ReadonlyMap<number, number>) => void,
+  onStereo?: (
+    atoms: ReadonlyMap<number, string>,
+    bonds: ReadonlyMap<number, string>,
+  ) => void,
 ): MoleculeReading {
   const [reading, setReading] = useState<MoleculeReading>(NOTHING);
 
@@ -99,6 +103,39 @@ export function useMolecule(
               ]),
             ),
           );
+        }
+
+        // E a configuração de cada centro volta junto: `R`, `S`, ou `?` para o
+        // centro que existe e que o desenho não definiu. Quem atribui é o RDKit
+        // pela regra CIP; o editor só escreve a letra ao lado do átomo.
+        if (analysis.ok && onStereo) {
+          const labels = new Map<number, string>();
+
+          for (const entry of analysis.molecule.stereo.atoms) {
+            const atom = graph.atoms[entry.index];
+            if (atom) labels.set(atom.id, entry.label);
+          }
+
+          // A dupla vem identificada pelos dois átomos; aqui ela vira o
+          // identificador da ligação, que é o que o desenho conhece.
+          const bonds = new Map<number, string>();
+
+          for (const entry of analysis.molecule.stereo.bonds) {
+            const [first, second] = entry.atoms;
+            const left = graph.atoms[first]?.id;
+            const right = graph.atoms[second]?.id;
+            if (left === undefined || right === undefined) continue;
+
+            const bond = graph.bonds.find(
+              (candidate) =>
+                (candidate.from === left && candidate.to === right) ||
+                (candidate.from === right && candidate.to === left),
+            );
+
+            if (bond) bonds.set(bond.id, entry.label);
+          }
+
+          onStereo(labels, bonds);
         }
 
         if (!analysis.ok) {
@@ -181,7 +218,7 @@ export function useMolecule(
       alive = false;
       clearTimeout(timer);
     };
-  }, [molblock, topology, empty, client, graph.atoms, onHydrogens]);
+  }, [molblock, topology, empty, client, graph.atoms, graph.bonds, onHydrogens, onStereo]);
 
   // Tela em branco não guarda leitura antiga: apagar tudo apaga os números.
   return empty ? NOTHING : reading;

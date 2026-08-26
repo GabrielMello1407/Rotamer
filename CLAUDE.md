@@ -133,8 +133,9 @@ tutor são derivados dele e recalculáveis. Nada além do grafo é persistido co
 Não implemente sem conversar antes: retrossíntese ou previsão de reação, docking, DFT,
 campanhas abertas da comunidade, edição colaborativa em tempo real, app nativo.
 
-Estereoquímica com cunhas e traços fica para a v0.2 — é a primeira coisa que um químico vai
-pedir e merece ser feita direito.
+**Estereoquímica existe** (D-21): cunha e traço no editor, `wedge` no grafo, molblock V2000 com a
+coluna de estereoquímica, e `R`/`S`/`E`/`Z` atribuídos pelo RDKit. Nunca calcule prioridade CIP à
+mão — é a mesma regra do D-01, e o erro sairia silencioso.
 
 ## Nunca afirme
 

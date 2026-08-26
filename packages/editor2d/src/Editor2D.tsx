@@ -61,6 +61,10 @@ function hintFor(tool: Tool, graph: MoleculeGraph): string | null {
     return 'Clique num átomo ou numa ligação para apagar.';
   }
 
+  if (tool === 'stereo') {
+    return 'Clique numa ligação simples: plano, cunha cheia, cunha tracejada. Com Shift, a cunha vira de lado.';
+  }
+
   if (isEmpty(graph)) {
     return 'Clique para começar um átomo. Arraste de um átomo para puxar uma ligação.';
   }
@@ -141,6 +145,8 @@ export function Editor2D({ store, className }: Editor2DProps): ReactElement {
         hydrogens: state.hydrogens,
         focus: state.focus,
         flagged: state.flagged,
+        stereo: state.stereo,
+        stereoBonds: state.stereoBonds,
       });
     });
   }, [store]);
@@ -252,6 +258,13 @@ export function Editor2D({ store, className }: Editor2DProps): ReactElement {
       state.setHover(under);
 
       if (state.tool === 'erase') return;
+
+      if (state.tool === 'stereo') {
+        // Nesta ferramenta o arrasto não desenha nada: ela existe para clicar em
+        // ligação. Arrastar move a vista, que é o gesto inofensivo.
+        state.setDrag({ kind: 'pan', origin: point, camera: state.camera });
+        return;
+      }
 
       if (state.tool === 'move') {
         // Em cima de um átomo, arrastar leva o átomo; no vazio, leva a vista.
@@ -425,6 +438,16 @@ export function Editor2D({ store, className }: Editor2DProps): ReactElement {
         if (under?.kind === 'bond') state.cycleBond(under.id);
         else if (under === null) state.addAtomAt(point);
       }
+
+      if (dragging.kind === 'pan' && !moved && state.tool === 'stereo') {
+        const under = hoverAt(state.graph, point, toleranceFor(state.camera));
+        if (under?.kind !== 'bond') return;
+
+        // Shift vira a cunha de lado — troca qual átomo é a ponta fina, e com
+        // isso a configuração do centro. Sem Shift, ela troca de tipo.
+        if (event.shiftKey) state.flipWedge(under.id);
+        else state.cycleWedge(under.id);
+      }
     },
     [pointAt, store],
   );
@@ -476,6 +499,12 @@ export function Editor2D({ store, className }: Editor2DProps): ReactElement {
         return;
       }
 
+      if (key === 'w') {
+        event.preventDefault();
+        state.setTool(state.tool === 'stereo' ? 'structure' : 'stereo');
+        return;
+      }
+
       if (key === 'm') {
         event.preventDefault();
         state.setTool(state.tool === 'move' ? 'structure' : 'move');
@@ -504,6 +533,7 @@ export function Editor2D({ store, className }: Editor2DProps): ReactElement {
     styles.frame,
     tool === 'erase' ? styles.erasing : null,
     tool === 'move' ? styles.moving : null,
+    tool === 'stereo' ? styles.stereo : null,
     dragKind === 'pan' ? styles.panning : null,
     dragKind === 'move' ? styles.dragging : null,
     className,

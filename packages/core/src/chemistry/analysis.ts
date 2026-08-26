@@ -8,7 +8,13 @@ import {
   type RDKitDescriptors,
 } from './rdkit-json';
 import { loadRDKit, type RDKitOptions } from './rdkit';
-import type { AnalysisResult, ChemistryError, Descriptors, Molecule } from './types';
+import type {
+  AnalysisResult,
+  ChemistryError,
+  Descriptors,
+  Molecule,
+  StereoLabels,
+} from './types';
 
 const NOTHING_DRAWN: ChemistryError = {
   code: 'empty',
@@ -71,6 +77,7 @@ function describe(rdkit: RDKitModule, mol: JSMol): Molecule {
     descriptors: descriptorsOf(mol),
     groups: detectFunctionalGroups(rdkit, mol),
     atomHydrogens: hydrogensOf(mol),
+    stereo: stereoOf(mol),
   };
 }
 
@@ -99,6 +106,50 @@ function formulaOf(mol: JSMol): string {
 function hydrogensOf(mol: JSMol): number[] {
   const document = parseJson<JsonDocument>(mol.get_json());
   return resolveAtoms(document).map((atom) => atom.implicitHydrogens);
+}
+
+/**
+ * O que o RDKit devolve em `get_stereo_tags`.
+ *
+ * As duas listas têm formatos diferentes, e a diferença tem razão de ser: um
+ * centro é um átomo (`[1, "(R)"]`), e uma geometria de dupla é uma ligação entre
+ * dois (`[1, 2, "(E)"]`).
+ */
+interface StereoTags {
+  readonly CIP_atoms?: readonly (readonly [number, string])[];
+  readonly CIP_bonds?: readonly (readonly [number, number, string])[];
+}
+
+/**
+ * Configuração de cada centro, no vocabulário de Cahn–Ingold–Prelog.
+ *
+ * Quem atribui R, S, E e Z é o RDKit, lendo as cunhas do desenho — a regra de
+ * prioridade CIP tem casos que ninguém acerta de cabeça, e escrever isso à mão
+ * seria justamente o tipo de perícia química que o D-01 proíbe.
+ *
+ * O rótulo vem entre parênteses (`(R)`), e aqui ele perde os parênteses: a tela
+ * põe a letra ao lado do átomo, e parêntese ali seria enfeite.
+ *
+ * Centro sem configuração vem como `?` — e isso não é ausência de resposta, é a
+ * resposta: existe um centro aqui e o desenho não disse de que lado. É o que
+ * permite apontar na tela onde falta a cunha.
+ */
+function stereoOf(mol: JSMol): StereoLabels {
+  const tags = parseJson<StereoTags>(mol.get_stereo_tags());
+  const clean = (label: string): string => label.replace(/[()]/g, '');
+
+  const atoms = (tags.CIP_atoms ?? [])
+    .map(([index, label]) => ({ index, label: clean(label) }))
+    .filter((entry) => entry.label !== '');
+
+  const bonds = (tags.CIP_bonds ?? [])
+    .map(([first, second, label]) => ({
+      atoms: [first, second] as readonly [number, number],
+      label: clean(label),
+    }))
+    .filter((entry) => entry.label !== '');
+
+  return { atoms, bonds };
 }
 
 /** Traduz o mapa de descritores do RDKit para os nomes usados no produto. */
