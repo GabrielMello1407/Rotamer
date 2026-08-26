@@ -9,7 +9,6 @@ import { ExportMenu } from './ExportMenu';
 import { NamePanel } from './NamePanel';
 import { NormalModesPanel } from './NormalModesPanel';
 import { QuestPanel } from './QuestPanel';
-import { SaveMolecule } from './SaveMolecule';
 import { ShareLink } from './ShareLink';
 import { SmilesInput } from './SmilesInput';
 import { ThemeToggle } from './ThemeToggle';
@@ -28,8 +27,6 @@ export interface AnalysisDrawerProps {
   /** Qual modo está em exibição na cena. */
   readonly selectedMode: number | null;
   readonly onSelectMode: (index: number | null) => void;
-  /** Limpar a tela para começar outra estrutura. */
-  readonly onNew: () => void;
   readonly connection: ChemistryConnection;
   readonly store: EditorStore;
   readonly tab: DrawerTab;
@@ -61,7 +58,6 @@ export function AnalysisDrawer({
   unsupported,
   selectedMode,
   onSelectMode,
-  onNew,
   connection,
   store,
   tab,
@@ -161,12 +157,14 @@ export function AnalysisDrawer({
                 <Lipinski descriptors={analysis.molecule.descriptors} />
 
                 <section className={styles.section}>
-                  <h3 className={styles.heading}>Guardar e levar</h3>
+                  <h3 className={styles.heading}>Levar embora</h3>
                   <div className={styles.row}>
-                    <SaveMolecule analysis={analysis} onNew={onNew} />
                     <ExportMenu analysis={analysis} connection={connection} />
                     <ShareLink analysis={analysis} />
                   </div>
+                  <p className={styles.note}>
+                    Guardar na sua estante fica na faixa de cima, ao lado da fórmula.
+                  </p>
                 </section>
 
                 <p className={styles.footnote}>

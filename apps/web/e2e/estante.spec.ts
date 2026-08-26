@@ -58,6 +58,16 @@ test.describe('estante', () => {
 
     await page.getByTestId('guardar-molecula').click();
     await expect(page.getByTestId('molecula-guardada')).toBeVisible({ timeout: 30_000 });
+
+    // Começa outra, volta para a mesma estrutura e guarda de novo: é o caminho
+    // que uma pessoa faz sem perceber que está repetindo.
+    await page.getByTestId('comecar-outra').click();
+    await expect(page.getByTestId('formula')).toBeHidden({ timeout: 30_000 });
+
+    await page.getByTestId('entrada-smiles').fill('CCO');
+    await page.getByRole('button', { name: 'Carregar' }).click();
+    await expect(page.getByTestId('formula')).toHaveText('C2H6O', { timeout: 60_000 });
+
     await page.getByTestId('guardar-molecula').click();
     await expect(page.getByTestId('molecula-guardada')).toBeVisible({ timeout: 30_000 });
 
@@ -124,5 +134,23 @@ test.describe('estante', () => {
 
     await page.getByRole('button', { name: 'Desfazer' }).click();
     await expect(page.getByTestId('formula')).toHaveText('C2H6O', { timeout: 60_000 });
+  });
+  test('guardar está na faixa de cima, sem abrir painel nenhum', async ({ page }) => {
+    await criarConta(page);
+
+    await page.goto('/');
+    await expect(page.getByTestId('tela-de-desenho')).toBeVisible();
+
+    // Um clique: um carbono. Metano é molécula válida e serve de teste.
+    const box = await page.getByTestId('tela-de-desenho').boundingBox();
+    if (!box) throw new Error('a tela de desenho não tem tamanho');
+    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+
+    await expect(page.getByTestId('formula')).toHaveText('CH4', { timeout: 60_000 });
+
+    // O painel continua fechado, e guardar está à vista.
+    await expect(page.getByTestId('painel-analise')).toBeHidden();
+    await page.getByTestId('guardar-molecula').click();
+    await expect(page.getByTestId('molecula-guardada')).toBeVisible({ timeout: 30_000 });
   });
 });

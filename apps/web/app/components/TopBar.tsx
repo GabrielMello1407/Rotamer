@@ -4,6 +4,7 @@ import type { AnalysisResult } from '@rotamer/core';
 import { Formula, Logo } from '@rotamer/ui';
 import { useEffect, useRef, useState, type ReactElement } from 'react';
 import { AccountMenu } from './AccountMenu';
+import { SaveMolecule } from './SaveMolecule';
 import styles from './TopBar.module.css';
 
 export interface TopBarProps {
@@ -15,6 +16,10 @@ export interface TopBarProps {
   readonly panelOpen: boolean;
   readonly onPanel: (tab: 'analysis' | 'quests') => void;
   readonly onExample: (smiles: string) => void;
+  /** Limpar a tela depois de guardar, para começar a próxima estrutura. */
+  readonly onNew: () => void;
+  /** Esvaziar a bancada ao sair da conta. */
+  readonly onSignOut: () => void;
 }
 
 /**
@@ -48,6 +53,8 @@ export function TopBar({
   panelOpen,
   onPanel,
   onExample,
+  onNew,
+  onSignOut,
 }: TopBarProps): ReactElement {
   const [examplesOpen, setExamplesOpen] = useState(false);
   const examplesRef = useRef<HTMLDivElement | null>(null);
@@ -96,6 +103,14 @@ export function TopBar({
       )}
 
       <span className={styles.spacer} />
+
+      {/* A chave é a molécula: guardar uma e desenhar outra não pode deixar o
+          aviso de "guardada" pendurado na barra. */}
+      <SaveMolecule
+        key={analysis?.ok === true ? analysis.molecule.inchiKey : 'sem-molecula'}
+        analysis={analysis}
+        onNew={onNew}
+      />
 
       <Status analysis={analysis} waitingForEngine={waitingForEngine} />
 
@@ -157,7 +172,7 @@ export function TopBar({
         Análise
       </button>
 
-      {showAccount && <AccountMenu displayName={accountName} />}
+      {showAccount && <AccountMenu displayName={accountName} onSignOut={onSignOut} />}
     </header>
   );
 }

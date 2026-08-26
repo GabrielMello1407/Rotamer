@@ -121,4 +121,24 @@ test.describe('conta', () => {
       'Já existe uma conta com esse e-mail.',
     );
   });
+  test('sair leva o desenho junto — a máquina do laboratório é compartilhada', async ({
+    page,
+  }) => {
+    await criarConta(page, novoEmail());
+    await desenharUmCarbono(page);
+    await expect(page.getByTestId('formula')).toHaveText('CH4', { timeout: 60_000 });
+
+    await page.getByRole('button', { name: 'Sair' }).click();
+    await expect(page.getByTestId('entrar')).toBeVisible({ timeout: 30_000 });
+
+    // A tela fica em branco: o rascunho é local e sai junto com a sessão.
+    await expect(page.getByTestId('formula')).toBeHidden();
+    await expect(page.getByTestId('metricas')).toContainText('Desenhe uma estrutura');
+
+    // E continua em branco depois de recarregar — não é só a tela, é o rascunho.
+    await page.reload();
+    await expect(page.getByTestId('metricas')).toContainText('Desenhe uma estrutura', {
+      timeout: 60_000,
+    });
+  });
 });

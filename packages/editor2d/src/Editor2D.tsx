@@ -14,7 +14,7 @@ import { hoverAt, snapFromAtom, suggestDirection, toGraph, toleranceFor } from '
 import { readPalette, type EditorPalette } from './palette';
 import { draw } from './render';
 import { clampScale, type EditorStore } from './store';
-import type { Camera, Point, Tool, Viewport } from './types';
+import type { Camera, Hover, Point, Tool, Viewport } from './types';
 
 /** O estado de uma pinça em andamento. */
 interface Pinch {
@@ -52,7 +52,13 @@ function clickSlop(pointerType: string): number {
  * porque cada ferramenta responde a arrasto de um jeito diferente e adivinhar
  * isso não é parte de aprender química.
  */
-function hintFor(tool: Tool, graph: MoleculeGraph): string | null {
+function hintFor(tool: Tool, graph: MoleculeGraph, hover: Hover): string | null {
+  // A dica mais útil é a que chega na hora da intenção: com o cursor em cima de
+  // uma ligação, o que a pessoa quer saber é como transformá-la em dupla.
+  if (tool === 'structure' && hover?.kind === 'bond') {
+    return 'Clique na ligação para trocar a ordem: simples → dupla → tripla.';
+  }
+
   if (tool === 'move') {
     return 'Arraste um átomo para movê-lo. Arraste o fundo para mover a vista.';
   }
@@ -66,11 +72,11 @@ function hintFor(tool: Tool, graph: MoleculeGraph): string | null {
   }
 
   if (isEmpty(graph)) {
-    return 'Clique para começar um átomo. Arraste de um átomo para puxar uma ligação.';
+    return 'Clique para começar um átomo. Arraste de um átomo para puxar uma ligação, e clique na ligação para fazer dupla.';
   }
 
   if (graph.atoms.length <= 3) {
-    return 'Clique numa ligação para trocar a ordem dela. Para mover um átomo, use a ferramenta de mover — ou segure Shift.';
+    return 'Clique numa ligação para trocar a ordem: simples → dupla → tripla. Para mover um átomo, use a ferramenta de mover — ou segure Shift.';
   }
 
   return null;
@@ -118,6 +124,8 @@ export function Editor2D({ store, className }: Editor2DProps): ReactElement {
   const tool = useStore(store, (state) => state.tool);
   const dragKind = useStore(store, (state) => state.drag.kind);
   const graph = useStore(store, (state) => state.graph);
+  // A dica muda com o que está sob o cursor, então ela precisa reagir ao hover.
+  const hover = useStore(store, (state) => state.hover);
 
   /** Redesenha no próximo quadro; várias chamadas seguidas viram uma. */
   const paint = useCallback(() => {
@@ -527,7 +535,7 @@ export function Editor2D({ store, className }: Editor2DProps): ReactElement {
     [store],
   );
 
-  const hint = hintFor(tool, graph);
+  const hint = hintFor(tool, graph, hover);
 
   const classes = [
     styles.frame,

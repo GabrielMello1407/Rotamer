@@ -17,6 +17,22 @@ import { useEffect } from 'react';
  */
 
 const KEY = 'rotamer-rascunho';
+
+/**
+ * Apaga o rascunho guardado no navegador.
+ *
+ * Chamado ao sair da conta. O editor funciona sem conta e o rascunho é
+ * conveniência local, mas sair é um "terminei aqui" deliberado — e numa máquina
+ * de laboratório de escola, o próximo aluno senta na mesma cadeira. Deixar a
+ * molécula de quem saiu na tela é entregar o trabalho dele a outra pessoa.
+ */
+export function forgetDraft(): void {
+  try {
+    localStorage.removeItem(KEY);
+  } catch {
+    // Navegador com armazenamento bloqueado: não havia rascunho para apagar.
+  }
+}
 const VERSION = 1;
 
 /** Espera o traço parar antes de gravar. */
