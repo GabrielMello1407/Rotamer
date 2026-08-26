@@ -284,4 +284,33 @@ test.describe('editor', () => {
     await expect(page.getByTestId('erro-quimico')).toBeHidden();
     await expect(page.getByText('atom type')).toBeHidden();
   });
+  test('clicar na ligação troca a ordem: simples, dupla, tripla', async ({ page }) => {
+    await drawFirstAtom(page);
+    await dragBondRight(page);
+    await expect(page.getByTestId('formula')).toHaveText('C2H6', { timeout: 60_000 });
+
+    // O meio da ligação, que é onde a dica manda clicar.
+    const meio = await pointOnCanvas(page, 0.75 * SCALE);
+
+    await page.mouse.click(meio.x, meio.y);
+    await expect(page.getByTestId('formula')).toHaveText('C2H4', { timeout: 60_000 });
+
+    await page.mouse.click(meio.x, meio.y);
+    await expect(page.getByTestId('formula')).toHaveText('C2H2', { timeout: 60_000 });
+
+    // E fecha o ciclo: tripla volta para simples.
+    await page.mouse.click(meio.x, meio.y);
+    await expect(page.getByTestId('formula')).toHaveText('C2H6', { timeout: 60_000 });
+  });
+
+  test('a dica ensina a dupla quando o cursor está na ligação', async ({ page }) => {
+    await drawFirstAtom(page);
+    await dragBondRight(page);
+    await expect(page.getByTestId('formula')).toHaveText('C2H6', { timeout: 60_000 });
+
+    const meio = await pointOnCanvas(page, 0.75 * SCALE);
+    await page.mouse.move(meio.x, meio.y);
+
+    await expect(page.getByText('simples → dupla → tripla')).toBeVisible();
+  });
 });

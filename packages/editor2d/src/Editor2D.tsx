@@ -294,7 +294,11 @@ export function Editor2D({ store, className }: Editor2DProps): ReactElement {
         return;
       }
 
-      if (under === null) {
+      // Ligação e vazio começam o mesmo arrasto: mover a vista. A diferença
+      // aparece só no soltar, quando o clique parado vira ordem de ligação —
+      // sem isto, clicar numa ligação não fazia **nada**, porque nenhum arrasto
+      // era registrado e o soltar não tinha em que caso entrar.
+      if (under === null || under.kind === 'bond') {
         state.setDrag({ kind: 'pan', origin: point, camera: state.camera });
       }
     },

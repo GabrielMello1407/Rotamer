@@ -4,6 +4,10 @@
   height: 100dvh;
   min-height: 0;
   background: var(--bg);
+  /* A bancada é do tamanho da janela e nada nela rola: qualquer coisa que
+     empurre altura tira a faixa de números para fora da tela, e ela é a única
+     coisa da interface que precisa estar sempre visível. */
+  overflow: hidden;
 }
 
 .stage {
