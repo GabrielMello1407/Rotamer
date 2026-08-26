@@ -1,8 +1,10 @@
-import { useEffect, useState, type ReactElement } from 'react';
-import { createPortal } from 'react-dom';
+import { type ReactElement } from 'react';
+import { Popover } from './Popover';
 import styles from './Shortcuts.module.css';
 
 export interface ShortcutsProps {
+  /** O botão que abriu — a caixa sai dele. */
+  readonly anchor: HTMLElement | null;
   readonly onClose: () => void;
 }
 
@@ -14,7 +16,8 @@ export interface ShortcutsProps {
  * pessoa souber que teclar faz alguma coisa.
  *
  * A lista é curta de propósito: o que acelera desenhar. Ela não é documentação
- * do produto, é a cola que se olha uma vez e não se olha mais.
+ * do produto, é a cola que se olha uma vez e não se olha mais — e por isso ela
+ * sai do botão, ao lado da bancada, em vez de cobrir a tela inteira.
  */
 
 interface Group {
@@ -59,82 +62,34 @@ const GROUPS: readonly Group[] = [
   },
 ];
 
-export function Shortcuts({ onClose }: ShortcutsProps): ReactElement {
-  // O portal só existe no navegador: no servidor não há `document.body` para
-  // receber a folha.
-  const [mounted, setMounted] = useState(false);
+export function Shortcuts({ anchor, onClose }: ShortcutsProps): ReactElement {
+  return (
+    <Popover anchor={anchor} label="Atalhos" className={styles.sheet} onClose={onClose}>
+      <h2 className={styles.title}>Atalhos</h2>
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+      <div className={styles.groups}>
+        {GROUPS.map((group) => (
+          <section key={group.title} className={styles.group}>
+            <h3 className={styles.groupTitle}>{group.title}</h3>
 
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape') onClose();
-    };
-
-    window.addEventListener('keydown', onKey);
-    return () => {
-      window.removeEventListener('keydown', onKey);
-    };
-  }, [onClose]);
-
-  if (!mounted) return <></>;
-
-  return createPortal(
-    <div
-      className={styles.backdrop}
-      role="presentation"
-      onPointerDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
-    >
-      <div className={styles.sheet} role="dialog" aria-modal="true" aria-label="Atalhos">
-        <div className={styles.header}>
-          <h2 className={styles.title}>Atalhos</h2>
-          <button
-            type="button"
-            className={styles.close}
-            aria-label="Fechar os atalhos"
-            onClick={onClose}
-          >
-            <svg viewBox="0 0 16 16" aria-hidden="true" className={styles.closeIcon}>
-              <path
-                d="M4 4l8 8M12 4l-8 8"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
-            </svg>
-          </button>
-        </div>
-
-        <div className={styles.groups}>
-          {GROUPS.map((group) => (
-            <section key={group.title} className={styles.group}>
-              <h3 className={styles.groupTitle}>{group.title}</h3>
-
-              <dl className={styles.rows}>
-                {group.rows.map(([key, what]) => (
-                  <div key={key} className={styles.row}>
-                    <dt>
-                      <kbd className={styles.key}>{key}</kbd>
-                    </dt>
-                    <dd className={styles.what}>{what}</dd>
-                  </div>
-                ))}
-              </dl>
-            </section>
-          ))}
-        </div>
-
-        <p className={styles.quiet}>
-          As letras valem em qualquer lugar da página, menos enquanto você escreve num campo de
-          texto.
-        </p>
+            <dl className={styles.rows}>
+              {group.rows.map(([key, what]) => (
+                <div key={key} className={styles.row}>
+                  <dt>
+                    <kbd className={styles.key}>{key}</kbd>
+                  </dt>
+                  <dd className={styles.what}>{what}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+        ))}
       </div>
-    </div>,
-    document.body,
+
+      <p className={styles.quiet}>
+        As letras valem em qualquer lugar da página, menos enquanto você escreve num campo de
+        texto.
+      </p>
+    </Popover>
   );
 }

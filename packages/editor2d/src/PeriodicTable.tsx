@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
-import { createPortal } from 'react-dom';
+import { useMemo, useState, type ReactElement } from 'react';
 import {
   blockOf,
   COMMON_ELEMENTS,
@@ -10,11 +9,14 @@ import {
   PERIODIC_TABLE,
   type TableEntry,
 } from './elements-table';
+import { Popover } from './Popover';
 import styles from './PeriodicTable.module.css';
 
 export interface PeriodicTableProps {
   /** O elemento ativo agora, para a célula aparecer marcada. */
   readonly selected: string;
+  /** O botão que abriu — a caixa sai dele. */
+  readonly anchor: HTMLElement | null;
   readonly onSelect: (symbol: string) => void;
   readonly onClose: () => void;
 }
@@ -42,30 +44,18 @@ function fold(text: string): string {
  * Célula sem moldura, só o número pequeno e o símbolo: cento e dezoito caixas
  * com borda viram uma parede. O bloco (s, p, d, f) aparece como um tom de fundo,
  * que é a informação que ajuda a achar sem competir com o símbolo.
+ *
+ * Ela sai do botão, e não do meio da tela: era um modal de tela cheia que
+ * escurecia a bancada inteira para mostrar uma grade. Escolher silício é escolha
+ * comum, feita no meio do desenho — a molécula continua visível ao lado.
  */
-export function PeriodicTable({ selected, onSelect, onClose }: PeriodicTableProps): ReactElement {
-  const sheetRef = useRef<HTMLDivElement | null>(null);
+export function PeriodicTable({
+  selected,
+  anchor,
+  onSelect,
+  onClose,
+}: PeriodicTableProps): ReactElement {
   const [search, setSearch] = useState('');
-  const [mounted, setMounted] = useState(false);
-
-  // A tabela cobre a página inteira, e a barra de ferramentas onde o botão vive
-  // é uma caixa pequena e transformada — dentro dela, `position: fixed` passa a
-  // se medir pela barra, não pela janela. Por isso ela sai do fluxo por portal.
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Escape fecha, e o foco entra na busca: quem abriu já pode digitar o nome.
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape') onClose();
-    };
-
-    window.addEventListener('keydown', onKey);
-    return () => {
-      window.removeEventListener('keydown', onKey);
-    };
-  }, [onClose]);
 
   const matches = useMemo(() => {
     const term = fold(search.trim());
@@ -124,75 +114,39 @@ export function PeriodicTable({ selected, onSelect, onClose }: PeriodicTableProp
     );
   };
 
-  if (!mounted) return <></>;
-
-  return createPortal(
-    <div
-      className={styles.backdrop}
-      role="presentation"
-      onPointerDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
+  return (
+    <Popover
+      anchor={anchor}
+      label="Tabela periódica"
+      className={styles.sheet}
+      onClose={onClose}
     >
-      <div
-        ref={sheetRef}
-        className={styles.sheet}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Tabela periódica"
-      >
-        <div className={styles.header}>
-          <h2 className={styles.title}>Tabela periódica</h2>
-
-          <input
-            className={styles.search}
-            type="search"
-            value={search}
-            placeholder="Buscar por nome, símbolo ou número"
-            aria-label="Buscar elemento"
-            data-testid="buscar-elemento"
-            autoFocus
-            onChange={(event) => {
-              setSearch(event.target.value);
-            }}
-            onKeyDown={(event) => {
-              // Um resultado só e Enter: escolhe sem precisar do mouse.
-              if (event.key === 'Enter' && only !== undefined && only !== null) onSelect(only);
-            }}
-          />
-
-          <button
-            type="button"
-            className={styles.close}
-            aria-label="Fechar a tabela periódica"
-            onClick={onClose}
-          >
-            <svg viewBox="0 0 16 16" aria-hidden="true" className={styles.closeIcon}>
-              <path
-                d="M4 4l8 8M12 4l-8 8"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
-            </svg>
-          </button>
-        </div>
-
-        <div className={styles.grid} data-testid="tabela-periodica">
-          {main.map((entry) => cell(entry, entry.period))}
-        </div>
-
-        <div className={[styles.grid, styles.innerBlock].join(' ')}>
-          {inner.map((entry) => cell(entry, entry.period - 7))}
-        </div>
-
-        <p className={styles.note}>
-          Escolher um elemento fecha a tabela e passa a desenhar com ele. Quem decide se a
-          molécula resultante existe continua sendo o RDKit.
-        </p>
+      <div className={styles.header}>
+        <input
+          className={styles.search}
+          type="search"
+          value={search}
+          placeholder="Buscar por nome, símbolo ou número"
+          aria-label="Buscar elemento"
+          data-testid="buscar-elemento"
+          autoFocus
+          onChange={(event) => {
+            setSearch(event.target.value);
+          }}
+          onKeyDown={(event) => {
+            // Um resultado só e Enter: escolhe sem precisar do mouse.
+            if (event.key === 'Enter' && only !== undefined && only !== null) onSelect(only);
+          }}
+        />
       </div>
-    </div>,
-    document.body,
+
+      <div className={styles.grid} data-testid="tabela-periodica">
+        {main.map((entry) => cell(entry, entry.period))}
+      </div>
+
+      <div className={[styles.grid, styles.innerBlock].join(' ')}>
+        {inner.map((entry) => cell(entry, entry.period - 7))}
+      </div>
+    </Popover>
   );
 }

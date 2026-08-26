@@ -39,6 +39,14 @@ interface Pinch {
 export interface Editor2DProps {
   readonly store: EditorStore;
   readonly className?: string | undefined;
+  /**
+   * Organizar o desenho, quando quem monta a tela tem o motor à mão.
+   *
+   * Quem endireita é o RDKit, e o editor não fala com ele — a regra de
+   * dependência do repositório. Sem esta função, a opção simplesmente não
+   * aparece no menu.
+   */
+  readonly onTidy?: (() => void) | undefined;
 }
 
 /**
@@ -64,7 +72,12 @@ function clickSlop(pointerType: string): number {
  * menu é caminho novo, não regra nova: quem diz se o resultado existe continua
  * sendo o RDKit, depois.
  */
-function entriesFor(store: EditorStore, graph: MoleculeGraph, target: Hover): MenuEntry[] {
+function entriesFor(
+  store: EditorStore,
+  graph: MoleculeGraph,
+  target: Hover,
+  onTidy: (() => void) | null,
+): MenuEntry[] {
   const state = store.getState();
 
   if (target?.kind === 'atom') {
@@ -164,6 +177,18 @@ function entriesFor(store: EditorStore, graph: MoleculeGraph, target: Hover): Me
   if (isEmpty(graph)) return [];
 
   return [
+    // Organizar só existe quando quem monta a tela ligou o motor: é o RDKit que
+    // calcula o desenho arrumado, e o editor não fala com ele direto.
+    ...(onTidy === null
+      ? []
+      : [
+          {
+            kind: 'item' as const,
+            label: 'Organizar o desenho',
+            testId: 'menu-organizar',
+            onPick: onTidy,
+          },
+        ]),
     {
       kind: 'item',
       label: 'Enquadrar a molécula',
@@ -297,7 +322,7 @@ const ELEMENT_KEYS: Readonly<Record<string, string>> = {
  * pronta dá o toque certo. O componente não sabe química — ele mexe no grafo, e
  * o grafo vai para o RDKit responder se aquilo existe.
  */
-export function Editor2D({ store, className }: Editor2DProps): ReactElement {
+export function Editor2D({ store, className, onTidy }: Editor2DProps): ReactElement {
   const frameRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const paletteRef = useRef<EditorPalette | null>(null);
@@ -831,8 +856,8 @@ export function Editor2D({ store, className }: Editor2DProps): ReactElement {
   }, []);
 
   const entries = useMemo(
-    () => (menu === null ? [] : entriesFor(store, graph, menu.target)),
-    [menu, store, graph],
+    () => (menu === null ? [] : entriesFor(store, graph, menu.target, onTidy ?? null)),
+    [menu, store, graph, onTidy],
   );
 
   useEffect(() => {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type ReactElement, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactElement, type ReactNode, type RefObject } from 'react';
 import { useStore } from 'zustand';
 import { COMMON_ELEMENTS } from './elements-table';
 import { shortcutsApply } from './keys';
@@ -13,6 +13,8 @@ import { RING_KINDS, ringLabel, type RingKind } from './templates';
 export interface ToolbarProps {
   readonly store: EditorStore;
   readonly className?: string | undefined;
+  /** Organizar o desenho. Sem isto, o botão não aparece — ver `Editor2DProps`. */
+  readonly onTidy?: (() => void) | undefined;
 }
 
 /**
@@ -51,9 +53,13 @@ const ELEMENT_KEY: Readonly<Record<string, string>> = {
  * três botões na primeira sessão e não precisa ler a palavra "Desfazer" mil
  * vezes depois disso.
  */
-export function Toolbar({ store, className }: ToolbarProps): ReactElement {
+export function Toolbar({ store, className, onTidy }: ToolbarProps): ReactElement {
   const [tableOpen, setTableOpen] = useState(false);
   const [keysOpen, setKeysOpen] = useState(false);
+
+  // As duas caixas saem dos botões que as abrem.
+  const tableButtonRef = useRef<HTMLButtonElement | null>(null);
+  const keysButtonRef = useRef<HTMLButtonElement | null>(null);
 
   // A interrogação abre a folha de atalhos — a mesma tecla que abre em todo
   // lugar que tem atalho.
@@ -190,8 +196,9 @@ export function Toolbar({ store, className }: ToolbarProps): ReactElement {
           title="Tabela periódica inteira"
           aria-label="Abrir a tabela periódica"
           data-testid="abrir-tabela"
+          ref={tableButtonRef}
           onClick={() => {
-            setTableOpen(true);
+            setTableOpen((open) => !open);
           }}
         >
           {listed ? '···' : element}
@@ -220,6 +227,28 @@ export function Toolbar({ store, className }: ToolbarProps): ReactElement {
       <span className={styles.divider} aria-hidden="true" />
 
       <div className={styles.group}>
+        {onTidy !== undefined && (
+          <RailButton
+            label="Organizar o desenho — o RDKit refaz as posições"
+            name="Organizar o desenho"
+            pressed={false}
+            disabled={!hasAtoms}
+            testId="organizar"
+            onClick={onTidy}
+          >
+            <svg viewBox="0 0 18 18" aria-hidden="true" className={styles.icon}>
+              <path
+                d="M3 9h3.2m5.6 0H15M6.2 9l2.4-4.2 2.4 4.2-2.4 4.2z"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </RailButton>
+        )}
+
         <RailButton
           label="Desfazer (Ctrl+Z)"
           name="Desfazer"
@@ -308,8 +337,9 @@ export function Toolbar({ store, className }: ToolbarProps): ReactElement {
           name="Atalhos do teclado"
           pressed={keysOpen}
           testId="abrir-atalhos"
+          buttonRef={keysButtonRef}
           onClick={() => {
-            setKeysOpen(true);
+            setKeysOpen((open) => !open);
           }}
         >
           <svg viewBox="0 0 18 18" aria-hidden="true" className={styles.icon}>
@@ -327,6 +357,7 @@ export function Toolbar({ store, className }: ToolbarProps): ReactElement {
 
       {keysOpen && (
         <Shortcuts
+          anchor={keysButtonRef.current}
           onClose={() => {
             setKeysOpen(false);
           }}
@@ -335,6 +366,7 @@ export function Toolbar({ store, className }: ToolbarProps): ReactElement {
 
       {tableOpen && (
         <PeriodicTable
+          anchor={tableButtonRef.current}
           selected={element}
           onSelect={(symbol) => {
             store.getState().setElement(symbol);
@@ -358,6 +390,8 @@ interface RailButtonProps {
   readonly pressed: boolean;
   readonly disabled?: boolean;
   readonly testId?: string;
+  /** Para a caixa que este botão abre saber de onde sair. */
+  readonly buttonRef?: RefObject<HTMLButtonElement | null>;
   readonly onClick: () => void;
   readonly children: ReactNode;
 }
@@ -368,11 +402,13 @@ function RailButton({
   pressed,
   disabled = false,
   testId,
+  buttonRef,
   onClick,
   children,
 }: RailButtonProps): ReactElement {
   return (
     <button
+      ref={buttonRef}
       type="button"
       className={styles.button}
       aria-pressed={pressed}

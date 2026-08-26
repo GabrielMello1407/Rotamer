@@ -16,6 +16,7 @@ export {
   type ModesResult,
 } from './chemistry/api';
 export { depict, type DepictionOptions } from './chemistry/depiction';
+export { tidy } from './chemistry/tidy';
 export { configureRDKit, loadRDKit, rdkitVersion, type RDKitOptions } from './chemistry/rdkit';
 export { atomicNumber, elementSymbol, hillFormula, maxValence } from './chemistry/elements';
 export {

@@ -1,6 +1,6 @@
 'use client';
 
-import { fromMolblock } from '@rotamer/core';
+import { fromMolblock, toMolblock } from '@rotamer/core';
 import { Editor2D, Toolbar, createEditorStore } from '@rotamer/editor2d';
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
@@ -225,6 +225,34 @@ export function EditorWorkspace({
     };
   }, [store, panelOpen]);
 
+  const client = connection.status === 'ready' ? connection.client : null;
+
+  /**
+   * Organizar o desenho.
+   *
+   * A tela deixa desenhar de qualquer jeito — é assim que tem que ser — e o
+   * resultado é uma estrutura torta, com ligações de tamanhos diferentes e
+   * ângulos que não existem. Quem endireita é o RDKit, com o mesmo algoritmo de
+   * layout que ele usa para desenhar: comprimento de ligação e ângulo de cadeia
+   * são química, não gosto.
+   *
+   * O grafo continua o mesmo; o que muda são as posições. E, como isso entra no
+   * histórico, Ctrl+Z devolve o desenho de antes.
+   */
+  const tidy = useCallback(() => {
+    if (!client || graph.atoms.length === 0) return;
+
+    const run = async (): Promise<void> => {
+      const arranged = await client.tidy(toMolblock(graph));
+      if (arranged === null) return;
+
+      store.getState().commit(fromMolblock(arranged));
+      store.getState().frame();
+    };
+
+    void run();
+  }, [client, graph, store]);
+
   const openPanel = useCallback((next: DrawerTab) => {
     setTab(next);
     setPanelOpen(true);
@@ -233,7 +261,6 @@ export function EditorWorkspace({
   // Clicar num exemplo antes de o motor subir não é erro: o pedido espera na
   // fila e entra assim que o worker responde. Num celular fraco isso é a regra.
   const [wanted, setWanted] = useState<string | null>(null);
-  const client = connection.status === 'ready' ? connection.client : null;
 
   useEffect(() => {
     if (wanted === null || !client) return;
@@ -280,10 +307,10 @@ export function EditorWorkspace({
 
       <div className={styles.stage}>
         <div className={styles.canvasArea} ref={areaRef}>
-          <Editor2D store={store} />
+          <Editor2D store={store} onTidy={client ? tidy : undefined} />
 
           <div className={styles.rail} ref={railRef}>
-            <Toolbar store={store} />
+            <Toolbar store={store} onTidy={client ? tidy : undefined} />
           </div>
 
           <div className={styles.metrics} ref={metricsRef}>

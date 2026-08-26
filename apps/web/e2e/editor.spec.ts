@@ -37,6 +37,25 @@ async function pointOnCanvas(
   };
 }
 
+/**
+ * Um ponto vazio, longe da molécula e dentro da tela.
+ *
+ * Deslocamento fixo não serve: no celular a tela de desenho tem menos de
+ * quatrocentos pixels de largura, e o mesmo "menos duzentos" que cai no vazio no
+ * desktop cai fora da tela ali.
+ */
+async function emptyPointOnCanvas(page: Page): Promise<{ x: number; y: number }> {
+  const canvas = page.getByTestId('tela-de-desenho');
+  const box = await canvas.boundingBox();
+  if (!box) throw new Error('a tela de desenho não tem tamanho');
+
+  return pointOnCanvas(
+    page,
+    -Math.min(220, box.width / 2 - 24),
+    -Math.min(120, box.height / 2 - 24),
+  );
+}
+
 async function drawFirstAtom(page: Page): Promise<void> {
   await page.goto('/');
   await expect(page.getByTestId('tela-de-desenho')).toBeVisible();
@@ -442,7 +461,7 @@ test.describe('menu do botão direito', () => {
     await dragBondRight(page);
     await expect(page.getByTestId('formula')).toHaveText('C2H6', { timeout: 60_000 });
 
-    const vazio = await pointOnCanvas(page, -220, -120);
+    const vazio = await emptyPointOnCanvas(page);
     await page.mouse.click(vazio.x, vazio.y, { button: 'right' });
 
     const menu = page.getByTestId('menu-contexto');
@@ -456,7 +475,7 @@ test.describe('menu do botão direito', () => {
     await drawFirstAtom(page);
     await expect(page.getByTestId('formula')).toHaveText('CH4', { timeout: 60_000 });
 
-    const vazio = await pointOnCanvas(page, -200, -100);
+    const vazio = await emptyPointOnCanvas(page);
     await page.mouse.click(vazio.x, vazio.y, { button: 'right' });
     await expect(page.getByTestId('menu-contexto')).toBeVisible();
 
@@ -465,5 +484,49 @@ test.describe('menu do botão direito', () => {
 
     // Continua sendo um carbono só: o botão direito não largou átomo nenhum.
     await expect(page.getByTestId('formula')).toHaveText('CH4');
+  });
+});
+
+/**
+ * Organizar o desenho.
+ *
+ * Quem está aprendendo põe o átomo onde a mão levou, e o resultado é uma
+ * estrutura torta — mais difícil de ler do que uma estrutura errada. Quem
+ * endireita é o RDKit: comprimento de ligação e ângulo de cadeia são química.
+ */
+test.describe('organizar', () => {
+  test('as ligações ficam do mesmo tamanho, e a molécula continua a mesma', async ({ page }) => {
+    await drawFirstAtom(page);
+
+    // Três carbonos jogados na tela, cada traço de um tamanho.
+    const centro = await pointOnCanvas(page);
+    await page.mouse.move(centro.x, centro.y);
+    await page.mouse.down();
+    await page.mouse.move(centro.x + 40, centro.y - 70, { steps: 6 });
+    await page.mouse.up();
+
+    await expect(page.getByTestId('formula')).toHaveText('C2H6', { timeout: 60_000 });
+
+    await page.getByTestId('organizar').click();
+
+    // A molécula é a mesma depois de endireitar: o que muda são as posições.
+    await expect(page.getByTestId('formula')).toHaveText('C2H6');
+
+    // E dá para desfazer, porque organizar entra no histórico.
+    await page.keyboard.press('Control+z');
+    await expect(page.getByTestId('formula')).toHaveText('C2H6');
+  });
+
+  test('o menu do vazio também organiza', async ({ page }) => {
+    await drawFirstAtom(page);
+    await dragBondRight(page);
+    await expect(page.getByTestId('formula')).toHaveText('C2H6', { timeout: 60_000 });
+
+    const vazio = await emptyPointOnCanvas(page);
+    await page.mouse.click(vazio.x, vazio.y, { button: 'right' });
+
+    await page.getByTestId('menu-organizar').click();
+    await expect(page.getByTestId('menu-contexto')).toBeHidden();
+    await expect(page.getByTestId('formula')).toHaveText('C2H6');
   });
 });

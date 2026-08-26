@@ -1,39 +1,15 @@
-.backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 40;
-  display: grid;
-  place-items: center;
-  padding: var(--sp-4);
-  background: color-mix(in srgb, var(--ink-900) 55%, transparent);
-  backdrop-filter: blur(2px);
-}
-
+/* A caixa é do tamanho da tabela: dezoito colunas de células pequenas, e nada
+   além disso. O modal de tela cheia que existia aqui escurecia a bancada
+   inteira para mostrar uma grade. */
 .sheet {
-  background: var(--raised);
-  border: 1px solid var(--line);
-  border-radius: var(--r-xl);
-  box-shadow: var(--shadow-md);
-  padding: var(--sp-5);
-  width: min(1040px, 100%);
-  max-height: 100%;
-  overflow: auto;
-  display: grid;
-  gap: var(--sp-4);
+  width: min(560px, calc(100vw - 16px));
+  gap: var(--sp-2);
 }
 
 .header {
   display: flex;
   align-items: center;
   gap: var(--sp-3);
-}
-
-.title {
-  font-family: var(--font-display);
-  font-size: var(--step-1);
-  letter-spacing: -0.012em;
-  margin: 0;
-  white-space: nowrap;
 }
 
 .search {
@@ -54,38 +30,16 @@
   outline-offset: 1px;
 }
 
-.close {
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  flex: none;
-  border: none;
-  border-radius: var(--r-sm);
-  background: transparent;
-  color: var(--ink-500);
-  cursor: pointer;
-}
-
-.close:hover {
-  background: var(--surface);
-  color: var(--ink-900);
-}
-
-.closeIcon {
-  width: 15px;
-  height: 15px;
-}
-
 .grid {
   display: grid;
   grid-template-columns: repeat(18, minmax(0, 1fr));
-  gap: 4px;
+  gap: 2px;
 }
 
 /* As duas faixas de baixo ganham respiro para não parecerem parte do bloco. */
 .innerBlock {
-  margin-top: calc(var(--sp-2) * -1);
+  margin-top: calc(var(--sp-1) * -1);
+  padding-left: calc(100% / 18 * 2);
 }
 
 .cell {
@@ -96,11 +50,11 @@
   gap: 1px;
   aspect-ratio: 1;
   border: 1px solid transparent;
-  border-radius: var(--r-sm);
+  border-radius: 4px;
   background: var(--surface);
   color: var(--ink-500);
   cursor: pointer;
-  padding: 2px;
+  padding: 1px;
   transition:
     background-color var(--t-fast) var(--ease-out),
     color var(--t-fast) var(--ease-out),
@@ -147,39 +101,27 @@
 .number {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: 9px;
+  font-size: 7px;
   color: var(--ink-400);
   line-height: 1;
 }
 
 .symbol {
   font-family: var(--font-mono);
-  font-size: var(--step-0);
+  font-size: var(--step--1);
   font-weight: 500;
   line-height: 1;
 }
 
-.note {
-  font-size: var(--step--1);
-  color: var(--ink-500);
-  margin: 0;
-}
-
+/* Tela estreita: o número atômico sai antes do símbolo. A posição na tabela
+   continua dizendo qual é o número; o símbolo é o que não pode encolher. */
 @media (max-width: 760px) {
-  .sheet {
-    padding: var(--sp-3);
-  }
-
   .grid {
-    gap: 2px;
-  }
-
-  .header {
-    flex-wrap: wrap;
+    gap: 1px;
   }
 
   .symbol {
-    font-size: var(--step--1);
+    font-size: var(--step--2);
   }
 
   .number {

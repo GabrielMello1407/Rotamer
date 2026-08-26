@@ -254,3 +254,31 @@ Três regras que vieram de defeito, não de gosto:
   mapa de elementos: o flúor era o único elemento da barra sem atalho. Enquadrar mudou para `0`.
 
 O botão diz a tecla no `title`. Atalho que ninguém descobre é atalho que não existe.
+
+## Caixa que sai do botão, não modal
+
+A tabela periódica e a folha de atalhos eram modais de tela cheia: escureciam a bancada inteira
+para mostrar uma grade e uma lista. Modal é para decisão que não pode esperar — escolher silício
+é escolha comum, feita no meio do desenho, e a molécula precisa continuar visível enquanto se
+escolhe.
+
+As duas viraram **popover ancorado no botão** (`Popover.tsx`): sai do lado que tem espaço, se
+prende dentro da janela, fecha com Escape, com clique fora ou clicando de novo no botão. Sem
+fundo escurecido, porque não há nada para bloquear.
+
+O menu do botão direito segue a mesma ideia — ele nasce onde o cursor está, e a tabela periódica
+dentro dele é a mesma grade em miniatura.
+
+## Organizar o desenho
+
+O editor deixa desenhar de qualquer jeito, e é assim que tem que ser: quem está aprendendo põe o
+átomo onde a mão levou. O preço é a estrutura torta — ligações de comprimentos diferentes,
+ângulos que não existem — e estrutura torta é mais difícil de ler do que estrutura errada.
+
+**Quem endireita é o RDKit**, com o algoritmo de layout dele. Não existe organizador nosso:
+comprimento de ligação, ângulo de cadeia e forma de anel são química, e vale aqui a mesma regra
+do D-01. O que o produto acrescenta é uma conta de escala — o layout do RDKit usa ligação de
+comprimento 1, o editor desenha em ångström com 1,5 — e essa conta multiplica todo mundo pelo
+mesmo número, então ângulo e configuração ficam onde estavam.
+
+Está no trilho e no menu do vazio, e entra no histórico: `Ctrl+Z` devolve o desenho torto.

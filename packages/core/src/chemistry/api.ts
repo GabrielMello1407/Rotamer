@@ -2,6 +2,7 @@ import { generateGeometry, GeometryUnavailable } from '../geometry/conformer';
 import { simulateDynamics } from '../geometry/dynamics';
 import type { DynamicsTrajectory } from '../geometry/dynamics';
 import { normalModes } from '../geometry/modes';
+import { tidy } from './tidy';
 import type { NormalModes } from '../geometry/modes';
 import { configureGeometry } from '../geometry/openchemlib';
 import type { Geometry } from '../geometry/types';
@@ -55,6 +56,12 @@ export interface ChemistryApi {
   geometry(input: string): Promise<GeometryResult>;
   /** Desenho plano em SVG, do jeito que o RDKit representa a estrutura. */
   depict(input: string): Promise<string | null>;
+  /**
+   * Coordenadas novas para o mesmo grafo: ligações do mesmo tamanho, ângulos de
+   * verdade, anel regular. Devolve o molblock organizado, ou `null` quando a
+   * estrutura não passa pelo RDKit.
+   */
+  tidy(input: string): Promise<string | null>;
   /** Vibração: dinâmica molecular a partir da conformação já minimizada. */
   dynamics(input: string): Promise<DynamicsResult>;
   /** Modos normais: 3N − 6 jeitos de a molécula vibrar, cada um com sua frequência. */
@@ -115,6 +122,10 @@ export const chemistryApi: ChemistryApi = {
 
   depict(input: string): Promise<string | null> {
     return depict(input);
+  },
+
+  tidy(input: string): Promise<string | null> {
+    return tidy(input);
   },
 
   async geometry(input: string): Promise<GeometryResult> {
