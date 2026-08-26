@@ -28,6 +28,14 @@ export default function AccountPage(): ReactElement {
       </p>
 
       <AccountForms />
+
+      <p className={styles.note}>
+        É professor e quer entender o que dá para fazer em aula?{' '}
+        <Link className={styles.link} href="/escolas">
+          A página para escolas
+        </Link>{' '}
+        conta o que o produto faz — e o que ele não faz.
+      </p>
     </main>
   );
 }

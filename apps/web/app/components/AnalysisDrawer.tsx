@@ -176,9 +176,14 @@ export function AnalysisDrawer({
             )}
             <div className={styles.tail}>
               <ThemeToggle />
-              <a className={styles.link} href="/marca">
-                Marca e tokens
-              </a>
+              <span className={styles.row}>
+                <a className={styles.link} href="/escolas">
+                  Para escolas
+                </a>
+                <a className={styles.link} href="/marca">
+                  Marca e tokens
+                </a>
+              </span>
             </div>
           </>
         ) : (

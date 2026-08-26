@@ -1,0 +1,234 @@
+.page {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: var(--sp-5) var(--sp-5) var(--sp-9);
+  display: grid;
+  gap: var(--sp-7);
+  align-content: start;
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+}
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  text-decoration: none;
+  color: inherit;
+}
+
+.wordmark {
+  font-family: var(--font-display);
+  font-size: var(--step-1);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.action {
+  font-size: var(--step--1);
+  color: var(--brand-ink);
+  text-decoration: none;
+}
+
+.action:hover {
+  text-decoration: underline;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  gap: var(--sp-6);
+  align-items: center;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: var(--step-4);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin: 0 0 var(--sp-4);
+  max-width: 20ch;
+}
+
+.lead {
+  margin: 0;
+  font-size: var(--step-2);
+  line-height: 1.45;
+  color: var(--ink-700);
+  max-width: 46ch;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin-top: var(--sp-5);
+}
+
+.primary,
+.secondary {
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 var(--sp-4);
+  border-radius: var(--r-sm);
+  font-size: var(--step-0);
+  text-decoration: none;
+  border: 1px solid transparent;
+}
+
+.primary {
+  background: var(--brand);
+  color: var(--brand-on);
+}
+
+.primary:hover {
+  filter: brightness(1.06);
+}
+
+.secondary {
+  border-color: var(--line-firm);
+  color: var(--ink-900);
+}
+
+.secondary:hover {
+  border-color: var(--brand);
+  color: var(--brand-ink);
+}
+
+.figure {
+  margin: 0;
+  display: grid;
+  gap: var(--sp-2);
+  justify-items: center;
+  padding: var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  background: var(--raised);
+}
+
+/* O SVG vem do RDKit com tamanho próprio; aqui ele só aprende a caber. */
+.drawing svg {
+  width: 100%;
+  height: auto;
+  max-width: 420px;
+}
+
+.caption {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--step--1);
+  color: var(--ink-500);
+  text-align: center;
+}
+
+.section {
+  display: grid;
+  gap: var(--sp-3);
+  justify-items: start;
+}
+
+.heading {
+  font-family: var(--font-display);
+  font-size: var(--step-3);
+  letter-spacing: -0.014em;
+  margin: 0;
+}
+
+.text {
+  margin: 0;
+  font-size: var(--step-1);
+  line-height: 1.55;
+  color: var(--ink-700);
+  max-width: 68ch;
+}
+
+.note {
+  margin: 0;
+  font-size: var(--step--1);
+  line-height: 1.55;
+  color: var(--ink-500);
+  max-width: 68ch;
+}
+
+.list {
+  margin: 0;
+  padding-left: var(--sp-5);
+  display: grid;
+  gap: var(--sp-2);
+  font-size: var(--step-1);
+  line-height: 1.5;
+  color: var(--ink-700);
+  max-width: 72ch;
+}
+
+.badges {
+  display: flex;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.specs {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--sp-3);
+  width: 100%;
+}
+
+.spec {
+  display: grid;
+  gap: 2px;
+  padding: var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--raised);
+}
+
+.term {
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-400);
+}
+
+.definition {
+  margin: 0;
+  font-size: var(--step-0);
+  color: var(--ink-900);
+}
+
+/* A lista do que o produto não faz tem peso próprio: ela é o que sustenta a
+   credibilidade de tudo o que está acima. */
+.limits {
+  padding: var(--sp-5);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  background: var(--sunk);
+}
+
+.footer {
+  border-top: 1px solid var(--line);
+  padding-top: var(--sp-4);
+}
+
+@media (max-width: 860px) {
+  .hero {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .title {
+    font-size: var(--step-3);
+    max-width: none;
+  }
+
+  .lead {
+    font-size: var(--step-1);
+  }
+}

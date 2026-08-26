@@ -135,7 +135,8 @@ continuar dito em voz alta enquanto for verdade.
 
 - [x] Painel do professor: turmas, acompanhamento de quem travou onde (D-22)
 - [ ] Camadas de assinatura e cobrança
-- [ ] Landing page e material de venda
+- [x] Landing page e material de venda — `/escolas`, com a estrutura desenhada pelo RDKit no
+      servidor na hora e a lista do que o produto **não** faz com o mesmo destaque do resto
 - [ ] Campanhas privadas para laboratório (ver ressalva em `DECISOES.md` D-08)
 
 **Publica:** v1.0.

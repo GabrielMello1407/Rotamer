@@ -246,7 +246,13 @@
   text-decoration: underline;
 }
 
-/* O rodapé do painel: tema e a página da marca, longe do que é química. */
+/* Dois links lado a lado no rodapé, sem virar parágrafo. */
+.tail .row {
+  display: flex;
+  gap: var(--sp-3);
+}
+
+/* O rodapé do painel: tema e as páginas de fora, longe do que é química. */
 .tail {
   display: flex;
   align-items: center;
