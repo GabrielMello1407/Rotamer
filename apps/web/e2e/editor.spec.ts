@@ -6,8 +6,8 @@ import { expect, test, type Page } from '@playwright/test';
  * química.
  */
 
-/** Escala padrão do editor: pixels por ångström. */
-const SCALE = 26;
+/** Escala padrão do editor: pixels por ångström. Espelha `DEFAULT_SCALE`. */
+const SCALE = 42;
 
 /**
  * Um ponto da tela de desenho, medido na hora.

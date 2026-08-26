@@ -217,7 +217,7 @@ const NO_INSETS: Insets = { left: 0, right: 0, top: 0, bottom: 0 };
  * centímetros. O teto é generoso o bastante para molécula pequena aparecer
  * grande e baixo o bastante para o traço continuar parecendo traço.
  */
-const FRAME_MAX_SCALE = 52;
+const FRAME_MAX_SCALE = 58;
 
 /** Câmera que enquadra a molécula inteira com folga. */
 export function frameGraph(

@@ -36,6 +36,12 @@ export interface Viewer3DProps {
  * pacote só desenha. Se o Three.js sumisse amanhã, nada do que decide se a
  * molécula existe mudaria de lugar.
  */
+/** Abertura vertical da câmera, em graus. */
+const FOV = 38;
+
+/** Folga em torno da molécula, em ångström. */
+const PADDING = 1.2;
+
 export function Viewer3D({
   geometry,
   trajectory,
@@ -121,10 +127,16 @@ export function Viewer3D({
     const center = centerOf(geometry);
     const radius = radiusOf(geometry);
 
-    // Perto o bastante para a molécula ocupar a cena, longe o bastante para não
-    // cortar átomo quando ela gira. A direção é normalizada: sem isso a câmera
-    // fica 14% mais longe do que o cálculo pediu, e a molécula sai pequena.
-    const distance = radius * 2.3 + 1.8;
+    /*
+     * A distância que faz a molécula caber inteira, em qualquer rotação.
+     *
+     * A molécula gira, então o que precisa caber não é a silhueta de agora: é a
+     * esfera que a contém. A folga cobre três coisas: o raio da esfera do átomo
+     * da ponta, a amplitude da vibração, e as duas faixas que passam por cima da
+     * cena — controles em cima, energia embaixo.
+     */
+    const halfFov = (FOV / 2) * (Math.PI / 180);
+    const distance = (radius + PADDING) / Math.tan(halfFov);
     const direction = [0.4, 0.35, 1];
     const length = Math.hypot(direction[0] ?? 0, direction[1] ?? 0, direction[2] ?? 0);
 
@@ -157,7 +169,7 @@ export function Viewer3D({
         <>
           <Canvas
             className={styles.canvas}
-            camera={{ position: view.position, fov: 40 }}
+            camera={{ position: view.position, fov: FOV }}
             dpr={[1, 2]}
           >
             <ambientLight intensity={1.05} />

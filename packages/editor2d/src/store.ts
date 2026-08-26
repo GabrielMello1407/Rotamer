@@ -33,7 +33,14 @@ export const MAX_HISTORY = 100;
 
 export const MIN_SCALE = 8;
 export const MAX_SCALE = 120;
-export const DEFAULT_SCALE = 26;
+/**
+ * Pixels por ångström no começo.
+ *
+ * Uma ligação de 1,5 Å sai com 63 px — do tamanho em que se desenha estrutura
+ * no quadro e em livro. Com o dobro disso a molécula não cabe; com a metade,
+ * o benzeno fica do tamanho de uma moeda no meio de uma tela vazia.
+ */
+export const DEFAULT_SCALE = 42;
 
 export interface EditorState {
   graph: MoleculeGraph;

@@ -35,7 +35,7 @@
 
 .rail {
   position: absolute;
-  inset: 0 auto 0 var(--sp-3);
+  inset: 0 auto 0 var(--sp-4);
   display: flex;
   align-items: center;
   z-index: 2;
