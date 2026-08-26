@@ -25,7 +25,12 @@
   cursor: not-allowed;
 }
 
-.panning .canvas {
+.moving .canvas {
+  cursor: grab;
+}
+
+.panning .canvas,
+.dragging .canvas {
   cursor: grabbing;
 }
 

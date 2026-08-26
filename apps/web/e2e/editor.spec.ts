@@ -141,4 +141,45 @@ test.describe('editor', () => {
     // Um carbono sozinho é metano: o RDKit completa os quatro hidrogênios.
     await expect(page.getByTestId('formula')).toHaveText('CH4', { timeout: 60_000 });
   });
+  test('a tabela periódica alcança elemento que não está na barra', async ({ page }) => {
+    await drawFirstAtom(page);
+    await expect(page.getByTestId('formula')).toHaveText('CH4', { timeout: 60_000 });
+
+    await page.getByTestId('abrir-tabela').click();
+    await expect(page.getByTestId('tabela-periodica')).toBeVisible();
+
+    // Silício não cabe na barra de orgânica, mas é o mesmo desenho.
+    await page.getByTestId('elemento-Si').click();
+    await expect(page.getByTestId('tabela-periodica')).toBeHidden();
+
+    const center = await pointOnCanvas(page);
+    await page.mouse.click(center.x, center.y);
+
+    await expect(page.getByTestId('formula')).toHaveText('H4Si', { timeout: 60_000 });
+  });
+  test('a ferramenta de mover arrasta o átomo, e o desenho continua a mesma molécula', async ({
+    page,
+  }) => {
+    await drawFirstAtom(page);
+    await dragBondRight(page);
+    await expect(page.getByTestId('formula')).toHaveText('C2H6', { timeout: 60_000 });
+
+    await page.getByRole('button', { name: 'Mover' }).click();
+
+    // Pega o carbono do centro e leva para cima. Mover átomo não muda a
+    // molécula: muda o desenho dela.
+    const origem = await pointOnCanvas(page);
+    await page.mouse.move(origem.x, origem.y);
+    await page.mouse.down();
+    await page.mouse.move(origem.x, origem.y - 3 * SCALE, { steps: 10 });
+    await page.mouse.up();
+
+    await expect(page.getByTestId('formula')).toHaveText('C2H6', { timeout: 60_000 });
+
+    // E o átomo saiu do lugar: clicar onde ele estava não acha mais nada, então
+    // aquele clique cria um átomo novo.
+    await page.getByRole('button', { name: 'Desenhar' }).click();
+    await page.mouse.click(origem.x, origem.y);
+    await expect(page.getByTestId('formula')).toHaveText('C3H10', { timeout: 60_000 });
+  });
 });

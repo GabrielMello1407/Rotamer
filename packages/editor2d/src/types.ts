@@ -2,7 +2,16 @@ import type { AtomId, BondId, MoleculeGraph } from '@rotamer/core';
 
 /** Tipos que o estado e as contas de tela compartilham. */
 
-export type Tool = 'structure' | 'erase';
+/**
+ * `structure` desenha, `move` arrasta, `erase` apaga.
+ *
+ * Em `move`, arrastar um átomo move o átomo e arrastar o vazio move a vista —
+ * é a mesma intenção, "pegar e levar", e quem desenha não deveria ter que
+ * escolher entre duas ferramentas para isso. No modo desenho o átomo também se
+ * move, mas segurando Shift; a ferramenta existe porque atalho de teclado não
+ * existe no celular e ninguém adivinha Shift.
+ */
+export type Tool = 'structure' | 'move' | 'erase';
 
 /** Ponto em coordenadas do grafo (ångström), salvo onde estiver dito o contrário. */
 export interface Point {

@@ -1,6 +1,6 @@
 'use client';
 
-import { isEmpty } from '@rotamer/core';
+import { isEmpty, type MoleculeGraph } from '@rotamer/core';
 import { useCallback, useEffect, useRef } from 'react';
 import type {
   KeyboardEvent as ReactKeyboardEvent,
@@ -10,11 +10,11 @@ import type {
 } from 'react';
 import { useStore } from 'zustand';
 import styles from './Editor2D.module.css';
-import { hoverAt, snapFromAtom, suggestDirection, toGraph } from './geometry2d';
+import { hoverAt, snapFromAtom, suggestDirection, toGraph, toleranceFor } from './geometry2d';
 import { readPalette, type EditorPalette } from './palette';
 import { draw } from './render';
 import { clampScale, type EditorStore } from './store';
-import type { Camera, Point, Viewport } from './types';
+import type { Camera, Point, Tool, Viewport } from './types';
 
 /** O estado de uma pinça em andamento. */
 interface Pinch {
@@ -31,8 +31,46 @@ export interface Editor2DProps {
   readonly className?: string | undefined;
 }
 
-/** Abaixo disto, o gesto foi um clique, não um arrasto. */
-const CLICK_SLOP = 4;
+/**
+ * Abaixo disto, o gesto foi um clique, não um arrasto.
+ *
+ * O dedo treme mais que o mouse: exigir a mesma firmeza dos dois faz metade dos
+ * cliques no celular virar arrasto de meio ângstrom.
+ */
+const CLICK_SLOP_MOUSE = 5;
+const CLICK_SLOP_TOUCH = 12;
+
+function clickSlop(pointerType: string): number {
+  return pointerType === 'mouse' ? CLICK_SLOP_MOUSE : CLICK_SLOP_TOUCH;
+}
+
+/**
+ * A dica que fica no pé da tela.
+ *
+ * Aparece enquanto o desenho é pequeno e some depois — quem já tem uma molécula
+ * na tela não precisa mais ler como começar. Fora do modo desenho ela fica,
+ * porque cada ferramenta responde a arrasto de um jeito diferente e adivinhar
+ * isso não é parte de aprender química.
+ */
+function hintFor(tool: Tool, graph: MoleculeGraph): string | null {
+  if (tool === 'move') {
+    return 'Arraste um átomo para movê-lo. Arraste o fundo para mover a vista.';
+  }
+
+  if (tool === 'erase') {
+    return 'Clique num átomo ou numa ligação para apagar.';
+  }
+
+  if (isEmpty(graph)) {
+    return 'Clique para começar um átomo. Arraste de um átomo para puxar uma ligação.';
+  }
+
+  if (graph.atoms.length <= 3) {
+    return 'Clique numa ligação para trocar a ordem dela. Para mover um átomo, use a ferramenta de mover — ou segure Shift.';
+  }
+
+  return null;
+}
 
 /** Atalhos de elemento. São os que aparecem em prova de orgânica. */
 const ELEMENT_KEYS: Readonly<Record<string, string>> = {
@@ -100,6 +138,9 @@ export function Editor2D({ store, className }: Editor2DProps): ReactElement {
         palette,
         element: state.element,
         erasing: state.tool === 'erase',
+        hydrogens: state.hydrogens,
+        focus: state.focus,
+        flagged: state.flagged,
       });
     });
   }, [store]);
@@ -207,10 +248,20 @@ export function Editor2D({ store, className }: Editor2DProps): ReactElement {
       const point = pointAt(event);
       pointerStartRef.current = { x: event.clientX, y: event.clientY };
 
-      const under = hoverAt(state.graph, point);
+      const under = hoverAt(state.graph, point, toleranceFor(state.camera));
       state.setHover(under);
 
       if (state.tool === 'erase') return;
+
+      if (state.tool === 'move') {
+        // Em cima de um átomo, arrastar leva o átomo; no vazio, leva a vista.
+        state.setDrag(
+          under?.kind === 'atom'
+            ? { kind: 'move', atom: under.id, before: state.graph, moved: false }
+            : { kind: 'pan', origin: point, camera: state.camera },
+        );
+        return;
+      }
 
       if (under?.kind === 'atom') {
         // Segurar Shift move o átomo; sem Shift, o arrasto puxa uma ligação.
@@ -267,7 +318,7 @@ export function Editor2D({ store, className }: Editor2DProps): ReactElement {
       const point = pointAt(event);
 
       if (dragging.kind === 'none') {
-        state.setHover(hoverAt(state.graph, point));
+        state.setHover(hoverAt(state.graph, point, toleranceFor(state.camera)));
         return;
       }
 
@@ -276,7 +327,7 @@ export function Editor2D({ store, className }: Editor2DProps): ReactElement {
         if (!origin) return;
 
         // Perto de outro átomo, a ponta gruda nele: é assim que se fecha anel.
-        const target = hoverAt(state.graph, point);
+        const target = hoverAt(state.graph, point, toleranceFor(state.camera));
         if (target?.kind === 'atom' && target.id !== dragging.from) {
           const atom = state.graph.atoms.find((candidate) => candidate.id === target.id);
           if (atom) {
@@ -328,13 +379,14 @@ export function Editor2D({ store, className }: Editor2DProps): ReactElement {
 
       const moved =
         start !== null &&
-        Math.hypot(event.clientX - start.x, event.clientY - start.y) > CLICK_SLOP;
+        Math.hypot(event.clientX - start.x, event.clientY - start.y) >
+          clickSlop(event.pointerType);
 
       const dragging = state.drag;
       state.setDrag({ kind: 'none' });
 
       if (state.tool === 'erase') {
-        const under = hoverAt(state.graph, point);
+        const under = hoverAt(state.graph, point, toleranceFor(state.camera));
         if (under?.kind === 'atom') state.eraseAtom(under.id);
         else if (under?.kind === 'bond') state.eraseBond(under.id);
         return;
@@ -359,7 +411,7 @@ export function Editor2D({ store, className }: Editor2DProps): ReactElement {
           return;
         }
 
-        const target = hoverAt(state.graph, point);
+        const target = hoverAt(state.graph, point, toleranceFor(state.camera));
         if (target?.kind === 'atom' && target.id !== dragging.from) {
           state.bondTo(dragging.from, target.id);
         } else {
@@ -368,8 +420,8 @@ export function Editor2D({ store, className }: Editor2DProps): ReactElement {
         return;
       }
 
-      if (dragging.kind === 'pan' && !moved) {
-        const under = hoverAt(state.graph, point);
+      if (dragging.kind === 'pan' && !moved && state.tool === 'structure') {
+        const under = hoverAt(state.graph, point, toleranceFor(state.camera));
         if (under?.kind === 'bond') state.cycleBond(under.id);
         else if (under === null) state.addAtomAt(point);
       }
@@ -424,6 +476,18 @@ export function Editor2D({ store, className }: Editor2DProps): ReactElement {
         return;
       }
 
+      if (key === 'm') {
+        event.preventDefault();
+        state.setTool(state.tool === 'move' ? 'structure' : 'move');
+        return;
+      }
+
+      if (key === 'd') {
+        event.preventDefault();
+        state.setTool('structure');
+        return;
+      }
+
       const element = ELEMENT_KEYS[key];
       if (element !== undefined && !event.ctrlKey && !event.metaKey) {
         event.preventDefault();
@@ -434,10 +498,14 @@ export function Editor2D({ store, className }: Editor2DProps): ReactElement {
     [store],
   );
 
+  const hint = hintFor(tool, graph);
+
   const classes = [
     styles.frame,
     tool === 'erase' ? styles.erasing : null,
+    tool === 'move' ? styles.moving : null,
     dragKind === 'pan' ? styles.panning : null,
+    dragKind === 'move' ? styles.dragging : null,
     className,
   ]
     .filter(Boolean)
@@ -463,11 +531,9 @@ export function Editor2D({ store, className }: Editor2DProps): ReactElement {
         onWheel={handleWheel}
       />
 
-      {isEmpty(graph) && (
+      {hint !== null && (
         <div className={styles.hint}>
-          <p className={styles.hintText}>
-            Clique para começar um átomo. Arraste de um átomo para puxar uma ligação.
-          </p>
+          <p className={styles.hintText}>{hint}</p>
         </div>
       )}
     </div>
