@@ -54,6 +54,16 @@ async function dragBondRight(page: Page): Promise<void> {
   await page.mouse.up();
 }
 
+/** O número dentro de "energia 18,9 kcal/mol", em kcal/mol. */
+function energiaDe(texto: string | null): number | null {
+  if (texto === null) return null;
+
+  const encontrado = /(-?\d+(?:,\d+)?)\s*kcal/.exec(texto);
+  if (!encontrado?.[1]) return null;
+
+  return Number(encontrado[1].replace(',', '.'));
+}
+
 test.describe('editor', () => {
   test('desenhar dois carbonos ligados dá etano', async ({ page }) => {
     await drawFirstAtom(page);
@@ -181,5 +191,36 @@ test.describe('editor', () => {
     await page.getByRole('button', { name: 'Desenhar' }).click();
     await page.mouse.click(origem.x, origem.y);
     await expect(page.getByTestId('formula')).toHaveText('C3H10', { timeout: 60_000 });
+  });
+  test('a segunda molécula também dobra — o relógio da cena volta a zero', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.getByTestId('tela-de-desenho')).toBeVisible();
+
+    // Primeira molécula: dobra, vibra, assenta.
+    await page.getByTestId('abrir-exemplos').click();
+    await page.getByTestId('exemplo-c1ccccc1').click();
+    await expect(page.getByTestId('formula')).toHaveText('C6H6', { timeout: 60_000 });
+    await expect(page.getByTestId('energia')).toBeVisible({ timeout: 60_000 });
+    await page.waitForTimeout(3000);
+
+    // Segunda molécula: o embrulho cru do gerador tem energia muito maior que o
+    // mínimo. Se o dobramento não acontecer, esse número nunca aparece na tela.
+    await page.getByTestId('abrir-exemplos').click();
+    await page.getByTestId('exemplo-CC(=O)Oc1ccccc1C(=O)O').click();
+    await expect(page.getByTestId('formula')).toHaveText('C9H8O4', { timeout: 60_000 });
+
+    let maior = Number.NEGATIVE_INFINITY;
+    for (let leitura = 0; leitura < 40; leitura += 1) {
+      const texto = await page.getByTestId('energia').textContent();
+      const valor = energiaDe(texto);
+      if (valor !== null) maior = Math.max(maior, valor);
+      await page.waitForTimeout(50);
+    }
+
+    await page.waitForTimeout(2500);
+    const assentada = energiaDe(await page.getByTestId('energia').textContent());
+
+    expect(assentada).not.toBeNull();
+    expect(maior).toBeGreaterThan((assentada ?? 0) + 5);
   });
 });

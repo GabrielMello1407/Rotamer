@@ -359,6 +359,23 @@ simulação fica mais precisa de graça.
 
 ---
 
+**Atualização — a reprodução precisa de dois relógios.** A física estava certa e a tela estava
+errada. Um relógio só, começando na montagem da cena, fazia duas coisas ruins: da segunda
+molécula em diante o tempo já tinha passado dos dois segundos do dobramento, e toda estrutura
+nova nascia pronta — a animação simplesmente não rodava; e a vibração, amostrada a partir do
+mesmo relógio deslocado, entrava num quadro qualquer do ciclo quando a trajetória chegava do
+worker, dando um salto visível. Agora são dois: o do dobramento zera quando a geometria troca, e
+o da vibração zera quando a trajetória chega ou quando o movimento é religado — a vibração
+sempre começa no quadro zero, que é a própria geometria mínima, e a emenda tem deslocamento zero.
+
+Três hipóteses foram levantadas e **derrubadas por medição**, e ficam registradas para não serem
+reinventadas: a vibração não é rápida demais (acima de 2500 cm⁻¹ está só 0,4%–6,9% do movimento
+de qualquer hidrogênio; o que se vê são os modos abaixo de 800 cm⁻¹); o dobramento não precisa
+ser parametrizado por deslocamento em vez de índice de quadro; e trocar a interpolação linear
+entre quadros por Catmull-Rom mudaria menos de um pixel na tela.
+
+---
+
 ## D-15 · O produto não nomeia; quem descobre, batiza
 
 **Decisão.** Não existe motor de nomenclatura no Rotamer. O que existe é **autoria**: uma

@@ -2,7 +2,7 @@
 
 import type { DynamicsTrajectory, Geometry } from '@rotamer/core';
 import { useFrame, type ThreeEvent } from '@react-three/fiber';
-import { useEffect, useMemo, useRef, type ReactElement } from 'react';
+import { memo, useEffect, useMemo, useRef, type ReactElement } from 'react';
 import { Color, Matrix4, Quaternion, Vector3, type InstancedMesh, type Mesh } from 'three';
 import { colorOf, radiusOf, type Cpk } from './cpk';
 import { sampleDynamics, sampleFolding, FOLD_DURATION } from './folding';
@@ -34,6 +34,14 @@ const STICK = 0.09;
 const SPACE_FILLING = 2.4;
 
 /**
+ * Menor variação de energia que vale um aviso, em kcal/mol.
+ *
+ * Abaixo disso o número na tela nem muda de casa decimal — avisar seria pedir
+ * uma repintura para não mudar nada.
+ */
+const ENERGY_STEP = 0.05;
+
+/**
  * A molécula em bola-e-vareta.
  *
  * Átomos e ligações são malhas instanciadas: uma esfera e um cilindro só,
@@ -44,7 +52,7 @@ const SPACE_FILLING = 2.4;
  * encolhendo a instância, nunca refazendo a lista. Índice de átomo é o mesmo em
  * todo lugar: nas posições, na trajetória e no desenho 2D.
  */
-export function Molecule({
+function MoleculeScene({
   geometry,
   cpk,
   animate,
@@ -58,7 +66,19 @@ export function Molecule({
   const atomsRef = useRef<InstancedMesh | null>(null);
   const bondsRef = useRef<InstancedMesh | null>(null);
   const haloRef = useRef<Mesh | null>(null);
+
+  /**
+   * Dois relógios, não um.
+   *
+   * O do dobramento começa quando a geometria chega; o da vibração, quando a
+   * trajetória chega — e ela chega depois, porque a simulação roda no worker.
+   * Com um relógio só, a vibração entrava no meio do ciclo: a molécula pulava
+   * da forma parada para um instante qualquer da trajetória num quadro de tela.
+   */
   const startRef = useRef<number | null>(null);
+  const vibeRef = useRef<number | null>(null);
+  const reportedRef = useRef<number | null>(null);
+  const doneRef = useRef<boolean | null>(null);
 
   const matrix = useMemo(() => new Matrix4(), []);
   const position = useMemo(() => new Vector3(), []);
@@ -85,6 +105,26 @@ export function Molecule({
     if (atoms.instanceColor !== null) atoms.instanceColor.needsUpdate = true;
   }, [geometry.atoms, cpk]);
 
+  /**
+   * Geometria nova, dobramento do começo.
+   *
+   * Sem isto o relógio nunca voltava a zero: a partir da segunda molécula, o
+   * tempo decorrido já passava dos dois segundos do dobramento e toda estrutura
+   * nascia pronta, sem a animação que é metade do que o produto mostra.
+   */
+  useEffect(() => {
+    startRef.current = null;
+    vibeRef.current = null;
+    reportedRef.current = null;
+    doneRef.current = null;
+  }, [geometry]);
+
+  // A vibração recomeça no quadro zero — que é a própria geometria mínima —
+  // sempre que a trajetória troca ou o movimento é religado.
+  useEffect(() => {
+    vibeRef.current = null;
+  }, [trajectory, animate]);
+
   const atomRadii = useMemo(
     () => geometry.atoms.map((atom) => radiusOf(atom.element)),
     [geometry.atoms],
@@ -100,14 +140,29 @@ export function Molecule({
 
     const elapsed = animate ? now - startRef.current : FOLD_DURATION;
     const sample = sampleFolding(geometry, elapsed);
-    onEnergy?.(sample.energy, sample.done);
+
+    // A energia é avisada por mudança, não por quadro: sessenta `setState` por
+    // segundo repintam a árvore inteira e engasgam justamente a animação que
+    // eles descrevem.
+    const reported = reportedRef.current;
+    const changed = reported === null || Math.abs(sample.energy - reported) > ENERGY_STEP;
+
+    // A virada de regime — dobrou, agora vibra — sempre é avisada, mesmo quando
+    // a energia mal se move: é ela que troca a palavra na faixa da cena.
+    if (changed || doneRef.current !== sample.done) {
+      reportedRef.current = sample.energy;
+      doneRef.current = sample.done;
+      onEnergy?.(sample.energy, sample.done);
+    }
 
     // Terminado o dobramento, a molécula passa a vibrar: mesma física, outro
     // regime. Quem pediu menos movimento fica na forma final, parada.
-    const positions =
-      sample.done && animate && trajectory
-        ? sampleDynamics(trajectory, elapsed - FOLD_DURATION)
-        : sample.positions;
+    let positions = sample.positions;
+
+    if (sample.done && animate && trajectory) {
+      vibeRef.current ??= now;
+      positions = sampleDynamics(trajectory, now - vibeRef.current);
+    }
 
     const positionAt = (index: number): Vector3 =>
       position.set(
@@ -216,3 +271,13 @@ export function Molecule({
     </group>
   );
 }
+
+/**
+ * A cena não repinta por repintura da página.
+ *
+ * Tudo o que ela desenha é atualizado quadro a quadro por matriz, dentro do
+ * `useFrame`; render do React aqui só serve para trocar molécula. Sem a
+ * memoização, cada `setState` de fora — a energia, o átomo apontado — refazia a
+ * árvore inteira no meio da animação.
+ */
+export const Molecule = memo(MoleculeScene);
