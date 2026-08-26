@@ -228,3 +228,29 @@ não empilhar o wordmark abaixo do símbolo.
 | `brand/rotamer-mark.svg` | símbolo principal |
 | `brand/rotamer-mark-mono.svg` | uma cor só, gravação e fundo complexo |
 | `brand/rotamer-favicon.svg` | abaixo de 32px |
+
+## Atalhos de teclado
+
+Desenhar molécula é repetição: o mesmo elemento, a mesma ferramenta, dezenas de vezes. Quem passa
+do primeiro dia larga a barra e usa a letra.
+
+| Tecla | O que faz |
+|---|---|
+| `C` `N` `O` `S` `P` `F` `I` `H` | troca o elemento ativo |
+| `L` `B` | cloro e bromo — a inicial já é do carbono e do bromo não sobrou |
+| `D` `M` `W` `E` | desenhar · mover · cunha e traço · apagar |
+| `0` | enquadrar a molécula |
+| `Delete` | apaga o que está sob o cursor |
+| `Ctrl+Z` / `Ctrl+Shift+Z` | desfazer e refazer |
+| `?` | a folha com tudo isto |
+
+Três regras que vieram de defeito, não de gosto:
+
+- **Valem na página inteira**, não só com a tela de desenho em foco. Uma missão diz "tecle O", e
+  isso só era verdade depois de clicar na tela — quem vinha do painel teclava no vazio.
+- **Não valem enquanto se escreve.** Em campo de texto, `o` é a letra o. Com folha modal aberta,
+  quem manda é a folha.
+- **Letra de elemento não divide com ferramenta.** O enquadrar morava no `F` e respondia antes do
+  mapa de elementos: o flúor era o único elemento da barra sem atalho. Enquadrar mudou para `0`.
+
+O botão diz a tecla no `title`. Atalho que ninguém descobre é atalho que não existe.

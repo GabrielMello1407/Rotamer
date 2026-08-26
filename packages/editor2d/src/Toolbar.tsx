@@ -1,9 +1,11 @@
 'use client';
 
-import { useState, type ReactElement, type ReactNode } from 'react';
+import { useEffect, useState, type ReactElement, type ReactNode } from 'react';
 import { useStore } from 'zustand';
 import { COMMON_ELEMENTS } from './elements-table';
+import { shortcutsApply } from './keys';
 import { PeriodicTable } from './PeriodicTable';
+import { Shortcuts } from './Shortcuts';
 import styles from './Toolbar.module.css';
 import type { EditorStore } from './store';
 import { RING_KINDS, ringLabel, type RingKind } from './templates';
@@ -21,6 +23,26 @@ export interface ToolbarProps {
 const ELEMENTS = COMMON_ELEMENTS.slice(0, 4);
 
 /**
+ * A tecla de cada elemento, para o botão dizer qual é.
+ *
+ * Atalho que ninguém descobre é atalho que não existe: quem passa o cursor no
+ * botão vê a letra e da próxima vez não precisa do botão. Cloro e bromo fogem da
+ * inicial porque `c` é do carbono, o mais usado de todos.
+ */
+const ELEMENT_KEY: Readonly<Record<string, string>> = {
+  C: 'C',
+  N: 'N',
+  O: 'O',
+  S: 'S',
+  P: 'P',
+  F: 'F',
+  Cl: 'L',
+  Br: 'B',
+  I: 'I',
+  H: 'H',
+};
+
+/**
  * A barra de ferramentas, em pé na borda da tela de desenho.
  *
  * Vertical porque a tela de desenho é larga e rasa: uma barra deitada em cima
@@ -31,6 +53,23 @@ const ELEMENTS = COMMON_ELEMENTS.slice(0, 4);
  */
 export function Toolbar({ store, className }: ToolbarProps): ReactElement {
   const [tableOpen, setTableOpen] = useState(false);
+  const [keysOpen, setKeysOpen] = useState(false);
+
+  // A interrogação abre a folha de atalhos — a mesma tecla que abre em todo
+  // lugar que tem atalho.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent): void => {
+      if (event.key !== '?' || !shortcutsApply(event.target)) return;
+
+      event.preventDefault();
+      setKeysOpen(true);
+    };
+
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+    };
+  }, []);
   const element = useStore(store, (state) => state.element);
   const tool = useStore(store, (state) => state.tool);
   const canUndo = useStore(store, (state) => state.past.length > 0);
@@ -131,7 +170,7 @@ export function Toolbar({ store, className }: ToolbarProps): ReactElement {
             className={[styles.button, styles.element].join(' ')}
             data-element={symbol}
             aria-pressed={element === symbol && tool !== 'erase'}
-            title={`Desenhar ${symbol}`}
+            title={`Desenhar ${symbol} (${ELEMENT_KEY[symbol] ?? symbol})`}
             onClick={() => {
               store.getState().setElement(symbol);
               store.getState().setTool('structure');
@@ -224,7 +263,7 @@ export function Toolbar({ store, className }: ToolbarProps): ReactElement {
         </RailButton>
 
         <RailButton
-          label="Enquadrar a molécula (F)"
+          label="Enquadrar a molécula (0)"
           name="Enquadrar"
           pressed={false}
           disabled={!hasAtoms}
@@ -264,7 +303,35 @@ export function Toolbar({ store, className }: ToolbarProps): ReactElement {
             />
           </svg>
         </RailButton>
+        <RailButton
+          label="Atalhos do teclado (?)"
+          name="Atalhos do teclado"
+          pressed={keysOpen}
+          testId="abrir-atalhos"
+          onClick={() => {
+            setKeysOpen(true);
+          }}
+        >
+          <svg viewBox="0 0 18 18" aria-hidden="true" className={styles.icon}>
+            <path
+              d="M6.4 6.6a2.6 2.6 0 1 1 3.4 2.5c-.6.2-.9.7-.9 1.3v.5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.4"
+              strokeLinecap="round"
+            />
+            <circle cx="9" cy="13.6" r="0.9" fill="currentColor" />
+          </svg>
+        </RailButton>
       </div>
+
+      {keysOpen && (
+        <Shortcuts
+          onClose={() => {
+            setKeysOpen(false);
+          }}
+        />
+      )}
 
       {tableOpen && (
         <PeriodicTable

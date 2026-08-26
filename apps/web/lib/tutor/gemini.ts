@@ -12,18 +12,35 @@ import { tutorHintSchema, type TutorHint } from './schema';
 
 const ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models';
 /*
- * O modelo padrão, trocável por `GEMINI_MODEL`.
+ * O modelo padrão: o apelido que sempre aponta para o Flash mais novo.
  *
- * Versão fixa, e não um apelido como `gemini-flash-latest`: o tutor tem schema
- * fechado e prompt afinado, e trocar de modelo sem querer é trocar o
- * comportamento sem querer. O apelido também some sob demanda alta — medido
- * aqui: 503 em 41 s, enquanto a versão fixa respondeu em 7 s.
+ * Modelo com versão no nome sai de circulação — o `gemini-2.5-flash` que estava
+ * aqui passou a responder 404 para chave nova, e o efeito na tela era o tutor
+ * calar como se não houvesse chave nenhuma. O apelido não tem essa validade.
  *
- * Modelo antigo não fica só ruim: some. O `gemini-2.5-flash` que estava aqui
- * passou a devolver 404 para chave nova, e o tutor caía nas dicas escritas sem
- * ninguém entender por quê.
+ * O preço do apelido é ele ficar indisponível sob demanda alta: medido aqui,
+ * três pedidos seguidos voltaram 503. Por isso existe o reserva abaixo.
  */
-const DEFAULT_MODEL = 'gemini-3.6-flash';
+const DEFAULT_MODEL = 'gemini-flash-latest';
+
+/*
+ * O reserva, para quando o apelido está fora do ar.
+ *
+ * Versão fixa de propósito: é o que não desaparece no meio de uma aula.
+ *
+ * Trocar este número faz parte de manter o produto: um dia ele também sai de
+ * circulação, e o sinal é o tutor calar com a chave certa.
+ */
+const FALLBACK_MODEL = 'gemini-3.6-flash';
+
+/*
+ * O tempo total, contando as duas tentativas.
+ *
+ * Quem clicou está olhando para a tela. Duas esperas de vinte segundos em
+ * sequência seriam quarenta segundos de nada — pior que a dica escrita à mão que
+ * o produto tem de reserva.
+ */
+const TOTAL_BUDGET_MS = 26_000;
 const TIMEOUT_MS = 20_000;
 
 /** O mesmo schema, na forma que a API entende — força o JSON já na geração. */
@@ -61,16 +78,47 @@ interface GeminiResponse {
 /**
  * Pede a explicação. Devolve `null` em qualquer tropeço — chave ausente, rede
  * caída, resposta fora do schema, número solto no texto.
+ *
+ * Duas tentativas quando o modelo é o padrão: o apelido primeiro, o reserva
+ * depois. É o que separa "o Google está ocupado agora" de "o tutor não
+ * funciona".
  */
 export async function askGemini(prompt: string): Promise<GeminiResult | null> {
   const key = process.env['GEMINI_API_KEY'];
   if (key === undefined || key === '') return null;
 
-  const model = tutorModel();
+  // O reserva só entra quando o modelo veio do padrão: quem escreveu
+  // `GEMINI_MODEL` no `.env` escolheu um modelo, e responder com outro por baixo
+  // seria trocar o comportamento sem avisar.
+  const chosen = tutorModel();
+  const models = chosen === DEFAULT_MODEL ? [chosen, FALLBACK_MODEL] : [chosen];
+
+  const deadline = Date.now() + TOTAL_BUDGET_MS;
+
+  for (const model of models) {
+    // O que sobrou do orçamento, nunca mais que o teto de uma tentativa: a
+    // segunda chamada não pode herdar a espera inteira da primeira.
+    const left = deadline - Date.now();
+    if (left <= 0) return null;
+
+    const hint = await tryModel(key, model, prompt, Math.min(left, TIMEOUT_MS));
+    if (hint !== null) return { hint, model };
+  }
+
+  return null;
+}
+
+/** Uma tentativa contra um modelo. `null` em qualquer tropeço. */
+async function tryModel(
+  key: string,
+  model: string,
+  prompt: string,
+  timeoutMs: number,
+): Promise<TutorHint | null> {
   const controller = new AbortController();
   const timer = setTimeout(() => {
     controller.abort();
-  }, TIMEOUT_MS);
+  }, timeoutMs);
 
   try {
     const response = await fetch(`${ENDPOINT}/${model}:generateContent`, {
@@ -98,9 +146,7 @@ export async function askGemini(prompt: string): Promise<GeminiResult | null> {
     if (text === undefined) return null;
 
     const parsed = tutorHintSchema.safeParse(JSON.parse(text));
-    if (!parsed.success) return null;
-
-    return { hint: parsed.data, model };
+    return parsed.success ? parsed.data : null;
   } catch {
     return null;
   } finally {

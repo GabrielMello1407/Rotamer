@@ -3,13 +3,13 @@
 import { isEmpty, type MoleculeGraph } from '@rotamer/core';
 import { useCallback, useEffect, useRef } from 'react';
 import type {
-  KeyboardEvent as ReactKeyboardEvent,
   PointerEvent as ReactPointerEvent,
   ReactElement,
   WheelEvent as ReactWheelEvent,
 } from 'react';
 import { useStore } from 'zustand';
 import styles from './Editor2D.module.css';
+import { shortcutsApply } from './keys';
 import { hoverAt, snapFromAtom, suggestDirection, toGraph, toleranceFor } from './geometry2d';
 import { readPalette, type EditorPalette } from './palette';
 import { draw } from './render';
@@ -83,6 +83,13 @@ function hintFor(tool: Tool, graph: MoleculeGraph, hover: Hover): string | null 
 }
 
 /** Atalhos de elemento. São os que aparecem em prova de orgânica. */
+/**
+ * A letra do elemento.
+ *
+ * São os elementos que aparecem em aula de orgânica, cada um na inicial do
+ * próprio símbolo — que é o que a pessoa já teria escrito à mão. `l` é o cloro e
+ * `b` é o bromo porque `c` já é o carbono e o carbono é o mais usado de todos.
+ */
 const ELEMENT_KEYS: Readonly<Record<string, string>> = {
   c: 'C',
   n: 'N',
@@ -473,8 +480,21 @@ export function Editor2D({ store, className }: Editor2DProps): ReactElement {
     [store],
   );
 
+  /**
+   * Os atalhos valem na página, não só dentro da moldura.
+   *
+   * Enquanto o ouvinte estava no `onKeyDown` da moldura, teclar `O` só fazia
+   * alguma coisa depois de clicar na tela de desenho — e a dica da missão diz
+   * "tecle O" sem falar em clicar antes. Quem acabou de escolher uma missão no
+   * painel está com o foco no painel, e a tecla morria ali.
+   *
+   * Duas exceções, e são as óbvias: enquanto alguém escreve num campo, letra é
+   * letra; e com a tabela periódica aberta, quem manda é a tabela.
+   */
   const handleKeyDown = useCallback(
-    (event: ReactKeyboardEvent<HTMLDivElement>): void => {
+    (event: KeyboardEvent): void => {
+      if (!shortcutsApply(event.target)) return;
+
       const state = store.getState();
       const key = event.key.toLowerCase();
 
@@ -499,7 +519,10 @@ export function Editor2D({ store, className }: Editor2DProps): ReactElement {
         return;
       }
 
-      if (key === 'f') {
+      // Enquadrar mudou de tecla: `f` é do flúor. Enquanto o enquadrar ficou
+      // aqui, ele respondia antes do mapa de elementos e o flúor era o único
+      // elemento da barra sem atalho nenhum — desenhá-lo exigia o mouse.
+      if (key === '0') {
         event.preventDefault();
         state.frame();
         return;
@@ -539,6 +562,13 @@ export function Editor2D({ store, className }: Editor2DProps): ReactElement {
     [store],
   );
 
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [handleKeyDown]);
+
   const hint = hintFor(tool, graph, hover);
 
   const classes = [
@@ -560,7 +590,6 @@ export function Editor2D({ store, className }: Editor2DProps): ReactElement {
       tabIndex={0}
       role="application"
       aria-label="Tela de desenho da molécula"
-      onKeyDown={handleKeyDown}
     >
       <canvas
         ref={canvasRef}

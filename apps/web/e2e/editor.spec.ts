@@ -314,3 +314,69 @@ test.describe('editor', () => {
     await expect(page.getByText('simples → dupla → tripla')).toBeVisible();
   });
 });
+
+/**
+ * Os atalhos.
+ *
+ * Uma missão diz "tecle O", e por muito tempo isso só era verdade depois de
+ * clicar na tela de desenho — quem vinha do painel teclava no vazio.
+ */
+test.describe('atalhos', () => {
+  test('teclar o elemento funciona sem clicar na tela antes', async ({ page }) => {
+    await page.goto('/');
+
+    const canvas = page.getByTestId('tela-de-desenho');
+    await expect(canvas).toBeVisible();
+
+    // Nenhum clique na tela: o foco está onde a página o deixou.
+    await page.keyboard.press('o');
+
+    const box = await canvas.boundingBox();
+    if (!box) throw new Error('a tela de desenho não tem tamanho');
+    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+
+    await expect(page.getByTestId('formula')).toHaveText('H2O', { timeout: 60_000 });
+  });
+
+  test('o flúor tem atalho — a letra F não é mais do enquadrar', async ({ page }) => {
+    await page.goto('/');
+
+    const canvas = page.getByTestId('tela-de-desenho');
+    const box = await canvas.boundingBox();
+    if (!box) throw new Error('a tela de desenho não tem tamanho');
+
+    await page.keyboard.press('f');
+    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+
+    await expect(page.getByTestId('formula')).toHaveText('FH', { timeout: 60_000 });
+  });
+
+  test('escrevendo num campo, letra é letra — não vira átomo', async ({ page }) => {
+    await page.goto('/');
+    await openAnalysis(page);
+
+    const entrada = page.getByTestId('entrada-smiles');
+    await entrada.fill('');
+    await entrada.type('CCO');
+    await expect(entrada).toHaveValue('CCO');
+
+    // Nada foi desenhado: as três letras ficaram no campo.
+    await expect(page.getByTestId('formula')).toHaveCount(0);
+  });
+
+  test('a folha de atalhos abre pela interrogação e lista as teclas', async ({ page }) => {
+    await page.goto('/');
+    // A tecla só vale depois de a página hidratar: antes disso não há ouvinte.
+    await expect(page.getByTestId('tela-de-desenho')).toBeVisible();
+
+    await page.keyboard.press('?');
+
+    const folha = page.getByRole('dialog', { name: 'Atalhos' });
+    await expect(folha).toBeVisible();
+    await expect(folha).toContainText('oxigênio');
+    await expect(folha).toContainText('enquadrar a molécula');
+
+    await page.keyboard.press('Escape');
+    await expect(folha).toBeHidden();
+  });
+});
