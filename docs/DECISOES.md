@@ -449,6 +449,16 @@ com o CID. Quando o PubChem não responde, o produto **diz que não sabe** e o b
 valendo aqui dentro, com a ressalva na tela — três estados, não dois, porque "não consegui
 verificar" não é "é inédito".
 
+**Atualização — quem batiza, guarda.** Batizar e guardar continuam sendo coisas diferentes: o
+apelido é da **estrutura** e vale para todo mundo; a estante é **de quem entrou**. Mas ninguém dá
+nome a uma molécula que não quer manter, e a pergunta "batizar é o jeito de salvar?" apareceu
+assim que as duas ações ficaram lado a lado na mesma tela. A resposta do produto passou a ser
+"não, mas batizar guarda junto": o batismo grava o `MoleculeName` e em seguida põe a estrutura na
+estante de quem batizou. Os três caminhos que guardam — guardar de propósito, cumprir uma missão
+e batizar — passam pelo mesmo lugar (`apps/web/lib/molecule-store.ts`), para não haver três
+versões da mesma gravação com regras diferentes. Se guardar falhar, o batismo continua valendo:
+perder a cópia na estante é menos grave que desfazer autoria.
+
 
 ---
 

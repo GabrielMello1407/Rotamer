@@ -31,6 +31,9 @@ export function NamePanel({ analysis }: NamePanelProps): ReactElement | null {
   const [error, setError] = useState<string | null>(null);
   const [anonymous, setAnonymous] = useState(false);
   const [saving, setSaving] = useState(false);
+  // Batizou agora, nesta visita: é o que autoriza dizer que a estrutura ficou
+  // guardada. Quem só está lendo o apelido de outra pessoa não guardou nada.
+  const [kept, setKept] = useState(false);
 
   const inchiKey = analysis !== null && analysis.ok ? analysis.molecule.inchiKey : null;
 
@@ -70,6 +73,7 @@ export function NamePanel({ analysis }: NamePanelProps): ReactElement | null {
 
       if (outcome.status === 'named' || outcome.status === 'taken') {
         setNamed(outcome.named);
+        setKept(outcome.status === 'named');
         setText('');
         setError(outcome.status === 'taken' ? 'Alguém batizou primeiro.' : null);
       } else if (outcome.status === 'known') {
@@ -114,6 +118,12 @@ export function NamePanel({ analysis }: NamePanelProps): ReactElement | null {
         <p className={styles.quiet}>
           Apelido dentro do Rotamer, não nomenclatura: o produto não calcula nome de composto.
         </p>
+        {kept && (
+          <p className={styles.quiet} data-testid="batismo-guardado">
+            A estrutura ficou em <Link href="/minhas">minhas moléculas</Link>. O apelido é da
+            estrutura e vale para todo mundo; a cópia guardada é sua.
+          </p>
+        )}
       </section>
     );
   }
@@ -125,6 +135,8 @@ export function NamePanel({ analysis }: NamePanelProps): ReactElement | null {
           ? 'estrutura inédita'
           : 'ninguém batizou esta estrutura'}
       </Label>
+
+      <p className={styles.quiet}>Batizar também guarda a estrutura nas suas moléculas.</p>
 
       <form className={styles.form} onSubmit={submit}>
         <input

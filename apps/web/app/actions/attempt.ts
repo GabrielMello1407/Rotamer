@@ -1,11 +1,11 @@
 'use server';
 
-import type { Molecule } from '@rotamer/core';
 import { evaluateQuest, findQuest } from '@rotamer/quests';
 import { z } from 'zod';
 import { currentProfile } from '../../lib/auth';
 import { analyzeOnServer } from '../../lib/chemistry-server';
 import { db } from '../../lib/db';
+import { rememberMolecule } from '../../lib/molecule-store';
 
 /**
  * Gravar uma tentativa de missão.
@@ -60,26 +60,6 @@ export async function saveAttempt(input: {
   });
 
   return { status: 'saved', score: result.score, passed: result.passed };
-}
-
-/** A mesma molécula, salva duas vezes, continua sendo uma linha só. */
-async function rememberMolecule(
-  ownerId: string,
-  molecule: Molecule,
-): Promise<{ readonly id: string }> {
-  return db.molecule.upsert({
-    where: { ownerId_inchiKey: { ownerId, inchiKey: molecule.inchiKey } },
-    create: {
-      ownerId,
-      graph: { molblock: molecule.molblock },
-      smiles: molecule.smiles,
-      inchiKey: molecule.inchiKey,
-      formula: molecule.formula,
-      descriptors: { ...molecule.descriptors },
-    },
-    update: {},
-    select: { id: true },
-  });
 }
 
 const openSchema = z.object({ questSlug: z.string().min(1).max(80) });

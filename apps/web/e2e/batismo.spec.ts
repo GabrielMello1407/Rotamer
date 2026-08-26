@@ -86,6 +86,25 @@ test.describe('batismo', () => {
     await expect(publico).toContainText('não é nomenclatura');
   });
 
+  test('batizar também guarda a estrutura em minhas moléculas', async ({ page }) => {
+    await criarConta(page);
+    await carregar(page, cadeiaInedita());
+
+    await page.getByTestId('entrada-apelido').fill('Guardada de propósito');
+    await page.getByRole('button', { name: 'Batizar' }).click();
+    await expect(page.getByTestId('apelido')).toContainText('Guardada de propósito', {
+      timeout: 30_000,
+    });
+    await expect(page.getByTestId('batismo-guardado')).toBeVisible();
+
+    // Ninguém dá nome a uma molécula que não quer manter: a estante é a
+    // resposta para "onde foi parar o que eu batizei".
+    await page.goto('/minhas');
+    const lista = page.getByTestId('minhas-moleculas');
+    await expect(lista).toContainText('Guardada de propósito', { timeout: 30_000 });
+    await expect(lista).toContainText('batizada por Professora Ana');
+  });
+
   test('apelido que se passa por nomenclatura é recusado com explicação', async ({ page }) => {
     await criarConta(page);
     await carregar(page, cadeiaInedita());

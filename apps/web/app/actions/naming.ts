@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { currentProfile } from '../../lib/auth';
 import { analyzeOnServer } from '../../lib/chemistry-server';
 import { db, hasDatabase } from '../../lib/db';
+import { rememberMolecule } from '../../lib/molecule-store';
 import { knownCompound } from '../../lib/known-compound';
 import { checkName, normalizeName, NAME_MAX } from '../../lib/molecule-name';
 
@@ -88,6 +89,19 @@ export async function nameMolecule(input: {
       data: { inchiKey, name, formula, smiles, profileId: profile.id },
       include: { profile: { select: { displayName: true } } },
     });
+
+    /*
+     * Quem batiza, guarda.
+     *
+     * Batizar e guardar são coisas diferentes — o apelido é da **estrutura** e
+     * vale para todo mundo; a estante é **de quem entrou**. Mas ninguém dá nome
+     * a uma molécula que não quer manter, e não encontrá-la depois em "minhas
+     * moléculas" seria a surpresa mais boba possível.
+     *
+     * Se este passo falhar, o batismo continua valendo: o nome já está gravado, e
+     * perder a cópia na estante é menos grave que desfazer autoria.
+     */
+    await rememberMolecule(profile.id, analysis.molecule).catch(() => null);
 
     return {
       status: 'named',

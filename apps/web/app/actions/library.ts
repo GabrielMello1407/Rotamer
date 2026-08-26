@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { currentProfile } from '../../lib/auth';
 import { analyzeOnServer } from '../../lib/chemistry-server';
 import { db, hasDatabase } from '../../lib/db';
+import { rememberMolecule } from '../../lib/molecule-store';
 
 /**
  * As moléculas de quem entrou.
@@ -58,19 +59,10 @@ export async function saveMolecule(input: { molblock: string }): Promise<SaveOut
 
   const { molecule } = analysis;
 
-  // A mesma estrutura guardada duas vezes continua sendo uma linha só — e a
-  // data continua sendo a da primeira vez, que é quando a pessoa a desenhou.
-  const row = await db.molecule.upsert({
+  await rememberMolecule(profile.id, molecule);
+
+  const row = await db.molecule.findUniqueOrThrow({
     where: { ownerId_inchiKey: { ownerId: profile.id, inchiKey: molecule.inchiKey } },
-    create: {
-      ownerId: profile.id,
-      graph: { molblock: molecule.molblock },
-      smiles: molecule.smiles,
-      inchiKey: molecule.inchiKey,
-      formula: molecule.formula,
-      descriptors: { ...molecule.descriptors },
-    },
-    update: { graph: { molblock: molecule.molblock } },
     select: { inchiKey: true, smiles: true, formula: true, descriptors: true, createdAt: true },
   });
 
