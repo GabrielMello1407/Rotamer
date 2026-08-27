@@ -105,6 +105,38 @@ test.describe('batismo', () => {
     await expect(lista).toContainText('batizada por Professora Ana');
   });
 
+  test('a autoria acompanha o apelido nas três telas onde ele aparece', async ({ page }) => {
+    // D-15: "nunca aparece sozinho" é o que separa apelido de nomenclatura — sem
+    // "batizada por X" ao lado, um nome batizado dentro do produto é
+    // indistinguível de um nome calculado. A regra vale nas três telas onde o
+    // apelido é lido: o painel do editor, a página pública do link e a estante
+    // de quem batizou. Apagar a autoria em qualquer uma delas — sem tocar no
+    // nome — precisa derrubar este teste.
+    const smiles = cadeiaInedita();
+
+    await criarConta(page);
+    await carregar(page, smiles);
+    await page.getByTestId('entrada-apelido').fill('Regra de autoria');
+    await page.getByRole('button', { name: 'Batizar' }).click();
+
+    // 1. O painel do editor, logo depois de batizar.
+    const painel = page.getByTestId('apelido');
+    await expect(painel).toContainText('Regra de autoria', { timeout: 30_000 });
+    await expect(painel).toContainText('batizada por Professora Ana');
+
+    // 2. A página pública — o link que circula fora do Rotamer.
+    await page.goto(`/m/${encodeURIComponent(smiles)}`);
+    const publico = page.getByTestId('apelido');
+    await expect(publico).toContainText('Regra de autoria');
+    await expect(publico).toContainText('Professora Ana');
+
+    // 3. A estante de quem batizou.
+    await page.goto('/minhas');
+    const estante = page.getByTestId('minhas-moleculas');
+    await expect(estante).toContainText('Regra de autoria', { timeout: 30_000 });
+    await expect(estante).toContainText('batizada por Professora Ana');
+  });
+
   test('apelido que se passa por nomenclatura é recusado com explicação', async ({ page }) => {
     await criarConta(page);
     await carregar(page, cadeiaInedita());
