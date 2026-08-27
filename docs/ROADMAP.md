@@ -99,6 +99,11 @@ estão no `DEPOIS.md`:
 - [x] Busca por nome via PubChem
 - [x] Centros estereogênicos nas métricas e "minhas moléculas"
 - [x] Recuperação de senha por código do professor, sem e-mail no caminho (D-19)
+- [ ] **A regra do apelido recusa "Camila" e aceita "aspirina"** — o inverso do que ela existe
+      para fazer, medido em `apps/web/lib/molecule-name.ts:35`. É a única pedra desta lista que
+      aparece **na frente da turma**, e por isso vai antes da primeira sessão (D-15)
+- [ ] **Conferir o PubChem a partir do IP do VPS** — em 27/08/2026 ele respondeu 503 o dia inteiro
+      daqui, e a verificação de novidade do batismo depende dele. Saber se foi o serviço ou este IP
 
 O contato propriamente dito:
 
@@ -115,9 +120,40 @@ O contato propriamente dito:
 percepção CIP e na coerência com a cena 3D, e o `CLAUDE.md` diz que merece ser feita direito.
 Se a validação apontar para ela com força, o que muda é a ordem — não o tamanho do trabalho.
 
-**Pergunta que precisa de resposta antes da primeira sessão:** o produto vai nomear molécula? Hoje
-não nomeia, e não existe motor de nomenclatura IUPAC no escopo. O primeiro professor vai
-perguntar. Não-objetivo declarado ou item de v0.3 — as duas respostas servem; o silêncio, não.
+**A pergunta "o produto vai nomear molécula?" está respondida: não** — e agora com justificativa
+que se sustenta. O `researcher` mostrou que existe motor aberto, MIT e determinístico
+(`docs/pesquisa/nomenclatura.md`); o D-15 foi reescrito por cima em 27/08/2026 dizendo por que o
+produto continua não nomeando mesmo assim, e com que gatilho isso se revisa. O que **falta** é a
+única coisa que a sessão responde de graça, e que decide o custo de tudo o que vier depois dela.
+
+### O que perguntar ao professor sobre nomenclatura — e em que ordem
+
+A sessão é assistir sem explicar nada. Nomenclatura não se introduz: **espera-se**.
+
+1. **Não puxe o assunto.** Anote se o professor ou o aluno pede o nome sem ninguém provocar: em
+   que minuto, e com que estrutura na tela. Quem **não** pergunta é dado tão bom quanto quem
+   pergunta.
+2. **Se ele pedir**, a única pergunta é *"o que você faria com esse nome na sua aula?"* — e
+   depois cale. Anote a resposta com as palavras dele.
+3. **Se ninguém pedir até o fim**, ao encerrar, nesta ordem literal:
+   - *"Na sua turma, quando entra nomenclatura, o que o aluno faz mais: ele recebe uma estrutura e
+     escreve o nome, ou recebe o nome e desenha a estrutura?"*
+   - *"Se o Rotamer soubesse fazer só uma das duas, qual delas te serviria mais?"*
+   - *"E se o nome saísse em inglês — 'ethyl acetate' no lugar de 'acetato de etila' — isso te
+     serve, atrapalha, ou é pior do que não ter nome nenhum?"*
+
+A terceira pergunta é a que decide o preço: **é ela que separa um mapeamento de termos de um
+dicionário de nomenclatura mantido para sempre.** Nenhuma das três menciona motor, biblioteca ou
+o que o produto poderia fazer — a resposta interessa como aula, não como pedido de
+funcionalidade.
+
+**A revisão por um químico ganhou uma segunda pauta, e ela é condicional.** Se — e só se — as
+sessões apontarem para "nomeie o que eu desenhei", a revisão passa a incluir: rodar o
+`openclatura` sobre a lista de moléculas que as trilhas realmente usam (`packages/quests`) e ter o
+químico marcando **aceita / não aceita**, nome a nome. É esse número, e não o round-trip, que diz
+se o caminho é "quase lá" ou "não serve" — gatilho 2 do D-15. Enquanto a sessão não acontecer,
+esse trabalho não começa: escolher motor antes de saber a direção é construir no escuro a parte
+mais cara. Os cinco caminhos, com o preço de cada um, estão no `DEPOIS.md`.
 
 ---
 

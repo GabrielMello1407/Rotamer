@@ -459,6 +459,90 @@ e batizar — passam pelo mesmo lugar (`apps/web/lib/molecule-store.ts`), para n
 versões da mesma gravação com regras diferentes. Se guardar falhar, o batismo continua valendo:
 perder a cópia na estante é menos grave que desfazer autoria.
 
+**Atualização — 27/08/2026: a justificativa caiu, a decisão fica de pé por outro motivo.**
+
+O `researcher` levantou o estado do mundo (`docs/pesquisa/nomenclatura.md`) e derrubou a premissa
+implícita desta decisão. "Não existe motor de nomenclatura aberto e com licença que sirva" **é
+falso desde hoje**: o `openclatura` 0.3.1 é MIT, determinístico, sem modelo e sem tabela de
+consulta, roda sobre o próprio RDKit, e foi medido aqui nomeando 30 de 30 moléculas de orgânica de
+ensino médio, com round-trip 30/30 pelo OPSIN e **zero divergência silenciosa**. Existe também o
+STOUT, MIT — e esse cai pelo D-01: é rede neural com 83,52% a 89,86% de acerto medidos pelos
+próprios autores, exatamente o perfil que este repositório usa para vetar o LLM. Fica registrado
+que a premissa era falsa, porque alguém ia descobrir.
+
+**O produto continua não nomeando — não porque não dá, porque escolhemos não.** Quatro razões,
+nesta ordem:
+
+1. **Nenhum motor fala português.** O `openclatura` devolve `ethyl acetate`; o OPSIN entende
+   3 de 42 nomes em pt-BR contra 42 de 42 em inglês. Toda a interface deste produto é pt-BR, e um
+   aluno de 3ª série lendo `N-(4-hydroxyphenyl)acetamide` não recebeu um nome, recebeu uma string
+   estrangeira. E traduzir nome de composto **é decidir estrutura**: cai no D-01, não pode ser o
+   LLM, e vira dicionário nosso, revisado por químico, para sempre. É o kernel próprio outra vez
+   (D-02), agora na nomenclatura.
+2. **Nomear é chamada de rede, não código no worker.** Medido: não existe motor estrutura→nome em
+   JS ou WASM com licença permissiva — nem `indigo-ketcher`, nem `ketcher-core`, nem o RDKit.js
+   (`iupac` → 0 no `.wasm`, com o controle positivo `inchi` → 62 no mesmo arquivo). Seria um
+   serviço a mais em produção, para sempre, que não funciona offline e cai junto com o VPS. Em
+   27/08/2026 o PubChem respondeu 503 o dia inteiro, em cinco conjuntos de tentativas — não é
+   hipótese remota, foi o estado do mundo hoje, e o produto já depende dele. Escola pública em 3G é
+   o caso de uso, não o caso extremo.
+3. **É beta 0.3.1, de um laboratório só, criado em 8 de maio de 2026.** A licença MIT permite fork,
+   o que limita o dano e não o elimina: fork de motor de nomenclatura é passar a ser dono de
+   nomenclatura.
+4. **Ninguém pediu, e o ensino brasileiro cobra a direção oposta.** A BNCC do Ensino Médio não
+   cobra nomenclatura (IUPAC: 0 ocorrências no PDF do MEC). Em seis anos de ENEM, nenhuma questão
+   pediu o nome de uma estrutura desenhada. SEDUC-SP e Unicamp cobram nas duas direções, e onde o
+   aluno erra é **desenhando a partir do nome** — 41,59% de zeros na questão 9 da Unicamp 2005. E
+   Shute (2008) mede que dar a resposta antes da tentativa anula o feedback.
+
+**O gatilho estava mal escrito, e isto é o que ele queria dizer.** O texto acima manda revisar "se
+aparecer motor de nomenclatura confiável **em WebAssembly**". Ao pé da letra nada disparou — o
+`openclatura` é Python. Mas "WebAssembly" ali não era requisito de tecnologia: era o jeito curto de
+dizer *roda onde o produto roda, sem serviço novo, sem rede, no celular fraco da escola pública*.
+Escrever a tecnologia no lugar da restrição foi erro de redação, e ele quase escondeu uma premissa
+falsa atrás de um gatilho que jamais dispararia. **O gatilho passa a ser este — três condições que
+valem juntas:**
+
+1. **O nome sai em português**, vindo do motor ou de um mapeamento determinístico nosso que um
+   químico revisou. Nunca do LLM.
+2. **Um professor de química marcou nome a nome** a lista de moléculas que as trilhas usam e disse
+   quantos aceitaria numa prova. Round-trip válido não é nome de livro: 2 dos 30 medidos saíram em
+   forma correta e menos comum (`2-(acetoxy)benzoic acid` no lugar de "ácido acetilsalicílico").
+   Sem esse número ninguém sabe se é "quase lá" ou "não serve".
+3. **Existe verificação, e o produto cala quando ela não confirma.** Nome que o round-trip não
+   confirmou não chega à tela. Motor beta falando sozinho para uma sala inteira é o D-01 ao
+   contrário.
+
+Antes das três, a pergunta que custa zero: **qual das duas direções o professor quer** — "nomeie o
+que eu desenhei" ou "corrija o nome que meu aluno escreveu". São produtos diferentes, com custos
+muito diferentes, e a sessão de observação da Fase 3 responde de graça. As perguntas exatas estão
+no `docs/ROADMAP.md`. Os caminhos que ficaram em pé, com o preço de cada um, estão no `DEPOIS.md`.
+
+**Atualização — 27/08/2026: a regra do apelido errava nos dois sentidos, e o remédio muda de
+lugar.**
+
+Medido em `apps/web/lib/molecule-name.ts:35`: `parece-sistematico` é um sufixo solto sobre palavra
+única e **recusa** `Camila`, `Sol`, `Cristal`, `Girassol`, `Farol`, `Carnaval` e `Ludmila`; a regra
+de fórmula recusa `Ba` e `Na`. Enquanto isso, **aceita** `cafeina`, `aspirina` e `anilina`. Barra o
+primeiro nome da aluna e deixa passar o nome trivial de composto real: o inverso do que ela existe
+para fazer. Recusar "Camila" na frente da turma encerra uma sessão de observação antes de ela
+começar.
+
+**O que muda.** Esta decisão diz que "apelido que se passa por nome de verdade é pior do que
+apelido nenhum". Continua verdade — e continua não sendo motivo para pôr o custo no aluno. Nenhuma
+expressão regular sobre morfologia do português separa `Girassol` de `butanol` sem errar de um lado
+ou do outro; a escolha é qual dos dois erros se prefere, e **prefere-se deixar passar**. O peso que
+estava todo na cadeia de caracteres volta para onde esta decisão já o tinha posto: **o apelido
+nunca aparece sozinho**. "batizada por Camila" ao lado transforma o apelido em autoria, e é por
+isso que essa parte — que já existe em `NamePanel`, em `/m/<smiles>` e na estante — passa a ter
+teste que a trava, em vez de ser hábito.
+
+A regra escrita continua recusando o caso inequívoco (fórmula, SMILES, e nomenclatura sistemática
+que um químico reconheceria como tal), mas nenhum apelido é recusado sem que exista um caso
+verdadeiro que justifique a recusa. **A lista de nomes triviais de composto é dado de química e
+não se inventa aqui**: ou vem de fonte revisada por químico, ou não vem. Fica no `DEPOIS.md`, e só
+entra se a revisão da Fase 3 mostrar que a colisão incomoda de verdade.
+
 
 ---
 

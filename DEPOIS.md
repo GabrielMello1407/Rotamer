@@ -41,9 +41,90 @@ merece ser feita direito; espremer junto com oito itens pequenos é exatamente c
   autoria. Estrutura válida que ninguém batizou pode receber apelido de quem a desenhou, sempre
   exibido com o nome de quem deu. Falta a parte que depende do PubChem: hoje "ninguém batizou"
   quer dizer "ninguém batizou aqui dentro", e o produto não sabe se o composto já existe lá fora.
+  **Reaberta e refechada em 27/08/2026.** O `researcher` derrubou a premissa — "não existe
+  motor aberto e permissivo" é falso, o `openclatura` 0.3.1 é MIT e determinístico — e o D-15
+  foi reescrito por cima com justificativa nova. A resposta continua **não**, agora por escolha
+  e não por impossibilidade. O que ficou aberto é só a **direção**, e quem responde é o professor,
+  na sessão de observação da Fase 3. Os caminhos estão logo abaixo.
 - **Acessibilidade do canvas.** Desenhar exige ponteiro; teclado só tem atalhos. Compra
   institucional costuma exigir acessibilidade, e isso pode virar bloqueio de venda antes de virar
   pedido de usuário.
+
+## Nomenclatura — os cinco caminhos, e o que destranca cada um
+
+**Escrito em 27/08/2026, a partir de `docs/pesquisa/nomenclatura.md`.** Nada disto entra agora. O
+D-15 fica de pé com justificativa nova, e a escolha entre os caminhos abaixo **espera a sessão de
+observação**, que responde de graça a única pergunta que decide tudo: o professor quer "nomeie o
+que eu desenhei" ou "corrija o nome que meu aluno escreveu"? As perguntas exatas estão na Fase 3
+do `docs/ROADMAP.md`.
+
+Ordem de preço, do mais barato ao mais caro.
+
+**(a) Não nomear, e dizer isso em voz alta.** É o que está valendo. Custo quase zero: a
+justificativa reescrita (feita) e uma frase na tela que responda antes de o professor perguntar.
+Risco: ele lê como limitação em vez de escolha — o que encolhe se a frase disser **o que** o
+produto não faz e **por quê**, em vez de "não dá". Obriga para sempre: a disciplina de recusar
+apelido que se passe por nomenclatura — hoje sustentada mais pela atribuição de autoria do que
+pela regra escrita, e isso agora está dito no D-15.
+
+**(b) O aluno nomeia e o produto confere** (nome → estrutura). **Metade já existe e custa zero:** a
+condição `inchiKey` das missões (`packages/quests/src/types.ts`) já compara o que o aluno desenhou
+com o alvo, e o nome do alvo é digitado por um humano no dado da missão — nenhum motor, nenhuma
+rede, o D-15 intacto. É a direção que ENEM, Unicamp e SEDUC-SP cobram, é onde o aluno erra (41,59%
+de zeros na Unicamp 2005) e é o que Shute (2008) prescreve: o aluno produz, o software confere. A
+**outra** metade — nomenclatura livre, o aluno escrevendo qualquer nome — exige OPSIN (JVM no VPS,
+ou o serviço do EBI) mais uma camada pt→en que **decide estrutura** e portanto não pode ser o LLM
+(D-01). Obriga para sempre: um dicionário pt→en revisado por químico, mais um processo em produção
+ou uma dependência de terceiro. **Contra, e é sério:** reabre o item 3 do D-09, que pôs entrada por
+nome depois do MVP. **Destranca se** a sessão disser "corrija o nome do meu aluno" — e aí a
+primeira entrega é a metade grátis: missão com alvo dado por nome, sem motor nenhum.
+
+**(c) Integrar motor de terceiro** (estrutura → nome). Candidato realista único: `openclatura`
+0.3.1, MIT, determinístico, sobre o RDKit, como microsserviço Python ao lado do Next.js. Custo: um
+serviço a mais em produção para sempre, **mais** a localização pt-BR, que é o trabalho de verdade.
+Risco: beta 0.3.1 de um laboratório só; inglês; chamada de rede por nome, que não funciona offline
+e cai junto com o VPS. Obriga para sempre: **só mostrar nome que a verificação confirmou** — e
+ativar o `verify_with_opsin` puxa o OPSIN, o Java e a LGPL junto. A favor, e é o argumento forte: o
+`NameAnalysis` devolve o nome **em pedaços**, com índices de átomo que casam com o grafo — daria
+para acender no desenho a parte que corresponde a cada pedaço do nome, que é a mesma ideia do
+"átomo aceso é um só nas duas telas" (D-18). Isso deixa de ser dar a resposta e vira explicação.
+**Destranca se** os três gatilhos do D-15 forem satisfeitos, nesta ordem: sessão → químico marcando
+nome a nome → pt-BR determinístico.
+
+**(d) Faixa restrita** — nomear só o que dá para garantir e calar no resto. Risco: a fronteira é
+invisível ao usuário, e a faixa **cresce** — escopo estourando é o risco número um deste projeto.
+Observação que muda o preço: com o round-trip do `openclatura`, a faixa não precisa ser escrita à
+mão — pode ser "tudo que a verificação confirmou", que é fronteira medida e não opinada. Na
+prática isto não é caminho separado: é o (c) feito direito.
+
+**(e) Nomear só o conteúdo curado, em tempo de build.** Rodar o motor uma vez sobre a lista fechada
+das missões, um químico conferir nome a nome, e o resultado entrar como **dado** — do mesmo jeito
+que o nome já entra hoje na missão. Custo zero em produção: nenhum serviço, funciona offline e no
+celular fraco. Risco: só responde dentro da missão, e o professor vai desenhar fora da lista — que
+é exatamente o que ele fará na sessão. Obriga para sempre: revisão humana a cada mudança da lista,
+trabalho de professor que some se ninguém for pago para fazê-lo. **E isto não é nomear, é
+catálogo** — a diferença precisa estar dita na tela, ou vira a impressão de que o produto nomeia,
+que é justamente o que o D-15 quis evitar. **Destranca se** a sessão disser "nomeie o que eu
+desenhei" **e** o professor aceitar que o produto responda só dentro da trilha.
+
+**Vetado, e o motivo já está escrito.** Qualquer motor **neural** de nomenclatura, incluindo o
+STOUT (MIT): 83,52% a 89,86% de acerto medidos pelos próprios autores é o mesmo perfil que o
+`CLAUDE.md` usa para vetar o LLM. `chem-dl-iupac` (AGPL-3.0) e `iupac-to-structure` (GPL-3.0) caem
+pela licença; `smiles2iupac` e o fork em espanhol do OPSIN não têm licença nenhuma. O ChemDoodle
+**não** está vetado por política — a licença comercial da iChemLabs serve a produto fechado; ele
+está fora por preço (US$ 29/mês por usuário, sem desconto acadêmico) e por depender do servidor
+deles a cada chamada. Chamar isso de "vetado" transformaria juízo de negócio em proibição de regra.
+
+## Duas dívidas menores que a nomenclatura deixou
+
+- **Lista de nomes triviais de composto.** Hoje o `checkName` aceita `aspirina`, `cafeina` e
+  `anilina` como apelido. **É dado de química**: ou vem de fonte revisada por químico, ou não vem
+  — inventar a lista aqui seria o kernel próprio outra vez (D-02). Só entra se a revisão da Fase 3
+  mostrar que a colisão incomoda de verdade. Até lá quem carrega o peso é a atribuição de autoria:
+  "batizada por Camila" ao lado do apelido.
+- **`condense_abbreviations` do RDKit.** Produz rótulos como `CO2Et`, que o aluno lê como nome. Não
+  está ligado em lugar nenhum do produto hoje (verificado por grep). Se alguém ligar, esses rótulos
+  caem sob a regra do D-15 e precisam de origem dita na tela.
 
 ## Considerado e adiado
 
