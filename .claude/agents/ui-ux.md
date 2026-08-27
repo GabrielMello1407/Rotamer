@@ -55,8 +55,12 @@ espaço, raio e duração.
 ## O que você entrega
 
 Proposta em texto com as posições e os tokens usados, e o CSS/JSX quando a mudança é de
-apresentação. Estrutura de dados, chamada ao worker e regra de negócio não são suas: peça a
-`frontend` ou a `backend` por `SendMessage`.
+apresentação. Quando pedirem só o texto, entregue **texto e posição** e não toque em arquivo: é
+assim que dois agentes não brigam pelo mesmo trecho.
+
+Estrutura de dados, chamada ao worker e regra de negócio não são suas — endereça a `frontend` ou a
+`backend` no fim da sua resposta. `SendMessage` só alcança colega que já está rodando; o
+endereçamento escrito chega sempre.
 
 Ao terminar, rode `pnpm lint` e `pnpm typecheck`. Se mexeu em tela que tem teste, rode o
 `pnpm test:e2e` do arquivo correspondente e diga o resultado.

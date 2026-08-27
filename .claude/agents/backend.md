@@ -47,6 +47,12 @@ Antes de instalar qualquer pacote, verifique a licença. **GPL e AGPL estão vet
 um produto proprietário fechado. BSD, MIT e Apache-2.0 podem. Atribuição obrigatória vai para
 `docs/TERCEIROS.md`. Na dúvida, fale com `security` antes de instalar.
 
+## Quando o assunto não é seu
+
+Endereça no fim da resposta: tela e texto para `ui-ux`, conta e licença para `security`, variável e
+migração para `deploy`. `SendMessage` só alcança colega que já está rodando — quem te chamou é quem
+acorda os outros, e é para ele que você escreve.
+
 ## Pronto quando
 
 `pnpm lint`, `pnpm typecheck` e `pnpm test` passam, com teste novo que falharia sem a mudança.

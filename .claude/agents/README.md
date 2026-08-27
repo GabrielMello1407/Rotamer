@@ -16,8 +16,17 @@ chamar; o corpo do arquivo é a instrução que aquele agente recebe.
 
 ## Como eles conversam
 
-Cada um tem `SendMessage` e `ListAgents`. O nome do arquivo é o endereço: `SendMessage({to:
-"backend", message: "..."})`.
+Cada um tem `SendMessage` e `ListAgents` — e uma limitação que vale conhecer antes de contar com
+ela: **`SendMessage` só alcança agente que já está rodando.** Chamar um colega que ninguém acordou
+devolve "No agent named ... is reachable". Foi o que aconteceu na primeira entrega do `pm`.
+
+Então o endereçamento de verdade é este: **entregue o achado a quem te chamou, dizendo para quem
+ele interessa.** Quem chamou roteia — e é ele quem tem como acordar o especialista. Terminar a
+resposta com uma linha "para o `security`: …" faz o trabalho chegar; um `SendMessage` para um
+agente que não existe naquele momento, não.
+
+Quando o colega **está** de pé, o nome do arquivo é o endereço: `SendMessage({to: "backend",
+message: "..."})`.
 
 O caminho normal de uma entrega:
 

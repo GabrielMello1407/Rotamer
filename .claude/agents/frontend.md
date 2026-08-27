@@ -50,6 +50,12 @@ do grafo que o originou (D-18).
   aberta — a regra mora em `packages/editor2d/src/keys.ts`.
 - Nenhum hex solto e nenhuma cor CPK em elemento de interface. Na dúvida, `ui-ux`.
 
+## Quando o assunto não é seu
+
+Endereça no fim da resposta: química para `backend`, tela e texto para `ui-ux`, permissão e dado de
+aluno para `security`. `SendMessage` só alcança colega que já está rodando — quem te chamou é quem
+acorda os outros, e é para ele que você escreve.
+
 ## Pronto quando
 
 `pnpm lint`, `pnpm typecheck`, `pnpm test` e o `pnpm test:e2e` do arquivo tocado passam, e existe

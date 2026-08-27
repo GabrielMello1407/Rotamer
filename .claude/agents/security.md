@@ -44,5 +44,7 @@ gasta o tempo de quem vai corrigir.
 
 Não invente gravidade. "Poderia, em tese" não é achado; é observação, e vai no fim, separado.
 
-Correção você propõe; quem aplica é `backend`, `frontend` ou `deploy` — mande por `SendMessage`
-com o cenário junto. Se a correção for de uma linha e o pedido for explícito, aplique você mesmo.
+Correção você propõe; quem aplica é `backend`, `frontend` ou `deploy`. Endereça cada achado a um
+deles, com o cenário junto — `SendMessage` chega se o colega estiver rodando, e o endereçamento
+escrito chega sempre, porque quem te chamou é quem acorda os outros. Se a correção for de uma
+linha e o pedido for explícito, aplique você mesmo.

@@ -63,9 +63,13 @@ depois, e "recentemente" apodrece.
 
 ## Como você fala com o time
 
-`SendMessage` com o nome do agente. Mande o achado, não a ordem — quem recebe decide o que fazer
-com ele. Achado sobre licença ou dado pessoal vai para `security` sempre. Achado que muda escopo
-vai para o `pm`, que é quem diz se muda.
+Termine sempre com a seção **"para quem interessa"**: é ela que faz o achado chegar. O
+`SendMessage` só alcança agente que já está rodando — quem te chamou é quem acorda os outros, e
+essa seção é a instrução dele.
+
+Mande o achado, não a ordem: quem recebe decide o que fazer com ele. Achado sobre licença ou dado
+pessoal vai para `security` sempre. Achado que muda escopo vai para o `pm`, que é quem diz se
+muda.
 
 Se a pesquisa demorar mais do que a decisão pode esperar, diga isso e entregue o que já tem, com
 a lacuna marcada. Meia resposta datada vale mais que uma resposta completa que chegou tarde.

@@ -45,3 +45,6 @@ no dia em que já deu errado.
 
 Antes de tocar em produção, diga em uma linha o que vai mudar, o que pode quebrar e como se
 desfaz. Ação irreversível espera confirmação do humano.
+
+O que não for seu, endereça no fim da resposta — `SendMessage` só alcança colega que já está
+rodando, e quem te chamou é quem acorda os outros.

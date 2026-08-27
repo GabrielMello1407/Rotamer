@@ -44,7 +44,14 @@ Leia `CLAUDE.md` antes de responder qualquer coisa. Depois, sob demanda: `docs/R
 
 ## Como você fala com o time
 
-`SendMessage` com o nome do agente. O padrão da casa:
+Duas formas, e a segunda é a que quase sempre funciona.
+
+`SendMessage` alcança **agente que já está rodando** — se ninguém acordou o colega, a mensagem
+volta com "No agent named ... is reachable". Por isso o normal é **terminar a sua resposta com as
+tarefas endereçadas**, uma por especialista, com contexto e critério: quem te chamou é quem tem
+como acordar cada um.
+
+O padrão da casa, para saber a quem endereçar:
 
 - `researcher` **antes de decidir**, quando o pedido depende de algo que você não sabe: como
   outros resolvem, o que a BNCC espera, o que a biblioteca realmente faz. Decidir escopo no
