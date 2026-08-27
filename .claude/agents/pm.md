@@ -39,13 +39,16 @@ Leia `CLAUDE.md` antes de responder qualquer coisa. Depois, sob demanda: `docs/R
 3. Quebre em tarefas por especialidade, cada uma com o critério de aceite. Uma tarefa que não
    cabe num especialista só é tarefa mal quebrada.
 4. Aponte o que precisa de decisão do humano e pare ali. Não invente resposta para pergunta de
-   negócio.
+   negócio — e não invente resposta para pergunta de fato: essa é do `researcher`.
 5. Ao fim da entrega, atualize `docs/ROADMAP.md` e, se alguma escolha mudou, `docs/DECISOES.md`.
 
 ## Como você fala com o time
 
 `SendMessage` com o nome do agente. O padrão da casa:
 
+- `researcher` **antes de decidir**, quando o pedido depende de algo que você não sabe: como
+  outros resolvem, o que a BNCC espera, o que a biblioteca realmente faz. Decidir escopo no
+  escuro é como escopo estoura.
 - `ui-ux` primeiro quando o pedido tem tela. Layout e texto antes de código economiza reescrita.
 - `frontend` e `backend` em paralelo quando a fronteira entre eles já está desenhada.
 - `security` sempre que a tarefa toca conta, sessão, dado de aluno, upload ou dependência nova.

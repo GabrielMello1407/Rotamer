@@ -1,6 +1,6 @@
 # O time
 
-Sete papéis, um arquivo cada. O Claude Code lê o `description` de cada um para saber quando
+Oito papéis, um arquivo cada. O Claude Code lê o `description` de cada um para saber quando
 chamar; o corpo do arquivo é a instrução que aquele agente recebe.
 
 | Agente | O que ele decide | Quando chamar |
@@ -11,6 +11,7 @@ chamar; o corpo do arquivo é a instrução que aquele agente recebe.
 | `backend` | server action, Prisma, `core`, worker, tutor | persistência, validação, cálculo químico |
 | `security` | conta, sessão, dado de aluno, licença | antes de mexer em qualquer um dos quatro |
 | `deploy` | build, VPS, migração, backup, variável | quando a mudança precisa de passo no servidor |
+| `researcher` | o que se sabe, de onde veio, o que falta | quando a decisão depende de algo que ninguém sabe de cabeça |
 | `reviewer` | se a entrega passa | ao final, sempre |
 
 ## Como eles conversam
@@ -21,11 +22,17 @@ Cada um tem `SendMessage` e `ListAgents`. O nome do arquivo é o endereço: `Sen
 O caminho normal de uma entrega:
 
 ```
-pm  ──►  ui-ux  ──►  frontend ──┐
-    └──►  backend ───────────────┼──►  reviewer  ──►  commit
-    └──►  security (quando toca conta, dado ou dependência)
-    └──►  deploy   (quando precisa de variável, migração ou passo no servidor)
+                 ┌──►  ui-ux  ──►  frontend ──┐
+pm  ──────────── ┼──►  backend ───────────────┼──►  reviewer  ──►  commit
+                 ├──►  security (quando toca conta, dado ou dependência)
+                 └──►  deploy   (quando precisa de variável, migração ou passo no servidor)
+
+researcher  ──►  qualquer um deles, a qualquer momento
 ```
+
+O `researcher` não tem lugar fixo na fila: ele é chamado por quem estiver travado. O caso mais
+comum é o `pm` antes de decidir — o pedido do usuário vira ideia bem posta depois de saber como
+outros resolveram e o que o produto já tem.
 
 Três regras de convivência:
 
@@ -36,9 +43,12 @@ Três regras de convivência:
 3. **O `reviewer` tem veto** sobre a regra que não se quebra e sobre a precisão química. É a
    única hierarquia que existe aqui.
 
+E uma regra que vale só para pesquisa: **achado tem endereço e data**. Número sem fonte é boato, e
+"recentemente" apodrece — pesquisa é lida meses depois de escrita.
+
 ## O que todos sabem antes de começar
 
-O `CLAUDE.md` vale para os sete, e nenhum arquivo daqui o substitui:
+O `CLAUDE.md` vale para os oito, e nenhum arquivo daqui o substitui:
 
 - **O núcleo determinístico decide; a IA explica.** Química é do RDKit, do campo de força e do
   motor de missões.
