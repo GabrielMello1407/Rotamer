@@ -31,6 +31,11 @@ export type {
   Descriptors,
   Molecule,
   OffendingAtom,
+  StereoBondLabel,
+  StereoLabel,
+  StereoLabels,
+  TidyResult,
+  TidyStereoChanges,
 } from './chemistry/types';
 
 // ---- grafo: a fonte de verdade ----

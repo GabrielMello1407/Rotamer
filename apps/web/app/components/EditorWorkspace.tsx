@@ -1,7 +1,7 @@
 'use client';
 
 import { fromMolblock, toMolblock } from '@rotamer/core';
-import { Editor2D, Toolbar, createEditorStore } from '@rotamer/editor2d';
+import { Editor2D, Toolbar, createEditorStore, type EditorNotice } from '@rotamer/editor2d';
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
 import { useStore } from 'zustand';
@@ -13,8 +13,106 @@ import { useChemistryClient } from './use-chemistry-client';
 import { useDraft } from './use-draft';
 import { useInitialSmiles } from './use-initial-smiles';
 import { useMolecule } from './use-molecule';
-import type { NormalModes } from '@rotamer/core';
+import type { MoleculeGraph, NormalModes, TidyStereoChanges } from '@rotamer/core';
 import { track } from '../../lib/track';
+
+/**
+ * Nove segundos: tempo para ler uma frase de sala de aula sem pressa. A frase
+ * ensina, e o traço seguinte apaga o aviso antes disso de qualquer jeito — ser
+ * generoso aqui não custa nada porque o cartão não intercepta clique
+ * (`pointer-events: none` em `.notice`, `Editor2D.module.css`).
+ *
+ * `prefers-reduced-motion` não encurta este tempo: quem pede menos movimento
+ * costuma precisar de mais tempo para ler, não de menos.
+ */
+const NOTICE_MS = 9_000;
+
+/**
+ * O aviso da faixa depois de organizar, escolhido só a partir do que `tidy`
+ * relatou — nunca inventado aqui.
+ *
+ * `null` quando nada mudou na estereoquímica: é o caso da maioria das
+ * moléculas de aula, que não têm cunha nenhuma, e um aviso que aparece sempre
+ * vira moldura que ninguém lê.
+ *
+ * Três coisas diferentes podem acontecer com uma cunha, e cada uma ensina uma
+ * química diferente:
+ *
+ * - **saiu** — aquele átomo não é centro estereogênico, e cunha que não define
+ *   configuração é enfeite. É o caso que gerou este aviso;
+ * - **mudou de ligação** — o centro continua ali; o RDKit só escolheu outra
+ *   ligação para desenhar a mesma configuração;
+ * - **virou traço** — a mesma configuração, vista do outro lado do papel.
+ *
+ * Dizer "saiu" nos três seria mentir em dois — e mentir sobre estereoquímica
+ * para uma sala inteira é o erro que este produto não pode cometer (D-01). Por
+ * isso o núcleo distingue os três, e cada um tem a sua frase.
+ */
+function infoNoticeFor(stereo: TidyStereoChanges): EditorNotice | null {
+  const { removedWedges, movedWedges, flippedWedges } = stereo;
+  if (removedWedges === 0 && movedWedges === 0 && flippedWedges === 0) return null;
+
+  // A cunha que saiu de verdade vem primeiro: é a única das três que muda o que
+  // o desenho afirma, e é a única que a pessoa precisa conferir.
+  if (removedWedges > 0) {
+    return {
+      tone: 'info',
+      headline:
+        removedWedges === 1
+          ? 'A cunha saiu do desenho: naquele átomo ela não definia configuração.'
+          : `${String(removedWedges)} cunhas saíram do desenho: naqueles átomos elas não definiam configuração.`,
+      detail:
+        'Cunha só vale em centro estereogênico — átomo com quatro grupos diferentes. Ctrl+Z traz o desenho de antes.',
+    };
+  }
+
+  if (movedWedges > 0 && flippedWedges > 0) {
+    return {
+      tone: 'info',
+      headline: 'As cunhas foram redesenhadas: mesma configuração, outro traço.',
+      detail:
+        'Com as posições novas, o RDKit escolhe de qual ligação a cunha sai e para que lado ela aponta. As letras R e S ao lado dos átomos continuam as mesmas.',
+    };
+  }
+
+  if (movedWedges > 0) {
+    return {
+      tone: 'info',
+      headline:
+        movedWedges === 1
+          ? 'A cunha mudou de ligação: o centro continua ali.'
+          : `${String(movedWedges)} cunhas mudaram de ligação: os centros continuam ali.`,
+      detail:
+        'Com as posições novas, o RDKit escolhe de qual ligação do centro a cunha sai. As letras R e S continuam as mesmas.',
+    };
+  }
+
+  return {
+    tone: 'info',
+    headline:
+      flippedWedges === 1
+        ? 'A cunha virou traço: a mesma configuração, vista do outro lado.'
+        : `${String(flippedWedges)} cunhas trocaram de tipo: a mesma configuração, vista do outro lado.`,
+    detail: 'As letras R e S ao lado dos átomos continuam as mesmas.',
+  };
+}
+
+/**
+ * O aviso de quando organizar erraria: algum centro (R/S/E/Z) mudaria de
+ * letra. Isso nunca deveria acontecer só de reorganizar o desenho — por isso
+ * `tidy` é descartado neste caso (ver `tidy` em `EditorWorkspace`) e a tela
+ * devolve a responsabilidade a quem é dela, em vez de aplicar um resultado que
+ * silenciosamente trocaria a molécula do desenho por outra.
+ */
+function dangerNotice(onClose: () => void): EditorNotice {
+  return {
+    tone: 'danger',
+    headline:
+      'Não organizei o desenho: nas posições novas, a configuração de um centro sairia diferente — e isso seria outra molécula.',
+    detail: 'O seu desenho está intacto na tela, nada foi trocado. Isto é um defeito do Rotamer, não do seu desenho.',
+    onClose,
+  };
+}
 
 /**
  * A cena 3D chega depois.
@@ -228,6 +326,40 @@ export function EditorWorkspace({
   const client = connection.status === 'ready' ? connection.client : null;
 
   /**
+   * O aviso da faixa sobre a última vez que se organizou, e só sobre ela.
+   *
+   * `noticeGraphRef` guarda o grafo a que o aviso se refere: quando o grafo do
+   * editor deixa de ser esse (desenhar, desfazer, refazer, carregar exemplo,
+   * limpar a tela — qualquer caminho, sem precisar enumerar cada um), o efeito
+   * abaixo apaga o aviso sozinho. Um aviso que continua na tela descrevendo um
+   * desenho que já não existe é mentira, mesmo que tenha sido verdade um
+   * instante atrás.
+   */
+  const [notice, setNotice] = useState<EditorNotice | null>(null);
+  const noticeGraphRef = useRef<MoleculeGraph | null>(null);
+  const noticeTimerRef = useRef<number | undefined>(undefined);
+
+  const clearNoticeTimer = useCallback(() => {
+    window.clearTimeout(noticeTimerRef.current);
+    noticeTimerRef.current = undefined;
+  }, []);
+
+  const dismissNotice = useCallback(() => {
+    clearNoticeTimer();
+    noticeGraphRef.current = null;
+    setNotice(null);
+  }, [clearNoticeTimer]);
+
+  useEffect(() => {
+    if (noticeGraphRef.current !== null && noticeGraphRef.current !== graph) {
+      dismissNotice();
+    }
+  }, [graph, dismissNotice]);
+
+  // O temporizador não pode sobreviver ao componente.
+  useEffect(() => clearNoticeTimer, [clearNoticeTimer]);
+
+  /**
    * Organizar o desenho.
    *
    * A tela deixa desenhar de qualquer jeito — é assim que tem que ser — e o
@@ -238,20 +370,48 @@ export function EditorWorkspace({
    *
    * O grafo continua o mesmo; o que muda são as posições. E, como isso entra no
    * histórico, Ctrl+Z devolve o desenho de antes.
+   *
+   * A cunha, porém, é desenho, e o RDKit reescreve cada uma para as posições
+   * novas: pode sumir, quando não definia nada, ou virar traço, quando definia
+   * e passou para o outro lado do papel — as duas são certas, e ficam mudas se
+   * a tela não contar (`tidy.ts`, `TidyStereoChanges`). Quando o RDKit relata
+   * que algum centro mudaria de letra, o resultado nem chega a ser aplicado: é
+   * o organizador que errou, não o desenho, e a tela devolve a
+   * responsabilidade em vez de trocar a molécula da pessoa por outra em
+   * silêncio.
    */
   const tidy = useCallback(() => {
     if (!client || graph.atoms.length === 0) return;
 
     const run = async (): Promise<void> => {
-      const arranged = await client.tidy(toMolblock(graph));
-      if (arranged === null) return;
+      // Organizar de novo é sobre um desenho que está prestes a deixar de
+      // existir na forma atual: o aviso anterior conta a história de um
+      // instante que já passou.
+      dismissNotice();
 
-      store.getState().commit(fromMolblock(arranged));
+      const result = await client.tidy(toMolblock(graph));
+      if (result === null) return;
+
+      if (!result.stereo.sameConfiguration) {
+        noticeGraphRef.current = graph;
+        setNotice(dangerNotice(dismissNotice));
+        return;
+      }
+
+      const arranged = fromMolblock(result.molblock);
+      store.getState().commit(arranged);
       store.getState().frame();
+
+      const next = infoNoticeFor(result.stereo);
+      if (next === null) return;
+
+      noticeGraphRef.current = arranged;
+      setNotice(next);
+      noticeTimerRef.current = window.setTimeout(dismissNotice, NOTICE_MS);
     };
 
     void run();
-  }, [client, graph, store]);
+  }, [client, graph, store, dismissNotice]);
 
   const openPanel = useCallback((next: DrawerTab) => {
     setTab(next);
@@ -307,7 +467,7 @@ export function EditorWorkspace({
 
       <div className={styles.stage}>
         <div className={styles.canvasArea} ref={areaRef}>
-          <Editor2D store={store} onTidy={client ? tidy : undefined} />
+          <Editor2D store={store} onTidy={client ? tidy : undefined} notice={notice ?? undefined} />
 
           <div className={styles.rail} ref={railRef}>
             <Toolbar store={store} onTidy={client ? tidy : undefined} />

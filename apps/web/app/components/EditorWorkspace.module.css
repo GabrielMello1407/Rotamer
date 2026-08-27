@@ -73,8 +73,8 @@
   width: min(400px, 40%);
   height: min(320px, 44%);
   transition:
-    width var(--t-mid) var(--ease-out),
-    height var(--t-mid) var(--ease-out);
+    width var(--t-base) var(--ease-out),
+    height var(--t-base) var(--ease-out);
   z-index: 1;
   border-radius: var(--r-xl);
   box-shadow: var(--shadow-md);

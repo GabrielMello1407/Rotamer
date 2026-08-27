@@ -107,6 +107,51 @@ export interface Molecule {
   readonly stereo: StereoLabels;
 }
 
+/**
+ * O que aconteceu com a estereoquímica ao organizar o desenho.
+ *
+ * Organizar redesenha as coordenadas; o RDKit reescreve as cunhas para que a
+ * configuração continue a mesma na posição nova. Três coisas podem acontecer, e
+ * a tela precisa poder contar cada uma:
+ *
+ * - uma cunha que não definia centro nenhum some — é enfeite que o desenho novo
+ *   não carrega, não um traço perdido;
+ * - uma cunha de um centro de verdade troca de cheia para tracejada ou o
+ *   contrário — o centro é o mesmo, só está desenhado do outro lado;
+ * - em qualquer um dos dois casos, a configuração de cada centro (R/S/E/Z) devia
+ *   continuar a mesma. Isso não se supõe: `tidy` pergunta ao RDKit antes e
+ *   depois e compara.
+ */
+export interface TidyStereoChanges {
+  /** Cunhas que estavam no desenho de entrada e não sobreviveram no de saída. */
+  readonly removedWedges: number;
+  /** Cunhas que continuam ali, mas trocaram de cheia para tracejada ou vice-versa. */
+  readonly flippedWedges: number;
+  /**
+   * Cunhas que continuam no mesmo átomo, em outra ligação dele.
+   *
+   * É o caso mais comum, e o que mais engana: o RDKit escolhe de qual ligação
+   * do centro a cunha sai, e a escolha muda com as coordenadas. Contar isso
+   * como remoção faria a tela dizer que a cunha não valia nada — para um
+   * centro que continua ali, com a mesma configuração.
+   */
+  readonly movedWedges: number;
+  /**
+   * `false` quando algum centro mudou de letra (R virou S, E virou Z, etc.).
+   *
+   * Isso nunca deveria acontecer só de reorganizar o desenho — é defeito do
+   * organizador, não do desenho do aluno, e a tela precisa poder dizer isso.
+   */
+  readonly sameConfiguration: boolean;
+}
+
+/** Resultado de organizar: as coordenadas novas e o relatório de estereoquímica. */
+export interface TidyResult {
+  /** Molblock nas coordenadas novas, na escala do editor. */
+  readonly molblock: string;
+  readonly stereo: TidyStereoChanges;
+}
+
 /** Código de erro químico. A interface escolhe o tratamento a partir dele. */
 export type ChemistryErrorCode =
   | 'empty'

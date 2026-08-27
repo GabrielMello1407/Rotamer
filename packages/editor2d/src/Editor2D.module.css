@@ -69,6 +69,117 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* O aviso mora na banda da dica e a substitui: duas vozes no mesmo canto viram
+   uma coisa ilegível. Cartão, não pílula — são duas linhas, e o raio codifica
+   hierarquia. */
+.notice {
+  position: absolute;
+  inset: var(--sp-4) 0 auto 0;
+  display: flex;
+  justify-content: center;
+  padding: 0 var(--sp-4);
+  pointer-events: none;
+}
+
+.noticeCard {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  max-width: 62ch;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--info-wash);
+  border: 1px solid color-mix(in srgb, var(--info) 35%, var(--line));
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-sm);
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity var(--t-base) var(--ease-out),
+    transform var(--t-base) var(--ease-out);
+}
+
+/*
+ * O estado de antes do primeiro quadro. `Editor2D` troca esta classe por
+ * `requestAnimationFrame` assim que o cartão monta, o que dá à `transition`
+ * acima algo para animar — sem essa troca, o cartão já nasceria no estado
+ * final e não haveria entrada nenhuma para ver.
+ */
+.noticeEnter {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+.noticeDanger {
+  background: var(--danger-wash);
+  border-color: color-mix(in srgb, var(--danger) 40%, var(--line));
+}
+
+/* Só o cartão que se fecha recebe clique: os outros não podem roubar traço. */
+.noticeCard:has(.noticeClose) {
+  pointer-events: auto;
+}
+
+.noticeMark {
+  flex: none;
+  width: var(--sp-2);
+  height: var(--sp-2);
+  margin-top: var(--sp-1);
+  border-radius: var(--r-full);
+  background: var(--info);
+}
+
+.noticeDanger .noticeMark {
+  background: var(--danger);
+}
+
+.noticeHeadline {
+  margin: 0;
+  font-size: var(--step--1);
+  color: var(--ink-900);
+  /* A frase conta cunhas, e contagem é número. */
+  font-variant-numeric: tabular-nums;
+}
+
+.noticeDetail {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--step--1);
+  color: var(--ink-500);
+}
+
+/* Alvo de 44px: escola pública em aparelho fraco é o caso de uso. */
+.noticeClose {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  margin: calc(var(--sp-3) * -1) calc(var(--sp-2) * -1) calc(var(--sp-3) * -1) 0;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--ink-500);
+  cursor: pointer;
+}
+
+.noticeClose:hover {
+  color: var(--ink-900);
+}
+
+.noticeCloseIcon {
+  width: 15px;
+  height: 15px;
+}
+
+/* No celular a cena 3D mora no canto de cima à direita: o aviso para antes
+   dela em vez de escrever por cima da molécula no espaço. */
+@media (max-width: 900px) {
+  .notice {
+    inset: var(--sp-3) calc(46% + var(--sp-3)) auto 0;
+    padding: 0 var(--sp-3);
+    justify-content: flex-start;
+  }
+}
+
 /* O que só o leitor de tela lê. Quem seleciona com Ctrl+A não vê o marca-texto,
    e sem isto nada anuncia que a seleção mudou. */
 .announce {

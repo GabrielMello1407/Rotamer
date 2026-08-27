@@ -54,6 +54,31 @@ export interface Editor2DProps {
    * aparece no menu.
    */
   readonly onTidy?: (() => void) | undefined;
+  /**
+   * O aviso da última vez que se organizou o desenho.
+   *
+   * Enquanto ele existir, toma a banda da dica — duas vozes no mesmo canto
+   * viram uma coisa ilegível. Quem decide a frase e por quanto tempo ela fica
+   * na tela é `EditorWorkspace`; o editor só sabe desenhar um cartão.
+   */
+  readonly notice?: EditorNotice | undefined;
+}
+
+/**
+ * O aviso que substitui a dica quando organizar mexeu na estereoquímica.
+ *
+ * `info` é conta do RDKit relatada — cunha que sumiu ou virou traço sem a
+ * configuração mudar. `danger` é o caso em que o organizador erraria: algum
+ * centro mudaria de letra, e o produto se recusa a aplicar o resultado.
+ */
+export interface EditorNotice {
+  readonly tone: 'info' | 'danger';
+  /** A frase que ensina. Fica na tinta cheia. */
+  readonly headline: string;
+  /** A linha de apoio, em tom mais baixo. */
+  readonly detail: string;
+  /** Só o aviso de defeito tem fechar — os outros saem sozinhos. */
+  readonly onClose?: (() => void) | undefined;
 }
 
 /**
@@ -509,7 +534,7 @@ const ELEMENT_KEYS: Readonly<Record<string, string>> = {
  * pronta dá o toque certo. O componente não sabe química — ele mexe no grafo, e
  * o grafo vai para o RDKit responder se aquilo existe.
  */
-export function Editor2D({ store, className, onTidy }: Editor2DProps): ReactElement {
+export function Editor2D({ store, className, onTidy, notice }: Editor2DProps): ReactElement {
   const frameRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const paletteRef = useRef<EditorPalette | null>(null);
@@ -636,6 +661,33 @@ export function Editor2D({ store, className, onTidy }: Editor2DProps): ReactElem
 
   // ---- redesenho a cada mudança de estado ----
   useEffect(() => store.subscribe(paint), [store, paint]);
+
+  /**
+   * O cartão de aviso entra com uma transição, não já pronto.
+   *
+   * `false` no quadro do mount e `true` um quadro depois é o que dá à
+   * `transition` do CSS algo para animar — trocar direto para o estado final
+   * faria o cartão nascer sem entrada nenhuma. Quanto tempo ele fica na tela
+   * é decisão de quem monta a tela, não deste componente: aqui só existe a
+   * animação de entrada.
+   */
+  const [noticeEntered, setNoticeEntered] = useState(false);
+
+  useEffect(() => {
+    if (notice === null || notice === undefined) {
+      setNoticeEntered(false);
+      return;
+    }
+
+    setNoticeEntered(false);
+    const frame = requestAnimationFrame(() => {
+      setNoticeEntered(true);
+    });
+
+    return () => {
+      cancelAnimationFrame(frame);
+    };
+  }, [notice]);
 
   /**
    * O menu do botão direito.
@@ -1313,10 +1365,54 @@ export function Editor2D({ store, className, onTidy }: Editor2DProps): ReactElem
         onContextMenu={openMenu}
       />
 
-      {hint !== null && (
-        <div className={styles.hint}>
-          <p className={styles.hintText}>{hint}</p>
+      {/* O aviso toma a banda da dica: as duas são a voz da tela de desenho, e
+          duas vozes no mesmo canto viram uma coisa ilegível. */}
+      {notice !== null && notice !== undefined ? (
+        <div className={styles.notice}>
+          <div
+            className={[
+              styles.noticeCard,
+              notice.tone === 'danger' ? styles.noticeDanger : null,
+              noticeEntered ? null : styles.noticeEnter,
+            ]
+              .filter(Boolean)
+              .join(' ')}
+            role={notice.tone === 'danger' ? 'alert' : 'status'}
+            aria-live={notice.tone === 'danger' ? undefined : 'polite'}
+            data-testid="aviso-organizar"
+          >
+            <span className={styles.noticeMark} aria-hidden="true" />
+            <div>
+              <p className={styles.noticeHeadline}>{notice.headline}</p>
+              <p className={styles.noticeDetail}>{notice.detail}</p>
+            </div>
+            {notice.onClose !== undefined && (
+              <button
+                type="button"
+                className={styles.noticeClose}
+                aria-label="Fechar o aviso"
+                data-testid="fechar-aviso-organizar"
+                onClick={notice.onClose}
+              >
+                <svg viewBox="0 0 16 16" aria-hidden="true" className={styles.noticeCloseIcon}>
+                  <path
+                    d="M4 4l8 8M12 4l-8 8"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
+      ) : (
+        hint !== null && (
+          <div className={styles.hint}>
+            <p className={styles.hintText}>{hint}</p>
+          </div>
+        )
       )}
 
       {menu !== null && entries.length > 0 && (

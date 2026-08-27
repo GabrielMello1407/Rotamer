@@ -5,7 +5,7 @@
  * tocar em nada abaixo dela: ele mexe no grafo, e o grafo é que atravessa para
  * o núcleo. Nenhuma pergunta química é respondida aqui.
  */
-export { Editor2D, type Editor2DProps } from './Editor2D';
+export { Editor2D, type Editor2DProps, type EditorNotice } from './Editor2D';
 export { Toolbar, type ToolbarProps } from './Toolbar';
 export {
   createEditorStore,

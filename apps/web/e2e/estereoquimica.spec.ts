@@ -103,3 +103,94 @@ test.describe('estereoquímica', () => {
     await expect(page.getByTestId('identidade')).toContainText(`C/C=C${barra}C`);
   });
 });
+
+/**
+ * O aviso depois de organizar.
+ *
+ * "Organizar o desenho" reescreve as cunhas para as posições novas — e sem
+ * contar o que fez, quem desenhou lê a mudança como um bug que comeu o
+ * traço. As duas coisas que podem acontecer são certas do ponto de vista
+ * químico (a cunha some quando não definia nada; troca de tipo quando
+ * definia e passou para o outro lado do papel), e a faixa no alto da tela de
+ * desenho precisa contar qual das duas foi.
+ */
+test.describe('aviso ao organizar', () => {
+  test('cunha sem centro estereogênico some, e o aviso conta o porquê', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.getByTestId('tela-de-desenho')).toBeVisible();
+
+    // Metila — carbono — hidroxila: etanol, desenhado à mão como no relato
+    // original. A cunha vai na ligação C–O; o carbono que a recebe só tem
+    // hidrogênios iguais como vizinhos, então não é centro estereogênico.
+    const metila = await pointOnCanvas(page);
+    await page.mouse.click(metila.x, metila.y);
+
+    const carbono = await pointOnCanvas(page, 1.5 * SCALE);
+    await page.mouse.move(metila.x, metila.y);
+    await page.mouse.down();
+    await page.mouse.move(carbono.x, carbono.y, { steps: 8 });
+    await page.mouse.up();
+
+    await expect(page.getByTestId('formula')).toHaveText('C2H6', { timeout: 60_000 });
+
+    await page.keyboard.press('o');
+    const oxigenio = await pointOnCanvas(page, 1.5 * SCALE, -1.5 * SCALE);
+    await page.mouse.move(carbono.x, carbono.y);
+    await page.mouse.down();
+    await page.mouse.move(oxigenio.x, oxigenio.y, { steps: 8 });
+    await page.mouse.up();
+
+    await expect(page.getByTestId('formula')).toHaveText('C2H6O', { timeout: 60_000 });
+
+    // Ferramenta de estereoquímica, clique na ligação C–O: cunha cheia.
+    await page.keyboard.press('w');
+    const meioDaLigacaoCO = { x: (carbono.x + oxigenio.x) / 2, y: (carbono.y + oxigenio.y) / 2 };
+    await page.mouse.click(meioDaLigacaoCO.x, meioDaLigacaoCO.y);
+
+    await page.getByTestId('organizar').click();
+
+    const aviso = page.getByTestId('aviso-organizar');
+    await expect(aviso).toBeVisible({ timeout: 60_000 });
+    await expect(aviso).toHaveAttribute('role', 'status');
+    // A frase nomeia a causa, e só pode nomear porque o núcleo separa "saiu" de
+    // "mudou de ligação" — sem essa distinção, esta mesma tela apareceria na
+    // alanina, onde a cunha não saiu de lugar nenhum.
+    await expect(aviso).toContainText('A cunha saiu do desenho');
+    await expect(aviso).toContainText('não definia configuração');
+    await expect(aviso).toContainText('centro estereogênico');
+
+    // A química não mudou — só o enfeite que não definia configuração nenhuma.
+    await expect(page.getByTestId('formula')).toHaveText('C2H6O');
+
+    // O aviso é sobre o desenho de antes do Ctrl+Z: continuar mostrando ele
+    // depois de desfazer seria contar a história de um traço que já não existe.
+    await page.keyboard.press('Control+z');
+    await expect(aviso).toBeHidden();
+  });
+
+  test('cunha de um centro de verdade vira traço, e a letra do centro continua a mesma', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    await openAnalysis(page);
+
+    // Alanina: o centro estereogênico de uma molécula de aula, não de um
+    // exemplo artificial.
+    await page.getByTestId('entrada-smiles').fill('C[C@@H](N)C(=O)O');
+    await page.getByRole('button', { name: 'Carregar' }).click();
+
+    await expect(page.getByTestId('formula')).toHaveText('C3H7NO2', { timeout: 60_000 });
+    await expect(page.getByTestId('estereocentros')).not.toContainText('sem configuração');
+
+    await page.getByTestId('organizar').click();
+
+    const aviso = page.getByTestId('aviso-organizar');
+    await expect(aviso).toBeVisible({ timeout: 60_000 });
+    await expect(aviso).toContainText('virou traço');
+    await expect(aviso).toContainText('mesma configuração');
+
+    // A letra R ao lado do átomo é exatamente o que o aviso promete que não
+    // mudou.
+    await expect(page.getByTestId('estereocentros')).not.toContainText('sem configuração');
+  });
+});

@@ -10,7 +10,7 @@ import { analyze } from './analysis';
 import { depict } from './depiction';
 import { scriptFactory } from './browser';
 import { configureRDKit, loadRDKit, rdkitVersion } from './rdkit';
-import type { AnalysisResult, ChemistryError } from './types';
+import type { AnalysisResult, ChemistryError, TidyResult } from './types';
 
 /** Trajetória de vibração, quando foi possível calcular. */
 export type DynamicsResult =
@@ -58,10 +58,11 @@ export interface ChemistryApi {
   depict(input: string): Promise<string | null>;
   /**
    * Coordenadas novas para o mesmo grafo: ligações do mesmo tamanho, ângulos de
-   * verdade, anel regular. Devolve o molblock organizado, ou `null` quando a
-   * estrutura não passa pelo RDKit.
+   * verdade, anel regular. Devolve o molblock organizado e o que aconteceu com
+   * a estereoquímica ao redesenhar, ou `null` quando a estrutura não passa pelo
+   * RDKit.
    */
-  tidy(input: string): Promise<string | null>;
+  tidy(input: string): Promise<TidyResult | null>;
   /** Vibração: dinâmica molecular a partir da conformação já minimizada. */
   dynamics(input: string): Promise<DynamicsResult>;
   /** Modos normais: 3N − 6 jeitos de a molécula vibrar, cada um com sua frequência. */
@@ -124,7 +125,7 @@ export const chemistryApi: ChemistryApi = {
     return depict(input);
   },
 
-  tidy(input: string): Promise<string | null> {
+  tidy(input: string): Promise<TidyResult | null> {
     return tidy(input);
   },
 

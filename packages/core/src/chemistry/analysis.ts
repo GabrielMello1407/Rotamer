@@ -8,6 +8,7 @@ import {
   type RDKitDescriptors,
 } from './rdkit-json';
 import { loadRDKit, type RDKitOptions } from './rdkit';
+import { cleanStereoLabel, readStereoTags } from './stereo-tags';
 import type {
   AnalysisResult,
   ChemistryError,
@@ -129,18 +130,6 @@ function hydrogensOf(mol: JSMol): number[] {
 }
 
 /**
- * O que o RDKit devolve em `get_stereo_tags`.
- *
- * As duas listas têm formatos diferentes, e a diferença tem razão de ser: um
- * centro é um átomo (`[1, "(R)"]`), e uma geometria de dupla é uma ligação entre
- * dois (`[1, 2, "(E)"]`).
- */
-interface StereoTags {
-  readonly CIP_atoms?: readonly (readonly [number, string])[];
-  readonly CIP_bonds?: readonly (readonly [number, number, string])[];
-}
-
-/**
  * Configuração de cada centro, no vocabulário de Cahn–Ingold–Prelog.
  *
  * Quem atribui R, S, E e Z é o RDKit, lendo as cunhas do desenho — a regra de
@@ -155,17 +144,16 @@ interface StereoTags {
  * permite apontar na tela onde falta a cunha.
  */
 function stereoOf(mol: JSMol): StereoLabels {
-  const tags = parseJson<StereoTags>(mol.get_stereo_tags());
-  const clean = (label: string): string => label.replace(/[()]/g, '');
+  const tags = readStereoTags(mol);
 
   const atoms = (tags.CIP_atoms ?? [])
-    .map(([index, label]) => ({ index, label: clean(label) }))
+    .map(([index, label]) => ({ index, label: cleanStereoLabel(label) }))
     .filter((entry) => entry.label !== '');
 
   const bonds = (tags.CIP_bonds ?? [])
     .map(([first, second, label]) => ({
       atoms: [first, second] as readonly [number, number],
-      label: clean(label),
+      label: cleanStereoLabel(label),
     }))
     .filter((entry) => entry.label !== '');
 
