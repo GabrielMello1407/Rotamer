@@ -143,6 +143,15 @@ mão — é a mesma regra do D-01, e o erro sairia silencioso.
 - Que uma molécula tem atividade biológica. Descritores são descritores.
 - Que o Rotamer substitui PyMOL, ChemDraw ou Maestro.
 
+## O time de agentes
+
+Sete papéis vivem em `.claude/agents/`, um arquivo cada: `pm`, `ui-ux`, `frontend`, `backend`,
+`security`, `deploy` e `reviewer`. O `README.md` de lá diz quando chamar cada um e como eles
+conversam entre si. O caminho normal de uma entrega é `pm` → especialista → `reviewer`, e o
+`reviewer` tem veto sobre a regra que não se quebra.
+
+Nenhum desses arquivos substitui este aqui: o que está escrito no `CLAUDE.md` vale para os sete.
+
 ## Comandos
 
 ```
