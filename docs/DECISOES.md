@@ -794,3 +794,37 @@ o duplo toque nunca aconteceria.
 
 **Revisar se.** As sessões de observação mostrarem que ninguém acha a ferramenta — aí o caminho é
 o gesto sem modo (Shift+arrasto), não mais um botão no trilho.
+
+---
+
+## D-24 · Organizar mexe na cunha, e o produto diz o que fez
+
+**Decisão.** Organizar o desenho continua sendo do RDKit, e ele continua livre para reescrever as
+cunhas. O que muda é que o produto **relata**: quantas saíram, quantas mudaram de ligação, quantas
+trocaram de tipo — e se a configuração dos centros continua a mesma. A tela conta isso em uma
+frase que ensina a química do caso.
+
+**A pergunta que provocou.** "Quando eu organizo o desenho, a cunha some. Isso não estaria
+correto, estaria?" Estava correto e estava calado, que é o problema. Medido: cunha em átomo sem
+centro estereogênico **some**, porque não definia nada; cunha em centro de verdade **vira traço**
+ou **muda de ligação**, com o rótulo CIP idêntico antes e depois.
+
+**Três coisas diferentes, três frases diferentes.** A primeira versão contava cunha por ligação, e
+com isso "mudou de ligação" virava "saiu". A alanina com a cunha no C–N saía com a mesma contagem
+do etanol — e a tela diria, a um centro estereogênico legítimo, que "cunha só vale em centro
+estereogênico". Mentira dita para uma sala inteira, que é o erro que este produto não pode
+cometer. A conta passou a ser por **átomo de origem**: se aquela ponta continua tendo cunha, o
+desenho mudou; se não, a cunha saiu de verdade.
+
+**A conferência de configuração lê o desenho que sai.** A primeira versão perguntava duas vezes ao
+mesmo objeto do RDKit, antes e depois de `set_new_coords` — que troca o confôrmero e não encosta na
+marca de quiralidade do átomo. A resposta era sempre "igual": uma tautologia com cara de
+conferência. Agora o molblock devolvido é relido do zero, porque é ele que chega ao aluno.
+
+**Quando a configuração mudaria, organizar não acontece.** O resultado é descartado e a tela diz
+que não conseguiu organizar sem mexer na molécula. Nunca foi observado em mais de sessenta
+moléculas quirais medidas — e é justamente por isso que precisa existir: no dia em que acontecer,
+o produto não pode entregar em silêncio uma molécula que a pessoa não desenhou.
+
+**Revisar se.** O RDKit passar a expor a razão pela qual removeu uma cunha — hoje a razão é
+inferida da ausência de centro, e inferência se troca por fato assim que o fato existe.
