@@ -60,6 +60,16 @@
   --info:      var(--ink-cesio);
   --info-wash: #E4E7FB;
 
+  /* ---- seleção no desenho ----
+     O que está pego é turquesa como todo estado do produto: lilás e violeta são
+     o sódio, o potássio e o iodo no CPK, e vermelho é o oxigênio. Fica na
+     turquesa de tinta, mais pesada que a da marca — o hover é passageiro e
+     desenha um anel fino; a seleção fica e desenha um marca-texto por baixo do
+     traço. A diferença que se lê é a forma, e o peso confirma. */
+  --select:        var(--brand-ink);
+  --select-wash:   rgba(0, 128, 108, 0.24);   /* marca-texto do que está pego  */
+  --select-veil:   rgba(0, 128, 108, 0.10);   /* miolo do retângulo em arrasto */
+
   /* ---- CPK: reservado aos átomos, os 118 em cpk.css ---- */
 
   /* ---- tipografia ---- */
@@ -137,6 +147,11 @@
     --danger-wash: #3A1620;
     --info-wash:   #1B2044;
 
+    /* A turquesa clara rende mais por unidade de opacidade sobre superfície
+       escura: o marca-texto pede um pouco menos aqui para pesar o mesmo. */
+    --select-wash: rgba(53, 216, 188, 0.22);
+    --select-veil: rgba(53, 216, 188, 0.10);
+
     --shadow-sm: 0 1px 2px rgba(0,0,0,.5), 0 4px 12px -6px rgba(0,0,0,.6);
     --shadow-md: 0 1px 1px rgba(0,0,0,.5), 0 6px 16px -6px rgba(0,0,0,.6),
                  0 20px 50px -24px rgba(0,0,0,.9);
@@ -154,6 +169,7 @@
   --line:#272B38; --line-firm:#3A3F50;
   --brand:#00A98F; --brand-ink:var(--ink-cobre); --brand-on:#041B17; --brand-wash:#0C302A;
   --ok-wash:#1A2E12; --warn-wash:#33270F; --danger-wash:#3A1620; --info-wash:#1B2044;
+  --select-wash:rgba(53,216,188,.22); --select-veil:rgba(53,216,188,.10);
   --shadow-sm:0 1px 2px rgba(0,0,0,.5), 0 4px 12px -6px rgba(0,0,0,.6);
   --shadow-md:0 1px 1px rgba(0,0,0,.5), 0 6px 16px -6px rgba(0,0,0,.6), 0 20px 50px -24px rgba(0,0,0,.9);
   --stage-top:#212533; --stage-bot:#101219;

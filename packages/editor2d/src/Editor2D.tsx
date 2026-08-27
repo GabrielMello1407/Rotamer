@@ -1,6 +1,6 @@
 'use client';
 
-import { findAtom, findBond, isEmpty, type MoleculeGraph } from '@rotamer/core';
+import { findAtom, findBond, isEmpty, type AtomId, type MoleculeGraph } from '@rotamer/core';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type {
   MouseEvent as ReactMouseEvent,
@@ -12,11 +12,18 @@ import { useStore } from 'zustand';
 import { ContextMenu, type MenuEntry } from './ContextMenu';
 import styles from './Editor2D.module.css';
 import { shortcutsApply } from './keys';
-import { hoverAt, snapFromAtom, suggestDirection, toGraph, toleranceFor } from './geometry2d';
+import {
+  hoverAt,
+  selectInRegion,
+  snapFromAtom,
+  suggestDirection,
+  toGraph,
+  toleranceFor,
+} from './geometry2d';
 import { readPalette, type EditorPalette } from './palette';
 import { draw } from './render';
-import { clampScale, type EditorStore } from './store';
-import type { Camera, Hover, Point, Tool, Viewport } from './types';
+import { clampScale, type EditorState, type EditorStore } from './store';
+import type { Camera, Hover, Point, Selection, Tool, Viewport } from './types';
 
 /**
  * Quanto tempo o dedo fica parado antes de o menu aparecer.
@@ -79,6 +86,16 @@ function entriesFor(
   onTidy: (() => void) | null,
 ): MenuEntry[] {
   const state = store.getState();
+
+  // O alvo está dentro do que já está pego: o menu passa a falar do bloco
+  // inteiro, não só do item apontado — é o caminho de quem selecionou e
+  // trocou de ferramenta, ou de quem abriu o menu direto sobre a seleção.
+  if (
+    (target?.kind === 'atom' && state.selection.atoms.has(target.id)) ||
+    (target?.kind === 'bond' && state.selection.bonds.has(target.id))
+  ) {
+    return selectionEntries(state, graph, state.selection);
+  }
 
   if (target?.kind === 'atom') {
     const atom = findAtom(graph, target.id);
@@ -234,6 +251,139 @@ function entriesFor(
   ];
 }
 
+/**
+ * O menu quando o alvo é parte da seleção: age no bloco inteiro, não só no
+ * item apontado. Mesma regra do resto do menu — o menu só é o caminho até a
+ * ação que já existe no grafo; quem diz se o resultado existe continua sendo
+ * o RDKit, depois.
+ *
+ * Sem seção de estereoquímica: aplicar cunha em bloco definiria configurações
+ * que ninguém escolheu, e o RDKit devolveria `R`/`S` que a pessoa não desenhou
+ * (D-01, D-21).
+ */
+function selectionEntries(
+  state: EditorState,
+  graph: MoleculeGraph,
+  selection: Selection,
+): MenuEntry[] {
+  const commonElement = commonElementOf(graph, selection.atoms);
+
+  return [
+    { kind: 'title', label: 'Seleção' },
+    ...(selection.atoms.size > 0
+      ? [
+          { kind: 'title' as const, label: 'trocar o elemento' },
+          {
+            kind: 'elements' as const,
+            active: commonElement,
+            onPick: (symbol: string) => {
+              state.changeSelectionElement(symbol);
+            },
+          },
+          { kind: 'divider' as const },
+        ]
+      : []),
+    ...(selection.bonds.size > 0
+      ? [
+          { kind: 'title' as const, label: 'ordem das ligações' },
+          ...ORDERS.map(([order, label]) => ({
+            kind: 'item' as const,
+            label,
+            testId: `menu-selecao-ordem-${String(order)}`,
+            onPick: () => {
+              state.setSelectionOrder(order);
+            },
+          })),
+          { kind: 'divider' as const },
+        ]
+      : []),
+    {
+      kind: 'item',
+      label: 'Soltar a seleção',
+      testId: 'menu-soltar-selecao',
+      onPick: () => {
+        state.clearSelection();
+      },
+    },
+    {
+      kind: 'item',
+      label: `Apagar ${selectionCount(selection.atoms.size, selection.bonds.size)}`,
+      danger: true,
+      testId: 'menu-apagar-selecao',
+      onPick: () => {
+        state.eraseSelection();
+      },
+    },
+  ];
+}
+
+/**
+ * O elemento comum a todos os átomos selecionados, ou `null` quando são
+ * diferentes — é o que a mini-tabela do menu marca como ativo. Trocar o
+ * elemento em bloco não julga se o resultado existe; quem julga é o RDKit,
+ * depois, como sempre.
+ */
+function commonElementOf(graph: MoleculeGraph, atoms: ReadonlySet<AtomId>): string | null {
+  let common: string | null = null;
+
+  for (const atom of graph.atoms) {
+    if (!atoms.has(atom.id)) continue;
+    if (common === null) common = atom.element;
+    else if (common !== atom.element) return null;
+  }
+
+  return common;
+}
+
+/**
+ * "7 átomos e 6 ligações" — a contagem que entra na dica e nos rótulos do
+ * menu. O plural é escrito à mão porque um átomo é um átomo: "1 átomos" numa
+ * tela de aula é o tipo de descuido que a turma inteira copia.
+ */
+/**
+ * "selecionado", "selecionada", "selecionados", "selecionadas".
+ *
+ * Três casos, e é a gramática que os separa. Com átomo e ligação juntos, o
+ * particípio vai para o masculino plural, que é como o português concorda um
+ * adjetivo posposto a substantivos de gêneros diferentes: "2 átomos e 1 ligação
+ * selecionados". Sozinhos, cada um concorda consigo. Sem isto, o caso mais
+ * comum da ferramenta — um átomo só — saía escrito "1 átomo selecionados".
+ */
+function selectedWord(selection: Selection): string {
+  const atoms = selection.atoms.size;
+  const bonds = selection.bonds.size;
+
+  if (atoms > 0 && bonds > 0) return 'selecionados';
+  if (bonds > 0) return bonds === 1 ? 'selecionada' : 'selecionadas';
+
+  return atoms === 1 ? 'selecionado' : 'selecionados';
+}
+
+function selectionCount(atoms: number, bonds: number): string {
+  const a = `${String(atoms)} ${atoms === 1 ? 'átomo' : 'átomos'}`;
+  const b = `${String(bonds)} ${bonds === 1 ? 'ligação' : 'ligações'}`;
+
+  if (atoms === 0) return b;
+  if (bonds === 0) return a;
+  return `${a} e ${b}`;
+}
+
+/** O mesmo átomo, a mesma ligação — usado para reconhecer o duplo toque. */
+function sameHover(a: Hover, b: Hover): boolean {
+  if (a === null || b === null) return false;
+  if (a.kind !== b.kind) return false;
+  return a.id === b.id;
+}
+
+/**
+ * Janela de tempo entre dois toques para contar como duplo toque.
+ *
+ * O gesto não existe no navegador para ponteiro de caneta/mouse com a mesma
+ * confiabilidade que existe para toque — por isso a contagem é feita à mão
+ * aqui, uniforme para os dois, em vez de depender do `dblclick` nativo.
+ */
+const DOUBLE_TAP_MS = 350;
+
 /** As cargas que aparecem em aula de orgânica, e nada além delas. */
 const CHARGES = [1, 0, -1] as const;
 
@@ -264,7 +414,33 @@ const WEDGES = [
  * porque cada ferramenta responde a arrasto de um jeito diferente e adivinhar
  * isso não é parte de aprender química.
  */
-function hintFor(tool: Tool, graph: MoleculeGraph, hover: Hover): string | null {
+function hintFor(tool: Tool, graph: MoleculeGraph, hover: Hover, selection: Selection): string | null {
+  /*
+   * A dica da seleção só aparece na ferramenta Selecionar.
+   *
+   * Ela promete "clique no vazio solta" — e em qualquer outra ferramenta o
+   * clique parado no vazio cria um átomo. Prometer o gesto errado é pior que
+   * não dizer nada: quem seguir a dica desenha carbono sem querer no meio da
+   * estrutura.
+   */
+  if (tool === 'select' && (selection.atoms.size > 0 || selection.bonds.size > 0)) {
+    return `${selectionCount(selection.atoms.size, selection.bonds.size)} ${selectedWord(
+      selection,
+    )}. Arraste de dentro para mover · Delete apaga · clique no vazio solta.`;
+  }
+
+  // Fora dela, a seleção continua existindo e o caminho para agir sobre ela é
+  // voltar à ferramenta — é isso que a dica diz.
+  if (selection.atoms.size > 0 || selection.bonds.size > 0) {
+    return `${selectionCount(selection.atoms.size, selection.bonds.size)} ${selectedWord(
+      selection,
+    )}. Tecle V para mover ou apagar em bloco · Esc solta.`;
+  }
+
+  if (tool === 'select') {
+    return 'Arraste no fundo para cercar um pedaço · dois toques pegam o fragmento inteiro · dois dedos movem a vista.';
+  }
+
   // A dica mais útil é a que chega na hora da intenção: com o cursor em cima de
   // uma ligação, o que a pessoa quer saber é como transformá-la em dupla.
   if (tool === 'structure' && hover?.kind === 'bond') {
@@ -289,6 +465,17 @@ function hintFor(tool: Tool, graph: MoleculeGraph, hover: Hover): string | null 
 
   if (graph.atoms.length <= 3) {
     return 'Clique numa ligação para trocar a ordem: simples → dupla → tripla. Para mover um átomo, use a ferramenta de mover — ou segure Shift.';
+  }
+
+  /*
+   * A dor de repetir átomo a átomo aparece quando a molécula cresce — é a hora
+   * de apontar o caminho mais curto. Mas só por uma faixa de tamanho: a dica
+   * some depois, como toda dica desta função. Uma faixa de texto fixa no pé da
+   * tela deixa de ser dica e vira moldura, e ela come a altura que a molécula
+   * precisa para crescer.
+   */
+  if (graph.atoms.length >= 8 && graph.atoms.length <= 14) {
+    return 'Para pegar um pedaço inteiro, use Selecionar (V) — ou segure Shift e arraste no fundo.';
   }
 
   return null;
@@ -340,11 +527,29 @@ export function Editor2D({ store, className, onTidy }: Editor2DProps): ReactElem
   const touchesRef = useRef(new Map<number, Point>());
   const pinchRef = useRef<Pinch | null>(null);
 
+  /**
+   * O ponto do grafo onde o arrasto do bloco selecionado começou.
+   *
+   * `Drag` de tipo `'selection'` não guarda a origem (só `before` e `moved`):
+   * o deslocamento precisa ser recalculado do início a cada quadro para não
+   * acumular erro de ponto flutuante, e é esta referência que sustenta a
+   * conta — igual ao `pointerStartRef`, mas em coordenadas do grafo.
+   */
+  const selectionDragOriginRef = useRef<Point | null>(null);
+
+  /**
+   * O último toque solto sem arrastar, na ferramenta Selecionar — é o que
+   * reconhece o duplo toque/clique sem depender do `dblclick` do navegador,
+   * que não é confiável em toque.
+   */
+  const lastTapRef = useRef<{ readonly target: Hover; readonly time: number } | null>(null);
+
   const tool = useStore(store, (state) => state.tool);
   const dragKind = useStore(store, (state) => state.drag.kind);
   const graph = useStore(store, (state) => state.graph);
   // A dica muda com o que está sob o cursor, então ela precisa reagir ao hover.
   const hover = useStore(store, (state) => state.hover);
+  const selection = useStore(store, (state) => state.selection);
 
   /** Redesenha no próximo quadro; várias chamadas seguidas viram uma. */
   const paint = useCallback(() => {
@@ -374,6 +579,7 @@ export function Editor2D({ store, className, onTidy }: Editor2DProps): ReactElem
         flagged: state.flagged,
         stereo: state.stereo,
         stereoBonds: state.stereoBonds,
+        selection: state.selection,
       });
     });
   }, [store]);
@@ -464,6 +670,34 @@ export function Editor2D({ store, className, onTidy }: Editor2DProps): ReactElem
     [store],
   );
 
+  /**
+   * O arrasto que começa no vazio: view normal, retângulo com Shift.
+   *
+   * Vale para `structure`, `move` e `stereo` — não para `erase`, que nem chega
+   * aqui (`erase` sai da função antes de montar drag nenhum), e não é o gesto
+   * de `select`, que abre retângulo sem precisar de Shift porque é a própria
+   * ferramenta.
+   */
+  const panOrMarquee = useCallback(
+    (state: EditorState, point: Point, shift: boolean): void => {
+      state.setDrag(
+        shift ? { kind: 'marquee', origin: point, point } : { kind: 'pan', origin: point, camera: state.camera },
+      );
+    },
+    [],
+  );
+
+  /**
+   * A seleção como estava antes de o primeiro dedo encostar.
+   *
+   * No toque, encostar em cima de um átomo já troca a seleção — é o que faz o
+   * toque simples selecionar. Só que o segundo dedo pode chegar em seguida e
+   * transformar o gesto em pinça: em modo Selecionar é assim que se move a
+   * vista, e nesse caso a troca do primeiro dedo nunca foi intenção de
+   * ninguém. Guardar aqui é o que permite devolvê-la quando a pinça começa.
+   */
+  const selectionBeforeTouchRef = useRef<Selection | null>(null);
+
   /** Começa a pinça quando o segundo dedo encosta. */
   const startPinch = useCallback((): void => {
     const [first, second] = [...touchesRef.current.values()];
@@ -472,6 +706,12 @@ export function Editor2D({ store, className, onTidy }: Editor2DProps): ReactElem
     const state = store.getState();
     state.setDrag({ kind: 'none' });
     state.setHover(null);
+
+    // Dois dedos movem a vista, e mover a vista não é mexer no que está pego:
+    // a seleção volta a ser a de antes do primeiro dedo.
+    const before = selectionBeforeTouchRef.current;
+    selectionBeforeTouchRef.current = null;
+    if (before !== null) state.setSelection(before);
 
     const midpoint = { x: (first.x + second.x) / 2, y: (first.y + second.y) / 2 };
 
@@ -536,20 +776,56 @@ export function Editor2D({ store, className, onTidy }: Editor2DProps): ReactElem
 
       if (state.tool === 'erase') return;
 
+      if (state.tool === 'select') {
+        // Só no toque: o mouse não vira pinça, e guardar por lá seria carregar
+        // estado que nunca é lido.
+        selectionBeforeTouchRef.current =
+          event.pointerType === 'mouse' ? null : state.selection;
+
+        if (under !== null) {
+          const alreadySelected =
+            (under.kind === 'atom' && state.selection.atoms.has(under.id)) ||
+            (under.kind === 'bond' && state.selection.bonds.has(under.id));
+
+          // Clique substitui a seleção — inclusive quando o próximo gesto vira
+          // arrasto: a pessoa já vê o que pegou antes de decidir mover. Em cima
+          // de algo que já estava pego, a seleção fica como está: é o que
+          // permite arrastar o bloco inteiro sem reduzi-lo a um item só.
+          if (!alreadySelected) {
+            state.setSelection(
+              under.kind === 'atom'
+                ? { atoms: new Set([under.id]), bonds: new Set() }
+                : { atoms: new Set(), bonds: new Set([under.id]) },
+            );
+          }
+
+          selectionDragOriginRef.current = point;
+          state.setDrag({ kind: 'selection', before: state.graph, moved: false });
+          return;
+        }
+
+        // O vazio abre o retângulo — sem Shift, porque a ferramenta inteira já
+        // é sobre selecionar.
+        state.setDrag({ kind: 'marquee', origin: point, point });
+        return;
+      }
+
       if (state.tool === 'stereo') {
         // Nesta ferramenta o arrasto não desenha nada: ela existe para clicar em
-        // ligação. Arrastar move a vista, que é o gesto inofensivo.
-        state.setDrag({ kind: 'pan', origin: point, camera: state.camera });
+        // ligação. Arrastar move a vista — ou, com Shift a partir do vazio,
+        // abre o retângulo de seleção.
+        panOrMarquee(state, point, under === null && event.shiftKey);
         return;
       }
 
       if (state.tool === 'move') {
-        // Em cima de um átomo, arrastar leva o átomo; no vazio, leva a vista.
-        state.setDrag(
-          under?.kind === 'atom'
-            ? { kind: 'move', atom: under.id, before: state.graph, moved: false }
-            : { kind: 'pan', origin: point, camera: state.camera },
-        );
+        // Em cima de um átomo, arrastar leva o átomo; no vazio, leva a vista —
+        // ou, com Shift, abre o retângulo.
+        if (under?.kind === 'atom') {
+          state.setDrag({ kind: 'move', atom: under.id, before: state.graph, moved: false });
+        } else {
+          panOrMarquee(state, point, under === null && event.shiftKey);
+        }
         return;
       }
 
@@ -566,12 +842,13 @@ export function Editor2D({ store, className, onTidy }: Editor2DProps): ReactElem
       // Ligação e vazio começam o mesmo arrasto: mover a vista. A diferença
       // aparece só no soltar, quando o clique parado vira ordem de ligação —
       // sem isto, clicar numa ligação não fazia **nada**, porque nenhum arrasto
-      // era registrado e o soltar não tinha em que caso entrar.
+      // era registrado e o soltar não tinha em que caso entrar. Com Shift a
+      // partir do vazio, o arrasto abre o retângulo de seleção.
       if (under === null || under.kind === 'bond') {
-        state.setDrag({ kind: 'pan', origin: point, camera: state.camera });
+        panOrMarquee(state, point, under === null && event.shiftKey);
       }
     },
-    [clearLongPress, pointAt, startPinch, store],
+    [clearLongPress, panOrMarquee, pointAt, startPinch, store],
   );
 
   const handlePointerMove = useCallback(
@@ -653,6 +930,34 @@ export function Editor2D({ store, className, onTidy }: Editor2DProps): ReactElem
         return;
       }
 
+      if (dragging.kind === 'marquee') {
+        // Ao vivo, não só no soltar: o que está dentro já veste o marca-texto
+        // enquanto o retângulo cresce, e soltar só encerra o gesto.
+        state.setDrag({ kind: 'marquee', origin: dragging.origin, point });
+        state.setSelection(
+          selectInRegion(state.graph, {
+            x0: dragging.origin.x,
+            y0: dragging.origin.y,
+            x1: point.x,
+            y1: point.y,
+          }),
+        );
+        return;
+      }
+
+      if (dragging.kind === 'selection') {
+        const origin = selectionDragOriginRef.current;
+        if (!origin) return;
+
+        // Do início até aqui, nunca quadro sobre quadro — é o que evita
+        // acumular erro de ponto flutuante num arrasto longo.
+        state.moveSelectionBy(dragging.before, { x: point.x - origin.x, y: point.y - origin.y });
+        state.setDrag({ ...dragging, moved: true });
+        return;
+      }
+
+      if (dragging.kind !== 'pan') return;
+
       state.setCamera({
         x: dragging.camera.x - (point.x - dragging.origin.x),
         y: dragging.camera.y - (point.y - dragging.origin.y),
@@ -678,6 +983,7 @@ export function Editor2D({ store, className, onTidy }: Editor2DProps): ReactElem
       }
 
       clearLongPress();
+      selectionBeforeTouchRef.current = null;
 
       const state = store.getState();
       const point = pointAt(event);
@@ -702,7 +1008,68 @@ export function Editor2D({ store, className, onTidy }: Editor2DProps): ReactElem
       if (dragging.kind === 'move') {
         // O arrasto foi mexendo o grafo sem marcar histórico. Aqui o caminho
         // inteiro vira um passo só de desfazer.
-        if (dragging.moved) state.closeUndoStep(dragging.before);
+        if (dragging.moved) {
+          state.closeUndoStep(dragging.before);
+          return;
+        }
+
+        // Sem arrasto, Shift+clique no átomo alterna ele na seleção — hoje
+        // isso não fazia nada, porque o mesmo drag serve para "segurar Shift
+        // move o átomo" em `structure`. Sem Shift, clicar um átomo com a
+        // ferramenta Mover continua sem fazer nada, como sempre foi.
+        if (event.shiftKey) state.toggleAtomSelection(dragging.atom);
+        return;
+      }
+
+      if (dragging.kind === 'marquee') {
+        if (!moved) {
+          // Retângulo menor que o alvo de clique é um clique: no vazio, com a
+          // ferramenta Selecionar, é o gesto que solta a seleção. Com Shift a
+          // partir de outra ferramenta, o mesmo toque parado também limpa —
+          // em vez de largar um átomo novo debaixo do dedo.
+          state.clearSelection();
+          return;
+        }
+
+        // A seleção já foi atualizada a cada quadro do arrasto (`drawMarquee`
+        // lê o retângulo, `drawSelection` lê o resultado); soltar só encerra
+        // o gesto.
+        return;
+      }
+
+      if (dragging.kind === 'selection') {
+        // `moved` com folga de clique, e não o `dragging.moved` que qualquer
+        // pixel de tremor liga: no dedo a folga é de 12 px, e sem ela um toque
+        // firme viraria "arrastou" — o duplo toque nunca chegaria a acontecer,
+        // e cada toque deixaria um passo de desfazer que não move nada.
+        if (moved) {
+          // O arrasto foi movendo o bloco sem marcar histórico (`amend`, via
+          // `moveSelectionBy`). Aqui o caminho inteiro vira um passo só de
+          // desfazer — o mesmo contrato do arrasto de um átomo.
+          if (dragging.moved) state.closeUndoStep(dragging.before);
+          return;
+        }
+
+        // Dedo parado que chegou a mexer o grafo por um fio: devolve o desenho
+        // ao que era, senão o toque deixaria a molécula deslocada.
+        if (dragging.moved) state.commit(dragging.before);
+
+        // Sem arrasto: foi um toque ou clique parado. Um segundo toque no
+        // mesmo alvo, dentro da janela de tempo, pega o fragmento inteiro —
+        // é o duplo clique/toque que só existe dentro desta ferramenta.
+        const under = hoverAt(state.graph, point, toleranceFor(state.camera));
+        if (under === null) return;
+
+        const last = lastTapRef.current;
+        const now = performance.now();
+        lastTapRef.current = { target: under, time: now };
+
+        if (last !== null && now - last.time < DOUBLE_TAP_MS && sameHover(last.target, under)) {
+          lastTapRef.current = null;
+          if (under.kind === 'atom') state.selectFragmentFromAtom(under.id);
+          else state.selectFragmentFromBond(under.id);
+        }
+
         return;
       }
 
@@ -786,8 +1153,34 @@ export function Editor2D({ store, className, onTidy }: Editor2DProps): ReactElem
         return;
       }
 
+      if ((event.ctrlKey || event.metaKey) && key === 'a') {
+        // Sem isto o navegador seleciona a página inteira — o texto ao redor
+        // do editor, não a molécula.
+        event.preventDefault();
+        state.selectAll();
+        return;
+      }
+
+      if (key === 'escape') {
+        // O menu de contexto tem o próprio ouvinte de Escape (`role="menu"`,
+        // que `isSheetOpen()` não pega — ela procura `[role="dialog"]`). Sem
+        // esta saída, a mesma tecla fecharia o menu **e** limparia a seleção
+        // por baixo dele.
+        if (menu !== null) return;
+
+        event.preventDefault();
+        state.clearSelection();
+        return;
+      }
+
       if (key === 'delete' || key === 'backspace') {
         event.preventDefault();
+
+        if (state.selection.atoms.size > 0 || state.selection.bonds.size > 0) {
+          state.eraseSelection();
+          return;
+        }
+
         const under = state.hover;
         if (under?.kind === 'atom') state.eraseAtom(under.id);
         else if (under?.kind === 'bond') state.eraseBond(under.id);
@@ -821,6 +1214,13 @@ export function Editor2D({ store, className, onTidy }: Editor2DProps): ReactElem
         return;
       }
 
+      // `v`, não `s`: `s` já é o enxofre, e tioéter é comum em aula.
+      if (key === 'v') {
+        event.preventDefault();
+        state.setTool(state.tool === 'select' ? 'structure' : 'select');
+        return;
+      }
+
       if (key === 'd') {
         event.preventDefault();
         state.setTool('structure');
@@ -834,7 +1234,7 @@ export function Editor2D({ store, className, onTidy }: Editor2DProps): ReactElem
         state.setTool('structure');
       }
     },
-    [store],
+    [menu, store],
   );
 
   const openMenu = useCallback(
@@ -867,13 +1267,15 @@ export function Editor2D({ store, className, onTidy }: Editor2DProps): ReactElem
     };
   }, [handleKeyDown]);
 
-  const hint = hintFor(tool, graph, hover);
+  const hint = hintFor(tool, graph, hover, selection);
+  const selectionEmpty = selection.atoms.size === 0 && selection.bonds.size === 0;
 
   const classes = [
     styles.frame,
     tool === 'erase' ? styles.erasing : null,
     tool === 'move' ? styles.moving : null,
     tool === 'stereo' ? styles.stereo : null,
+    tool === 'select' ? styles.selecting : null,
     dragKind === 'pan' ? styles.panning : null,
     dragKind === 'move' ? styles.dragging : null,
     className,
@@ -889,6 +1291,16 @@ export function Editor2D({ store, className, onTidy }: Editor2DProps): ReactElem
       role="application"
       aria-label="Tela de desenho da molécula"
     >
+      {/* Quem seleciona com Ctrl+A não vê o marca-texto: sem isto, nada
+          anuncia para o leitor de tela que a seleção mudou. */}
+      <p className={styles.announce} role="status" aria-live="polite">
+        {selectionEmpty
+          ? 'Nada selecionado.'
+          : `${selectionCount(selection.atoms.size, selection.bonds.size)} ${selectedWord(
+              selection,
+            )}.`}
+      </p>
+
       <canvas
         ref={canvasRef}
         className={styles.canvas}

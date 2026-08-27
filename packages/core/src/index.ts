@@ -38,6 +38,8 @@ export {
   addAtom,
   addBond,
   bondBetween,
+  connectedFragment,
+  connectedFragmentFromBond,
   cycleBondOrder,
   emptyGraph,
   findAtom,
@@ -56,6 +58,7 @@ export {
   topologyKey,
   type AddAtomResult,
   type AddBondResult,
+  type Fragment,
 } from './graph/operations';
 export { fromMolblock, toMolblock } from './graph/molfile';
 export {

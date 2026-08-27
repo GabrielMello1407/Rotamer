@@ -13,6 +13,12 @@ export interface EditorPalette {
   readonly inkSoft: string;
   readonly brand: string;
   readonly danger: string;
+  /** Marca-texto e contorno do que está pego pela ferramenta Selecionar. */
+  readonly select: string;
+  /** Preenchimento macio da seleção sobre átomo e ligação. */
+  readonly selectWash: string;
+  /** Miolo translúcido do retângulo enquanto ele é arrastado. */
+  readonly selectVeil: string;
   readonly font: string;
   readonly cpk: Readonly<Record<string, string>>;
 }
@@ -66,6 +72,9 @@ export function readPalette(element: Element): EditorPalette {
     inkSoft: token('--ink-400', '#6E7189'),
     brand: token('--brand', '#00A98F'),
     danger: token('--danger', '#DE1A4E'),
+    select: token('--select', '#00806C'),
+    selectWash: token('--select-wash', 'rgba(0, 128, 108, 0.24)'),
+    selectVeil: token('--select-veil', 'rgba(0, 128, 108, 0.10)'),
     font: token('--font-ui', 'sans-serif'),
     cpk,
   };

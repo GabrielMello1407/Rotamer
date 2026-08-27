@@ -21,7 +21,7 @@
   font-size: var(--step--2);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--ink-600);
+  color: var(--ink-500);
 }
 
 .item {
@@ -47,6 +47,8 @@
 
 .label {
   flex: 1 1 auto;
+  /* O rótulo da seleção conta átomos e ligações: contagem é número. */
+  font-variant-numeric: tabular-nums;
 }
 
 .check {

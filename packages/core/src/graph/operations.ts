@@ -227,6 +227,63 @@ export function flipBond(graph: MoleculeGraph, id: BondId): MoleculeGraph {
   };
 }
 
+/** Um pedaço do grafo: os átomos e as ligações que a travessia alcançou. */
+export interface Fragment {
+  readonly atoms: ReadonlySet<AtomId>;
+  readonly bonds: ReadonlySet<BondId>;
+}
+
+/**
+ * Todo átomo e toda ligação alcançáveis a partir de um átomo, andando pelas
+ * ligações — o "pedaço inteiro" que o duplo clique da ferramenta Selecionar
+ * pega de uma vez.
+ *
+ * É travessia de grafo, nada mais: não pergunta se é anel, se é aromático nem
+ * se é um grupo funcional — quem responde isso é o RDKit, e o editor não fala
+ * com ele (regra de dependência do pacote). Duas moléculas desconectadas na
+ * mesma tela (dois fragmentos do mesmo desenho) ficam cada uma no seu pedaço.
+ */
+export function connectedFragment(graph: MoleculeGraph, start: AtomId): Fragment {
+  const atoms = new Set<AtomId>();
+  const bonds = new Set<BondId>();
+  if (!findAtom(graph, start)) return { atoms, bonds };
+
+  // Pilha em vez de recursão: uma cadeia de centenas de átomos não pode
+  // estourar o limite de chamadas do motor.
+  const pending: AtomId[] = [start];
+  atoms.add(start);
+
+  while (pending.length > 0) {
+    const current = pending.pop();
+    if (current === undefined) continue;
+
+    for (const bond of graph.bonds) {
+      const other = bond.from === current ? bond.to : bond.to === current ? bond.from : null;
+      if (other === null) continue;
+
+      bonds.add(bond.id);
+      if (!atoms.has(other)) {
+        atoms.add(other);
+        pending.push(other);
+      }
+    }
+  }
+
+  return { atoms, bonds };
+}
+
+/**
+ * O mesmo fragmento, partindo de uma ligação em vez de um átomo — o duplo
+ * clique em cima do traço pega o mesmo pedaço que o duplo clique num dos
+ * átomos das pontas dela.
+ */
+export function connectedFragmentFromBond(graph: MoleculeGraph, id: BondId): Fragment {
+  const bond = findBond(graph, id);
+  if (!bond) return { atoms: new Set(), bonds: new Set() };
+
+  return connectedFragment(graph, bond.from);
+}
+
 /**
  * Só a topologia importa para saber se a geometria precisa ser recalculada.
  * Arrastar átomo muda o grafo, mas não muda a molécula — e conformação é cara.

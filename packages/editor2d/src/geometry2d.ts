@@ -196,6 +196,52 @@ function direction(origin: Point, angle: number): Point {
   };
 }
 
+/** Retângulo em coordenadas do grafo — os dois cantos, em qualquer ordem. */
+export interface Rect {
+  readonly x0: number;
+  readonly y0: number;
+  readonly x1: number;
+  readonly y1: number;
+}
+
+/** O que um retângulo de arrasto pega. */
+export interface RegionSelection {
+  readonly atoms: ReadonlySet<AtomId>;
+  readonly bonds: ReadonlySet<BondId>;
+}
+
+function insideRect(point: Point, rect: Rect): boolean {
+  const minX = Math.min(rect.x0, rect.x1);
+  const maxX = Math.max(rect.x0, rect.x1);
+  const minY = Math.min(rect.y0, rect.y1);
+  const maxY = Math.max(rect.y0, rect.y1);
+
+  return point.x >= minX && point.x <= maxX && point.y >= minY && point.y <= maxY;
+}
+
+/**
+ * O que cai dentro de um retângulo de seleção.
+ *
+ * Átomo entra pelo centro dele. Ligação só entra quando **as duas pontas**
+ * entram — não quando o traço apenas cruza a borda. O desenho da seleção
+ * destaca a ligação inteira, nunca um pedaço dela: se bastasse cruzar a borda,
+ * uma ligação escaparia para fora do retângulo que a pessoa acabou de
+ * desenhar, e isso é o tipo de surpresa que faz duvidar da própria mão.
+ */
+export function selectInRegion(graph: MoleculeGraph, rect: Rect): RegionSelection {
+  const atoms = new Set<AtomId>();
+  for (const atom of graph.atoms) {
+    if (insideRect(atom, rect)) atoms.add(atom.id);
+  }
+
+  const bonds = new Set<BondId>();
+  for (const bond of graph.bonds) {
+    if (atoms.has(bond.from) && atoms.has(bond.to)) bonds.add(bond.id);
+  }
+
+  return { atoms, bonds };
+}
+
 /**
  * Cantos da tela que estão cobertos por outra coisa — barra de ferramentas,
  * faixa de números, cena 3D. Enquadrar sem contar com eles põe metade da

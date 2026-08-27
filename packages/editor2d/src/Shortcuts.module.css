@@ -28,7 +28,7 @@
   font-size: var(--step--2);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--ink-600);
+  color: var(--ink-500);
 }
 
 .rows {
@@ -67,12 +67,12 @@
   margin: 0;
   font-family: var(--font-ui);
   font-size: var(--step--1);
-  color: var(--ink-600);
+  color: var(--ink-500);
 }
 
 .quiet {
   margin: 0;
   font-family: var(--font-ui);
   font-size: var(--step--2);
-  color: var(--ink-600);
+  color: var(--ink-500);
 }

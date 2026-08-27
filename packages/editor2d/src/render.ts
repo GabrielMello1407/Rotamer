@@ -1,7 +1,7 @@
 import type { AtomId, BondId, GraphAtom, MoleculeGraph } from '@rotamer/core';
 import { toScreen } from './geometry2d';
 import { colorOf, type EditorPalette } from './palette';
-import type { Camera, Drag, Hover, Point, Viewport } from './types';
+import type { Camera, Drag, Hover, Point, Selection, Viewport } from './types';
 
 /**
  * O desenho da fórmula estrutural.
@@ -37,6 +37,8 @@ export interface Scene {
   readonly stereo: ReadonlyMap<AtomId, string>;
   /** `E` ou `Z` de cada dupla com geometria definida. */
   readonly stereoBonds: ReadonlyMap<BondId, string>;
+  /** O que está pego pela ferramenta Selecionar — o desenho só lê, não calcula. */
+  readonly selection: Selection;
 }
 
 /**
@@ -62,10 +64,95 @@ export function draw(context: CanvasRenderingContext2D, scene: Scene): void {
   context.lineCap = 'round';
   context.lineJoin = 'round';
 
+  drawSelection(context, scene);
   drawBonds(context, scene);
   drawDragPreview(context, scene);
   drawAtoms(context, scene);
   drawBondStereo(context, scene);
+  drawMarquee(context, scene);
+}
+
+/** Largura da faixa do marca-texto: cobre a tripla inteira e sobra folga. */
+function highlightBand(camera: Camera): number {
+  return Math.max(12, camera.scale * 0.48);
+}
+
+/** Folga do marca-texto em volta do átomo, em px de tela. */
+const HIGHLIGHT_PAD = 4;
+
+/**
+ * O que está pego.
+ *
+ * Marca-texto: preenchimento macio por baixo da tinta, seguindo o esqueleto.
+ * Por baixo porque a letra do elemento é CPK e a cunha é preta — recolorir
+ * qualquer um dos dois trocaria o significado deles pelo de um estado da
+ * interface. E preenchimento largo, não anel: o anel fino já é o cursor.
+ */
+function drawSelection(context: CanvasRenderingContext2D, scene: Scene): void {
+  const { graph, camera, viewport, palette, selection } = scene;
+  if (selection.atoms.size === 0 && selection.bonds.size === 0) return;
+
+  const size = Math.max(12, camera.scale * 0.66);
+
+  context.save();
+  context.fillStyle = palette.selectWash;
+  context.strokeStyle = palette.selectWash;
+  context.lineWidth = highlightBand(camera);
+  context.lineCap = 'round';
+
+  for (const bond of graph.bonds) {
+    if (!selection.bonds.has(bond.id)) continue;
+
+    const from = graph.atoms.find((atom) => atom.id === bond.from);
+    const to = graph.atoms.find((atom) => atom.id === bond.to);
+    if (!from || !to) continue;
+
+    // De centro a centro, sem encurtar: o disco do rótulo recorta o miolo
+    // depois, e a faixa termina encostada na letra como a tinta termina.
+    line(context, toScreen(from, camera, viewport), toScreen(to, camera, viewport));
+  }
+
+  for (const atom of graph.atoms) {
+    if (!selection.atoms.has(atom.id)) continue;
+
+    const center = toScreen(atom, camera, viewport);
+    context.beginPath();
+    context.arc(center.x, center.y, labelRadius(context, scene, atom, size) + HIGHLIGHT_PAD, 0, Math.PI * 2);
+    context.fill();
+  }
+
+  context.restore();
+}
+
+/**
+ * O retângulo que pega.
+ *
+ * Tracejado parado, não formiguinha andando: animar o tracejado é uma
+ * repintura por quadro num tablet fraco, e é movimento que
+ * `prefers-reduced-motion` teria de desligar. Canto vivo e `rect` simples
+ * porque `roundRect` não existe em WebView antiga.
+ */
+function drawMarquee(context: CanvasRenderingContext2D, scene: Scene): void {
+  const { drag, camera, viewport, palette } = scene;
+  if (drag.kind !== 'marquee') return;
+
+  const origin = toScreen(drag.origin, camera, viewport);
+  const point = toScreen(drag.point, camera, viewport);
+
+  // Meio pixel: em linha de 1 px o traço sai nítido em vez de borrado em dois.
+  const left = Math.round(Math.min(origin.x, point.x)) + 0.5;
+  const top = Math.round(Math.min(origin.y, point.y)) + 0.5;
+  const width = Math.round(Math.abs(point.x - origin.x));
+  const height = Math.round(Math.abs(point.y - origin.y));
+
+  context.save();
+  context.fillStyle = palette.selectVeil;
+  context.fillRect(left, top, width, height);
+  context.setLineDash([5, 4]);
+  context.strokeStyle = palette.select;
+  context.lineWidth = 1;
+  context.strokeRect(left, top, width, height);
+  context.restore();
 }
 
 function drawBonds(context: CanvasRenderingContext2D, scene: Scene): void {
@@ -249,6 +336,28 @@ function hashes(
   }
 }
 
+/**
+ * O raio do disco que apoia o rótulo — o mesmo número que o marca-texto
+ * precisa para não ser apagado por ele.
+ *
+ * Rótulo largo (`H3C`, `NH2`) tem disco maior que qualquer raio fixo; sem essa
+ * mesma medida nos dois lugares, o marca-texto desses átomos sumiria por baixo
+ * do próprio rótulo.
+ */
+function labelRadius(
+  context: CanvasRenderingContext2D,
+  scene: Scene,
+  atom: GraphAtom,
+  size: number,
+): number {
+  if (!shouldLabel(atom, scene.graph)) return Math.max(2.8, scene.camera.scale * 0.1) + 3;
+
+  context.font = `600 ${String(size)}px ${scene.palette.font}`;
+  const label = atomLabel(atom, scene.graph, scene.hydrogens.get(atom.id) ?? 0) ?? atom.element;
+
+  return Math.max(size * 0.62, context.measureText(label).width / 2 + size * 0.2);
+}
+
 function drawAtoms(context: CanvasRenderingContext2D, scene: Scene): void {
   const { graph, camera, viewport, palette, hover, erasing, hydrogens, focus, flagged } = scene;
 
@@ -314,7 +423,7 @@ function drawAtoms(context: CanvasRenderingContext2D, scene: Scene): void {
 
     const label = atomLabel(atom, graph, hydrogens.get(atom.id) ?? 0) ?? atom.element;
 
-    const half = Math.max(size * 0.62, context.measureText(label).width / 2 + size * 0.2);
+    const half = labelRadius(context, scene, atom, size);
 
     // O rótulo se apoia num disco da cor da superfície: é o que abre espaço na
     // ligação sem apagar o traço com um retângulo.

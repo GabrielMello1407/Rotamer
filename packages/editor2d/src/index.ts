@@ -22,8 +22,11 @@ export {
   bondAt,
   frameGraph,
   hoverAt,
+  selectInRegion,
   snapFromAtom,
   type Insets,
+  type Rect,
+  type RegionSelection,
   suggestDirection,
   toGraph,
   toScreen,
@@ -36,4 +39,4 @@ export { Shortcuts, type ShortcutsProps } from './Shortcuts';
 export { Popover, type PopoverProps } from './Popover';
 export { ContextMenu, type ContextMenuProps, type MenuEntry } from './ContextMenu';
 export { COMMON_ELEMENTS, PERIODIC_TABLE, type TableEntry } from './elements-table';
-export type { Camera, Drag, Hover, Point, Tool, Viewport } from './types';
+export type { Camera, Drag, Hover, Point, Selection, Tool, Viewport } from './types';

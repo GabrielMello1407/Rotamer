@@ -74,6 +74,74 @@ async function dragBondRight(page: Page): Promise<void> {
   await page.mouse.up();
 }
 
+/** Arrasta uma ligação nova a partir de um ponto qualquer da tela. */
+async function dragBondFrom(
+  page: Page,
+  origin: { x: number; y: number },
+  dx: number,
+  dy: number,
+): Promise<void> {
+  await page.mouse.move(origin.x, origin.y);
+  await page.mouse.down();
+  await page.mouse.move(origin.x + dx, origin.y + dy, { steps: 8 });
+  await page.mouse.up();
+}
+
+/** Um toque solto — dedo desce e sobe no mesmo ponto, sem passar por arrasto. */
+async function touchTap(page: Page, x: number, y: number, id = 1): Promise<void> {
+  await page.evaluate(
+    ({ x, y, id }) => {
+      const canvas = document.querySelector('[data-testid="tela-de-desenho"]');
+      if (!(canvas instanceof HTMLElement)) throw new Error('sem tela de desenho');
+
+      const fire = (type: string): void => {
+        canvas.dispatchEvent(
+          new PointerEvent(type, {
+            pointerId: id,
+            pointerType: 'touch',
+            clientX: x,
+            clientY: y,
+            bubbles: true,
+            button: 0,
+          }),
+        );
+      };
+
+      fire('pointerdown');
+      fire('pointerup');
+    },
+    { x, y, id },
+  );
+}
+
+/**
+ * O dedo parado — meio segundo é o que o componente espera antes de abrir o
+ * menu (`LONG_PRESS_MS`), e por isso a espera aqui é tempo real de execução,
+ * não algo que o navegador simula sozinho.
+ */
+async function touchLongPress(page: Page, x: number, y: number, id = 1): Promise<void> {
+  await page.evaluate(
+    ({ x, y, id }) => {
+      const canvas = document.querySelector('[data-testid="tela-de-desenho"]');
+      if (!(canvas instanceof HTMLElement)) throw new Error('sem tela de desenho');
+
+      canvas.dispatchEvent(
+        new PointerEvent('pointerdown', {
+          pointerId: id,
+          pointerType: 'touch',
+          clientX: x,
+          clientY: y,
+          bubbles: true,
+          button: 0,
+        }),
+      );
+    },
+    { x, y, id },
+  );
+
+  await page.waitForTimeout(600);
+}
+
 /** O número dentro de "energia 18,9 kcal/mol", em kcal/mol. */
 function energiaDe(texto: string | null): number | null {
   if (texto === null) return null;
@@ -528,5 +596,167 @@ test.describe('organizar', () => {
     await page.getByTestId('menu-organizar').click();
     await expect(page.getByTestId('menu-contexto')).toBeHidden();
     await expect(page.getByTestId('formula')).toHaveText('C2H6');
+  });
+});
+
+/**
+ * Selecionar um pedaço.
+ *
+ * Antes disto só dava para agir átomo a átomo ou ligação a ligação — mover,
+ * apagar ou trocar um pedaço inteiro exigia repetir a mesma ação várias vezes.
+ * O retângulo e o duplo clique/toque pegam o bloco de uma vez; o resto (mover,
+ * apagar, trocar em bloco) já existia no motor da parte 1.
+ */
+test.describe('seleção', () => {
+  test('o retângulo pega vários átomos, e Delete apaga tudo de uma vez — com um Ctrl+Z para trás', async ({
+    page,
+  }) => {
+    await drawFirstAtom(page);
+    await dragBondRight(page);
+    await expect(page.getByTestId('formula')).toHaveText('C2H6', { timeout: 60_000 });
+
+    // Terceiro carbono, colinear: propano.
+    const atomo2 = await pointOnCanvas(page, 1.5 * SCALE);
+    await dragBondFrom(page, atomo2, 60, 0);
+    await expect(page.getByTestId('formula')).toHaveText('C3H8', { timeout: 60_000 });
+
+    await page.getByRole('button', { name: 'Selecionar' }).click();
+
+    // O retângulo cerca o primeiro e o segundo carbono, e deixa o terceiro de
+    // fora — é o que prova que a seleção pegou "vários", não "todos".
+    const inicio = await pointOnCanvas(page, -40, -40);
+    const fim = await pointOnCanvas(page, 100, 40);
+
+    await page.mouse.move(inicio.x, inicio.y);
+    await page.mouse.down();
+    await page.mouse.move(fim.x, fim.y, { steps: 8 });
+    await page.mouse.up();
+
+    // A seleção só muda o desenho: a molécula continua propano até o Delete.
+    await expect(page.getByTestId('formula')).toHaveText('C3H8');
+
+    await page.keyboard.press('Delete');
+    // Sobra só o terceiro carbono, sozinho: metano.
+    await expect(page.getByTestId('formula')).toHaveText('CH4', { timeout: 60_000 });
+
+    await page.keyboard.press('Control+z');
+    await expect(page.getByTestId('formula')).toHaveText('C3H8', { timeout: 60_000 });
+  });
+
+  test('o duplo clique pega o fragmento inteiro; arrastar de dentro move o bloco, e um Ctrl+Z devolve as posições', async ({
+    page,
+  }) => {
+    await drawFirstAtom(page);
+    await dragBondRight(page);
+    await expect(page.getByTestId('formula')).toHaveText('C2H6', { timeout: 60_000 });
+
+    await page.getByRole('button', { name: 'Selecionar' }).click();
+
+    const atomo1 = await pointOnCanvas(page);
+    const atomo2 = await pointOnCanvas(page, 1.5 * SCALE);
+
+    // Duplo clique no primeiro carbono pega o fragmento inteiro: os dois
+    // átomos e a ligação entre eles.
+    await page.mouse.click(atomo1.x, atomo1.y);
+    await page.mouse.click(atomo1.x, atomo1.y);
+
+    // Arrasta de dentro da seleção: o bloco inteiro sobe junto.
+    await page.mouse.move(atomo1.x, atomo1.y);
+    await page.mouse.down();
+    await page.mouse.move(atomo1.x, atomo1.y - 3 * SCALE, { steps: 10 });
+    await page.mouse.up();
+
+    // Só o desenho mudou — a molécula continua a mesma.
+    await expect(page.getByTestId('formula')).toHaveText('C2H6', { timeout: 60_000 });
+
+    await page.keyboard.press('Control+z');
+    await expect(page.getByTestId('formula')).toHaveText('C2H6');
+
+    // A prova de que as duas posições voltaram num passo só: clicar onde o
+    // segundo carbono estava antes do arrasto acha o átomo de novo — se ele
+    // tivesse ficado para trás (arrasto de um átomo só, ou desfazer parcial),
+    // o clique criaria um átomo novo e desconectado.
+    await page.getByRole('button', { name: 'Desenhar' }).click();
+    await page.mouse.click(atomo2.x, atomo2.y);
+    await expect(page.getByTestId('formula')).toHaveText('C3H8', { timeout: 60_000 });
+  });
+
+  test('no celular, o toque duplo pega o fragmento e o toque longo abre o menu da seleção', async ({
+    page,
+  }) => {
+    await drawFirstAtom(page);
+    await dragBondRight(page);
+    await expect(page.getByTestId('formula')).toHaveText('C2H6', { timeout: 60_000 });
+
+    // Toque na ferramenta: o botão responde a toque como a qualquer clique.
+    await page.getByRole('button', { name: 'Selecionar' }).click();
+
+    const atomo1 = await pointOnCanvas(page);
+
+    await touchTap(page, atomo1.x, atomo1.y);
+    await touchTap(page, atomo1.x, atomo1.y);
+
+    // Toque longo sobre o que já está selecionado abre o menu da seleção, não
+    // o menu do átomo sozinho.
+    await touchLongPress(page, atomo1.x, atomo1.y);
+
+    const menu = page.getByTestId('menu-contexto');
+    await expect(menu).toContainText('Seleção');
+
+    await menu.getByTestId('menu-apagar-selecao').click();
+    await expect(page.getByTestId('formula')).toHaveCount(0);
+  });
+
+  test('a tecla V abre a ferramenta, e Esc solta a seleção', async ({ page }) => {
+    await drawFirstAtom(page);
+    await dragBondRight(page);
+    await expect(page.getByTestId('formula')).toHaveText('C2H6', { timeout: 60_000 });
+
+    await page.keyboard.press('v');
+    await expect(page.getByRole('button', { name: 'Selecionar' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+
+    await page.keyboard.press('Control+a');
+    await expect(page.getByRole('status')).toContainText('2 átomos e 1 ligação selecionados');
+
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('status')).toContainText('Nada selecionado');
+
+    // A molécula não mudou: selecionar e soltar não mexe no grafo.
+    await expect(page.getByTestId('formula')).toHaveText('C2H6');
+  });
+
+  test('regressão: Shift ainda cicla a ligação e ainda move o átomo em Desenhar, mas não larga mais um átomo no vazio', async ({
+    page,
+  }) => {
+    await drawFirstAtom(page);
+    await dragBondRight(page);
+    await expect(page.getByTestId('formula')).toHaveText('C2H6', { timeout: 60_000 });
+
+    const meio = await pointOnCanvas(page, 0.75 * SCALE);
+    await page.keyboard.down('Shift');
+    await page.mouse.click(meio.x, meio.y);
+    await page.keyboard.up('Shift');
+    await expect(page.getByTestId('formula')).toHaveText('C2H4', { timeout: 60_000 });
+
+    // Shift+arrasto de um átomo continua sendo "mover o átomo": nenhuma
+    // ligação nova, nenhum átomo novo.
+    const atomo1 = await pointOnCanvas(page);
+    await page.mouse.move(atomo1.x, atomo1.y);
+    await page.keyboard.down('Shift');
+    await page.mouse.down();
+    await page.mouse.move(atomo1.x, atomo1.y - 2 * SCALE, { steps: 8 });
+    await page.mouse.up();
+    await page.keyboard.up('Shift');
+    await expect(page.getByTestId('formula')).toHaveText('C2H4');
+
+    // Shift+clique parado no vazio deixou de criar átomo: a fórmula não muda.
+    const vazio = await emptyPointOnCanvas(page);
+    await page.keyboard.down('Shift');
+    await page.mouse.click(vazio.x, vazio.y);
+    await page.keyboard.up('Shift');
+    await expect(page.getByTestId('formula')).toHaveText('C2H4');
   });
 });

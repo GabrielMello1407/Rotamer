@@ -46,6 +46,7 @@ const GROUPS: readonly Group[] = [
     rows: [
       ['D', 'desenhar'],
       ['M', 'mover átomo ou a vista'],
+      ['V', 'selecionar um pedaço'],
       ['W', 'cunha e traço'],
       ['E', 'apagar'],
     ],
@@ -54,7 +55,8 @@ const GROUPS: readonly Group[] = [
     title: 'na tela',
     rows: [
       ['0', 'enquadrar a molécula'],
-      ['Delete', 'apagar o que está sob o cursor'],
+      ['Ctrl+A', 'selecionar tudo'],
+      ['Delete', 'apagar a seleção, ou o que está sob o cursor'],
       ['Ctrl+Z', 'desfazer'],
       ['Ctrl+Shift+Z', 'refazer'],
       ['Esc', 'fechar'],

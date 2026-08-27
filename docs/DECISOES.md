@@ -747,3 +747,50 @@ progresso de missão, avaliado no servidor a cada tentativa — nunca a nota que
 
 **Turma é do professor que abriu.** Outro professor, mesmo da mesma escola, não abre o quadro de
 uma turma que não é dele: a consulta filtra por dono, e não por papel.
+
+---
+
+## D-23 · Selecionar é gesto de desenho, e a seleção morre quando o grafo muda
+
+**Decisão.** O editor 2D ganha uma ferramenta **Selecionar** (tecla `V`), com retângulo de
+seleção, duplo clique para pegar o fragmento conectado inteiro, e três ações em bloco: mover,
+apagar e trocar — elemento de todos os átomos, ordem de todas as ligações. **Não** entra
+estereoquímica em bloco.
+
+**A pergunta que provocou.** "Falta selecionar uma ligação inteira específica ou uma grande parte
+facilmente, pois no momento eu só consigo ir um a uma." É atrito de desenho, não funcionalidade
+de química: não toca no RDKit e não cria promessa nenhuma.
+
+**A tecla é `V`, não `S`.** `s` é o enxofre no mapa de elementos, e tioéter aparece em aula. É o
+mesmo erro do `f`/enquadrar que já custou o atalho do flúor — repeti-lo com o enxofre seria pior.
+
+**Cunha e traço não entram em bloco, e isso é D-01.** `BondWedge` prende a ponta fina no átomo
+`from` (D-21): aplicar "cunha cheia" a oito ligações define oito configurações que ninguém
+escolheu, e o RDKit devolveria `R`/`S` que a pessoa não desenhou. Erro silencioso de química, que
+é o único tipo que este produto não pode cometer.
+
+**A seleção morre quando o grafo muda, e não é excesso de zelo.** `fromMolblock` **renumera** os
+átomos a partir de 1 — e é por ele que passam organizar o desenho, carregar exemplo e colar SMILES.
+Seleção guardada atravessando um desses aponta para átomos **diferentes com o mesmo número**:
+errado e silencioso, que é pior que vazio. Por isso `commit` limpa a seleção por padrão e quem
+precisa preservá-la pede (`keepSelection`); `amend` poda o que sumiu; `undo`, `redo` e `clear`
+zeram. Esquecer cai no seguro, nunca no errado — é a mesma regra que o `store` já usava para
+hidrogênios, estereoquímica e átomo culpado: número velho num desenho novo é pior que número
+nenhum.
+
+**A travessia do fragmento mora no núcleo**, não no editor: é grafo, e grafo se testa sem
+navegador. Anel e grupo funcional continuam sendo pergunta para o RDKit — "selecionar o anel" não
+entra por isso, e está no `DEPOIS.md`.
+
+**Um gesto mudou de sentido.** Shift+clique parado no vazio deixou de criar átomo e passou a
+soltar a seleção. Está coberto por teste de regressão nomeado, porque gesto que muda em silêncio
+volta como bug.
+
+**O que a revisão pegou, e que vale registrar.** Dois dedos movem a vista em modo Selecionar — e
+o primeiro dedo, ao encostar, já trocava a seleção: mover a vista destruía o bloco. A seleção
+anterior passa a ser devolvida quando a pinça começa. E o arrasto da seleção passou a usar a
+mesma folga de clique do resto do editor (12 px no dedo): sem ela, dedo firme virava "arrastou", e
+o duplo toque nunca aconteceria.
+
+**Revisar se.** As sessões de observação mostrarem que ninguém acha a ferramenta — aí o caminho é
+o gesto sem modo (Shift+arrasto), não mais um botão no trilho.

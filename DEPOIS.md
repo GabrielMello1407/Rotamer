@@ -126,6 +126,27 @@ deles a cada chamada. Chamar isso de "vetado" transformaria juízo de negócio e
   está ligado em lugar nenhum do produto hoje (verificado por grep). Se alguém ligar, esses rótulos
   caem sob a regra do D-15 e precisam de origem dita na tela.
 
+## Seleção — o que ficou de fora do primeiro corte
+
+Escrito em 27/08/2026, junto com o D-23. A ferramenta Selecionar entregou mover, apagar e trocar
+em bloco. Ficaram de fora, em ordem de quanto custam:
+
+- **Inverter a seleção** e **laço à mão livre.** Baratos, mas ninguém pediu: retângulo e fragmento
+  cobrem o que o pedido descrevia.
+- **Copiar, colar e duplicar.** Puxa área de transferência, ancoragem do que se cola e conflito de
+  identificadores. É uma entrega própria.
+- **Girar, espelhar e escalar a seleção.** Espelhar **inverte configuração** de centro
+  estereogênico: cai no D-21 e precisa de teste que prove que o RDKit vê o enantiômero, não uma
+  molécula qualquer.
+- **"Selecionar o anel" e "selecionar o grupo funcional".** Percepção de anel e de grupo é do
+  RDKit, e `editor2d` não fala com o worker — é a regra de dependência do repositório. Entraria
+  como função recebida de quem monta a tela, do mesmo jeito que "Organizar o desenho".
+- **Acender a seleção também na cena 3D.** O caminho já existe (`source` liga átomo do grafo a
+  átomo da geometria, D-18); o que falta é decidir o que a cena mostra quando a seleção tem
+  ligação, e não só átomo.
+- **Estereoquímica em bloco.** Vetada no D-23, não adiada: aplicar cunha a várias ligações define
+  configurações que ninguém escolheu.
+
 ## Considerado e adiado
 
 - [ ] Comparar dois análogos lado a lado — é para o usuário avançado, que não é o comprador (D-09)

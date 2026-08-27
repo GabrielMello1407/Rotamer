@@ -5,6 +5,8 @@ import {
   addAtom,
   addBond,
   bondBetween,
+  connectedFragment,
+  connectedFragmentFromBond,
   cycleBondOrder,
   emptyGraph,
   moveAtom,
@@ -93,6 +95,74 @@ describe('grafo', () => {
     // tela não muda a molécula, trocar elemento muda.
     expect(topologyKey(arrastado)).toBe(topologyKey(grafo));
     expect(topologyKey(trocado)).not.toBe(topologyKey(grafo));
+  });
+});
+
+describe('fragmento conectado', () => {
+  /** Um etanol e um carbono solto no mesmo desenho, sem ligação entre os dois. */
+  function etanolEUmSolto(): MoleculeGraph {
+    const grafo = ethanol();
+    return addAtom(grafo, { element: 'C', x: 10, y: 10 }).graph;
+  }
+
+  it('pega tudo o que está ligado, e nada de um segundo fragmento na mesma tela', () => {
+    const grafo = etanolEUmSolto();
+    const primeiro = grafo.atoms[0];
+    const soltoId = grafo.atoms[3]?.id;
+    if (!primeiro || soltoId === undefined) throw new Error('grafo de teste inválido');
+
+    const fragmento = connectedFragment(grafo, primeiro.id);
+
+    expect(fragmento.atoms.size).toBe(3);
+    expect(fragmento.bonds.size).toBe(2);
+    expect(fragmento.atoms.has(soltoId)).toBe(false);
+  });
+
+  it('um átomo sozinho, sem ligação nenhuma, é um fragmento de um só', () => {
+    const grafo = etanolEUmSolto();
+    const solto = grafo.atoms[3];
+    if (!solto) throw new Error('grafo de teste inválido');
+
+    const fragmento = connectedFragment(grafo, solto.id);
+
+    expect(fragmento.atoms).toEqual(new Set([solto.id]));
+    expect(fragmento.bonds.size).toBe(0);
+  });
+
+  it('anel fechado não entra em laço infinito e volta com todos os átomos e ligações', () => {
+    const a = addAtom(emptyGraph(), { element: 'C', x: 0, y: 0 });
+    const b = addAtom(a.graph, { element: 'C', x: BOND_LENGTH, y: 0 });
+    const c = addAtom(b.graph, { element: 'C', x: BOND_LENGTH / 2, y: BOND_LENGTH });
+
+    let grafo = c.graph;
+    grafo = addBond(grafo, a.atomId, b.atomId).graph;
+    grafo = addBond(grafo, b.atomId, c.atomId).graph;
+    grafo = addBond(grafo, c.atomId, a.atomId).graph;
+
+    const fragmento = connectedFragment(grafo, a.atomId);
+
+    expect(fragmento.atoms).toEqual(new Set([a.atomId, b.atomId, c.atomId]));
+    expect(fragmento.bonds.size).toBe(3);
+  });
+
+  it('partindo de uma ligação pega o mesmo pedaço que partir de um dos átomos dela', () => {
+    const grafo = ethanol();
+    const ligacao = grafo.bonds[0];
+    if (!ligacao) throw new Error('grafo de teste inválido');
+
+    const peloAtomo = connectedFragment(grafo, ligacao.from);
+    const pelaLigacao = connectedFragmentFromBond(grafo, ligacao.id);
+
+    expect(pelaLigacao.atoms).toEqual(peloAtomo.atoms);
+    expect(pelaLigacao.bonds).toEqual(peloAtomo.bonds);
+  });
+
+  it('átomo inexistente devolve fragmento vazio, não erro', () => {
+    const grafo = ethanol();
+    const fragmento = connectedFragment(grafo, 999);
+
+    expect(fragmento.atoms.size).toBe(0);
+    expect(fragmento.bonds.size).toBe(0);
   });
 });
 

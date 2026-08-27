@@ -4,6 +4,7 @@ import {
   atomAt,
   bondAt,
   frameGraph,
+  selectInRegion,
   snapFromAtom,
   suggestDirection,
   toGraph,
@@ -98,5 +99,49 @@ describe('enquadrar', () => {
   it('tela em branco não muda a escala', () => {
     const camera = frameGraph(emptyGraph(), VIEWPORT, 26);
     expect(camera).toEqual({ x: 0, y: 0, scale: 26 });
+  });
+});
+
+describe('retângulo de seleção', () => {
+  it('pega o átomo pelo centro dele', () => {
+    const graph = pair();
+    const dentro = selectInRegion(graph, { x0: -0.5, y0: -0.5, x1: 0.5, y1: 0.5 });
+
+    expect(dentro.atoms).toEqual(new Set([graph.atoms[0]?.id]));
+    expect(dentro.bonds.size).toBe(0);
+  });
+
+  it('a ligação só entra quando as duas pontas entram, não quando o traço só cruza a borda', () => {
+    const graph = pair();
+
+    // O retângulo cobre só o primeiro átomo: o traço da ligação cruza a
+    // borda direita, mas a segunda ponta fica de fora.
+    const meioCaminho = selectInRegion(graph, { x0: -0.5, y0: -0.5, x1: BOND_LENGTH / 2, y1: 0.5 });
+    expect(meioCaminho.bonds.size).toBe(0);
+
+    // Com as duas pontas dentro, a ligação entra junto.
+    const inteiro = selectInRegion(graph, { x0: -0.5, y0: -0.5, x1: BOND_LENGTH + 0.5, y1: 0.5 });
+    expect(inteiro.atoms.size).toBe(2);
+    expect(inteiro.bonds).toEqual(new Set([graph.bonds[0]?.id]));
+  });
+
+  it('os cantos do retângulo podem vir em qualquer ordem', () => {
+    const graph = pair();
+    const invertido = selectInRegion(graph, {
+      x0: BOND_LENGTH + 0.5,
+      y0: 0.5,
+      x1: -0.5,
+      y1: -0.5,
+    });
+
+    expect(invertido.atoms.size).toBe(2);
+  });
+
+  it('retângulo fora da molécula não pega nada', () => {
+    const graph = pair();
+    const fora = selectInRegion(graph, { x0: 10, y0: 10, x1: 11, y1: 11 });
+
+    expect(fora.atoms.size).toBe(0);
+    expect(fora.bonds.size).toBe(0);
   });
 });

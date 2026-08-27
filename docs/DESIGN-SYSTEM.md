@@ -238,9 +238,10 @@ do primeiro dia larga a barra e usa a letra.
 |---|---|
 | `C` `N` `O` `S` `P` `F` `I` `H` | troca o elemento ativo |
 | `L` `B` | cloro e bromo — a inicial já é do carbono e do bromo não sobrou |
-| `D` `M` `W` `E` | desenhar · mover · cunha e traço · apagar |
+| `D` `M` `V` `W` `E` | desenhar · mover · selecionar · cunha e traço · apagar |
 | `0` | enquadrar a molécula |
-| `Delete` | apaga o que está sob o cursor |
+| `Ctrl+A` | seleciona tudo |
+| `Delete` | apaga a seleção, ou o que está sob o cursor |
 | `Ctrl+Z` / `Ctrl+Shift+Z` | desfazer e refazer |
 | `?` | a folha com tudo isto |
 

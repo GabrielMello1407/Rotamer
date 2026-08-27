@@ -13,9 +13,17 @@ export function isTyping(target: EventTarget | null): boolean {
   return target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT';
 }
 
-/** Alguma folha modal está aberta? */
+/**
+ * Alguma folha ou menu está aberto por cima?
+ *
+ * `dialog` é a tabela periódica e a folha de atalhos; `menu` é o menu do botão
+ * direito e o de exemplos da barra de cima. Os dois têm a própria saída no
+ * Escape, e sem esta pergunta a mesma tecla fecharia o menu **e** faria o que o
+ * editor faz com Escape — soltar a seleção que a pessoa nem sabia que ia
+ * perder.
+ */
 export function isSheetOpen(): boolean {
-  return document.querySelector('[role="dialog"]') !== null;
+  return document.querySelector('[role="dialog"], [role="menu"]') !== null;
 }
 
 /** A tecla vale como atalho agora? */

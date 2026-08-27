@@ -132,6 +132,40 @@ export function Toolbar({ store, className, onTidy }: ToolbarProps): ReactElemen
         </RailButton>
 
         <RailButton
+          label="Selecionar um pedaço (V)"
+          name="Selecionar"
+          pressed={tool === 'select'}
+          testId="selecionar"
+          onClick={() => {
+            store.getState().setTool(tool === 'select' ? 'structure' : 'select');
+          }}
+        >
+          <svg viewBox="0 0 18 18" aria-hidden="true" className={styles.icon}>
+            {/* O retângulo tracejado é o gesto; a cadeia dentro dele é o que
+                se pega. */}
+            <rect
+              x="2.2"
+              y="3.4"
+              width="13.6"
+              height="11.2"
+              rx="1.6"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.2"
+              strokeDasharray="2.6 2.2"
+            />
+            <path
+              d="M5.2 11.4 7.9 7.2l2.9 4.2 2.2-2.4"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </RailButton>
+
+        <RailButton
           label="Cunha e traço: estereoquímica (W)"
           name="Estereoquímica"
           pressed={tool === 'stereo'}
