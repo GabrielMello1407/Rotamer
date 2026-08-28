@@ -1,6 +1,17 @@
 {
   "$schema": "https://turborepo.com/schema.json",
   "ui": "stream",
+
+  "globalEnv": [
+    "CI",
+    "DATABASE_URL",
+    "SESSION_SECRET",
+    "GEMINI_API_KEY",
+    "GEMINI_MODEL",
+    "TUTOR_DAILY_LIMIT",
+    "UMAMI_SCRIPT_URL",
+    "UMAMI_WEBSITE_ID"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
