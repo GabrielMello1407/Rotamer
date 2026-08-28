@@ -118,45 +118,46 @@ test.describe('pinça', () => {
     await page.getByTestId('anel-benzene').click();
     await expect(page.getByTestId('formula')).toHaveText('C6H6', { timeout: 60_000 });
 
-    const tela = page.getByTestId('tela-de-desenho');
-    const antes = await tela.screenshot();
+    const moldura = page.getByRole('application', { name: 'Tela de desenho da molécula' });
+    const caixa = await page.getByTestId('tela-de-desenho').boundingBox();
+    if (!caixa) throw new Error('a tela de desenho não tem tamanho');
 
-    // Dois toques afastando-se: em celular não existe roda de mouse, e sem isto
-    // não há como enquadrar uma molécula que cresceu.
-    await tela.evaluate((canvas) => {
-      const caixa = canvas.getBoundingClientRect();
-      const centroX = caixa.left + caixa.width / 2;
-      const centroY = caixa.top + caixa.height / 2;
+    const antes = Number(await moldura.getAttribute('data-camera-scale'));
+    expect(antes).toBeGreaterThan(0);
 
-      const toque = (tipo: string, id: number, x: number, y: number): void => {
-        canvas.dispatchEvent(
-          new PointerEvent(tipo, {
-            pointerId: id,
-            pointerType: 'touch',
-            clientX: x,
-            clientY: y,
-            bubbles: true,
-          }),
-        );
-      };
+    /*
+     * O gesto vai pelo protocolo do navegador, não por `dispatchEvent`.
+     *
+     * Evento sintético não cria ponteiro de verdade: `setPointerCapture` lança e
+     * o gesto morre na primeira linha. Pior, o teste passava assim mesmo, porque
+     * comparava duas capturas de tela que diferiam por outro motivo qualquer —
+     * teste verde que nunca executou o gesto é pior que teste nenhum, porque
+     * ocupa o lugar dele. Por isso agora são dedos de verdade, e o que se mede é
+     * a escala da câmera, não a imagem.
+     */
+    const centro = { x: caixa.x + caixa.width / 2, y: caixa.y + caixa.height / 2 };
+    const cdp = await page.context().newCDPSession(page);
+    const dedos = (distancia: number): { x: number; y: number; id: number }[] => [
+      { x: centro.x - distancia, y: centro.y, id: 1 },
+      { x: centro.x + distancia, y: centro.y, id: 2 },
+    ];
 
-      toque('pointerdown', 1, centroX - 40, centroY);
-      toque('pointerdown', 2, centroX + 40, centroY);
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: dedos(40) });
+    for (let passo = 1; passo <= 6; passo += 1) {
+      await cdp.send('Input.dispatchTouchEvent', {
+        type: 'touchMove',
+        touchPoints: dedos(40 + passo * 18),
+      });
+    }
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
 
-      for (let passo = 1; passo <= 6; passo += 1) {
-        const distancia = 40 + passo * 18;
-        toque('pointermove', 1, centroX - distancia, centroY);
-        toque('pointermove', 2, centroX + distancia, centroY);
-      }
-
-      toque('pointerup', 1, centroX - 148, centroY);
-      toque('pointerup', 2, centroX + 148, centroY);
-    });
-
-    await page.waitForTimeout(300);
-    const depois = await tela.screenshot();
-
-    expect(Buffer.compare(antes, depois)).not.toBe(0);
+    // Dedos afastando aproximam a molécula: a escala cresce na proporção da
+    // distância entre eles, que aqui triplicou.
+    await expect
+      .poll(async () => Number(await moldura.getAttribute('data-camera-scale')), {
+        timeout: 10_000,
+      })
+      .toBeGreaterThan(antes * 1.5);
 
     // E a pinça não pode deixar átomo perdido para trás ao soltar os dedos.
     await expect(page.getByTestId('formula')).toHaveText('C6H6');

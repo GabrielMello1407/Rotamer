@@ -418,6 +418,13 @@ test.describe('atalhos', () => {
     // Nenhum clique na tela: o foco está onde a página o deixou.
     await page.keyboard.press('o');
 
+    // A tecla só vale depois de a página hidratar, e no CI isso demora mais que
+    // o "visível" do canvas. Esperar o botão do elemento ficar marcado é
+    // esperar pelo efeito do atalho, não por um tempo arbitrário.
+    await expect(page.locator('[data-element="O"]')).toHaveAttribute('aria-pressed', 'true', {
+      timeout: 30_000,
+    });
+
     const box = await canvas.boundingBox();
     if (!box) throw new Error('a tela de desenho não tem tamanho');
     await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
@@ -433,6 +440,13 @@ test.describe('atalhos', () => {
     if (!box) throw new Error('a tela de desenho não tem tamanho');
 
     await page.keyboard.press('f');
+    // O flúor não está entre os quatro do trilho: quem passa a mostrá-lo é o
+    // botão da tabela periódica, que exibe o elemento ativo quando ele é de
+    // fora da lista curta.
+    await expect(page.locator('[data-element="F"]')).toHaveAttribute('aria-pressed', 'true', {
+      timeout: 30_000,
+    });
+
     await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
 
     await expect(page.getByTestId('formula')).toHaveText('FH', { timeout: 60_000 });

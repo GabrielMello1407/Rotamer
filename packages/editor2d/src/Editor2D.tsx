@@ -575,6 +575,9 @@ export function Editor2D({ store, className, onTidy, notice }: Editor2DProps): R
   // A dica muda com o que está sob o cursor, então ela precisa reagir ao hover.
   const hover = useStore(store, (state) => state.hover);
   const selection = useStore(store, (state) => state.selection);
+  // Só a escala, e não a câmera inteira: mover a vista não precisa re-renderizar
+  // o componente, quem redesenha é a assinatura do store.
+  const cameraScale = useStore(store, (state) => state.camera.scale);
 
   /** Redesenha no próximo quadro; várias chamadas seguidas viram uma. */
   const paint = useCallback(() => {
@@ -1334,6 +1337,18 @@ export function Editor2D({ store, className, onTidy, notice }: Editor2DProps): R
   }, [handleKeyDown]);
 
   const hint = hintFor(tool, graph, hover, selection);
+
+  /*
+   * A escala da câmera fica legível no DOM.
+   *
+   * Não é enfeite nem depuração: é o único jeito de um teste perguntar "a pinça
+   * aproximou?" sem comparar imagem com imagem. Comparação de captura já
+   * enganou uma vez — o teste da pinça passou meses verde sem nunca executar o
+   * gesto, porque duas capturas diferiam por outro motivo qualquer.
+   *
+   * Sai como atributo, com duas casas: quem lê é teste, não pessoa.
+   */
+  const scaleLabel = cameraScale.toFixed(2);
   const selectionEmpty = selection.atoms.size === 0 && selection.bonds.size === 0;
 
   const classes = [
@@ -1356,6 +1371,7 @@ export function Editor2D({ store, className, onTidy, notice }: Editor2DProps): R
       tabIndex={0}
       role="application"
       aria-label="Tela de desenho da molécula"
+      data-camera-scale={scaleLabel}
     >
       {/* Quem seleciona com Ctrl+A não vê o marca-texto: sem isto, nada
           anuncia para o leitor de tela que a seleção mudou. */}
