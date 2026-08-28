@@ -784,7 +784,21 @@ export function Editor2D({ store, className, onTidy, notice }: Editor2DProps): R
       // largaria um átomo atrás dele.
       if (event.pointerType === 'mouse' && event.button !== 0) return;
 
-      event.currentTarget.setPointerCapture(event.pointerId);
+      /*
+       * Capturar o ponteiro é conveniência, não requisito.
+       *
+       * Ela mantém o arrasto vivo quando o dedo sai da tela de desenho — mas
+       * lança quando o ponteiro daquele identificador já não está ativo, e aí
+       * derruba o resto do gesto junto. Acontece de verdade num toque que o
+       * sistema cancelou, e acontece sempre com evento sintético: era o que
+       * fazia o teste da pinça no celular passar sem nunca chegar a testar a
+       * pinça, porque o manipulador morria na primeira linha.
+       */
+      try {
+        event.currentTarget.setPointerCapture(event.pointerId);
+      } catch {
+        // Sem captura, o gesto continua — só não sobrevive a sair da moldura.
+      }
       frameRef.current?.focus();
 
       const rect = event.currentTarget.getBoundingClientRect();

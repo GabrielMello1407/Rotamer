@@ -21,17 +21,37 @@ const ESCOLA = 'EE Dom Pedro II';
  * caminho feliz precisa rodar o script, que é como isso acontece de verdade.
  */
 function promover(email: string, escola: string): void {
-  const linha = readFileSync('.env', 'utf8')
-    .split(/\r?\n/)
-    .find((entry) => entry.startsWith('DATABASE_URL'));
-
-  const url = linha?.split('=').slice(1).join('=').trim().replace(/^"|"$/g, '');
-  if (url === undefined || url === '') throw new Error('sem DATABASE_URL no .env');
+  /*
+   * A URL do banco vem do ambiente, e o arquivo é só o plano B.
+   *
+   * O `.env` existe na máquina de quem desenvolve e **não existe no CI**, onde o
+   * endereço do Postgres vem do próprio trabalho. Ler o arquivo primeiro fazia
+   * estes testes falharem lá por não achar um arquivo que nunca esteve lá — um
+   * erro de ambiente vestido de teste quebrado.
+   */
+  const url = process.env['DATABASE_URL'] ?? urlFromEnvFile();
+  if (url === undefined || url === '') throw new Error('sem DATABASE_URL no ambiente nem no .env');
 
   execFileSync('node', ['scripts/promote-teacher.mjs', email, '--escola', escola], {
     env: { ...process.env, DATABASE_URL: url },
     stdio: 'pipe',
   });
+}
+
+/** A linha `DATABASE_URL` do `.env`, quando existe. */
+function urlFromEnvFile(): string | undefined {
+  try {
+    return readFileSync('.env', 'utf8')
+      .split(/\r?\n/)
+      .find((entry) => entry.startsWith('DATABASE_URL'))
+      ?.split('=')
+      .slice(1)
+      .join('=')
+      .trim()
+      .replace(/^"|"$/g, '');
+  } catch {
+    return undefined;
+  }
 }
 
 function novoEmail(quem: string): string {
