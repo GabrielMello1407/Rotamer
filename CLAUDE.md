@@ -145,13 +145,15 @@ mão — é a mesma regra do D-01, e o erro sairia silencioso.
 
 ## O time de agentes
 
-Oito papéis vivem em `.claude/agents/`, um arquivo cada: `pm`, `ui-ux`, `frontend`, `backend`,
-`security`, `deploy`, `researcher` e `reviewer`. O `README.md` de lá diz quando chamar cada um e
-como eles conversam entre si. O caminho normal de uma entrega é `pm` → especialista →
-`reviewer`, o `researcher` entra em qualquer ponto onde falte informação, e o `reviewer` tem veto
-sobre a regra que não se quebra.
+Nove papéis vivem em `.claude/agents/`, um arquivo cada: `pm`, `ui-ux`, `frontend`, `backend`,
+`security`, `deploy`, `researcher`, `marketing` e `reviewer`. O `README.md` de lá diz quando
+chamar cada um e como eles conversam entre si. O caminho normal de uma entrega é `pm` → especialista →
+`reviewer`, o `researcher` entra em qualquer ponto onde falte informação, o `marketing` fala
+para fora depois que o `pm` disse o que já pode ser prometido, e o `reviewer` tem veto sobre a
+regra que não se quebra.
 
-Nenhum desses arquivos substitui este aqui: o que está escrito no `CLAUDE.md` vale para os oito.
+Nenhum desses arquivos substitui este aqui: o que está escrito no `CLAUDE.md` vale para os nove —
+e a seção **Nunca afirme** vale com força extra no que sai para o público.
 
 ## Comandos
 

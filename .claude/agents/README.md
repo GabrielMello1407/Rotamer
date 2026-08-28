@@ -1,6 +1,6 @@
 # O time
 
-Oito papéis, um arquivo cada. O Claude Code lê o `description` de cada um para saber quando
+Nove papéis, um arquivo cada. O Claude Code lê o `description` de cada um para saber quando
 chamar; o corpo do arquivo é a instrução que aquele agente recebe.
 
 | Agente | O que ele decide | Quando chamar |
@@ -12,6 +12,7 @@ chamar; o corpo do arquivo é a instrução que aquele agente recebe.
 | `security` | conta, sessão, dado de aluno, licença | antes de mexer em qualquer um dos quatro |
 | `deploy` | build, VPS, migração, backup, variável | quando a mudança precisa de passo no servidor |
 | `researcher` | o que se sabe, de onde veio, o que falta | quando a decisão depende de algo que ninguém sabe de cabeça |
+| `marketing` | o que o produto diz de si em público | postagem, convite para testar, e-mail para escola |
 | `reviewer` | se a entrega passa | ao final, sempre |
 
 ## Como eles conversam
@@ -37,6 +38,7 @@ pm  ──────────── ┼──►  backend ─────�
                  └──►  deploy   (quando precisa de variável, migração ou passo no servidor)
 
 researcher  ──►  qualquer um deles, a qualquer momento
+marketing   ──►  fala para fora, depois que o pm disse o que já pode ser prometido
 ```
 
 O `researcher` não tem lugar fixo na fila: ele é chamado por quem estiver travado. O caso mais
@@ -57,10 +59,12 @@ E uma regra que vale só para pesquisa: **achado tem endereço e data**. Número
 
 ## O que todos sabem antes de começar
 
-O `CLAUDE.md` vale para os oito, e nenhum arquivo daqui o substitui:
+O `CLAUDE.md` vale para os nove, e nenhum arquivo daqui o substitui:
 
 - **O núcleo determinístico decide; a IA explica.** Química é do RDKit, do campo de força e do
   motor de missões.
 - **Texto em pt-BR, código em inglês.** O erro explica a química, não o código.
 - **GPL e AGPL estão vetadas.** O produto é proprietário e fechado.
 - **Escopo estourando é o risco número um.** Ideia fora do MVP vai para `DEPOIS.md`.
+- **Nunca afirme** previsão de reação, atividade biológica, ou que o produto substitui ChemDraw,
+  PyMOL ou Maestro. Vale no código, no documento e — principalmente — no que se publica.
