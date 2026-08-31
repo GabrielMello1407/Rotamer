@@ -105,6 +105,56 @@ primeira impressão, e ela dura mais que a segunda.
 - **Se ele quiser levar para a turma:** aluno é menor de idade, e isso é outra conversa — o convite
   passa pelo professor.
 
+## Perguntas que ele fez, e como foram respondidas
+
+### "Como são calculados os modos de vibração? Ou eles são pegos da internet por IA?"
+
+Feita em 28 de agosto de 2026, antes de qualquer teste. É a pergunta de quem está avaliando rigor,
+e a resposta é o argumento de venda inteiro — por isso ela é técnica de propósito, com os números
+que ele pode conferir.
+
+Resposta enviada (duas mensagens):
+
+> Ótima pergunta, e vai direto no ponto. Nada vem da internet, e nenhuma IA encosta nesses números.
+>
+> O caminho é o mesmo de um cálculo de frequências normal, só que com campo de força em vez de
+> método quântico:
+>
+> 1. a energia da molécula é função da posição de cada átomo — isso vem do campo de força MMFF94;
+> 2. eu calculo a matriz de derivadas segundas dessa energia (a hessiana), numericamente: desloco
+> cada átomo um pouquinho em cada direção e vejo como a força muda;
+> 3. pondero por massa, projeto fora os 6 movimentos que são só a molécula transladando e girando
+> (5 se ela for linear) e diagonalizo;
+> 4. os autovalores viram as frequências; os autovetores são exatamente o movimento que aparece
+> animado na tela — cada modo é desenhado com o vetor dele.
+>
+> É por isso que dá 3N−6, ou 3N−5 no caso linear.
+
+> Pra você calibrar o que esperar, os números que ele devolve:
+>
+> Água: 1582, 3722 e 3782 cm⁻¹ (experimental: 1595, 3657, 3756)
+> Metano: 1305, 1471, 2840 e 2982 cm⁻¹ (experimental: 1306, 1534, 2917, 3019)
+>
+> E aqui vai a parte honesta: campo de força não é cálculo quântico. Serve pra mostrar o padrão do
+> movimento e a ordem de grandeza — que C–H estica lá em cima e deformação angular fica embaixo —
+> e não substitui um espectro calculado em DFT. Não aplico fator de escala empírico pra "melhorar"
+> o número; sai o que a conta dá.
+>
+> Um exemplo de como isso aparece: no CO₂, o MMFF94 devolve duas deformações angulares com
+> frequência imaginária (−698 cm⁻¹), porque nesse campo de força a molécula linear é ponto de sela,
+> não mínimo. O produto mostra o número negativo e explica, em vez de esconder.
+>
+> A IA entra num lugar só: um tutor que lê os números já calculados e escreve a explicação em
+> português. Ele nunca produz número, e o que sai dele aparece marcado na tela como hipótese. Essa
+> separação é a regra número um do projeto.
+>
+> Se quiser, na chamada eu rodo o teste na sua frente.
+
+**Por que responder assim.** O impulso é simplificar; com professor de instituto federal isso
+custaria a confiança. Ele perguntou em linguagem técnica — responder em linguagem técnica é o
+respeito. E a parte que mais convence não é o acerto: é dizer onde o método não serve, e mostrar o
+número negativo do CO₂ que a maioria dos produtos esconderia.
+
 ## Registro
 
 - [ ] Enviada em ____ / ____
