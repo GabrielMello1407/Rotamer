@@ -39,9 +39,12 @@ de usuário ou de escola, porque não existe nenhum.
 > por isso que seu olhar vale tanto agora: nesta fase, o que você apontar ainda dá tempo de virar
 > produto. Depois de pronto, vira desculpa.
 >
-> Seriam uns 15 minutos, numa chamada: eu abro a ferramenta, você desenha a molécula que ensinaria
-> na próxima aula e vai falando o que atrapalha — principalmente o que estiver feio, faltando ou
-> confuso.
+> Vou deixar aqui embaixo um vídeo curto pra você ter uma ideia de como ficou — é a ferramenta
+> rodando, do jeito que ela está hoje.
+>
+> Se fizer sentido, seriam uns 15 minutos numa chamada: eu abro a ferramenta, você desenha a
+> molécula que ensinaria na próxima aula e vai falando o que atrapalha — principalmente o que
+> estiver feio, faltando ou confuso.
 >
 > Toparia?
 
@@ -55,10 +58,10 @@ de usuário ou de escola, porque não existe nenhum.
 > verdade, não inventados por IA.
 >
 > Ainda não publiquei: quero ouvir alguns professores antes, enquanto ainda dá tempo de mudar o que
-> estiver ruim. Seriam uns 15 minutos numa chamada, você desenhando uma molécula da sua aula e
-> falando o que atrapalha.
+> estiver ruim. Mando aqui embaixo um vídeo curto pra você ver como está.
 >
-> Toparia dar uma olhada?
+> Se topar, seriam uns 15 minutos numa chamada, você desenhando uma molécula da sua aula e falando
+> o que atrapalha. Que acha?
 
 **Qual eu mandaria:** a principal, se ele for de responder mensagem longa; a curta, se o Cavazzani
 já tiver comentado do projeto. A principal ganha por causa de dois trechos — o do aluno que trava
@@ -66,6 +69,31 @@ quando a molécula vira objeto no espaço, que é a experiência dele, e o de "n
 apontar ainda dá tempo de virar produto", que é o motivo real de ele gastar quinze minutos.
 
 ---
+
+## O vídeo que vai junto
+
+O vídeo é afirmação, igual a uma captura de tela: o que ele mostra, o produto tem que fazer. Nada
+de tela montada, nada de número editado, nada de estrutura desenhada errada — quem você quer
+alcançar é justamente quem percebe.
+
+O que ele precisa mostrar, nesta ordem, em **30 a 60 segundos**:
+
+1. A tela vazia, e um traço virando molécula — o desenho acontecendo, não o resultado pronto.
+2. A forma em 3D aparecendo sozinha, dobrando e depois vibrando.
+3. Girar a molécula com o dedo ou com o mouse.
+4. Trocar um átomo e a forma inteira mudando junto.
+
+Três cuidados de gravação:
+
+- **Sem narração.** No WhatsApp o vídeo abre mudo, e legenda ninguém lê no primeiro contato. Se o
+  gesto não se explica sozinho, o problema é do produto, não do vídeo.
+- **Uma molécula que ele reconheça** — etanol, ácido acético, benzeno. Estrutura exótica vira
+  demonstração de software; molécula de aula vira aula.
+- **Vertical ou quadrado**, gravado no celular ou com a janela estreita. Vídeo de tela larga no
+  WhatsApp chega do tamanho de uma tarja.
+
+Se algo no vídeo estiver visivelmente quebrado, não grave por cima: conserte antes. Vídeo é a
+primeira impressão, e ela dura mais que a segunda.
 
 ## Antes de enviar
 
