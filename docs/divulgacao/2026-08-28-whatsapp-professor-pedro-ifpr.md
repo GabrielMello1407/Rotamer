@@ -194,6 +194,21 @@ pesquisa: está registrada no `DEPOIS.md`.
 pedido solto em dado de sessão de observação. E se ele responder "é pra mostrar que a água é
 polar", o produto ganhou uma funcionalidade barata e certa.
 
+### "Interface na cor branca não fica melhor?"
+
+Feita em 28 de agosto de 2026, provavelmente porque o vídeo foi gravado no tema escuro. O produto
+**já tem os dois** — é regra do projeto que nenhuma cor exista só num tema — e segue o sistema por
+padrão, com botão para trocar.
+
+> Tem branca sim. Ele segue o tema do seu aparelho: se o celular ou o computador tá no claro, ele
+> abre claro. Tem um botão pra trocar também.
+>
+> O vídeo saiu escuro porque é assim que eu deixo o meu. Se quiser eu gravo de novo no claro, que
+> é como vai aparecer na maioria dos computadores de escola.
+
+**Nota para quem gravar o próximo vídeo:** gravar no tema **claro**. É o que a escola vê, é o que
+projeta melhor em datashow, e o professor pediu.
+
 ## Registro
 
 - [ ] Enviada em ____ / ____
