@@ -147,6 +147,31 @@ em bloco. Ficaram de fora, em ordem de quanto custam:
 - **Estereoquímica em bloco.** Vetada no D-23, não adiada: aplicar cunha a várias ligações define
   configurações que ninguém escolheu.
 
+## Momento de dipolo — pedido por professor de verdade
+
+**28 de agosto de 2026.** O professor Pedro, do IFPR, perguntou se o produto mostra o momento de
+dipolo, antes mesmo de testar. É o primeiro pedido de funcionalidade vindo de fora, e por isso
+vale mais que qualquer ideia nossa.
+
+Hoje **não existe**: não está nos descritores, não está na tela, não está em lugar nenhum do
+código.
+
+O que torna o pedido interessante: a geometria 3D já está calculada, e o MMFF94 atribui carga
+parcial a cada átomo. Somar carga vezes posição dá um vetor de dipolo — e a **seta** desenhada
+sobre a molécula em 3D é justamente o que uma aula de polaridade precisa, mais do que o número.
+
+O que impede de entrar sem conversa:
+
+- **Dipolo de campo de força é estimativa grosseira.** As cargas do MMFF94 servem para energia, não
+  para momento de dipolo; o valor de referência de verdade vem de cálculo quântico. Mostrar
+  "1,85 D" para a água quando a conta dá outra coisa seria o erro que este produto não pode
+  cometer (D-01) — e o número da água é o primeiro que qualquer professor confere.
+- Então há duas saídas honestas, e a escolha é do `pm`: mostrar **só a direção** (a seta, sem
+  número, dizendo que é a direção da polaridade e não uma medida), ou mostrar o número com a
+  origem dita e uma comparação — o que exige medir antes o quanto ele erra em moléculas de aula.
+- Antes das duas: **perguntar ao Pedro o que ele faria com isso na aula**. Se o uso é "mostrar que
+  a água é polar e o CO₂ não", a seta basta e é barata.
+
 ## Considerado e adiado
 
 - [ ] Comparar dois análogos lado a lado — é para o usuário avançado, que não é o comprador (D-09)

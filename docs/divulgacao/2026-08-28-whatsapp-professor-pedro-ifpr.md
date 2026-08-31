@@ -169,6 +169,31 @@ custaria a confiança. Ele perguntou em linguagem técnica — responder em ling
 respeito. E a parte que mais convence não é o acerto: é dizer onde o método não serve, e mostrar o
 número negativo do CO₂ que a maioria dos produtos esconderia.
 
+### "É mostrado o momento de dipolo da molécula?"
+
+Feita junto com a pergunta sobre os modos, em 28 de agosto de 2026. **Não existe no produto** —
+conferido no código, não é esquecimento de memória. A resposta honesta é "não", e a pergunta vira
+pesquisa: está registrada no `DEPOIS.md`.
+
+> Hoje não mostra, não.
+>
+> Dá pra fazer: a geometria 3D já está calculada e o campo de força atribui carga parcial a cada
+> átomo, então sai um vetor. Só que dipolo tirado de campo de força é estimativa grosseira — pra
+> valor de verdade é cálculo quântico. Botar um número que não bate com o da tabela na frente de
+> uma turma é justamente o que eu não quero.
+>
+> O que eu faria sem mentir é desenhar a seta na molécula em 3D, mostrando a direção da
+> polaridade, e deixar claro que é direção e não medida.
+>
+> Te pergunto o contrário: o que você faria com isso na aula? Se for pra mostrar que a água é
+> polar e o CO₂ não é, a seta resolve. Se você precisa do valor em debye pra comparar com tabela,
+> aí é outra conversa e prefiro te dizer que não faço.
+
+**Por que responder assim.** Ele pediu funcionalidade antes de ver o produto — a tentação é dizer
+"sim, dá pra fazer". Dizer não, explicar o limite e devolver a pergunta é o que transforma um
+pedido solto em dado de sessão de observação. E se ele responder "é pra mostrar que a água é
+polar", o produto ganhou uma funcionalidade barata e certa.
+
 ## Registro
 
 - [ ] Enviada em ____ / ____
