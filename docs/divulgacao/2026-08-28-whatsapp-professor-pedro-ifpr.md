@@ -113,7 +113,21 @@ Feita em 28 de agosto de 2026, antes de qualquer teste. É a pergunta de quem es
 e a resposta é o argumento de venda inteiro — por isso ela é técnica de propósito, com os números
 que ele pode conferir.
 
-Resposta enviada (duas mensagens):
+Resposta curta, que é a que vai: sem conta, sem lista numerada, sem cara de texto gerado.
+
+> Não vem da internet não, e IA não entra nisso.
+>
+> Quem calcula é um campo de força, o MMFF94. Ele diz qual é a energia da molécula pra cada
+> posição dos átomos, e a partir disso dá pra ver como ela reage quando você mexe em cada um. Sai
+> daí a frequência de cada modo e o movimento que aparece animado na tela.
+>
+> Só que é campo de força, não é cálculo quântico. Os valores caem na faixa certa e o padrão do
+> movimento é o certo, mas não é espectro de DFT. Pra aula serve bem, pra publicar não.
+>
+> IA tem no projeto, mas só escrevendo explicação em português em cima de número que já foi
+> calculado. Ela nunca inventa valor, e o que vem dela aparece marcado na tela.
+
+Se ele puxar mais fundo, a versão longa (com o caminho da conta e os números para conferir):
 
 > Ótima pergunta, e vai direto no ponto. Nada vem da internet, e nenhuma IA encosta nesses números.
 >
