@@ -237,6 +237,29 @@ lista e sem título, porque no WhatsApp texto formatado parece circular de empre
 > claro. Tem botão pra trocar também. O vídeo saiu escuro porque é assim que eu uso. Se quiser eu
 > gravo de novo no claro, que é como vai aparecer na maioria dos computadores da escola.
 
+### Ele respondeu que a seta serve — e a resposta precisou de uma correção
+
+Em 28/08/2026: *"Sim!! Mostraria a polaridade da molécula. Só a seta, com a direção do dipolo
+resultante, ajuda bastante. Não precisa gravar em fundo branco, já que existe essa opção."*
+
+A mensagem anterior tinha dito que daria para fazer "porque o campo de força dá carga parcial em
+cada átomo". É verdade sobre o MMFF94 como método, e **falso sobre o que os nossos motores
+entregam**: nem o OpenChemLib nem o RDKit devolvem carga parcial pela API que usamos (medido, ver
+`DEPOIS.md`). Corrigir isso na hora vale mais que a funcionalidade — ele está avaliando se pode
+confiar no que eu digo.
+
+> Anotado, é isso mesmo que eu ia fazer: a seta e mais nada.
+>
+> Só que preciso te corrigir numa coisa que eu falei antes. Fui ver como fazer direito e o motor
+> que eu uso não me entrega a carga de cada átomo, ele usa isso por dentro e não devolve. Então
+> não é tão rápido quanto eu te disse. Ou eu acho uma fonte de carga em que dê pra confiar, ou eu
+> teria que calcular por conta própria — e essa segunda opção eu não faço, porque é o tipo de coisa
+> que erra calado e aponta a seta pro lado errado.
+>
+> Vou atrás do caminho certo. Se der, você vê a seta funcionando; se não der, te digo que não deu.
+>
+> E valeu pelo vídeo, deixo escuro então.
+
 ## Registro
 
 - [ ] Enviada em ____ / ____

@@ -160,6 +160,32 @@ O que torna o pedido interessante: a geometria 3D já está calculada, e o MMFF9
 parcial a cada átomo. Somar carga vezes posição dá um vetor de dipolo — e a **seta** desenhada
 sobre a molécula em 3D é justamente o que uma aula de polaridade precisa, mais do que o número.
 
+**Validado pelo professor em 28/08/2026**, antes de qualquer teste: *"Mostraria a polaridade da
+molécula. Só a seta, com a direção do dipolo resultante, ajuda bastante."* Ou seja, a saída barata
+— seta sem número — é exatamente a que serve para a aula dele. Vale como dado de sessão de
+observação, e chegou de graça.
+
+**Só que ela não é barata, e isso foi medido em 28/08/2026.** Nenhum dos dois motores entrega
+carga parcial pela API que usamos:
+
+- **OpenChemLib 9.25.0**: `ForceFieldMMFF94` expõe `size()`, `getTotalEnergy()` e `minimise()`, e
+  nada mais. O MMFF94 calcula as cargas por dentro para montar o termo eletrostático, mas não as
+  devolve.
+- **RDKit MinimalLib**: o `JSMol` não tem método de carga parcial (só `get_prop`/`set_prop`
+  genéricos), e o `get_json` traz por átomo apenas `impHs`. A string `gasteiger` existe no `.wasm`,
+  então o código está compilado — mas não está exposto no JavaScript.
+
+Logo, as saídas possíveis, e nenhuma é de uma tarde:
+
+1. **Achar outra fonte de carga com licença que sirva** (MIT, BSD, Apache) — pergunta para o
+   `researcher`.
+2. **Compilar a nossa própria MinimalLib** com a função do RDKit exposta. É o caminho mais correto
+   quimicamente e o mais caro em infraestrutura; muda o `prebuild` e o `docs/DEPLOY.md`.
+3. **Implementar Gasteiger–Marsili à mão.** Tentador e proibido pelo espírito do D-01 e do D-02:
+   seria kernel próprio outra vez, agora em carga parcial, e o erro sairia silencioso numa seta que
+   aponta para o lado errado.
+4. **Não fazer**, e dizer por quê.
+
 O que impede de entrar sem conversa:
 
 - **Dipolo de campo de força é estimativa grosseira.** As cargas do MMFF94 servem para energia, não
