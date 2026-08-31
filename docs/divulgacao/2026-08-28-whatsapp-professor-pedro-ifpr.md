@@ -209,6 +209,34 @@ padrão, com botão para trocar.
 **Nota para quem gravar o próximo vídeo:** gravar no tema **claro**. É o que a escola vê, é o que
 projeta melhor em datashow, e o professor pediu.
 
+### A resposta única, que é a que foi enviada
+
+As três perguntas vieram juntas, então a resposta vai junta — em três parágrafos corridos, sem
+lista e sem título, porque no WhatsApp texto formatado parece circular de empresa.
+
+> Boa, vou por partes.
+>
+> Os modos de vibração são calculados na hora, não vêm da internet e IA não encosta neles. Quem faz
+> a conta é um campo de força, o MMFF94: ele dá a energia da molécula pra cada posição dos átomos,
+> e daí sai como ela responde quando você desloca cada um. É disso que vêm a frequência de cada
+> modo e o movimento que aparece animado. Como é campo de força e não cálculo quântico, os valores
+> ficam na faixa certa e o padrão do movimento é o certo, mas não é espectro de DFT: pra aula
+> funciona bem, pra publicar não. IA no projeto tem, só que ela escreve a explicação em português
+> em cima do número que já foi calculado. Nunca inventa valor, e o que vem dela fica marcado na
+> tela.
+>
+> Momento de dipolo ainda não tem. Daria pra fazer, porque a geometria 3D já tá calculada e o campo
+> de força dá carga parcial em cada átomo, então sai um vetor. Só que dipolo tirado de campo de
+> força é estimativa grosseira, e botar um número que não bate com a tabela na frente da turma é o
+> que eu quero evitar. O que dá pra fazer sem mentir é desenhar a seta na molécula mostrando a
+> direção da polaridade, sem número. Aí te devolvo a pergunta: o que você faria com isso na aula?
+> Se for pra mostrar que água é polar e CO2 não é, a seta resolve. Se você precisa do valor em
+> debye pra comparar com tabela, prefiro te dizer que não faço.
+>
+> Sobre a cor, tem tema claro sim, e ele segue o do aparelho: se seu computador tá no claro, abre
+> claro. Tem botão pra trocar também. O vídeo saiu escuro porque é assim que eu uso. Se quiser eu
+> gravo de novo no claro, que é como vai aparecer na maioria dos computadores da escola.
+
 ## Registro
 
 - [ ] Enviada em ____ / ____
