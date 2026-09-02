@@ -57,7 +57,11 @@ export default function RootLayout({
 }: {
   readonly children: ReactNode;
 }): ReactElement {
-  const fontVariables = [displayFont.variable, uiFont.variable, monoFont.variable].join(' ');
+  const fontVariables = [
+    displayFont.variable,
+    uiFont.variable,
+    monoFont.variable,
+  ].join(' ');
 
   return (
     <html lang="pt-BR" className={fontVariables} suppressHydrationWarning>
@@ -65,7 +69,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: THEME_BEFORE_PAINT }} />
         <Telemetry />
       </head>
-      <body>{children}</body>
+      <body cz-shortcut-listen="true">{children}</body>
     </html>
   );
 }

@@ -12,6 +12,27 @@ const config: NextConfig = {
     '@rotamer/ui',
     '@rotamer/viewer3d',
   ],
+  /**
+   * Quem pode falar com o servidor de desenvolvimento por outro endereço.
+   *
+   * Em desenvolvimento o Next recusa pedido vindo de origem diferente da que ele
+   * está servindo, e recusa **sem quebrar a página**: o HTML chega, os pedaços
+   * de JavaScript não. O efeito é a tela abrir e nada funcionar — foi o que
+   * aconteceu ao mostrar o produto por um túnel do ngrok.
+   *
+   * A lista aceita **nome de máquina**, sem `https://` e sem barra no fim. Com
+   * esquema ou barra a entrada nunca casa, e o aviso continua aparecendo como se
+   * ninguém tivesse configurado nada.
+   *
+   * O endereço do ngrok muda a cada vez que o túnel sobe, então ele entra por
+   * variável de ambiente: `NGROK_HOST=xxxx.ngrok-free.app pnpm dev`. O curinga
+   * cobre o caso comum e a variável cobre domínio reservado ou outro serviço.
+   */
+  allowedDevOrigins: [
+    '*.ngrok-free.app',
+    '*.ngrok.app',
+    ...(process.env['NGROK_HOST'] === undefined ? [] : [process.env['NGROK_HOST']]),
+  ],
 
   turbopack: {
     // Sem isto o Turbopack tenta adivinhar a raiz e acha a pasta errada.
@@ -40,7 +61,10 @@ const config: NextConfig = {
       {
         source: '/chem/:file*',
         headers: [
-          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
         ],
       },
     ]);
