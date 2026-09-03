@@ -828,3 +828,31 @@ o produto não pode entregar em silêncio uma molécula que a pessoa não desenh
 
 **Revisar se.** O RDKit passar a expor a razão pela qual removeu uma cunha — hoje a razão é
 inferida da ausência de centro, e inferência se troca por fato assim que o fato existe.
+
+---
+
+## D-25 · Só o professor orquestra e cria exercícios
+
+**Decisão do dono do produto, 28 de agosto de 2026.** Quem monta a sequência de exercícios para a
+turma e quem inventa exercício novo é **o professor**. O aluno resolve; não organiza nem cria.
+
+**O que isso muda no que estava proposto.** A proposta de estrutura das missões (`DEPOIS.md`)
+tinha "criar missão própria" como o último e mais caro dos três itens. Deixa de ser opcional: é
+requisito, e o desenho do roteiro precisa nascer já com o lugar onde a missão do professor entra.
+
+**Como criar sem quebrar a regra que não se quebra.** Missão é verificada pelo RDKit sobre a
+molécula (D-01). Enunciado escrito à mão não é verificável, e objetivo escrito à mão pode ser
+impossível de cumprir — "um álcool com fórmula C2H4O" não existe, e o aluno passaria a aula
+tentando. O caminho que respeita o D-01 é **o professor desenhar a resposta, e o produto extrair
+os objetivos dela**: fórmula, grupos funcionais, contagem de átomos, centros estereogênicos — tudo
+calculado da molécula que o RDKit aceitou. O professor escolhe quais desses objetivos cobrar e
+escreve o enunciado e as dicas; a parte que decide química nunca é digitada.
+
+**O que continua verdade.** O aluno vê progresso, não ranking (D-22). A trilha Otimização continua
+sem missão (D-09). E o papel de professor continua sendo dado por quem administra, nunca
+autodeclarado (D-19) — o que agora importa mais, porque professor passa a publicar conteúdo para
+menores de idade.
+
+**Em aberto.** O catálogo atual — as 16 missões que qualquer pessoa abre sem conta — continua
+existindo como exploração livre, ou passa a ser só matéria-prima para o roteiro do professor? As
+duas leituras cabem na decisão; a diferença é o que o aluno sem professor encontra ao entrar.

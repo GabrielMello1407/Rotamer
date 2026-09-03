@@ -235,9 +235,10 @@ exige) em vez de declaração. Também aparece de graça a resposta para "o que 
    oxigenadas — 3ª série"). É o que transforma o produto em material de aula, e não exige que ele
    escreva missão nenhuma.
 2. **Acompanhar** — já existe (D-22): o painel mostra onde a turma parou, não quem foi melhor.
-3. **Criar missão própria** — o mais caro, e o que mais parece necessário sem ser. Um editor de
-   missão precisa de validação, de revisão e de um jeito de impedir enunciado quimicamente errado.
-   Fica para depois de o roteiro provar que o formato serve.
+3. **Criar missão própria** — deixou de ser opcional em 28/08/2026 (D-25): o dono do produto
+   decidiu que só o professor orquestra e cria exercícios. O jeito de fazer isso sem quebrar o
+   D-01 é o professor **desenhar a resposta** e o produto extrair os objetivos verificáveis dela;
+   ele escolhe quais cobrar e escreve o enunciado. A parte que decide química nunca é digitada.
 
 ### A escolha que precisa ser feita, e a recomendação
 
