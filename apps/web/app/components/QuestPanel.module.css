@@ -73,6 +73,13 @@
   color: var(--ok);
 }
 
+/* Achado 1 — enquanto só o servidor sabe o veredito do objetivo (InChIKey,
+   R-4), a linha diz que está conferindo, nunca que falhou. */
+.pending {
+  font-size: var(--step--2);
+  color: var(--ink-400);
+}
+
 .footer {
   display: flex;
   flex-wrap: wrap;

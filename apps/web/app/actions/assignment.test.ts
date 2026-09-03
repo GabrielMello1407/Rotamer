@@ -1,11 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import { analyze, configureRDKit, type Molecule } from '@rotamer/core';
 import { packageFactory } from '@rotamer/core/chemistry/node';
-import { evaluateQuest, extractGoals } from '@rotamer/quests';
+import { evaluateQuest, extractGoals, type CandidateGoal } from '@rotamer/quests';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { endSession, startSession } from '../../lib/auth';
 import { db } from '../../lib/db';
-import { resolveQuest } from '../../lib/quest-resolve';
+import { resolveQuest, validateAuthoredGoals } from '../../lib/quest-resolve';
 import { buildPrompt } from '../../lib/tutor/prompt';
 import { isDatabaseReachable } from '../../test/db-guard';
 import { openQuest, saveAttempt } from './attempt';
@@ -13,10 +13,12 @@ import {
   addItem,
   archiveAssignment,
   archiveTeacherQuest,
+  checkQuest,
   createAssignment,
   createTeacherQuest,
   publishAssignment,
   publishToCatalog,
+  readAssignments,
   readCatalog,
   readQuestDetail,
   readStudentAssignments,
@@ -412,6 +414,57 @@ maybeDescribe('R-1 — nada digitado vira Condition', () => {
     expect(outcome.status).toBe('rejected');
     const count = await db.teacherQuest.count({ where: { teacherId: teacher.id } });
     expect(count).toBe(0);
+  });
+});
+
+describe('achado 8 — validateAuthoredGoals recusa direto, sem passar pela ação', () => {
+  /**
+   * `createTeacherQuest` sempre monta `candidates` a partir de `extractGoals`
+   * rodando sobre a mesma molécula que valida a missão — por construção, a
+   * `Condition` de cada candidato sempre fecha com ela, e a R-2 nunca tinha
+   * um caso real que a exercitasse pela recusa. `validateAuthoredGoals`
+   * (`apps/web/lib/quest-resolve.ts`) roda sem RDKit, sem banco e sem sessão,
+   * então dá para forjar um candidato cuja `condition` é sabidamente falsa
+   * para a molécula testada e provar as duas pontas: recusa, e a razão
+   * **nomeia** o objetivo que não fechou.
+   */
+  it('candidato forjado cuja condição não fecha é recusado, e a razão nomeia o objetivo', async () => {
+    const result = await analyze('CCO'); // etanol: 0 anéis
+    if (!result.ok) throw new Error('o etanol deveria ser válido');
+
+    const objetivoImpossivel: CandidateGoal = {
+      id: 'descriptor:rings:2',
+      label: 'tem exatamente 2 anéis',
+      measured: '0',
+      kind: 'count',
+      exclusive: false,
+      condition: { kind: 'descriptor', descriptor: 'rings', min: 2, max: 2 },
+    };
+    const candidates = new Map([[objetivoImpossivel.id, objetivoImpossivel]]);
+
+    const outcome = validateAuthoredGoals(candidates, [objetivoImpossivel.id], result.molecule);
+
+    expect(outcome.status).toBe('rejected');
+    if (outcome.status === 'rejected') {
+      expect(outcome.reason).toContain(objetivoImpossivel.label);
+      expect(outcome.reason).toContain('não é cumprida nem pela sua própria resposta');
+    }
+  });
+
+  it('objetivo cuja condição fecha é aceito, com o mesmo `id`, `label` e `condition`', async () => {
+    const result = await analyze('CCO');
+    if (!result.ok) throw new Error('o etanol deveria ser válido');
+
+    const formula = extractGoals(result.molecule).find((candidate) => candidate.id === 'formula');
+    if (!formula) throw new Error('candidato de fórmula deveria existir');
+    const candidates = new Map([[formula.id, formula]]);
+
+    const outcome = validateAuthoredGoals(candidates, [formula.id], result.molecule);
+
+    expect(outcome.status).toBe('ok');
+    if (outcome.status === 'ok') {
+      expect(outcome.goals).toEqual([{ id: formula.id, label: formula.label, condition: formula.condition }]);
+    }
   });
 });
 
@@ -1401,6 +1454,67 @@ maybeDescribe('D-27 — denúncia grava e respeita o teto', () => {
 
     const count = await db.questReport.count({ where: { questSlug: cenario.questSlug } });
     expect(count).toBe(0);
+  });
+});
+
+maybeDescribe('checkQuest — conferir sem gravar (achado 5)', () => {
+  it('chama três vezes seguidas e nenhum Attempt é gravado', async () => {
+    const cenario = await publishedTeacherQuest();
+    const aluno = await makeStudent();
+    await enroll(cenario.classroomId, aluno.id);
+
+    await loginAs(aluno.id);
+
+    for (let index = 0; index < 3; index += 1) {
+      const outcome = await checkQuest({ questSlug: cenario.questSlug, molblock: 'CCO' });
+      expect(outcome.status).toBe('ok');
+      if (outcome.status === 'ok') expect(outcome.passed).toBe(true);
+    }
+
+    const attempts = await db.attempt.count({ where: { profileId: aluno.id, questSlug: cenario.questSlug } });
+    expect(attempts).toBe(0);
+
+    const opens = await db.questOpen.count({ where: { profileId: aluno.id, questSlug: cenario.questSlug } });
+    expect(opens).toBe(0);
+  });
+
+  it('mesma recusa uniforme (R-8) para aluno sem acesso ao slug', async () => {
+    const cenario = await publishedTeacherQuest();
+    const alunoDeFora = await makeStudent(); // nunca matriculado
+
+    await loginAs(alunoDeFora.id);
+    const outcome = await checkQuest({ questSlug: cenario.questSlug, molblock: 'CCO' });
+
+    expect(outcome.status).toBe('rejected');
+    if (outcome.status === 'rejected') expect(outcome.reason).toBe('Essa missão não existe.');
+
+    const attempts = await db.attempt.count({ where: { questSlug: cenario.questSlug } });
+    expect(attempts).toBe(0);
+  });
+});
+
+maybeDescribe('readAssignments — includeArchived (achado 2)', () => {
+  it('com includeArchived: true, também devolve a lista arquivada, marcada por archivedAt', async () => {
+    const teacher = await makeTeacher();
+    await loginAs(teacher.id);
+    const classroom = await makeClassroom(teacher.id);
+
+    const ativa = await createAssignment({ classroomId: classroom.id, title: 'Lista ativa' });
+    const arquivada = await createAssignment({ classroomId: classroom.id, title: 'Lista arquivada' });
+    if (ativa.status !== 'created' || arquivada.status !== 'created') throw new Error('deveria criar as duas listas');
+
+    await archiveAssignment({ assignmentId: arquivada.id });
+
+    const semArquivadas = await readAssignments({ classroomId: classroom.id });
+    expect(semArquivadas.some((assignment) => assignment.id === arquivada.id)).toBe(false);
+    expect(semArquivadas.some((assignment) => assignment.id === ativa.id)).toBe(true);
+
+    const comArquivadas = await readAssignments({ classroomId: classroom.id, includeArchived: true });
+    const linhaAtiva = comArquivadas.find((assignment) => assignment.id === ativa.id);
+    const linhaArquivada = comArquivadas.find((assignment) => assignment.id === arquivada.id);
+
+    expect(linhaAtiva?.archivedAt).toBeNull();
+    expect(linhaArquivada?.archivedAt).not.toBeNull();
   });
 });
 

@@ -213,6 +213,25 @@ export function EditorWorkspace({
   );
 
   /**
+   * A seleção de objetivos é sobre **esta** molécula (achado 3 do `reviewer`).
+   *
+   * `extractGoals` roda de novo sobre cada análise nova, e um `id` marcado
+   * antes do desenho mudar pode não existir mais no conjunto novo — ou pior,
+   * existir com o mesmo `id` e outra `condition` (mesmo tipo de objetivo,
+   * medida diferente). Zerar quando a InChIKey muda é o mesmo "esquecer cai
+   * no seguro, nunca no errado" que a seleção do editor já usa (D-23):
+   * arrastar um átomo não muda a molécula e não mexe na marcação; virar outra
+   * substância — ou deixar de fechar — limpa.
+   */
+  const authoredInchiKey = analysis?.ok === true ? analysis.molecule.inchiKey : null;
+  const lastAuthoredInchiKey = useRef<string | null>(null);
+  useEffect(() => {
+    if (lastAuthoredInchiKey.current === authoredInchiKey) return;
+    lastAuthoredInchiKey.current = authoredInchiKey;
+    setSelectedGoalIds(new Set());
+  }, [authoredInchiKey]);
+
+  /**
    * Salvar a missão (§6.3, §4.5).
    *
    * O que sai daqui é `goalIds`, nunca `Condition` — o servidor regenera
@@ -261,21 +280,41 @@ export function EditorWorkspace({
         return;
       }
 
-      const notice = messages.assignment.entered(authoringTitle, outcome.position);
+      /*
+       * Achado 12 — o query string leva um código fechado, nunca a frase
+       * pronta: `feito=missao-criada` é o único valor que a lista aceita
+       * (§6.6), e a posição basta para achar o item na lista já carregada e
+       * montar o texto com `messages.assignment.entered`. Nada além disso
+       * atravessa a URL — um link forjado com outro `feito` é ignorado, e
+       * um `entered` livre nunca mais aparece na tela como se fosse do
+       * sistema.
+       */
       router.push(
-        `/turmas/${authoring.classroomId}/listas/${authoring.assignmentId}?entered=${encodeURIComponent(notice)}`,
+        `/turmas/${authoring.classroomId}/listas/${authoring.assignmentId}?feito=missao-criada&posicao=${String(outcome.position)}`,
       );
     };
 
     void run();
   }, [authoring, analysis, selectedGoalIds, authoringTitle, authoringBrief, authoringHints, graph, router]);
 
-  const toggleGoal = useCallback((id: string) => {
+  /**
+   * Marcar o objetivo de InChIKey desmarca qualquer outro já marcado (achado
+   * 7 do `reviewer`): §6.3 já avisa que, marcado, ele precisa ser o único
+   * objetivo da missão — antes disto os outros só ficavam desabilitados
+   * *checked*, travados sem explicação nenhuma na tela. Desmarcar um
+   * objetivo comum nunca mexe nos demais.
+   */
+  const toggleGoal = useCallback((id: string, exclusive: boolean) => {
     setSelectedGoalIds((current) => {
-      const next = new Set(current);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
+      if (current.has(id)) {
+        const next = new Set(current);
+        next.delete(id);
+        return next;
+      }
+
+      if (exclusive) return new Set([id]);
+
+      return new Set(current).add(id);
     });
   }, []);
 

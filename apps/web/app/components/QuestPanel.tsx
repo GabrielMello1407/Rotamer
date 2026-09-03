@@ -1,7 +1,7 @@
 'use client';
 
 import type { AnalysisResult } from '@rotamer/core';
-import { CATALOG, evaluateAnalysis, findQuest, type Track } from '@rotamer/quests';
+import { CATALOG, evaluateAnalysis, findQuest, type Assessable, type Goal, type Track } from '@rotamer/quests';
 import { Button, Label, SourceBadge } from '@rotamer/ui';
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
@@ -14,9 +14,11 @@ import {
   type QuestProgress,
 } from '../actions/attempt';
 import {
+  checkQuest,
   readQuestDetail,
   readStudentAssignments,
   reportQuest,
+  type CheckQuestResult,
   type StudentAssignment,
   type StudentQuestDetail,
 } from '../actions/assignment';
@@ -40,6 +42,14 @@ const TRACK_NAMES: Readonly<Record<Track, string>> = {
 /** Sem missão: a tela vira ferramenta livre, sem tique e sem contador (D-09). */
 const FREE = '';
 const TEACHER_PREFIX = 'professor:';
+
+/**
+ * Debounce de `checkQuest` — o mesmo silêncio de 120 ms que o resto do
+ * produto usa antes de perguntar ao worker (`use-molecule.ts`): aqui quem
+ * responde é o servidor, não o RDKit local, mas a regra é a mesma —
+ * perguntar a cada traço desperdiça e faz o painel piscar.
+ */
+const CHECK_QUIET_MS = 120;
 
 interface NextUp {
   readonly assignmentTitle: string;
@@ -79,11 +89,13 @@ function findNextUp(
  * O painel de missões.
  *
  * O veredito de uma missão do catálogo sai do motor de missões rodando aqui
- * mesmo, comparando os números que o RDKit calculou. Uma missão de professor
- * carrega um objetivo de InChIKey às vezes, e esse objetivo **não manda a
- * condição para o cliente** (R-4) — por isso o veredito dela nunca é
- * calculado aqui: toda estrutura válida nova vai ao servidor perguntar
- * (`saveAttempt`), e é a resposta dele que diz se cumpriu.
+ * mesmo, comparando os números que o RDKit calculou — `evaluateAnalysis`. Uma
+ * missão de professor faz o mesmo **quando a lista da turma trouxe a
+ * condição** (achado 1 do `reviewer`): o objetivo de InChIKey nunca manda a
+ * condição para o cliente (R-4), e aí quem decide é `checkQuest`, sem gravar
+ * nada, a cada estrutura válida nova. `saveAttempt` só entra depois que um
+ * dos dois já disse que passou — nunca antes (achado 2), para um desenho de
+ * passagem não virar tentativa gravada.
  */
 export function QuestPanel({ analysis, slug, onSlug }: QuestPanelProps): ReactElement {
   const [hintsShown, setHintsShown] = useState(0);
@@ -97,10 +109,75 @@ export function QuestPanel({ analysis, slug, onSlug }: QuestPanelProps): ReactEl
 
   const isTeacherQuest = slug.startsWith(TEACHER_PREFIX);
   const quest = slug === FREE || isTeacherQuest ? undefined : findQuest(slug);
-  const result = useMemo(
-    () => (quest ? evaluateAnalysis(quest, analysis) : null),
-    [quest, analysis],
-  );
+
+  /**
+   * A `condition` de uma missão de professor só chega ao cliente pela lista
+   * "Da sua turma" (achado 1) — `readStudentAssignments` manda `condition` em
+   * todo objetivo, **menos** no de InChIKey (R-4), e esse objetivo nunca vem
+   * sozinho fora de uma exclusividade que o servidor garante na criação. Uma
+   * missão alcançada só pelo catálogo (fora das listas do aluno) não passa
+   * por aqui, e cai no mesmo caminho de "sem condição local" — não porque
+   * seja de InChIKey, mas porque o cliente não tem como saber.
+   */
+  const localAssessable: Assessable | null = useMemo(() => {
+    if (!isTeacherQuest) return null;
+
+    const item = assignments
+      .flatMap((assignment) => assignment.items)
+      .find((entry) => entry.questSlug === slug);
+
+    if (item === undefined) return null;
+    if (item.goals.some((goal) => goal.condition === undefined)) return null;
+
+    return { slug, goals: item.goals as Goal[] };
+  }, [isTeacherQuest, assignments, slug]);
+
+  const result = useMemo(() => {
+    if (quest) return evaluateAnalysis(quest, analysis);
+    if (localAssessable) return evaluateAnalysis(localAssessable, analysis);
+    return null;
+  }, [quest, localAssessable, analysis]);
+
+  /**
+   * Sem condição local, quem decide é o servidor — `checkQuest` (R-4, achado
+   * 1 e 2): confere sem gravar, a cada estrutura válida nova, com o mesmo
+   * debounce de intenção do resto do produto. Nunca dispara para a missão do
+   * catálogo nem quando a lista da turma já deu a condição de graça.
+   *
+   * O estado guarda de qual `slug`/InChIKey a resposta é — em vez de zerar
+   * `checkResult` de volta a `null` toda vez que a estrutura muda (`setState`
+   * síncrono dentro do efeito, que o React desaconselha), a leitura abaixo
+   * descarta sozinha uma resposta que não é mais sobre o desenho atual.
+   */
+  const [checkState, setCheckState] = useState<{
+    readonly slug: string;
+    readonly inchiKey: string;
+    readonly result: CheckQuestResult;
+  } | null>(null);
+  const usingServerCheck = isTeacherQuest && localAssessable === null;
+
+  useEffect(() => {
+    if (!usingServerCheck || analysis === null || !analysis.ok) return;
+
+    let alive = true;
+    const { molblock, inchiKey } = analysis.molecule;
+
+    const timer = window.setTimeout(() => {
+      void checkQuest({ questSlug: slug, molblock }).then((outcome) => {
+        if (alive) setCheckState({ slug, inchiKey, result: outcome });
+      });
+    }, CHECK_QUIET_MS);
+
+    return () => {
+      alive = false;
+      window.clearTimeout(timer);
+    };
+  }, [usingServerCheck, slug, analysis]);
+
+  const checkResult =
+    checkState !== null && checkState.slug === slug && analysis?.ok === true && checkState.inchiKey === analysis.molecule.inchiKey
+      ? checkState.result
+      : null;
 
   // O que já foi cumprido em visitas anteriores. Sem conta, a lista volta
   // vazia e a tela simplesmente não mostra progresso nenhum.
@@ -171,12 +248,15 @@ export function QuestPanel({ analysis, slug, onSlug }: QuestPanelProps): ReactEl
   }, [slug]);
 
   /**
-   * A tentativa cumprida vai para o servidor com o desenho, nunca com a nota.
+   * A tentativa cumprida vai para o servidor com o desenho, nunca com a nota
+   * — e nunca por desenho intermediário (achado 2 do `reviewer`).
    *
-   * Missão do catálogo: só manda quando o veredito local já bateu — poupa uma
-   * ida ao servidor sem necessidade. Missão de professor: manda em toda
-   * estrutura válida nova, porque o veredito dela pode depender de um
-   * objetivo de InChIKey que o cliente nunca recebeu (R-4).
+   * Catálogo e missão de professor com condição local: só manda quando o
+   * veredito **local** já bateu — a mesma regra, porque `result` cobre os
+   * dois casos igual. Missão sem condição local (InChIKey, R-4, ou missão
+   * alcançada só pelo catálogo): quem decide é `checkQuest`, sem gravar
+   * nada; só quando ele diz que passou é que `saveAttempt` entra em cena.
+   * Nenhuma estrutura de passagem vira `Attempt` nem molécula na estante.
    */
   useEffect(() => {
     if (slug === FREE || analysis === null || !analysis.ok) return;
@@ -184,7 +264,8 @@ export function QuestPanel({ analysis, slug, onSlug }: QuestPanelProps): ReactEl
     const key = `${slug}:${analysis.molecule.inchiKey}`;
     if (recorded.current.has(key)) return;
 
-    if (!isTeacherQuest && result?.passed !== true) return;
+    const passed = usingServerCheck ? checkResult?.status === 'ok' && checkResult.passed : result?.passed === true;
+    if (!passed) return;
 
     recorded.current.add(key);
     if (!isTeacherQuest) track('missao-cumprida');
@@ -200,7 +281,7 @@ export function QuestPanel({ analysis, slug, onSlug }: QuestPanelProps): ReactEl
     };
 
     void record();
-  }, [slug, isTeacherQuest, result, analysis]);
+  }, [slug, isTeacherQuest, usingServerCheck, result, checkResult, analysis]);
 
   const done = useMemo(
     () => new Set(progress.filter((entry) => entry.passed).map((entry) => entry.questSlug)),
@@ -216,7 +297,7 @@ export function QuestPanel({ analysis, slug, onSlug }: QuestPanelProps): ReactEl
   }, []);
 
   const passedNow =
-    (quest !== undefined && result?.passed === true) ||
+    result?.passed === true ||
     (isTeacherQuest && outcome?.status === 'saved' && outcome.passed);
 
   // A faixa "Próxima:" — só existe quando a missão cumprida é item de uma
@@ -226,9 +307,24 @@ export function QuestPanel({ analysis, slug, onSlug }: QuestPanelProps): ReactEl
   const title = quest?.title ?? teacherQuestForSlug?.title ?? null;
   const brief = quest?.brief ?? teacherQuestForSlug?.brief ?? null;
   const hints = quest?.hints ?? teacherQuestForSlug?.hints ?? [];
+
+  /**
+   * O estado real por objetivo (achado 1 do `reviewer`).
+   *
+   * `result` já cobre catálogo e missão de professor com condição local — o
+   * mesmo `evaluateAnalysis` dos dois casos. Sem condição local, o único
+   * veredito confiável é o que `checkQuest` devolveu; enquanto ele não
+   * respondeu (ou nunca vai, porque nada foi desenhado ainda), a tela nunca
+   * finge saber: cada objetivo aparece como "conferindo…", nunca como se
+   * tivesse sido medido e não batido.
+   */
+  const awaitingServerCheck = usingServerCheck && analysis?.ok === true && checkResult === null;
+
   const goalLabels: readonly { readonly id: string; readonly label: string; readonly met: boolean }[] =
     result?.goals ??
-    (teacherQuestForSlug?.goals.map((goal) => ({ id: goal.id, label: goal.label, met: passedNow === true })) ?? []);
+    (checkResult?.status === 'ok'
+      ? checkResult.goals
+      : (teacherQuestForSlug?.goals.map((goal) => ({ id: goal.id, label: goal.label, met: false })) ?? []));
 
   return (
     <section className={styles.panel} aria-label="Missão">
@@ -242,7 +338,7 @@ export function QuestPanel({ analysis, slug, onSlug }: QuestPanelProps): ReactEl
         <Label>
           {done.size === 0 ? 'missão' : `missão · ${String(done.size)} de ${String(CATALOG.length)} cumpridas`}
         </Label>
-        {result?.passed === true && (
+        {passedNow === true && (
           <span className={styles.done} data-testid="missao-cumprida">
             cumprida
           </span>
@@ -308,6 +404,14 @@ export function QuestPanel({ analysis, slug, onSlug }: QuestPanelProps): ReactEl
                   {goal.met ? '✓' : ''}
                 </span>
                 {goal.label}
+                {/* Missão de InChIKey (ou alcançada só pelo catálogo, sem
+                    condição local) — R-4. Nunca "por cumprir": o cliente não
+                    tem como saber, só o servidor. */}
+                {awaitingServerCheck && (
+                  <span className={styles.pending} data-testid="objetivo-conferindo">
+                    {messages.studentAssignments.checkingWithServer}
+                  </span>
+                )}
               </li>
             ))}
           </ul>

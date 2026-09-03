@@ -24,6 +24,13 @@ export const messages = {
     publishedChip: 'publicado',
     itemCount: (n: number): string => `${String(n)} ${pluralize(n, 'missão', 'missões')}`,
     namePlaceholder: 'Funções oxigenadas — 3ª série',
+    /**
+     * Achado 5 — `unarchiveAssignment` já existia sem caminho de tela: a
+     * única leitura desta seção vinha sem `archivedAt`, e uma lista
+     * arquivada simplesmente sumia, sem jeito de voltar.
+     */
+    archivedHeading: (n: number): string => `Listas arquivadas (${String(n)})`,
+    unarchive: 'Desarquivar',
   },
 
   // ---------------------------------------------------------- §6.2 — professor, a lista
@@ -45,6 +52,9 @@ export const messages = {
     remove: 'Remover',
     removed: (title: string): string => `«${title}» saiu da lista.`,
     undo: 'Desfazer',
+    /** Achado 6 — desfazer devolve para a posição de origem; se a subida falhar no meio, a tela diz. */
+    undoMoveFailed: (title: string): string =>
+      `«${title}» voltou para a lista, mas não consegui trazê-la de volta para a posição de antes. Suba com ↑.`,
     pickFromCatalog: 'Escolher do catálogo',
     createByDrawing: 'Criar missão desenhando',
     publish: 'Publicar para a turma',
@@ -58,6 +68,8 @@ export const messages = {
     withdrawFromCatalog: 'Retirar do catálogo',
     onCatalog: 'no catálogo',
     offCatalog: 'fora do catálogo',
+    /** Achado 11 — vivia solto em `Assignment.tsx`, fora deste arquivo. */
+    archivedNotice: 'Esta lista foi arquivada. Ela some das duas telas até você desarquivar.',
   },
 
   publishPopover: {
@@ -144,6 +156,14 @@ export const messages = {
     catalogLabel: (met: number, total: number): string => `catálogo · ${String(met)} de ${String(total)}`,
     catalogFreedom: 'O catálogo é livre: dá para explorar por conta, mesmo fora da lista.',
     inProgressOption: (title: string): string => `Da sua turma · ${title}`,
+    /**
+     * Achado 1 — o objetivo de InChIKey (ou uma missão de professor alcançada
+     * só pelo catálogo, sem a condição que "Da sua turma" traria) não tem
+     * como ser avaliado no cliente (R-4). Nunca "por cumprir": o servidor
+     * ainda não respondeu, e dizer "não cumprido" seria mentir enquanto se
+     * espera a resposta.
+     */
+    checkingWithServer: 'conferindo…',
   },
 
   // ---------------------------------------------------------- catálogo buscável (D-26, D-27)
@@ -177,6 +197,12 @@ export const messages = {
     footer:
       'O que aparece aqui é progresso de missão, avaliado no servidor a cada tentativa. As moléculas que o aluno desenhou não entram nesta tela.',
     emptyOpened: 'Ninguém abriu nenhuma missão desta lista ainda.',
+    /**
+     * Achado 10 — `board.students` vem de `enrollment`, não de quem abriu
+     * algo: zero alunos aqui é zero matrícula na turma, nunca "ninguém abriu
+     * ainda" (essa frase mentiria sobre o motivo da tabela estar vazia).
+     */
+    noStudentsEnrolled: 'Nenhum aluno matriculado ainda.',
   },
 
   // ---------------------------------------------------------- §6.6 — vazios

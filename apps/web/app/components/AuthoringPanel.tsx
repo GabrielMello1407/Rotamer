@@ -10,7 +10,12 @@ import styles from './AuthoringPanel.module.css';
 export interface AuthoringPanelProps {
   readonly analysis: AnalysisResult | null;
   readonly selectedGoalIds: ReadonlySet<string>;
-  readonly onToggleGoal: (id: string) => void;
+  /**
+   * `exclusive` é o mesmo `candidate.exclusive` do InChIKey (achado 7 do
+   * `reviewer`): quem chama precisa saber para desligar os outros marcados
+   * ao ligar este, em vez de só travá-los sem dizer.
+   */
+  readonly onToggleGoal: (id: string, exclusive: boolean) => void;
   readonly title: string;
   readonly onTitle: (value: string) => void;
   readonly brief: string;
@@ -131,13 +136,22 @@ export function AuthoringPanel({
                           checked={checked}
                           disabled={disabled}
                           onChange={() => {
-                            onToggleGoal(candidate.id);
+                            onToggleGoal(candidate.id, candidate.exclusive);
                           }}
                           data-testid={`objetivo-${candidate.id}`}
                         />
                         <span className={styles.goalLabel}>{candidate.label}</span>
                         <span className={styles.goalMeasured}>{candidate.measured}</span>
                       </label>
+
+                      {/* Achado 7: a frase de exclusividade fica visível na
+                          linha, não só num `title` que só aparece no hover —
+                          é o que explica por que este objetivo saiu marcado. */}
+                      {disabled && (
+                        <p className={styles.disabledNote} data-testid={`desligado-${candidate.id}`}>
+                          {messages.authoring.disabledByExclusive}
+                        </p>
+                      )}
 
                       {candidate.exclusive && checked && (
                         <p className={styles.inchiWarning} data-testid="aviso-inchikey">

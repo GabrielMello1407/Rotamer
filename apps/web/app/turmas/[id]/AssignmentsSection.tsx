@@ -4,12 +4,18 @@ import { Button } from '@rotamer/ui';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent, type ReactElement } from 'react';
-import { createAssignment, type AssignmentSummary } from '../../actions/assignment';
+import { createAssignment, unarchiveAssignment, type AssignmentSummary } from '../../actions/assignment';
 import { messages } from '../messages';
 import styles from './AssignmentsSection.module.css';
 
 export interface AssignmentsSectionProps {
   readonly classroomId: string;
+  /**
+   * Vem de `readAssignments({ classroomId, includeArchived: true })` (achado
+   * 5): a arquivada precisa continuar visível **aqui**, senão não há como
+   * chegar em `unarchiveAssignment` — a ação existia sem tela nenhuma que a
+   * chamasse. Ativas e arquivadas se separam por `archivedAt`.
+   */
   readonly assignments: readonly AssignmentSummary[];
 }
 
@@ -26,6 +32,24 @@ export function AssignmentsSection({ classroomId, assignments }: AssignmentsSect
   const router = useRouter();
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [archivedOpen, setArchivedOpen] = useState(false);
+  const [unarchiving, setUnarchiving] = useState<string | null>(null);
+
+  const active = assignments.filter((assignment) => assignment.archivedAt === null);
+  const archived = assignments.filter((assignment) => assignment.archivedAt !== null);
+
+  const unarchive = (assignmentId: string): void => {
+    setError(null);
+    setUnarchiving(assignmentId);
+    void unarchiveAssignment({ assignmentId }).then((outcome) => {
+      setUnarchiving(null);
+      if (outcome.status === 'rejected') {
+        setError(outcome.reason);
+        return;
+      }
+      router.refresh();
+    });
+  };
 
   const create = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault();
@@ -66,14 +90,14 @@ export function AssignmentsSection({ classroomId, assignments }: AssignmentsSect
         </form>
       </div>
 
-      {assignments.length === 0 ? (
+      {active.length === 0 ? (
         <div className={styles.empty}>
           <p className={styles.emptyTitle}>{messages.classroomSection.emptyTitle}</p>
           <p className={styles.emptyBody}>{messages.classroomSection.emptyBody}</p>
         </div>
       ) : (
         <ul className={styles.list}>
-          {assignments.map((assignment) => (
+          {active.map((assignment) => (
             <li key={assignment.id} className={styles.row} data-testid={`lista-${assignment.id}`}>
               <Link className={styles.name} href={`/turmas/${classroomId}/listas/${assignment.id}`}>
                 {assignment.title}
@@ -96,6 +120,43 @@ export function AssignmentsSection({ classroomId, assignments }: AssignmentsSect
             </li>
           ))}
         </ul>
+      )}
+
+      {archived.length > 0 && (
+        <div className={styles.archived}>
+          <button
+            type="button"
+            className={styles.archivedToggle}
+            aria-expanded={archivedOpen}
+            onClick={() => {
+              setArchivedOpen((current) => !current);
+            }}
+            data-testid="listas-arquivadas-toggle"
+          >
+            {messages.classroomSection.archivedHeading(archived.length)}
+          </button>
+
+          {archivedOpen && (
+            <ul className={styles.list} data-testid="listas-arquivadas">
+              {archived.map((assignment) => (
+                <li key={assignment.id} className={styles.row} data-testid={`lista-arquivada-${assignment.id}`}>
+                  <span className={styles.name}>{assignment.title}</span>
+                  <Button
+                    size="small"
+                    variant="ghost"
+                    disabled={unarchiving === assignment.id}
+                    onClick={() => {
+                      unarchive(assignment.id);
+                    }}
+                    data-testid={`desarquivar-${assignment.id}`}
+                  >
+                    {messages.classroomSection.unarchive}
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       )}
 
       {error !== null && (

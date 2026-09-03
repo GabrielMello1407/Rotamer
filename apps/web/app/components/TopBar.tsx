@@ -4,7 +4,9 @@ import type { AnalysisResult } from '@rotamer/core';
 import { Formula, Logo } from '@rotamer/ui';
 import { useEffect, useRef, useState, type ReactElement } from 'react';
 import { AccountMenu } from './AccountMenu';
+import type { DrawerTab } from './AnalysisDrawer';
 import { SaveMolecule } from './SaveMolecule';
+import { messages } from '../turmas/messages';
 import styles from './TopBar.module.css';
 
 /**
@@ -39,7 +41,7 @@ export interface TopBarProps {
   readonly accountName: string | null;
   readonly showAccount: boolean;
   readonly panelOpen: boolean;
-  readonly onPanel: (tab: 'analysis' | 'quests') => void;
+  readonly onPanel: (tab: DrawerTab) => void;
   readonly onExample: (smiles: string) => void;
   /** Limpar a tela depois de guardar, para começar a próxima estrutura. */
   readonly onNew: () => void;
@@ -151,6 +153,23 @@ export function TopBar({
           <span className={styles.authoringLabel} data-testid="rotulo-autoria">
             {authoring.label}
           </span>
+
+          {/* Achado 4 do `reviewer`: fechar o painel em modo autoria não
+              deixava jeito de reabrir — o "X" do `AnalysisDrawer` some, e só
+              sobravam Cancelar/Salvar aqui. O botão espelha "Análise" do modo
+              normal. */}
+          <button
+            type="button"
+            className={styles.action}
+            aria-pressed={panelOpen}
+            data-testid="abrir-autoria"
+            onClick={() => {
+              onPanel('authoring');
+            }}
+          >
+            {messages.authoring.tab}
+          </button>
+
           <button
             type="button"
             ref={cancelButtonRef}

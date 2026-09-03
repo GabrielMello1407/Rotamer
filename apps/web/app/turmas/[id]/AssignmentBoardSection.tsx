@@ -52,7 +52,7 @@ export function AssignmentBoardSection({ assignmentTitle, board }: AssignmentBoa
       )}
 
       {board.students.length === 0 ? (
-        <p className={styles.empty}>{messages.board.emptyOpened}</p>
+        <p className={styles.empty}>{messages.board.noStudentsEnrolled}</p>
       ) : (
         <>
           <p className={styles.legend}>{messages.board.legend}</p>

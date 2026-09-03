@@ -9,7 +9,25 @@ import { Assignment } from './Assignment';
 
 interface PageProps {
   readonly params: Promise<{ readonly id: string; readonly assignmentId: string }>;
-  readonly searchParams: Promise<{ readonly entered?: string }>;
+  readonly searchParams: Promise<{ readonly feito?: string; readonly posicao?: string }>;
+}
+
+/**
+ * O único código que este `feito` aceita hoje (achado 12 do `reviewer`).
+ *
+ * Fechado de propósito: a tela nunca escreve o valor do query string direto,
+ * só o traduz por `messages.ts` — um link forjado com outro `feito`, ou sem
+ * `posicao` numérica, não vira faixa nenhuma. Quando outra ação da lista
+ * precisar de uma faixa parecida, o código novo entra aqui, não como texto
+ * livre na URL.
+ */
+const KNOWN_DONE_CODES = new Set(['missao-criada']);
+
+function parseEnteredAtPosition(feito: string | undefined, posicao: string | undefined): number | undefined {
+  if (feito === undefined || !KNOWN_DONE_CODES.has(feito) || posicao === undefined) return undefined;
+
+  const parsed = Number(posicao);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined;
 }
 
 export const metadata: Metadata = {
@@ -32,7 +50,8 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
   if (profile === null) redirect('/entrar');
 
   const { id: classroomId, assignmentId } = await params;
-  const { entered } = await searchParams;
+  const { feito, posicao } = await searchParams;
+  const enteredAtPosition = parseEnteredAtPosition(feito, posicao);
 
   const [assignments, { teaching }] = await Promise.all([
     readAssignments({ classroomId }),
@@ -55,7 +74,7 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
       initialItems={assignment.items}
       initialPublishedAt={assignment.publishedAt}
       archived={false}
-      enteredNotice={entered}
+      enteredAtPosition={enteredAtPosition}
     />
   );
 }

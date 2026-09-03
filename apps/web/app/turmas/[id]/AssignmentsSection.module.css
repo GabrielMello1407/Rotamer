@@ -131,6 +131,27 @@
   color: var(--ink-500);
 }
 
+.archived {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.archivedToggle {
+  justify-self: start;
+  background: none;
+  border: none;
+  padding: var(--sp-1) 0;
+  font-family: var(--font-ui);
+  font-size: var(--step--1);
+  color: var(--ink-500);
+  cursor: pointer;
+  min-height: var(--tap-min);
+}
+
+.archivedToggle:hover {
+  color: var(--ink-900);
+}
+
 @media (max-width: 720px) {
   .row {
     grid-template-columns: minmax(0, 1fr) auto;

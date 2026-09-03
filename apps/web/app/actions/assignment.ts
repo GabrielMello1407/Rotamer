@@ -7,7 +7,7 @@ import type { Prisma } from '../../generated/prisma/client';
 import { currentProfile } from '../../lib/auth';
 import { analyzeOnServer } from '../../lib/chemistry-server';
 import { db, hasDatabase } from '../../lib/db';
-import { studentQuestAccess } from '../../lib/quest-resolve';
+import { resolveQuest, studentQuestAccess, validateAuthoredGoals } from '../../lib/quest-resolve';
 import {
   ownedAssignment,
   ownedAssignmentAnyState,
@@ -45,6 +45,8 @@ const MAX_ITEMS_PER_ASSIGNMENT = 30;
 const MAX_AUTHORING_SAVES_PER_DAY = 200;
 const REPORT_REASON_MAX = 200;
 const MAX_REPORTS_PER_DAY = 10;
+const CHECK_QUEST_LIMIT = 120;
+const CHECK_QUEST_WINDOW_MS = 60 * 1000;
 
 /** Janela usada pelos dois tetos "por dia" que rodam em memória ou em contagem por período. */
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
@@ -147,8 +149,12 @@ const removeItemSchema = z.object({ assignmentId: cuid, itemId: cuid });
 const publishAssignmentSchema = z.object({ assignmentId: cuid });
 const archiveAssignmentSchema = z.object({ assignmentId: cuid });
 const unarchiveAssignmentSchema = z.object({ assignmentId: cuid });
-const readAssignmentsSchema = z.object({ classroomId: cuid });
+const readAssignmentsSchema = z.object({ classroomId: cuid, includeArchived: z.boolean().optional() });
 const readAssignmentBoardSchema = z.object({ assignmentId: cuid });
+const checkQuestSchema = z.object({
+  questSlug: z.string().min(1).max(80),
+  molblock: z.string().min(1).max(200_000),
+});
 
 // --------------------------------------------------------------- tipos comuns
 
@@ -192,6 +198,34 @@ function registerAuthoringSave(teacherId: string): void {
   const saves = authoringSaves.get(teacherId) ?? [];
   saves.push(Date.now());
   authoringSaves.set(teacherId, saves);
+}
+
+/**
+ * Teto de `checkQuest` — 120 conferências por conta por minuto (achado 2).
+ *
+ * `checkQuest` não grava nada (nem `Attempt`, nem `QuestOpen`): é a mesma
+ * reavaliação de `saveAttempt`, só que sem persistir, para o aluno conferir
+ * "cheguei?" sem contar como tentativa. Sem teto, é RDKit no servidor a cada
+ * tecla — barato por chamada, caro em volume.
+ *
+ * Mesmo padrão de `authoringSaves` e `wrongCodeAttempts` (`classroom.ts`, R-15):
+ * um `Map` no processo. **Limitação conhecida:** reiniciar o servidor zera a
+ * janela, e não há coordenação entre instâncias — aceitável enquanto o VPS
+ * roda um processo só (D-11); vira tabela no dia em que isso mudar.
+ */
+const questChecks = new Map<string, number[]>();
+
+function tooManyQuestChecks(profileId: string): boolean {
+  const now = Date.now();
+  const checks = (questChecks.get(profileId) ?? []).filter((at) => now - at < CHECK_QUEST_WINDOW_MS);
+  questChecks.set(profileId, checks);
+  return checks.length >= CHECK_QUEST_LIMIT;
+}
+
+function registerQuestCheck(profileId: string): void {
+  const checks = questChecks.get(profileId) ?? [];
+  checks.push(Date.now());
+  questChecks.set(profileId, checks);
 }
 
 /** Títulos de missão `professor:`, buscados com `select` explícito (R-3) — nunca a resposta. */
@@ -364,40 +398,14 @@ export async function createTeacherQuest(input: {
     };
   }
 
-  // R-1: regenera os candidatos a partir desta mesma molécula, e só aceita `id` que está aqui.
+  // R-1 e R-2, extraídas em `validateAuthoredGoals` (achado 8): regenera os
+  // candidatos a partir desta mesma molécula, aceita só `id` presente ali, e
+  // confere que a própria resposta cumpre o que foi marcado.
   const candidates = new Map(extractGoals(molecule).map((candidate) => [candidate.id, candidate] as const));
+  const validated = validateAuthoredGoals(candidates, parsed.data.goalIds, molecule);
+  if (validated.status === 'rejected') return { status: 'rejected', reason: validated.reason };
 
-  const goals: Goal[] = [];
-  for (const id of parsed.data.goalIds) {
-    const candidate = candidates.get(id);
-    if (candidate === undefined) {
-      return {
-        status: 'rejected',
-        reason: 'Um dos objetivos não veio da molécula desenhada e foi recusado.',
-      };
-    }
-    goals.push({ id: candidate.id, label: candidate.label, condition: candidate.condition });
-  }
-
-  // Defesa a mais, do mesmo jeito que a tela desliga os outros ao marcar o
-  // InChIKey (§6.3): marcado, ele precisa ser o único objetivo — o servidor
-  // não confia que o cliente respeitou isso.
-  if (goals.some((goal) => goal.condition.kind === 'inchiKey') && goals.length > 1) {
-    return {
-      status: 'rejected',
-      reason: 'Marcado, «é exatamente esta molécula» precisa ser o único objetivo da missão.',
-    };
-  }
-
-  // R-2: a própria resposta precisa cumprir a missão que ela está criando.
-  const verdict = evaluateQuest({ slug: 'rascunho', goals }, molecule);
-  if (!verdict.passed) {
-    const failing = verdict.goals.find((goal) => !goal.met);
-    return {
-      status: 'rejected',
-      reason: `Esta missão não é cumprida nem pela sua própria resposta. O objetivo «${failing?.label ?? ''}» não fecha com a molécula que você desenhou, então ninguém conseguiria cumpri-la. Nada foi salvo: desmarque esse objetivo ou ajuste o desenho.`,
-    };
-  }
+  const goals: Goal[] = [...validated.goals];
 
   // Achado 6: o teto diário conta toda escrita de autoria, em memória — ver
   // `authoringSavesToday`. Checado antes da transação porque não depende do
@@ -864,10 +872,24 @@ export interface AssignmentSummary {
   readonly title: string;
   readonly items: readonly AssignmentItemView[];
   readonly publishedAt: string | null;
+  /** `null` quando ativa. Presente só quando `includeArchived` pediu a lista arquivada junto. */
+  readonly archivedAt: string | null;
 }
 
-/** R-3: `answerMolblock` e `answerInchiKey` não entram em nenhum `select` daqui. */
-export async function readAssignments(input: { classroomId: string }): Promise<readonly AssignmentSummary[]> {
+/**
+ * R-3: `answerMolblock` e `answerInchiKey` não entram em nenhum `select` daqui.
+ *
+ * `includeArchived` é achado 5: sem ele, uma lista arquivada some das duas
+ * telas (§3.5 do `docs/ROTEIROS.md`) e o professor não tinha como achá-la de
+ * volta para `unarchiveAssignment`. Continua vindo **junto** com as ativas
+ * quando pedido — não substitui a leitura padrão — e cada lista carrega
+ * `archivedAt`, para a tela distinguir sem adivinhar pela ausência na lista
+ * padrão.
+ */
+export async function readAssignments(input: {
+  classroomId: string;
+  includeArchived?: boolean;
+}): Promise<readonly AssignmentSummary[]> {
   if (!hasDatabase()) return [];
 
   const parsed = readAssignmentsSchema.safeParse(input);
@@ -880,12 +902,13 @@ export async function readAssignments(input: { classroomId: string }): Promise<r
   if (classroom === null) return [];
 
   const assignments = await db.assignment.findMany({
-    where: { classroomId: classroom.id, archivedAt: null },
+    where: parsed.data.includeArchived === true ? { classroomId: classroom.id } : { classroomId: classroom.id, archivedAt: null },
     orderBy: { createdAt: 'asc' },
     select: {
       id: true,
       title: true,
       publishedAt: true,
+      archivedAt: true,
       items: { orderBy: { position: 'asc' }, select: { id: true, position: true, questSlug: true } },
     },
   });
@@ -897,6 +920,7 @@ export async function readAssignments(input: { classroomId: string }): Promise<r
     id: assignment.id,
     title: assignment.title,
     publishedAt: assignment.publishedAt?.toISOString() ?? null,
+    archivedAt: assignment.archivedAt?.toISOString() ?? null,
     items: assignment.items.map((item) => ({
       id: item.id,
       position: item.position,
@@ -1265,6 +1289,60 @@ export async function readQuestDetail(input: { questSlug: string }): Promise<Rea
       goals,
     },
   };
+}
+
+// ================================================================== checkQuest
+
+/**
+ * Conferir se um desenho cumpre uma missão, **sem** gravar nada — achado 5.
+ *
+ * Mesma reavaliação de `saveAttempt`: o molblock passa de novo pelo RDKit no
+ * servidor e a mesma `evaluateQuest` decide, nunca o cliente. A diferença é
+ * que esta ação não persiste — nenhum `Attempt`, nenhum `QuestOpen`, nenhuma
+ * chamada a `rememberMolecule`. É "cheguei?" sem contar como tentativa.
+ *
+ * Mesma cadeia de acesso das outras portas (R-7, R-8): slug de catálogo é
+ * livre; slug `professor:` exige conta com acesso, e a recusa é a mesma frase
+ * para slug inexistente e para slug fora do alcance.
+ */
+export interface CheckQuestOutcome {
+  readonly status: 'ok';
+  readonly passed: boolean;
+  readonly goals: readonly { readonly id: string; readonly label: string; readonly met: boolean }[];
+}
+
+export type CheckQuestResult = CheckQuestOutcome | { readonly status: 'rejected'; readonly reason: string };
+
+export async function checkQuest(input: { questSlug: string; molblock: string }): Promise<CheckQuestResult> {
+  if (!hasDatabase()) return { status: 'rejected', reason: 'Indisponível neste ambiente.' };
+
+  const parsed = checkQuestSchema.safeParse(input);
+  if (!parsed.success) return { status: 'rejected', reason: 'Pedido mal formado.' };
+
+  const quest = await resolveQuest(parsed.data.questSlug);
+  if (!quest) return { status: 'rejected', reason: QUEST_NOT_FOUND };
+
+  const profile = await currentProfile();
+
+  // R-7/R-8: missão de professor exige conta com acesso; catálogo continua livre.
+  if (quest.slug.startsWith(TEACHER_PREFIX)) {
+    if (profile === null || !(await studentQuestAccess(profile.id, quest.slug))) {
+      return { status: 'rejected', reason: QUEST_NOT_FOUND };
+    }
+  }
+
+  // Teto de 120 por conta por minuto — anônimo não tem conta para contar contra.
+  if (profile !== null && tooManyQuestChecks(profile.id)) {
+    return { status: 'rejected', reason: 'Muitas conferências em pouco tempo. Espere um pouco e tente de novo.' };
+  }
+
+  const analysis = await analyzeOnServer(parsed.data.molblock);
+  if (!analysis.ok) return { status: 'rejected', reason: analysis.error.message };
+
+  const result = evaluateQuest(quest, analysis.molecule);
+  if (profile !== null) registerQuestCheck(profile.id);
+
+  return { status: 'ok', passed: result.passed, goals: result.goals };
 }
 
 // ================================================================== publishToCatalog

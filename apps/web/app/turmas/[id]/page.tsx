@@ -52,8 +52,16 @@ export default async function ClassroomPage({ params }: PageProps): Promise<Reac
   const titles = new Map(CATALOG.map((quest) => [quest.slug, quest.title]));
   const total = titles.size;
 
-  // "Listas da turma" (§6.1) e o quadro por lista publicada (§6.5).
-  const assignments = await readAssignments({ classroomId: id });
+  /*
+   * "Listas da turma" (§6.1) e o quadro por lista publicada (§6.5).
+   *
+   * `includeArchived` (achado 5) traz as arquivadas junto — sem isso não
+   * havia tela nenhuma de onde chamar `unarchiveAssignment`. O quadro por
+   * lista continua só sobre as ativas: uma lista arquivada, mesmo que tenha
+   * sido publicada um dia, não é mais o que a turma está fazendo agora.
+   */
+  const allAssignments = await readAssignments({ classroomId: id, includeArchived: true });
+  const assignments = allAssignments.filter((assignment) => assignment.archivedAt === null);
   const published = assignments.filter((assignment) => assignment.publishedAt !== null);
   const assignmentBoards = await Promise.all(
     published.map(async (assignment) => ({
@@ -84,7 +92,7 @@ export default async function ClassroomPage({ params }: PageProps): Promise<Reac
         </p>
       </div>
 
-      <AssignmentsSection classroomId={id} assignments={assignments} />
+      <AssignmentsSection classroomId={id} assignments={allAssignments} />
 
       {assignmentBoards.map(({ assignment, board: assignmentBoard }) =>
         assignmentBoard === null ? null : (

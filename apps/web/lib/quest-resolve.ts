@@ -1,6 +1,7 @@
 import 'server-only';
-import type { Assessable, Goal } from '@rotamer/quests';
-import { findQuest } from '@rotamer/quests';
+import type { Molecule } from '@rotamer/core';
+import type { Assessable, CandidateGoal, Goal } from '@rotamer/quests';
+import { evaluateQuest, findQuest } from '@rotamer/quests';
 import { db } from './db';
 
 /**
@@ -121,4 +122,69 @@ export async function studentQuestAccess(profileId: string, slug: string): Promi
   ]);
 
   return viaEnrollment !== null || viaCatalog !== null || viaAuthorship !== null;
+}
+
+// -------------------------------------------------------- validateAuthoredGoals
+
+export type ValidateAuthoredGoalsResult =
+  | { readonly status: 'ok'; readonly goals: readonly Goal[] }
+  | { readonly status: 'rejected'; readonly reason: string };
+
+/**
+ * As duas travas de `createTeacherQuest` (§4.5 do `docs/ROTEIROS.md`), como
+ * função pura — achado 8 do `reviewer`: a R-2 ("a própria resposta precisa
+ * cumprir a missão") vivia só embutida na ação, sem caso de teste que
+ * alcançasse a recusa de verdade — hoje os candidatos vêm de `extractGoals`
+ * sobre a mesma molécula que o servidor acabou de reanalisar, e por
+ * construção sempre passam. A defesa continua correta, só não tinha teste
+ * que a exercitasse pela recusa.
+ *
+ * Extraída aqui para poder ser chamada com um `candidates` **forjado** — um
+ * candidato cuja `condition` não fecha com a `molecule` recebida — e provar
+ * que a função recusa e que a mensagem **nomeia** o objetivo que falhou.
+ *
+ * 1. **R-1.** Todo `id` de `goalIds` precisa estar em `candidates` — a lista
+ *    regerada por `extractGoals` sobre a molécula que o RDKit acabou de
+ *    aceitar. `Condition` nunca chega por fora.
+ * 2. **Exclusividade do InChIKey.** Marcado, ele precisa ser o único
+ *    objetivo — o servidor não confia que o cliente desligou os outros.
+ * 3. **R-2.** `evaluateQuest` roda sobre os objetivos escolhidos e a própria
+ *    molécula; se algum não fechar, a missão é recusada e a razão nomeia o
+ *    `label` do objetivo que não fechou.
+ */
+export function validateAuthoredGoals(
+  candidates: ReadonlyMap<string, CandidateGoal>,
+  goalIds: readonly string[],
+  molecule: Molecule,
+): ValidateAuthoredGoalsResult {
+  const goals: Goal[] = [];
+
+  for (const id of goalIds) {
+    const candidate = candidates.get(id);
+    if (candidate === undefined) {
+      return {
+        status: 'rejected',
+        reason: 'Um dos objetivos não veio da molécula desenhada e foi recusado.',
+      };
+    }
+    goals.push({ id: candidate.id, label: candidate.label, condition: candidate.condition });
+  }
+
+  if (goals.some((goal) => goal.condition.kind === 'inchiKey') && goals.length > 1) {
+    return {
+      status: 'rejected',
+      reason: 'Marcado, «é exatamente esta molécula» precisa ser o único objetivo da missão.',
+    };
+  }
+
+  const verdict = evaluateQuest({ slug: 'rascunho', goals }, molecule);
+  if (!verdict.passed) {
+    const failing = verdict.goals.find((goal) => !goal.met);
+    return {
+      status: 'rejected',
+      reason: `Esta missão não é cumprida nem pela sua própria resposta. O objetivo «${failing?.label ?? ''}» não fecha com a molécula que você desenhou, então ninguém conseguiria cumpri-la. Nada foi salvo: desmarque esse objetivo ou ajuste o desenho.`,
+    };
+  }
+
+  return { status: 'ok', goals };
 }

@@ -11,6 +11,7 @@ import {
   moveItem,
   publishAssignment,
   publishToCatalog,
+  readAssignments,
   readCatalog,
   removeItem,
   renameAssignment,
@@ -38,8 +39,16 @@ export interface AssignmentProps {
   readonly initialItems: readonly AssignmentItemView[];
   readonly initialPublishedAt: string | null;
   readonly archived: boolean;
-  /** A faixa vinda de `.../criar` depois de salvar uma missão — §6.3(d). */
-  readonly enteredNotice?: string | undefined;
+  /**
+   * A posição do item que acabou de entrar, vinda de `.../criar` — §6.3(d).
+   *
+   * Achado 12 do `reviewer`: o que atravessa a URL é `feito=missao-criada` +
+   * `posicao`, nunca a frase pronta — `page.tsx` já validou os dois contra o
+   * conjunto fechado antes de chegar aqui. O título vem de `items`, que já
+   * está carregado; não há por que o texto do professor passar pela URL
+   * também.
+   */
+  readonly enteredAtPosition?: number | undefined;
 }
 
 /**
@@ -66,7 +75,7 @@ export function Assignment({
   initialItems,
   initialPublishedAt,
   archived,
-  enteredNotice,
+  enteredAtPosition,
 }: AssignmentProps): ReactElement {
   const router = useRouter();
 
@@ -84,9 +93,9 @@ export function Assignment({
   const [isArchived, setIsArchived] = useState(archived);
   const [catalogSlugs, setCatalogSlugs] = useState<ReadonlySet<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
-  const [removedNotice, setRemovedNotice] = useState<{ readonly title: string; readonly slug: string } | null>(
-    null,
-  );
+  const [removedNotice, setRemovedNotice] = useState<
+    { readonly title: string; readonly slug: string; readonly position: number } | null
+  >(null);
   const removedTimer = useRef<number | undefined>(undefined);
 
   const [catalogOpen, setCatalogOpen] = useState(false);
@@ -136,7 +145,7 @@ export function Assignment({
         return;
       }
 
-      setRemovedNotice({ title: item.title, slug: item.questSlug });
+      setRemovedNotice({ title: item.title, slug: item.questSlug, position: item.position });
       window.clearTimeout(removedTimer.current);
       removedTimer.current = window.setTimeout(() => {
         setRemovedNotice(null);
@@ -145,14 +154,56 @@ export function Assignment({
     });
   };
 
+  /**
+   * Desfazer a remoção devolve o item para a posição de onde saiu (achado 6
+   * do `reviewer`), não para o fim da lista.
+   *
+   * `addItem` sempre acrescenta no fim e não devolve o `id` da linha nova
+   * (§5.2) — por isso a página é pedida de novo, para achar essa linha pelo
+   * `questSlug` (único na lista) e então subir com `moveItem` até a posição
+   * de antes. Uma falha no meio do caminho não é escondida: o item continua
+   * na lista, só não voltou para o lugar certo, e a tela diz isso.
+   */
   const undoRemoval = (): void => {
     if (removedNotice === null) return;
-    const { slug } = removedNotice;
+    const { slug, title, position: originalPosition } = removedNotice;
     setRemovedNotice(null);
+    setError(null);
 
-    void addItem({ assignmentId, questSlug: slug }).then(() => {
+    const run = async (): Promise<void> => {
+      const added = await addItem({ assignmentId, questSlug: slug });
+      if (added.status === 'rejected') {
+        setError(added.reason);
+        return;
+      }
+
+      const fresh = await readAssignments({ classroomId });
+      const item = fresh
+        .find((entry) => entry.id === assignmentId)
+        ?.items.find((entry) => entry.questSlug === slug);
+
+      if (item === undefined) {
+        router.refresh();
+        return;
+      }
+
+      // Cada subida depende da posição que a anterior deixou — sequencial de
+      // propósito, do mesmo jeito que `CatalogPicker` acrescenta um item de
+      // cada vez.
+      let restored = true;
+      for (let position = item.position; position > originalPosition; position -= 1) {
+        const outcome = await moveItem({ assignmentId, itemId: item.id, direction: 'up' });
+        if (outcome.status === 'rejected') {
+          restored = false;
+          break;
+        }
+      }
+
+      if (!restored) setError(messages.assignment.undoMoveFailed(title));
       router.refresh();
-    });
+    };
+
+    void run();
   };
 
   const publish = (): void => {
@@ -204,6 +255,10 @@ export function Assignment({
 
   const existingSlugs = useMemo(() => new Set(items.map((item) => item.questSlug)), [items]);
 
+  // Achado 12 — o título vem do item já carregado, nunca da URL: só a
+  // posição atravessa o query string, e é ela que aponta para a linha certa.
+  const enteredItem = enteredAtPosition === undefined ? undefined : items.find((item) => item.position === enteredAtPosition);
+
   return (
     <main className={styles.page}>
       <header className={styles.top}>
@@ -212,9 +267,9 @@ export function Assignment({
         </Link>
       </header>
 
-      {enteredNotice !== undefined && (
+      {enteredItem !== undefined && (
         <p className={styles.enteredNotice} data-testid="missao-entrou-na-lista">
-          {enteredNotice}
+          {messages.assignment.entered(enteredItem.title, enteredItem.position)}
         </p>
       )}
 
@@ -240,7 +295,7 @@ export function Assignment({
 
       {isArchived && (
         <p className={styles.archivedNotice} data-testid="lista-arquivada">
-          Esta lista foi arquivada. Ela some das duas telas até você desarquivar.
+          {messages.assignment.archivedNotice}
         </p>
       )}
 

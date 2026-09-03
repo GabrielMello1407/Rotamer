@@ -200,6 +200,25 @@ test.describe('listas da turma', () => {
 
     await sair(page);
 
+    /*
+     * Achado 9 — §8.15 só olhava `page.content()`, que é só o HTML do
+     * documento. Next.js manda a resposta da navegação, os payloads RSC das
+     * trocas de aba/rota e as respostas das ações de servidor separados — e
+     * cada um é uma resposta HTTP própria, que `page.content()` nunca vê.
+     * Registrado **antes** do login do aluno, para não perder nada do que a
+     * conta dele recebe do primeiro pixel em diante.
+     */
+    const respostasParaOAluno: Promise<string>[] = [];
+    page.on('response', (response) => {
+      const tipo = response.request().resourceType();
+      if (tipo !== 'document' && tipo !== 'fetch' && tipo !== 'xhr') return;
+
+      const contentType = response.headers()['content-type'] ?? '';
+      if (!/text|json|component/i.test(contentType)) return;
+
+      respostasParaOAluno.push(response.text().catch(() => ''));
+    });
+
     // 11-14. O aluno da turma entra, vê "Da sua turma" e resolve as duas missões.
     await criarConta(page, alunoTurma, 'Aluno Bruno');
     await page.goto('/turmas');
@@ -218,13 +237,6 @@ test.describe('listas da turma', () => {
     await expect(daSuaTurma).toContainText('O álcool do dia a dia');
     await expect(daSuaTurma).toContainText('missão do seu professor');
 
-    // §8.15 — nada da resposta do professor chegou até aqui, antes de o
-    // aluno desenhar a própria cópia. A mesma InChIKey vai aparecer na tela
-    // depois, quando ELE desenhar etanol — mas isso é dele, não vazamento.
-    const html = await page.content();
-    expect(html).not.toContain(INCHI_ETANOL);
-    expect(html).not.toContain('V2000');
-
     // Resolver o item 1.
     await daSuaTurma.getByText('O primeiro traço').click();
     await desenharUmCarbono(page);
@@ -242,6 +254,20 @@ test.describe('listas da turma', () => {
       'Cumprida. Você fechou a lista «Funções oxigenadas — 3ª série».',
       { timeout: 60_000 },
     );
+
+    // §8.15, achado 9 — a InChIKey do etanol e a assinatura `V2000` do
+    // molblock não podem aparecer em NENHUMA resposta que o navegador do
+    // aluno recebeu na sessão inteira: nem o HTML da navegação, nem o
+    // payload RSC de trocar de aba, nem o retorno de `checkQuest`,
+    // `saveAttempt` ou `readStudentAssignments` (R-3, R-4) — nenhum deles
+    // devolve molblock nem InChIKey, nem quando é o próprio desenho do
+    // aluno: essa análise roda inteira no worker, no navegador, e nunca
+    // volta do servidor.
+    const corpos = await Promise.all(respostasParaOAluno);
+    for (const corpo of corpos) {
+      expect(corpo).not.toContain(INCHI_ETANOL);
+      expect(corpo).not.toContain('V2000');
+    }
 
     await sair(page);
 
