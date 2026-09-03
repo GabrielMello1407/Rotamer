@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page, type Response } from '@playwright/test';
 import { openQuests } from './painel';
 
 /**
@@ -101,6 +101,15 @@ test.describe('listas da turma', () => {
   test('o professor monta a lista, a turma resolve, e o catálogo compartilhado alcança outra turma', async ({
     page,
   }) => {
+    /*
+     * Robustez — mais de vinte passos, quatro workers, e uma navegação final
+     * depois de todas as asserções: já estourou os 60 s padrão uma vez, no
+     * celular, sob carga. `test.slow()` triplica o tempo deste teste (o
+     * Playwright já faz a conta); não mexe em workers nem no timeout global,
+     * que continuam servindo a suíte inteira.
+     */
+    test.slow();
+
     const professora = novoEmail('professora');
     const alunoTurma = novoEmail('aluno-turma');
     const alunoOutro = novoEmail('aluno-outro');
@@ -137,6 +146,44 @@ test.describe('listas da turma', () => {
     await expect(page.getByTestId('item-primeiro-carbono')).toBeVisible({ timeout: 30_000 });
     await expect(page.getByTestId('origem-primeiro-carbono')).toContainText('catálogo');
 
+    /*
+     * Achado 6 — "remover" precisa tirar a linha da tela na hora, sem esperar
+     * o servidor confirmar, e o desfazer precisa partir da lista que está na
+     * tela agora. Para provar a ordem dos acontecimentos (não só o resultado
+     * final), a resposta de `removeItem` é segurada de propósito: se a linha
+     * já sumiu **antes** de soltarmos a resposta, a atualização é local.
+     */
+    let liberarRemocao: (() => void) | undefined;
+    const respostaSegurada = new Promise<void>((resolve) => {
+      liberarRemocao = resolve;
+    });
+    // `page.unroute` completa sozinho qualquer rota ainda pendente — se
+    // chamado antes do nosso `route.continue()` rodar, os dois disputam a
+    // mesma rota e o segundo estoura "Route is already handled!". Por isso
+    // guardamos a promessa da continuação e esperamos por ela antes de tirar
+    // a interceptação.
+    let requisicaoContinuada: Promise<void> = Promise.resolve();
+    await page.route('**/turmas/**', async (route) => {
+      if (route.request().method() !== 'POST') {
+        await route.continue();
+        return;
+      }
+      requisicaoContinuada = respostaSegurada.then(async () => route.continue());
+      await requisicaoContinuada;
+    });
+
+    await page.getByTestId('remover-primeiro-carbono').click();
+    await expect(page.getByTestId('item-primeiro-carbono')).toHaveCount(0, { timeout: 2_000 });
+
+    liberarRemocao?.();
+    await requisicaoContinuada;
+    await page.unroute('**/turmas/**');
+
+    await expect(page.getByTestId('desfazer-remocao')).toBeVisible({ timeout: 30_000 });
+    await page.getByRole('button', { name: 'Desfazer' }).click();
+    await expect(page.getByTestId('item-primeiro-carbono')).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByTestId('origem-primeiro-carbono')).toContainText('catálogo');
+
     // 6. Criar missão desenhando.
     await page.getByTestId('criar-missao-desenhando').click();
     await expect(page.getByTestId('rotulo-autoria')).toContainText(
@@ -150,6 +197,18 @@ test.describe('listas da turma', () => {
     await carregarEtanol(page);
     await page.getByRole('tab', { name: 'Autoria' }).click();
     await expect(page.getByTestId('painel-autoria')).toContainText('calculado', { timeout: 30_000 });
+
+    /*
+     * Achado 8 — marcar "é exatamente esta molécula" precisa desligar os
+     * demais objetivos com UMA frase só, no topo da lista — não uma repetida
+     * debaixo de cada objetivo desligado. Marca, confere, desmarca: a missão
+     * real desta lista cobra grupo e contagem, não a InChIKey.
+     */
+    await page.getByTestId('objetivo-inchi-key').click();
+    await expect(page.getByTestId('desligado-por-exclusividade')).toHaveCount(1);
+    await expect(page.getByTestId('objetivo-group:alcohol:1')).toBeDisabled();
+    await page.getByTestId('objetivo-inchi-key').click();
+    await expect(page.getByTestId('desligado-por-exclusividade')).toHaveCount(0);
 
     // 8. Marcar os dois objetivos, título, enunciado e uma dica.
     await page.getByTestId('objetivo-group:alcohol:1').click();
@@ -183,6 +242,20 @@ test.describe('listas da turma', () => {
     const teacherQuestSlug = teacherItemTestId?.replace(/^item-/, '');
     if (teacherQuestSlug === undefined) throw new Error('não achei o slug da missão própria');
 
+    /*
+     * Achado 4 — a faixa "entrou na lista, na posição 2" não pode voltar
+     * depois que a lista foi mexida, mesmo que o item acabe retornando à
+     * mesma posição de antes: sobe (banner some), desce de volta (banner
+     * continua sumido, mesmo de volta na posição 2 — sem a correção, a busca
+     * por posição acharia o item ali de novo e mostraria a faixa errada).
+     */
+    const itemDaMissaoPropria = page.getByTestId(`item-${teacherQuestSlug}`);
+    await itemDaMissaoPropria.getByRole('button', { name: /^Subir/ }).click();
+    await expect(page.getByTestId('missao-entrou-na-lista')).toHaveCount(0, { timeout: 30_000 });
+    await itemDaMissaoPropria.getByRole('button', { name: /^Descer/ }).click();
+    await expect(page.getByTestId('origem-primeiro-carbono')).toContainText('catálogo', { timeout: 30_000 });
+    await expect(page.getByTestId('missao-entrou-na-lista')).toHaveCount(0);
+
     // 10. Publicar para a turma → confirmar.
     await page.getByTestId('publicar-para-turma').click();
     await page.getByTestId('confirmar-publicar').click();
@@ -198,17 +271,39 @@ test.describe('listas da turma', () => {
     await page.goto(`/turmas/${classroomId}`);
     await expect(page.getByTestId(`estado-lista-${assignmentId}`)).toContainText('publicado');
 
+    /*
+     * Achado 7 — a mesma frase de "turma sem aluno" no resumo do topo e no
+     * quadro por lista publicada: nenhum aluno entrou ainda nesta turma, e as
+     * duas seções precisam dizer exatamente a mesma coisa, não duas frases
+     * diferentes para o mesmo estado.
+     */
+    const semAlunoAinda = 'Ninguém entrou ainda. Escreva o código no quadro.';
+    await expect(page.getByTestId('resumo-turma')).toHaveText(semAlunoAinda);
+    await expect(page.getByTestId('quadro-da-lista')).toContainText(semAlunoAinda);
+
     await sair(page);
 
     /*
-     * Achado 9 — §8.15 só olhava `page.content()`, que é só o HTML do
+     * §8.15 não pode se contentar com `page.content()`, que é só o HTML do
      * documento. Next.js manda a resposta da navegação, os payloads RSC das
      * trocas de aba/rota e as respostas das ações de servidor separados — e
      * cada um é uma resposta HTTP própria, que `page.content()` nunca vê.
      * Registrado **antes** do login do aluno, para não perder nada do que a
      * conta dele recebe do primeiro pixel em diante.
+     *
+     * Achado 5 — a varredura original podia passar sem ter coletado corpo
+     * nenhum (um `page.content()` só, ou uma lista vazia por sorte de
+     * `content-type`). Guardamos também se a resposta veio de uma ação de
+     * servidor (cabeçalho `Next-Action`, ou `content-type: text/x-component`
+     * do payload RSC) para provar que a varredura realmente alcançou o
+     * caminho que devolve o veredito de missão — não só a navegação inicial.
      */
-    const respostasParaOAluno: Promise<string>[] = [];
+    interface RespostaColetada {
+      readonly deAcaoDeServidor: boolean;
+      readonly contentType: string;
+      readonly corpo: Promise<string>;
+    }
+    const respostasParaOAluno: RespostaColetada[] = [];
     page.on('response', (response) => {
       const tipo = response.request().resourceType();
       if (tipo !== 'document' && tipo !== 'fetch' && tipo !== 'xhr') return;
@@ -216,7 +311,12 @@ test.describe('listas da turma', () => {
       const contentType = response.headers()['content-type'] ?? '';
       if (!/text|json|component/i.test(contentType)) return;
 
-      respostasParaOAluno.push(response.text().catch(() => ''));
+      respostasParaOAluno.push({
+        deAcaoDeServidor:
+          response.request().headers()['next-action'] !== undefined || /x-component/i.test(contentType),
+        contentType,
+        corpo: response.text().catch(() => ''),
+      });
     });
 
     // 11-14. O aluno da turma entra, vê "Da sua turma" e resolve as duas missões.
@@ -245,26 +345,90 @@ test.describe('listas da turma', () => {
       timeout: 30_000,
     });
 
-    // Ir para o item 2 e resolvê-lo.
+    // Ir para o item 2.
     await page.getByTestId('proxima-missao').click();
     await page.getByRole('tab', { name: 'Análise' }).click();
+
+    /*
+     * Achado 2 — o portão "`saveAttempt` só quando passou" vive só no
+     * cliente (`QuestPanel.tsx`); sem um teste que force o caminho errado,
+     * ele pode quebrar sem barulho. Três estruturas válidas — o RDKit aceita
+     * as três — mas nenhuma cumpre "um álcool com exatamente 2 carbonos":
+     * metanol tem 1 carbono, propan-1-ol e butan-1-ol têm carbono a mais.
+     *
+     * A contagem lê a RESPOSTA, não o corpo do pedido: `request.postData()`
+     * pode voltar vazio sob carga (a suíte inteira roda em paralelo), do
+     * jeito que a varredura da §8.15 logo abaixo já evita depender só do
+     * pedido. `{status:"saved", score, passed}` é a forma exata — e única —
+     * do retorno de `saveAttempt` (`AttemptOutcome`); nenhuma outra ação
+     * devolve os três juntos.
+     */
+    const isRespostaDeSaveAttempt = (corpo: string): boolean =>
+      corpo.includes('"status":"saved"') && corpo.includes('"score"') && corpo.includes('"passed"');
+
+    const respostasSaveAttempt: Promise<string | null>[] = [];
+    const capturarSaveAttempt = (response: Response): void => {
+      if (response.request().method() !== 'POST') return;
+      respostasSaveAttempt.push(
+        response.text().then((corpo) => (isRespostaDeSaveAttempt(corpo) ? corpo : null)).catch(() => null),
+      );
+    };
+    page.on('response', capturarSaveAttempt);
+
+    const chamadasSaveAttempt = async (): Promise<string[]> =>
+      (await Promise.all(respostasSaveAttempt)).filter((corpo): corpo is string => corpo !== null);
+
+    for (const [smiles, formula] of [
+      ['CO', 'CH4O'],
+      ['CCCO', 'C3H8O'],
+      ['CCCCO', 'C4H10O'],
+    ] as const) {
+      await page.getByTestId('entrada-smiles').fill(smiles);
+      await page.getByRole('button', { name: 'Carregar' }).click();
+      await expect(page.getByTestId('formula')).toHaveText(formula, { timeout: 60_000 });
+    }
+    expect(await chamadasSaveAttempt()).toHaveLength(0);
+
+    /*
+     * A resposta certa — resolve o item 2. "Cumprida" na tela é o veredito
+     * LOCAL (`evaluateAnalysis`, sem esperar o servidor — esta missão tem
+     * condição local, R-4); `saveAttempt` é uma viagem ao servidor à parte,
+     * que pode terminar depois do banner aparecer. Por isso a contagem usa
+     * `expect.poll`: o `page.on('response', ...)` já está de pé desde antes
+     * do clique, então a resposta entra no acumulado assim que chegar, cedo
+     * ou tarde — sem depender de registrar um `waitForResponse` no instante
+     * exato que precede a chamada.
+     */
     await carregarEtanol(page);
     await page.getByTestId('abrir-missoes').click();
     await expect(page.getByTestId('faixa-proxima')).toContainText(
       'Cumprida. Você fechou a lista «Funções oxigenadas — 3ª série».',
       { timeout: 60_000 },
     );
+    await expect.poll(async () => (await chamadasSaveAttempt()).length, { timeout: 60_000 }).toBe(1);
+    page.off('response', capturarSaveAttempt);
 
-    // §8.15, achado 9 — a InChIKey do etanol e a assinatura `V2000` do
-    // molblock não podem aparecer em NENHUMA resposta que o navegador do
-    // aluno recebeu na sessão inteira: nem o HTML da navegação, nem o
-    // payload RSC de trocar de aba, nem o retorno de `checkQuest`,
-    // `saveAttempt` ou `readStudentAssignments` (R-3, R-4) — nenhum deles
-    // devolve molblock nem InChIKey, nem quando é o próprio desenho do
-    // aluno: essa análise roda inteira no worker, no navegador, e nunca
-    // volta do servidor.
-    const corpos = await Promise.all(respostasParaOAluno);
-    for (const corpo of corpos) {
+    /*
+     * A InChIKey do etanol e a assinatura `V2000` do molblock não podem
+     * aparecer em NENHUMA resposta que o navegador do aluno recebeu na
+     * sessão inteira: nem o HTML da navegação, nem o payload RSC de trocar
+     * de aba, nem o retorno de `checkQuest`, `saveAttempt` ou
+     * `readStudentAssignments` (R-3, R-4) — nenhum deles devolve molblock
+     * nem InChIKey, nem quando é o próprio desenho do aluno: essa análise
+     * roda inteira no worker, no navegador, e nunca volta do servidor.
+     *
+     * Achado 5 — a varredura só prova algo se de fato coletou corpo: exige
+     * pelo menos 5 respostas com conteúdo, e ao menos uma delas vinda de uma
+     * ação de servidor de verdade (não só a navegação inicial).
+     */
+    const coletadas = await Promise.all(
+      respostasParaOAluno.map(async (entry) => ({ ...entry, corpo: await entry.corpo })),
+    );
+    const comCorpo = coletadas.filter((entry) => entry.corpo.length > 0);
+    expect(comCorpo.length).toBeGreaterThanOrEqual(5);
+    expect(comCorpo.some((entry) => entry.deAcaoDeServidor)).toBe(true);
+
+    for (const { corpo } of comCorpo) {
       expect(corpo).not.toContain(INCHI_ETANOL);
       expect(corpo).not.toContain('V2000');
     }
@@ -314,5 +478,23 @@ test.describe('listas da turma', () => {
     expect(paginaDoProfessor).not.toContain('CCO');
     expect(paginaDoProfessor).not.toContain('C2H6O');
     expect(paginaDoProfessor).not.toContain('V2000');
+
+    /*
+     * Achado 10 — "Listas arquivadas (n)" precisa de `tabular-nums`, como
+     * todo número da interface. Arquivar por último: uma lista arquivada some
+     * do quadro por lista, e as asserções acima já leram tudo que precisavam
+     * dela.
+     */
+    await page.goto(`/turmas/${classroomId}/listas/${assignmentId}`);
+    await page.getByTestId('alternar-arquivo-lista').click();
+    await expect(page.getByTestId('lista-arquivada')).toBeVisible({ timeout: 30_000 });
+
+    await page.goto(`/turmas/${classroomId}`);
+    const listasArquivadasToggle = page.getByTestId('listas-arquivadas-toggle');
+    await expect(listasArquivadasToggle).toContainText('Listas arquivadas (1)', { timeout: 30_000 });
+    const fontVariantNumeric = await listasArquivadasToggle.evaluate(
+      (el) => getComputedStyle(el).fontVariantNumeric,
+    );
+    expect(fontVariantNumeric).toContain('tabular-nums');
   });
 });

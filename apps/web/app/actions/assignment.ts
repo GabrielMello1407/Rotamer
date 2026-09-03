@@ -201,12 +201,22 @@ function registerAuthoringSave(teacherId: string): void {
 }
 
 /**
- * Teto de `checkQuest` — 120 conferências por conta por minuto (achado 2).
+ * Teto de `checkQuest` — 120 conferências por conta (ou por IP, sem conta)
+ * por minuto (achado 2 da primeira revisão; achado 1 desta).
  *
  * `checkQuest` não grava nada (nem `Attempt`, nem `QuestOpen`): é a mesma
  * reavaliação de `saveAttempt`, só que sem persistir, para o aluno conferir
  * "cheguei?" sem contar como tentativa. Sem teto, é RDKit no servidor a cada
  * tecla — barato por chamada, caro em volume.
+ *
+ * **A contagem precisa vir antes de qualquer trabalho.** A versão anterior só
+ * contava depois do acesso (missão `professor:`) e da análise passarem, e só
+ * por `profile.id` — então quem não tinha conta, ou mandava molblock inválido
+ * de propósito, martelava o RDKit do servidor sem nunca entrar no teto.
+ * `checkQuestKey` resolve a chave (conta ou IP) e `checkQuest` chama
+ * `tooManyQuestChecks`/`registerQuestCheck` antes de resolver a missão, checar
+ * acesso ou tocar o RDKit — molblock inválido conta contra o teto igual a um
+ * molblock válido.
  *
  * Mesmo padrão de `authoringSaves` e `wrongCodeAttempts` (`classroom.ts`, R-15):
  * um `Map` no processo. **Limitação conhecida:** reiniciar o servidor zera a
@@ -215,17 +225,36 @@ function registerAuthoringSave(teacherId: string): void {
  */
 const questChecks = new Map<string, number[]>();
 
-function tooManyQuestChecks(profileId: string): boolean {
+/**
+ * A chave do teto é a conta — e só a conta.
+ *
+ * Anônimo não conferencia nada aqui: missão do catálogo é avaliada no próprio
+ * navegador, e a única missão que precisa do servidor para decidir — a de
+ * InChIKey, R-4 — é de professor, que exige conta para ser alcançada (D-26,
+ * R-7). Então chamada anônima é recusada antes de qualquer trabalho, sem teto
+ * por IP: chavear por `x-forwarded-for` seria chavear pelo que o cliente
+ * escreve, e um `Map` alimentado por atacante cresce sem parar.
+ */
+function checkQuestKey(profileId: string): string {
+  return `conta:${profileId}`;
+}
+
+function tooManyQuestChecks(key: string): boolean {
   const now = Date.now();
-  const checks = (questChecks.get(profileId) ?? []).filter((at) => now - at < CHECK_QUEST_WINDOW_MS);
-  questChecks.set(profileId, checks);
+  const checks = (questChecks.get(key) ?? []).filter((at) => now - at < CHECK_QUEST_WINDOW_MS);
+
+  // Janela vazia some do mapa: o que fica é limitado pelo número de contas que
+  // conferiram no último minuto, não pelo histórico do processo.
+  if (checks.length === 0) questChecks.delete(key);
+  else questChecks.set(key, checks);
+
   return checks.length >= CHECK_QUEST_LIMIT;
 }
 
-function registerQuestCheck(profileId: string): void {
-  const checks = questChecks.get(profileId) ?? [];
+function registerQuestCheck(key: string): void {
+  const checks = questChecks.get(key) ?? [];
   checks.push(Date.now());
-  questChecks.set(profileId, checks);
+  questChecks.set(key, checks);
 }
 
 /** Títulos de missão `professor:`, buscados com `select` explícito (R-3) — nunca a resposta. */
@@ -1319,28 +1348,33 @@ export async function checkQuest(input: { questSlug: string; molblock: string })
   const parsed = checkQuestSchema.safeParse(input);
   if (!parsed.success) return { status: 'rejected', reason: 'Pedido mal formado.' };
 
+  // Sem conta, sem conferência — e sem trabalho nenhum antes de dizer isso:
+  // nem resolver a missão, nem RDKit. A recusa é a mesma frase de missão que
+  // não existe (R-8), para a ação não virar oráculo de existência.
+  const profile = await currentProfile();
+  if (profile === null) return { status: 'rejected', reason: QUEST_NOT_FOUND };
+
+  // Contado ANTES de qualquer trabalho — resolver a missão, checar acesso e
+  // rodar o RDKit vêm todos depois. Molblock inválido conta igual, porque
+  // também pagaria o custo do RDKit.
+  const key = checkQuestKey(profile.id);
+  if (tooManyQuestChecks(key)) {
+    return { status: 'rejected', reason: 'Muitas conferências em pouco tempo. Espere um pouco e tente de novo.' };
+  }
+  registerQuestCheck(key);
+
   const quest = await resolveQuest(parsed.data.questSlug);
   if (!quest) return { status: 'rejected', reason: QUEST_NOT_FOUND };
 
-  const profile = await currentProfile();
-
-  // R-7/R-8: missão de professor exige conta com acesso; catálogo continua livre.
-  if (quest.slug.startsWith(TEACHER_PREFIX)) {
-    if (profile === null || !(await studentQuestAccess(profile.id, quest.slug))) {
-      return { status: 'rejected', reason: QUEST_NOT_FOUND };
-    }
-  }
-
-  // Teto de 120 por conta por minuto — anônimo não tem conta para contar contra.
-  if (profile !== null && tooManyQuestChecks(profile.id)) {
-    return { status: 'rejected', reason: 'Muitas conferências em pouco tempo. Espere um pouco e tente de novo.' };
+  // R-7/R-8: missão de professor exige acesso; catálogo continua livre.
+  if (quest.slug.startsWith(TEACHER_PREFIX) && !(await studentQuestAccess(profile.id, quest.slug))) {
+    return { status: 'rejected', reason: QUEST_NOT_FOUND };
   }
 
   const analysis = await analyzeOnServer(parsed.data.molblock);
   if (!analysis.ok) return { status: 'rejected', reason: analysis.error.message };
 
   const result = evaluateQuest(quest, analysis.molecule);
-  if (profile !== null) registerQuestCheck(profile.id);
 
   return { status: 'ok', passed: result.passed, goals: result.goals };
 }

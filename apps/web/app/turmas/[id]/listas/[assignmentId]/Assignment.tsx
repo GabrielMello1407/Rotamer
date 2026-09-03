@@ -54,11 +54,13 @@ export interface AssignmentProps {
 /**
  * A lista, com o professor montando (§6.2 de `docs/ROTEIROS.md`).
  *
- * `items` e `publishedAt` não têm estado local próprio: eles são o que a
- * página do servidor mandou. Cada escrita (`moveItem`, `removeItem`,
- * `publishAssignment`…) termina em `router.refresh()`, que busca a lista de
- * novo e entrega props novas aqui — replicar isso num `useState` só criaria
- * uma segunda fonte de verdade que pode ficar velha.
+ * `publishedAt` não tem estado local próprio: é o que a página do servidor
+ * mandou. `items` já teve o mesmo desenho, mas achado 6 desta rodada mostrou
+ * o preço: remover uma linha só sumia da tela depois da viagem completa ao
+ * servidor. Agora `items` é espelho otimista — some/volta na hora — e o
+ * efeito logo abaixo resincroniza com `initialItems` sempre que
+ * `router.refresh()` traz a lista de novo, então não existe uma segunda
+ * fonte de verdade permanente: o servidor sempre vence no fim.
  *
  * O estado de "está no catálogo" de cada missão própria também não vem de
  * `readAssignments` — essa leitura nunca devolveu `catalogedAt` (R-3 mantém o
@@ -79,7 +81,23 @@ export function Assignment({
 }: AssignmentProps): ReactElement {
   const router = useRouter();
 
-  const items = initialItems;
+  /*
+   * Achado 6 — `items` precisa aceitar atualização otimista: remover some da
+   * tela na hora, e o desfazer parte do que está na tela agora, não de um
+   * retrato velho. Continua espelhando o servidor: sempre que `router.refresh()`
+   * traz `initialItems` de novo, o ajuste abaixo resincroniza — durante a
+   * renderização, não num efeito à parte, exatamente como a documentação do
+   * React recomenda para "ajustar estado quando uma prop muda"
+   * (https://react.dev/learn/you-might-not-need-an-effect), evitando o
+   * cascading render de um `setState` dentro de `useEffect`.
+   */
+  const [items, setItems] = useState(initialItems);
+  const [syncedInitialItems, setSyncedInitialItems] = useState(initialItems);
+  if (initialItems !== syncedInitialItems) {
+    setSyncedInitialItems(initialItems);
+    setItems(initialItems);
+  }
+
   const publishedAt = initialPublishedAt;
 
   const [title, setTitle] = useState(initialTitle);
@@ -97,6 +115,15 @@ export function Assignment({
     { readonly title: string; readonly slug: string; readonly position: number } | null
   >(null);
   const removedTimer = useRef<number | undefined>(undefined);
+
+  /*
+   * Achado 4 — a faixa "entrou na lista, na posição N" (`enteredAtPosition`)
+   * acha o item pela posição em `items`; depois de mover qualquer linha, a
+   * posição N passa a apontar para outro item, e a faixa nomeava quem quer que
+   * estivesse lá agora. Ela some no primeiro mover/remover e nunca mais volta,
+   * mesmo que o item original acabe retornando à mesma posição.
+   */
+  const [enteredVisible, setEnteredVisible] = useState(enteredAtPosition !== undefined);
 
   const [catalogOpen, setCatalogOpen] = useState(false);
   const [catalogAnchor, setCatalogAnchor] = useState<HTMLElement | null>(null);
@@ -128,6 +155,7 @@ export function Assignment({
 
   const move = (itemId: string, direction: 'up' | 'down'): void => {
     setError(null);
+    setEnteredVisible(false); // achado 4
     void moveItem({ assignmentId, itemId, direction }).then((outcome) => {
       if (outcome.status === 'rejected') {
         setError(outcome.reason);
@@ -139,9 +167,18 @@ export function Assignment({
 
   const remove = (item: AssignmentItemView): void => {
     setError(null);
+    setEnteredVisible(false); // achado 4
+
+    // Achado 6 desta rodada — tira a linha da tela na hora; se o servidor
+    // recusar, a linha volta (o retrato de antes da remoção fica só nesta
+    // closure).
+    const beforeRemoval = items;
+    setItems((current) => current.filter((entry) => entry.id !== item.id));
+
     void removeItem({ assignmentId, itemId: item.id }).then((outcome) => {
       if (outcome.status === 'rejected') {
         setError(outcome.reason);
+        setItems(beforeRemoval);
         return;
       }
 
@@ -155,20 +192,24 @@ export function Assignment({
   };
 
   /**
-   * Desfazer a remoção devolve o item para a posição de onde saiu (achado 6
-   * do `reviewer`), não para o fim da lista.
+   * Desfazer a remoção devolve o item para a posição de onde saiu, não para
+   * o fim da lista.
    *
    * `addItem` sempre acrescenta no fim e não devolve o `id` da linha nova
    * (§5.2) — por isso a página é pedida de novo, para achar essa linha pelo
    * `questSlug` (único na lista) e então subir com `moveItem` até a posição
    * de antes. Uma falha no meio do caminho não é escondida: o item continua
-   * na lista, só não voltou para o lugar certo, e a tela diz isso.
+   * na lista, só não voltou para o lugar certo, e a tela diz isso. Cada
+   * leitura fresca (`readAssignments`) também atualiza `items` na hora — o
+   * desfazer nunca trabalha sobre um retrato antigo enquanto espera o
+   * `router.refresh()` do fim da função (achado 6 desta rodada).
    */
   const undoRemoval = (): void => {
     if (removedNotice === null) return;
     const { slug, title, position: originalPosition } = removedNotice;
     setRemovedNotice(null);
     setError(null);
+    setEnteredVisible(false); // achado 4
 
     const run = async (): Promise<void> => {
       const added = await addItem({ assignmentId, questSlug: slug });
@@ -178,14 +219,18 @@ export function Assignment({
       }
 
       const fresh = await readAssignments({ classroomId });
-      const item = fresh
-        .find((entry) => entry.id === assignmentId)
-        ?.items.find((entry) => entry.questSlug === slug);
+      const freshItems = fresh.find((entry) => entry.id === assignmentId)?.items;
+      const item = freshItems?.find((entry) => entry.questSlug === slug);
 
-      if (item === undefined) {
+      if (item === undefined || freshItems === undefined) {
         router.refresh();
         return;
       }
+
+      // Achado 6 desta rodada — o desfazer parte da lista atual: assim que o
+      // servidor confirma o item de volta, a tela reflete isso na hora, sem
+      // esperar pelo `router.refresh()` do fim da função.
+      setItems(freshItems);
 
       // Cada subida depende da posição que a anterior deixou — sequencial de
       // propósito, do mesmo jeito que `CatalogPicker` acrescenta um item de
@@ -199,7 +244,16 @@ export function Assignment({
         }
       }
 
-      if (!restored) setError(messages.assignment.undoMoveFailed(title));
+      if (!restored) {
+        setError(messages.assignment.undoMoveFailed(title));
+      } else {
+        // Reflete a posição final na lista que está na tela — de novo, sem
+        // esperar o `router.refresh()` chegar do servidor.
+        const after = await readAssignments({ classroomId });
+        const afterItems = after.find((entry) => entry.id === assignmentId)?.items;
+        if (afterItems !== undefined) setItems(afterItems);
+      }
+
       router.refresh();
     };
 
@@ -257,7 +311,14 @@ export function Assignment({
 
   // Achado 12 — o título vem do item já carregado, nunca da URL: só a
   // posição atravessa o query string, e é ela que aponta para a linha certa.
-  const enteredItem = enteredAtPosition === undefined ? undefined : items.find((item) => item.position === enteredAtPosition);
+  //
+  // Achado 4 desta rodada — a busca por posição só vale enquanto nada foi
+  // movido ou removido (`enteredVisible`): mover qualquer linha muda quem
+  // ocupa a posição N, e sem essa guarda a faixa passava a nomear outro item.
+  const enteredItem =
+    !enteredVisible || enteredAtPosition === undefined
+      ? undefined
+      : items.find((item) => item.position === enteredAtPosition);
 
   return (
     <main className={styles.page}>

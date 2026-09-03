@@ -143,6 +143,9 @@
   padding: var(--sp-1) 0;
   font-family: var(--font-ui);
   font-size: var(--step--1);
+  /* Achado 10 — "Listas arquivadas (n)" tem número no meio do texto: sem
+     tabular-nums, o dígito troca a largura da palavra a cada mudança. */
+  font-variant-numeric: tabular-nums;
   color: var(--ink-500);
   cursor: pointer;
   min-height: var(--tap-min);

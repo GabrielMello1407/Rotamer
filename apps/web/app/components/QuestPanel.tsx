@@ -156,14 +156,38 @@ export function QuestPanel({ analysis, slug, onSlug }: QuestPanelProps): ReactEl
   } | null>(null);
   const usingServerCheck = isTeacherQuest && localAssessable === null;
 
+  /**
+   * Achado 9 — arrastar um átomo não muda a topologia, mas recalcula
+   * `analysis` (nova referência, mesma InChIKey) a cada debounce de métrica.
+   * Sem esta memória, cada arrasto perguntava `checkQuest` de novo para a
+   * mesma molécula. O veredito é função pura da missão e da InChIKey — cache
+   * por `slug:inchiKey`, dentro da vida do componente, nunca persistido.
+   */
+  const checkCache = useRef<Map<string, CheckQuestResult>>(new Map());
+
   useEffect(() => {
     if (!usingServerCheck || analysis === null || !analysis.ok) return;
 
-    let alive = true;
     const { molblock, inchiKey } = analysis.molecule;
+    const cacheKey = `${slug}:${inchiKey}`;
+    const cached = checkCache.current.get(cacheKey);
 
+    if (cached !== undefined) {
+      setCheckState((current) =>
+        current !== null && current.slug === slug && current.inchiKey === inchiKey
+          ? current
+          : { slug, inchiKey, result: cached },
+      );
+      return;
+    }
+
+    let alive = true;
     const timer = window.setTimeout(() => {
       void checkQuest({ questSlug: slug, molblock }).then((outcome) => {
+        // Só o veredito entra na memória. Recusa é transitória — teto de
+        // conferências, acesso que ainda não existia — e guardá-la faria o
+        // aluno que cumpriu a missão depois nunca ter a tentativa gravada.
+        if (outcome.status === 'ok') checkCache.current.set(cacheKey, outcome);
         if (alive) setCheckState({ slug, inchiKey, result: outcome });
       });
     }, CHECK_QUIET_MS);
@@ -326,6 +350,14 @@ export function QuestPanel({ analysis, slug, onSlug }: QuestPanelProps): ReactEl
       ? checkResult.goals
       : (teacherQuestForSlug?.goals.map((goal) => ({ id: goal.id, label: goal.label, met: false })) ?? []));
 
+  /**
+   * Achado 3 — `checkQuest` recusado (sem acesso, teto de conferências) não
+   * pode virar "por cumprir": a lista de objetivos mentiria dizendo que nada
+   * foi medido ainda, quando na verdade o servidor já respondeu que não dá
+   * para conferir. O motivo do servidor substitui a lista inteira.
+   */
+  const checkRejectedReason = checkResult?.status === 'rejected' ? checkResult.reason : null;
+
   return (
     <section className={styles.panel} aria-label="Missão">
       <StudentAssignmentsSection slug={slug} onSlug={onSlug} done={done} assignments={assignments} />
@@ -391,30 +423,36 @@ export function QuestPanel({ analysis, slug, onSlug }: QuestPanelProps): ReactEl
             </p>
           )}
 
-          <ul className={styles.goals} data-testid="objetivos">
-            {goalLabels.map((goal) => (
-              <li
-                key={goal.id}
-                className={[styles.goal, goal.met ? styles.goalMet : null].filter(Boolean).join(' ')}
-              >
-                <span
-                  className={[styles.mark, goal.met ? styles.markMet : null].filter(Boolean).join(' ')}
-                  aria-hidden="true"
+          {checkRejectedReason !== null ? (
+            <p className={styles.hint} data-testid="objetivos-recusados">
+              {checkRejectedReason}
+            </p>
+          ) : (
+            <ul className={styles.goals} data-testid="objetivos">
+              {goalLabels.map((goal) => (
+                <li
+                  key={goal.id}
+                  className={[styles.goal, goal.met ? styles.goalMet : null].filter(Boolean).join(' ')}
                 >
-                  {goal.met ? '✓' : ''}
-                </span>
-                {goal.label}
-                {/* Missão de InChIKey (ou alcançada só pelo catálogo, sem
-                    condição local) — R-4. Nunca "por cumprir": o cliente não
-                    tem como saber, só o servidor. */}
-                {awaitingServerCheck && (
-                  <span className={styles.pending} data-testid="objetivo-conferindo">
-                    {messages.studentAssignments.checkingWithServer}
+                  <span
+                    className={[styles.mark, goal.met ? styles.markMet : null].filter(Boolean).join(' ')}
+                    aria-hidden="true"
+                  >
+                    {goal.met ? '✓' : ''}
                   </span>
-                )}
-              </li>
-            ))}
-          </ul>
+                  {goal.label}
+                  {/* Missão de InChIKey (ou alcançada só pelo catálogo, sem
+                      condição local) — R-4. Nunca "por cumprir": o cliente não
+                      tem como saber, só o servidor. */}
+                  {awaitingServerCheck && (
+                    <span className={styles.pending} data-testid="objetivo-conferindo">
+                      {messages.studentAssignments.checkingWithServer}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
 
           {hints.slice(0, hintsShown).map((hint) => (
             <p key={hint} className={styles.hint}>

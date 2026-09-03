@@ -8,6 +8,7 @@ import { readAssignmentBoard, readAssignments } from '../../actions/assignment';
 import { readClassroomBoard } from '../../actions/classroom';
 import { currentProfile } from '../../../lib/auth';
 import { hasDatabase } from '../../../lib/db';
+import { messages } from '../messages';
 import { AssignmentBoardSection } from './AssignmentBoardSection';
 import { AssignmentsSection } from './AssignmentsSection';
 import styles from './page.module.css';
@@ -85,9 +86,9 @@ export default async function ClassroomPage({ params }: PageProps): Promise<Reac
 
       <div>
         <h1 className={styles.heading}>{board.name}</h1>
-        <p className={styles.intro}>
+        <p className={styles.intro} data-testid="resumo-turma">
           {board.students.length === 0
-            ? 'Ninguém entrou ainda. Escreva o código no quadro.'
+            ? messages.empty.noStudents
             : `${String(board.students.length)} ${board.students.length === 1 ? 'aluno' : 'alunos'}, de ${String(total)} missões no catálogo.`}
         </p>
       </div>

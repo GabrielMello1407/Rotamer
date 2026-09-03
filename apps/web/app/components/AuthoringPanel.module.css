@@ -108,12 +108,6 @@
   color: var(--ink-500);
 }
 
-.disabledNote {
-  margin: 0 0 var(--sp-1) var(--sp-6);
-  font-size: var(--step--2);
-  color: var(--ink-400);
-}
-
 .inchiWarning {
   margin: var(--sp-1) 0 var(--sp-2);
   padding: var(--sp-2) var(--sp-3);

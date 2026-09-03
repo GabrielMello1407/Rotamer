@@ -7,6 +7,8 @@ import { endSession, startSession } from '../../lib/auth';
 import { db } from '../../lib/db';
 import { resolveQuest, validateAuthoredGoals } from '../../lib/quest-resolve';
 import { buildPrompt } from '../../lib/tutor/prompt';
+import { analyzeOnServer } from '../../lib/chemistry-server';
+import type * as ChemistryServer from '../../lib/chemistry-server';
 import { isDatabaseReachable } from '../../test/db-guard';
 import { openQuest, saveAttempt } from './attempt';
 import {
@@ -75,8 +77,21 @@ const maybeDescribe = databaseAvailable ? describe : describe.skip;
 /** O mesmo prefixo de `apps/web/app/actions/assignment.ts` — repetido aqui só como literal de teste. */
 const TEACHER_PREFIX = 'professor:';
 
+/**
+ * Espiona `analyzeOnServer` mantendo o comportamento real (RDKit de verdade) —
+ * só para o achado 1 contar quantas vezes o servidor de fato rodou o RDKit,
+ * em vez de inferir isso pela frase de recusa.
+ */
+vi.mock('../../lib/chemistry-server', async (importOriginal) => {
+  const actual = await importOriginal<typeof ChemistryServer>();
+  return { ...actual, analyzeOnServer: vi.fn(actual.analyzeOnServer) };
+});
+
 vi.mock('next/headers', () => {
   const jar = new Map<string, string>();
+  // `x-forwarded-for` de teste — só o teste anônimo do achado 1 (rate limit de
+  // `checkQuest`) lê `headers()`; os demais rodam logados e nunca chamam isto.
+  const requestHeaders = new Map<string, string>([['x-forwarded-for', '203.0.113.7']]);
   return {
     cookies: () =>
       Promise.resolve({
@@ -87,6 +102,10 @@ vi.mock('next/headers', () => {
         delete: (name: string) => {
           jar.delete(name);
         },
+      }),
+    headers: () =>
+      Promise.resolve({
+        get: (name: string) => requestHeaders.get(name) ?? null,
       }),
   };
 });
@@ -1490,6 +1509,50 @@ maybeDescribe('checkQuest — conferir sem gravar (achado 5)', () => {
 
     const attempts = await db.attempt.count({ where: { questSlug: cenario.questSlug } });
     expect(attempts).toBe(0);
+  });
+
+  it('sem conta, checkQuest recusa antes de qualquer trabalho — nem RDKit, nem missão resolvida', async () => {
+    await logout();
+
+    const chamadasAntes = vi.mocked(analyzeOnServer).mock.calls.length;
+    const resultado = await checkQuest({ questSlug: 'primeiro-carbono', molblock: 'C' });
+
+    // A mesma frase de missão inexistente (R-8): a ação não diz se o slug existe.
+    expect(resultado.status).toBe('rejected');
+    if (resultado.status === 'rejected') expect(resultado.reason).toBe('Essa missão não existe.');
+    expect(vi.mocked(analyzeOnServer).mock.calls.length - chamadasAntes).toBe(0);
+  });
+
+  it('achado 1 — teto de 120/minuto por conta conta antes de resolver a missão e antes do RDKit; molblock inválido conta', async () => {
+    const student = await makeStudent();
+    await loginAs(student.id);
+
+    // Cinco ligações no carbono central: o RDKit recusa por valência — inválida
+    // de propósito, para provar que "inválido" também conta contra o teto.
+    const molblockInvalido = 'C(C)(C)(C)(C)C';
+    const rateLimitReason = 'Muitas conferências em pouco tempo. Espere um pouco e tente de novo.';
+    const chamadasAntes = vi.mocked(analyzeOnServer).mock.calls.length;
+
+    let ultima: Awaited<ReturnType<typeof checkQuest>> | null = null;
+    for (let index = 0; index < 121; index += 1) {
+      ultima = await checkQuest({ questSlug: 'primeiro-carbono', molblock: molblockInvalido });
+
+      // As 120 primeiras passam pelo teto e chegam a recusar pela química
+      // (RDKit rodou), nunca pelo teto — a recusa é outra frase.
+      if (index < 120) {
+        expect(ultima.status).toBe('rejected');
+        if (ultima.status === 'rejected') expect(ultima.reason).not.toBe(rateLimitReason);
+      }
+    }
+
+    // A 121ª é recusada pelo teto, exatamente — prova que nem chegou a rodar o
+    // RDKit de novo (senão a recusa seria a mesma frase de química das 120 anteriores).
+    expect(ultima?.status).toBe('rejected');
+    if (ultima?.status === 'rejected') expect(ultima.reason).toBe(rateLimitReason);
+
+    // E, direto: só 120 chamadas de verdade ao RDKit — a 121ª não chegou lá.
+    const chamadasDepois = vi.mocked(analyzeOnServer).mock.calls.length;
+    expect(chamadasDepois - chamadasAntes).toBe(120);
   });
 });
 

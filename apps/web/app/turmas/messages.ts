@@ -197,12 +197,6 @@ export const messages = {
     footer:
       'O que aparece aqui é progresso de missão, avaliado no servidor a cada tentativa. As moléculas que o aluno desenhou não entram nesta tela.',
     emptyOpened: 'Ninguém abriu nenhuma missão desta lista ainda.',
-    /**
-     * Achado 10 — `board.students` vem de `enrollment`, não de quem abriu
-     * algo: zero alunos aqui é zero matrícula na turma, nunca "ninguém abriu
-     * ainda" (essa frase mentiria sobre o motivo da tabela estar vazia).
-     */
-    noStudentsEnrolled: 'Nenhum aluno matriculado ainda.',
   },
 
   // ---------------------------------------------------------- §6.6 — vazios
@@ -211,6 +205,12 @@ export const messages = {
       'Uma lista é a sequência de missões de uma aula. Você escolhe do catálogo, cria as suas desenhando a resposta, ou mistura os dois.',
     noItems: 'Escolha do catálogo, ou desenhe a resposta e crie a sua.',
     noCatalogMatch: 'Nenhuma missão desta trilha fora da lista.',
+    /**
+     * Achado 7 — a mesma frase para "turma sem aluno" nas duas seções da
+     * página da turma: o resumo do topo (`page.tsx`) e o quadro por lista
+     * publicada (`AssignmentBoardSection`). Duas frases diferentes para o
+     * mesmo estado liam como dois bugs, não como um.
+     */
     noStudents: 'Ninguém entrou ainda. Escreva o código no quadro.',
     noOneOpened: 'Ninguém abriu nenhuma missão desta lista ainda.',
     studentNoPublished:

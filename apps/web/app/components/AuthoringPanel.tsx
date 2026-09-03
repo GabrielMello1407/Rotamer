@@ -111,6 +111,15 @@ export function AuthoringPanel({
           </span>
         </div>
 
+        {/* Achado 8 — a frase de exclusividade aparecia debaixo de CADA
+            objetivo desligado; com dez objetivos, dez repetições da mesma
+            linha. Uma vez só, no topo, enquanto o InChIKey estiver marcado. */}
+        {exclusiveMarked && (
+          <p className={styles.quiet} data-testid="desligado-por-exclusividade">
+            {messages.authoring.disabledByExclusive}
+          </p>
+        )}
+
         {BLOCKS.map((block) => {
           const inBlock = candidates.filter((candidate) => candidate.kind === block.kind);
           if (inBlock.length === 0) return null;
@@ -143,15 +152,6 @@ export function AuthoringPanel({
                         <span className={styles.goalLabel}>{candidate.label}</span>
                         <span className={styles.goalMeasured}>{candidate.measured}</span>
                       </label>
-
-                      {/* Achado 7: a frase de exclusividade fica visível na
-                          linha, não só num `title` que só aparece no hover —
-                          é o que explica por que este objetivo saiu marcado. */}
-                      {disabled && (
-                        <p className={styles.disabledNote} data-testid={`desligado-${candidate.id}`}>
-                          {messages.authoring.disabledByExclusive}
-                        </p>
-                      )}
 
                       {candidate.exclusive && checked && (
                         <p className={styles.inchiWarning} data-testid="aviso-inchikey">
