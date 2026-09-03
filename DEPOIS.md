@@ -198,6 +198,77 @@ O que impede de entrar sem conversa:
 - Antes das duas: **perguntar ao Pedro o que ele faria com isso na aula**. Se o uso é "mostrar que
   a água é polar e o CO₂ não", a seta basta e é barata.
 
+## Missões como material de aula — proposta de estrutura, aguardando o `pm`
+
+**28 de agosto de 2026.** As missões existem desde a v0.1 e foram pensadas como isca para quem
+chega sozinho. A pergunta nova é outra: **servir de exercício dentro da aula**, na sequência em que
+o professor ensina. É mudança de dono — de aluno curioso para professor com plano de ensino — e
+por isso precisa de decisão de escopo antes de código.
+
+### O que trava hoje
+
+O catálogo tem 16 missões, cada uma com `track` e `difficulty: 1 | 2 | 3`. O número é **rótulo, não
+progressão**: ele não diz o que a missão ensina, não diz o que ela pressupõe, e não tem relação
+nenhuma com a ordem em que o conteúdo aparece no semestre. Para o produto, "dificuldade 2" é uma
+fatia; para o professor, a unidade é "aula de funções oxigenadas, semana 4".
+
+Falta também o que agrupa: não existe jeito de o professor dizer "estas cinco, nesta ordem, para a
+minha turma".
+
+### A ideia: conceito e pré-requisito, e a ordem deixa de ser opinião
+
+Cada missão passaria a declarar o que **ensina** e o que **pressupõe**, em conceitos da disciplina
+— não em números:
+
+```
+teaches:  ['carbonila', 'cetona']
+requires: ['valencia-do-carbono', 'ligacao-dupla']
+```
+
+Com isso a ordem **deriva do grafo de conceitos** em vez de ser fixada à mão, a mesma missão pode
+ser alcançada por caminhos diferentes, e `difficulty` vira consequência (quantos conceitos ela
+exige) em vez de declaração. Também aparece de graça a resposta para "o que vem depois desta?".
+
+### O que o professor precisa, em ordem de valor
+
+1. **Escolher** — montar um roteiro: um punhado de missões, na ordem dele, com um nome ("Funções
+   oxigenadas — 3ª série"). É o que transforma o produto em material de aula, e não exige que ele
+   escreva missão nenhuma.
+2. **Acompanhar** — já existe (D-22): o painel mostra onde a turma parou, não quem foi melhor.
+3. **Criar missão própria** — o mais caro, e o que mais parece necessário sem ser. Um editor de
+   missão precisa de validação, de revisão e de um jeito de impedir enunciado quimicamente errado.
+   Fica para depois de o roteiro provar que o formato serve.
+
+### A escolha que precisa ser feita, e a recomendação
+
+Duas leituras de "de acordo com o aprendizado do aluno":
+
+- **Adaptativo automático** — o produto escolhe a próxima missão pelo desempenho. Tentador e
+  arriscado: é afirmação sobre aprendizagem que não temos como sustentar, tira o controle do
+  professor, e exigiria dado de aluno que hoje o produto de propósito não guarda.
+- **Sequência do professor, com o produto medindo** — ele monta o roteiro, o grafo de conceitos
+  **sugere** o que vem depois, e o painel mostra onde a turma travou.
+
+A segunda é a que cabe no D-09 (o professor decide) e no D-22 (progresso, não ranking). O grafo de
+conceitos entra como sugestão, **nunca como cadeado**: missão que só abre depois de outra é o tipo
+de coisa que quebra a aula do professor que quer começar por onde ele quer.
+
+### O que já está certo e não se mexe
+
+- **Dica só quando pedida**, uma de cada vez (`QuestPanel` libera por clique). Isso não é detalhe de
+  interface: Shute (2008) mede que resposta dada antes da tentativa anula o efeito do retorno.
+- **A nota sai do motor determinístico**, e cada objetivo vale a mesma fatia — nota que o aluno
+  consegue explicar.
+- **A direção do exercício.** ENEM e Unicamp cobram *nome → estrutura*, e é onde o aluno erra
+  (41,59% de zeros na questão 9 da Unicamp 2005). As missões já pedem para desenhar a partir de uma
+  descrição; isso é acerto, e vale reforçar em vez de inverter.
+
+### O que decide tudo, e custa zero
+
+**O plano de ensino do Idelcio.** Ele está com a disciplina neste semestre. A lista de conceitos e
+a ordem deles não deveriam sair da nossa cabeça: é pedir o plano, transcrever, e comparar com as 16
+missões que existem — o que sobra e o que falta aparece sozinho.
+
 ## Considerado e adiado
 
 - [ ] Comparar dois análogos lado a lado — é para o usuário avançado, que não é o comprador (D-09)
