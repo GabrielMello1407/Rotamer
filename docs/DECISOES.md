@@ -836,9 +836,10 @@ inferida da ausência de centro, e inferência se troca por fato assim que o fat
 **Decisão do dono do produto, 28 de agosto de 2026.** Quem monta a sequência de exercícios para a
 turma e quem inventa exercício novo é **o professor**. O aluno resolve; não organiza nem cria.
 
-**O que isso muda no que estava proposto.** A proposta de estrutura das missões (`DEPOIS.md`)
-tinha "criar missão própria" como o último e mais caro dos três itens. Deixa de ser opcional: é
-requisito, e o desenho do roteiro precisa nascer já com o lugar onde a missão do professor entra.
+**Esclarecimento, no mesmo dia.** Criar missão própria é **opcional para o professor** — ele pode
+montar o roteiro só com o catálogo, só com missões dele, ou misturando. O que a decisão fecha é
+**quem** pode: só o professor cria, e só o professor orquestra. O catálogo continua existindo
+como material pronto; o que ele não é mais é o único caminho.
 
 **Como criar sem quebrar a regra que não se quebra.** Missão é verificada pelo RDKit sobre a
 molécula (D-01). Enunciado escrito à mão não é verificável, e objetivo escrito à mão pode ser
