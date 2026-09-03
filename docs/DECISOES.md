@@ -902,8 +902,12 @@ delas é opcional, e a entrega não existe sem as três:
 
 1. **Opt-in por missão, nunca por padrão.** Missão nasce **só nas listas do professor**. Entrar no
    catálogo é ação separada — "publicar no catálogo" — que ele faz missão a missão, e desfaz
-   quando quiser. Missão retirada do catálogo continua funcionando para quem já a abriu (é a
-   mesma regra do arquivar, §3.5 de `docs/ROTEIROS.md`).
+   quando quiser. **Retirar do catálogo encerra o acesso pelo catálogo**: quem só chegava por ali
+   deixa de alcançar a missão; quem chega por lista publicada continua, porque o item está na
+   lista. O que já foi tentado fica gravado como histórico (`Attempt` não se apaga), mas histórico
+   não é chave — a primeira implementação usou o "já abriu" (`QuestOpen`) como acesso vitalício,
+   e isso anulava a regra R-7: bastava abrir uma vez para nunca mais perder o acesso, mesmo com o
+   professor arquivando ou retirando. Corrigido em 28/08/2026, no mesmo dia.
 2. **Autoria visível, sempre.** No catálogo, missão de professor aparece com **quem escreveu e de
    onde** — nome de exibição e instituição —, e nunca sem isso. É a regra do D-15 aplicada a
    conteúdo: o que um humano assinou não circula sem a assinatura. Missão de professor sem
