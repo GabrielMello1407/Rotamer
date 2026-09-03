@@ -648,7 +648,7 @@ repetiriam a regra.
 `index.ts`, `test/`.
 Pronto quando `pnpm test` cobrir: `extractGoals` sobre **etanol**, **aspirina** e **cafeína**
 devolvendo os candidatos esperados (a cafeína com as duas amidas e o imidazol aromático — 4 N, 2
-anéis, 1 aromático); o rótulo gerado batendo caractere a caractere com a §4.2, inclusive singular
+anéis, **2 aromáticos** — o imidazol também é, e é o caso de referência do `CLAUDE.md`); o rótulo gerado batendo caractere a caractere com a §4.2, inclusive singular
 e plural; `molarMass`, `exactMass`, `tpsa` e `logP` **ausentes** da lista; `id` determinístico
 (duas chamadas sobre a mesma molécula dão os mesmos ids); `evaluateQuest` devolvendo o mesmo
 resultado para uma `Quest` de catálogo e para um `Assessable` com os mesmos `goals`; e um teste
