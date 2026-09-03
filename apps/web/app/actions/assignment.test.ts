@@ -11,6 +11,7 @@ import { isDatabaseReachable } from '../../test/db-guard';
 import { openQuest, saveAttempt } from './attempt';
 import {
   addItem,
+  archiveAssignment,
   archiveTeacherQuest,
   createAssignment,
   createTeacherQuest,
@@ -20,6 +21,7 @@ import {
   readQuestDetail,
   readStudentAssignments,
   reportQuest,
+  unarchiveAssignment,
   unarchiveTeacherQuest,
   updateTeacherQuestText,
   withdrawFromCatalog,
@@ -414,40 +416,60 @@ maybeDescribe('R-1 — nada digitado vira Condition', () => {
 });
 
 maybeDescribe('R-2 — a própria resposta precisa cumprir a missão', () => {
-  it('missão que a própria resposta não cumpre é recusada, nomeando o objetivo', async () => {
+  /**
+   * Achado 4 da terceira revisão: até aqui, `extractGoals` oferecia o
+   * candidato «nenhum centro estereogênico fica sem configuração» sempre que
+   * existia um centro — mesmo quando o próprio butan-2-ol desenhado (sem
+   * cunha) **tinha** um centro sem configuração. O professor selecionava um
+   * candidato que a própria resposta não cumpria, e R-2 recusava a missão. A
+   * correção está em `packages/quests/src/extract.ts`: o candidato só nasce
+   * quando `unspecifiedStereocenters === 0` — ou seja, quando a molécula que
+   * o gerou já o cumpre. Este teste prova as duas pontas do fim a fim: sem
+   * cunha, o candidato nem aparece para o professor escolher; com cunha, ele
+   * aparece e a missão é criada (R-2 não tem mais nada para recusar).
+   */
+  it('butan-2-ol sem cunha: o candidato de configuração pendente nem é oferecido', async () => {
+    const result = await analyze('CCC(O)C');
+    if (!result.ok) throw new Error('o butan-2-ol deveria ser válido');
+
+    const semConfiguracao = extractGoals(result.molecule).find(
+      (candidate) => candidate.id === 'descriptor:unspecifiedStereocenters:0',
+    );
+    expect(semConfiguracao).toBeUndefined();
+  });
+
+  it('butan-2-ol com cunha (centro configurado): o candidato aparece, e a missão é criada', async () => {
     const teacher = await makeTeacher();
     await loginAs(teacher.id);
     const classroom = await makeClassroom(teacher.id);
     const assignment = await createAssignment({ classroomId: classroom.id, title: 'Lista' });
     if (assignment.status !== 'created') throw new Error('deveria criar a lista');
 
-    // Butan-2-ol: o carbono 2 é estereogênico, e sem cunha no desenho a
-    // configuração fica sem definir — exatamente o candidato cujo alvo (zero
-    // centros sem configuração) a própria molécula que o gerou não cumpre.
-    const result = await analyze('CCC(O)C');
-    if (!result.ok) throw new Error('o butan-2-ol deveria ser válido');
-    const semConfiguracao = extractGoals(result.molecule).find(
+    // Butan-2-ol com a ligação ao grupo hidroxila em cunha: o carbono 2 fica
+    // com configuração definida, e `unspecifiedStereocenters` sai 0.
+    const result = await analyze('CC[C@@H](O)C');
+    if (!result.ok) throw new Error('o butan-2-ol com cunha deveria ser válido');
+    expect(result.molecule.descriptors.unspecifiedStereocenters).toBe(0);
+
+    const configurado = extractGoals(result.molecule).find(
       (candidate) => candidate.id === 'descriptor:unspecifiedStereocenters:0',
     );
-    if (!semConfiguracao) {
-      throw new Error('o butan-2-ol sem cunha deveria oferecer o candidato de configuração pendente');
+    if (!configurado) {
+      throw new Error('o butan-2-ol com cunha deveria oferecer o candidato de configuração completa');
     }
 
     const outcome = await createTeacherQuest({
       assignmentId: assignment.id,
-      title: 'Missão impossível',
+      title: 'Missão possível',
       brief: 'Enunciado de teste.',
       hints: [],
-      molblock: 'CCC(O)C',
-      goalIds: [semConfiguracao.id],
+      molblock: 'CC[C@@H](O)C',
+      goalIds: [configurado.id],
     });
 
-    expect(outcome.status).toBe('rejected');
-    if (outcome.status === 'rejected') {
-      expect(outcome.reason).toContain('nenhum centro estereogênico fica sem configuração');
-    }
+    expect(outcome.status).toBe('created');
     const count = await db.teacherQuest.count({ where: { teacherId: teacher.id } });
-    expect(count).toBe(0);
+    expect(count).toBe(1);
   });
 });
 
@@ -802,6 +824,127 @@ maybeDescribe('Achado 6 do reviewer — unarchiveTeacherQuest existe', () => {
   });
 });
 
+maybeDescribe('Achado 2 da terceira revisão — unarchiveTeacherQuest confere o teto de R-12', () => {
+  it('com 200 missões ativas, desarquivar uma missão a mais é recusado', async () => {
+    const teacher = await makeTeacher();
+    await loginAs(teacher.id);
+
+    const classroom = await makeClassroom(teacher.id);
+    const assignment = await createAssignment({ classroomId: classroom.id, title: 'Lista' });
+    if (assignment.status !== 'created') throw new Error('deveria criar a lista');
+
+    const molecule = await ethanol();
+    const formula = extractGoals(molecule).find((candidate) => candidate.id === 'formula');
+    if (!formula) throw new Error('candidato de fórmula deveria existir');
+
+    // A missão que será arquivada e depois disputada pelo teto.
+    const quest = await createTeacherQuest({
+      assignmentId: assignment.id,
+      title: 'Missão a desarquivar contra o teto',
+      brief: 'Enunciado de teste.',
+      hints: [],
+      molblock: 'CCO',
+      goalIds: [formula.id],
+    });
+    if (quest.status !== 'created') throw new Error(`deveria criar a missão: ${JSON.stringify(quest)}`);
+    const teacherQuestId = quest.questSlug.slice(TEACHER_PREFIX.length);
+
+    const archived = await archiveTeacherQuest({ teacherQuestId });
+    expect(archived.status).toBe('ok');
+
+    // 200 missões ativas de enchimento, inseridas direto — sem passar pelo
+    // RDKit, que não é o que este teste está verificando.
+    await db.teacherQuest.createMany({
+      data: Array.from({ length: 200 }, (_unused, index) => ({
+        teacherId: teacher.id,
+        title: `Enchimento ${String(index)}`,
+        brief: 'Enunciado.',
+        hints: [],
+        goals: [],
+        answerMolblock: 'molblock de teste',
+        answerInchiKey: `INCHIKEY-ENCHIMENTO-${String(index)}`,
+      })),
+    });
+
+    const outcome = await unarchiveTeacherQuest({ teacherQuestId });
+
+    expect(outcome.status).toBe('rejected');
+
+    const row = await db.teacherQuest.findUniqueOrThrow({
+      where: { id: teacherQuestId },
+      select: { archivedAt: true },
+    });
+    expect(row.archivedAt).not.toBeNull();
+  });
+});
+
+maybeDescribe('Achado 3 da terceira revisão — unarchiveAssignment existe, simétrica a archiveAssignment', () => {
+  it('arquiva, lê a lista de listas (some), desarquiva, volta a aparecer', async () => {
+    const teacher = await makeTeacher();
+    await loginAs(teacher.id);
+    const classroom = await makeClassroom(teacher.id);
+
+    const created = await createAssignment({ classroomId: classroom.id, title: 'Lista a arquivar' });
+    if (created.status !== 'created') throw new Error('deveria criar a lista');
+
+    const archived = await archiveAssignment({ assignmentId: created.id });
+    expect(archived.status).toBe('ok');
+
+    let row = await db.assignment.findUniqueOrThrow({ where: { id: created.id }, select: { archivedAt: true } });
+    expect(row.archivedAt).not.toBeNull();
+
+    const unarchived = await unarchiveAssignment({ assignmentId: created.id });
+    expect(unarchived.status).toBe('ok');
+
+    row = await db.assignment.findUniqueOrThrow({ where: { id: created.id }, select: { archivedAt: true } });
+    expect(row.archivedAt).toBeNull();
+  });
+
+  it('com 50 listas ativas na turma, desarquivar uma lista a mais é recusado', async () => {
+    const teacher = await makeTeacher();
+    await loginAs(teacher.id);
+    const classroom = await makeClassroom(teacher.id);
+
+    const created = await createAssignment({ classroomId: classroom.id, title: 'Lista a desarquivar contra o teto' });
+    if (created.status !== 'created') throw new Error('deveria criar a lista');
+
+    const archived = await archiveAssignment({ assignmentId: created.id });
+    expect(archived.status).toBe('ok');
+
+    // 50 listas ativas de enchimento, inseridas direto.
+    await db.assignment.createMany({
+      data: Array.from({ length: 50 }, (_unused, index) => ({
+        classroomId: classroom.id,
+        createdById: teacher.id,
+        title: `Enchimento ${String(index)}`,
+      })),
+    });
+
+    const outcome = await unarchiveAssignment({ assignmentId: created.id });
+
+    expect(outcome.status).toBe('rejected');
+
+    const row = await db.assignment.findUniqueOrThrow({ where: { id: created.id }, select: { archivedAt: true } });
+    expect(row.archivedAt).not.toBeNull();
+  });
+
+  it('outro professor não desarquiva lista alheia', async () => {
+    const dono = await makeTeacher();
+    await loginAs(dono.id);
+    const classroom = await makeClassroom(dono.id);
+    const created = await createAssignment({ classroomId: classroom.id, title: 'Lista do dono' });
+    if (created.status !== 'created') throw new Error('deveria criar a lista');
+    await archiveAssignment({ assignmentId: created.id });
+
+    const outro = await makeTeacher();
+    await loginAs(outro.id);
+    const outcome = await unarchiveAssignment({ assignmentId: created.id });
+
+    expect(outcome.status).toBe('rejected');
+    if (outcome.status === 'rejected') expect(outcome.reason).toBe('Essa lista não é sua.');
+  });
+});
+
 maybeDescribe('Achado 7 do reviewer — institution nunca é string vazia', () => {
   it('professor sem instituição preenchida: byTeacher.institution sai null em readStudentAssignments e readQuestDetail', async () => {
     const teacher = await makeTeacher();
@@ -897,7 +1040,17 @@ maybeDescribe('Achado 2 do reviewer — a leitura da missão pelo aluno', () => 
       expect(outcome.quest.goals.length).toBeGreaterThan(0);
       expect(outcome.quest.goals[0]).not.toHaveProperty('condition');
     }
-    expect(JSON.stringify(outcome)).not.toContain('V2000');
+
+    // Achado 6 da terceira revisão: o teste checava `V2000` (o molblock) mas
+    // não `answerInchiKey` — R-3 exige que nenhum dos dois vaze, e só um
+    // estava coberto.
+    const row = await db.teacherQuest.findUniqueOrThrow({
+      where: { id: cenario.questSlug.slice(TEACHER_PREFIX.length) },
+      select: { answerMolblock: true, answerInchiKey: true },
+    });
+    const serialized = JSON.stringify(outcome);
+    expect(serialized).not.toContain('V2000');
+    expect(serialized).not.toContain(row.answerInchiKey);
   });
 
   it('conta anônima recebe a mesma recusa para um slug real e para um forjado', async () => {
@@ -1014,6 +1167,69 @@ maybeDescribe('D-27 corrigido — retirar do catálogo encerra o acesso pelo cat
     await loginAs(aluno.id);
     const outcome = await saveAttempt({ questSlug: cenario.questSlug, molblock: 'CCO', elapsedMs: 100 });
     expect(outcome.status).toBe('saved');
+  });
+});
+
+maybeDescribe('Achado 5 da terceira revisão — o autor alcança a própria missão', () => {
+  it('autor lê a própria missão não publicada em lista nenhuma, nem catalogada', async () => {
+    const teacher = await makeTeacher();
+    await loginAs(teacher.id);
+
+    const classroom = await makeClassroom(teacher.id);
+    const assignment = await createAssignment({ classroomId: classroom.id, title: 'Lista, ainda rascunho' });
+    if (assignment.status !== 'created') throw new Error('deveria criar a lista');
+
+    const molecule = await ethanol();
+    const formula = extractGoals(molecule).find((candidate) => candidate.id === 'formula');
+    if (!formula) throw new Error('candidato de fórmula deveria existir');
+
+    const quest = await createTeacherQuest({
+      assignmentId: assignment.id,
+      title: 'Missão ainda não publicada',
+      brief: 'Enunciado de teste.',
+      hints: [],
+      molblock: 'CCO',
+      goalIds: [formula.id],
+    });
+    if (quest.status !== 'created') throw new Error(`deveria criar a missão: ${JSON.stringify(quest)}`);
+
+    // A lista nunca foi publicada (`publishAssignment` não foi chamado) e a
+    // missão nunca foi catalogada — o único caminho de acesso possível aqui é
+    // a autoria.
+    const outcome = await readQuestDetail({ questSlug: quest.questSlug });
+
+    expect(outcome.status).toBe('ok');
+    if (outcome.status === 'ok') expect(outcome.quest.title).toBe('Missão ainda não publicada');
+  });
+
+  it('outro professor não alcança a missão não publicada de um colega', async () => {
+    const dono = await makeTeacher();
+    await loginAs(dono.id);
+
+    const classroom = await makeClassroom(dono.id);
+    const assignment = await createAssignment({ classroomId: classroom.id, title: 'Lista do dono' });
+    if (assignment.status !== 'created') throw new Error('deveria criar a lista');
+
+    const molecule = await ethanol();
+    const formula = extractGoals(molecule).find((candidate) => candidate.id === 'formula');
+    if (!formula) throw new Error('candidato de fórmula deveria existir');
+
+    const quest = await createTeacherQuest({
+      assignmentId: assignment.id,
+      title: 'Missão do dono, não publicada',
+      brief: 'Enunciado de teste.',
+      hints: [],
+      molblock: 'CCO',
+      goalIds: [formula.id],
+    });
+    if (quest.status !== 'created') throw new Error(`deveria criar a missão: ${JSON.stringify(quest)}`);
+
+    const outro = await makeTeacher();
+    await loginAs(outro.id);
+    const outcome = await readQuestDetail({ questSlug: quest.questSlug });
+
+    expect(outcome.status).toBe('rejected');
+    if (outcome.status === 'rejected') expect(outcome.reason).toBe('Essa missão não existe.');
   });
 });
 

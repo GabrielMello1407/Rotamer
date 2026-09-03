@@ -1,3 +1,52 @@
+/* §6.3(d) — confirmação de "Cancelar" ao criar missão, num popover. */
+.cancelConfirm {
+  display: grid;
+  gap: var(--sp-3);
+  width: 300px;
+  max-width: calc(100vw - 2 * var(--sp-4));
+  padding: var(--sp-4);
+}
+
+.cancelConfirmTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--step-1);
+  color: var(--ink-900);
+}
+
+.cancelConfirmBody {
+  margin: 0;
+  font-size: var(--step--1);
+  color: var(--ink-500);
+}
+
+.cancelConfirmActions {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.cancelConfirmButton,
+.cancelConfirmGhost {
+  min-height: var(--tap-min);
+  padding: 0 var(--sp-3);
+  border-radius: var(--r-sm);
+  font-family: var(--font-ui);
+  font-size: var(--step--1);
+  cursor: pointer;
+}
+
+.cancelConfirmButton {
+  border: 1px solid var(--danger);
+  background: var(--danger-wash);
+  color: var(--danger);
+}
+
+.cancelConfirmGhost {
+  border: 1px solid var(--line-firm);
+  background: transparent;
+  color: var(--ink-700);
+}
+
 .shell {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);

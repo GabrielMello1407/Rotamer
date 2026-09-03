@@ -4,7 +4,9 @@ import type { AnalysisResult, ChemistryError, Descriptors, NormalModes } from '@
 import type { EditorStore } from '@rotamer/editor2d';
 import { SourceBadge } from '@rotamer/ui';
 import type { ReactElement } from 'react';
+import { messages } from '../turmas/messages';
 import styles from './AnalysisDrawer.module.css';
+import { AuthoringPanel, type AuthoringPanelProps } from './AuthoringPanel';
 import { ExportMenu } from './ExportMenu';
 import { NamePanel } from './NamePanel';
 import { NormalModesPanel } from './NormalModesPanel';
@@ -15,7 +17,7 @@ import { ThemeToggle } from './ThemeToggle';
 import { TutorPanel } from './TutorPanel';
 import type { ChemistryConnection } from './use-chemistry-client';
 
-export type DrawerTab = 'analysis' | 'quests';
+export type DrawerTab = 'analysis' | 'quests' | 'authoring';
 
 export interface AnalysisDrawerProps {
   readonly analysis: AnalysisResult | null;
@@ -34,6 +36,12 @@ export interface AnalysisDrawerProps {
   readonly onClose: () => void;
   readonly questSlug: string;
   readonly onQuestSlug: (slug: string) => void;
+  /**
+   * Presente só quando o professor está desenhando a resposta de uma missão
+   * (§6.3): a aba "Missões" vira "Autoria", e ela substitui — nunca some ao
+   * lado — porque aqui não se resolve missão, se escreve uma.
+   */
+  readonly authoring?: AuthoringPanelProps | undefined;
 }
 
 const NUMBER = new Intl.NumberFormat('pt-BR', {
@@ -65,6 +73,7 @@ export function AnalysisDrawer({
   onClose,
   questSlug,
   onQuestSlug,
+  authoring,
 }: AnalysisDrawerProps): ReactElement {
   return (
     <aside className={styles.drawer} aria-label="Análise da molécula" data-testid="painel-analise">
@@ -84,12 +93,13 @@ export function AnalysisDrawer({
           type="button"
           role="tab"
           className={styles.tab}
-          aria-selected={tab === 'quests'}
+          aria-selected={tab === (authoring !== undefined ? 'authoring' : 'quests')}
+          data-testid="aba-autoria-ou-missoes"
           onClick={() => {
-            onTab('quests');
+            onTab(authoring !== undefined ? 'authoring' : 'quests');
           }}
         >
-          Missões
+          {authoring !== undefined ? messages.authoring.tab : 'Missões'}
         </button>
 
         <span className={styles.spacer} />
@@ -187,6 +197,8 @@ export function AnalysisDrawer({
               </span>
             </div>
           </>
+        ) : authoring !== undefined ? (
+          <AuthoringPanel {...authoring} />
         ) : (
           <>
             <QuestPanel analysis={analysis} slug={questSlug} onSlug={onQuestSlug} />

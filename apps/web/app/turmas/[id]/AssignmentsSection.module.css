@@ -1,0 +1,142 @@
+.panel {
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--raised);
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: var(--step-1);
+  margin: 0;
+}
+
+.newForm {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.newInput {
+  font-family: var(--font-ui);
+  font-size: var(--step-0);
+  color: var(--ink-900);
+  background: var(--sunk);
+  border: 1px solid var(--line-firm);
+  border-radius: var(--r-sm);
+  padding: var(--sp-2) var(--sp-3);
+  min-width: 220px;
+}
+
+.empty {
+  display: grid;
+  gap: var(--sp-1);
+  padding: var(--sp-4);
+  border: 1px dashed var(--line-firm);
+  border-radius: var(--r-md);
+}
+
+.emptyTitle {
+  margin: 0;
+  font-size: var(--step-0);
+  color: var(--ink-900);
+  font-weight: 600;
+}
+
+.emptyBody {
+  margin: 0;
+  font-size: var(--step--1);
+  color: var(--ink-500);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  gap: var(--sp-4);
+  min-height: var(--tap-min);
+  padding: var(--sp-2) 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.name {
+  font-size: var(--step-0);
+  color: var(--ink-900);
+  text-decoration: none;
+}
+
+.name:hover {
+  color: var(--brand-ink);
+  text-decoration: underline;
+}
+
+.chip {
+  font-size: var(--step--2);
+  letter-spacing: var(--track-wide);
+  text-transform: uppercase;
+  border-radius: var(--r-full);
+  padding: 2px var(--sp-2);
+  white-space: nowrap;
+}
+
+.chipDraft {
+  color: var(--info);
+  background: var(--info-wash);
+}
+
+.chipPublished {
+  color: var(--ok);
+  background: var(--ok-wash);
+}
+
+.count,
+.date {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--step--1);
+  color: var(--ink-500);
+  white-space: nowrap;
+}
+
+.error {
+  margin: 0;
+  font-size: var(--step-0);
+  color: var(--danger);
+}
+
+.footer {
+  margin: 0;
+  font-size: var(--step--1);
+  color: var(--ink-500);
+}
+
+@media (max-width: 720px) {
+  .row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .date {
+    display: none;
+  }
+}

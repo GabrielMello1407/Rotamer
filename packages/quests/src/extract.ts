@@ -157,8 +157,10 @@ export function extractGoals(molecule: Molecule): readonly CandidateGoal[] {
   }
 
   // Só faz sentido oferecer "sem centro sem configuração" quando existe
-  // algum centro estereogênico para configurar.
-  if (molecule.descriptors.stereocenters > 0) {
+  // algum centro estereogênico para configurar **e** a própria molécula já
+  // cumpre isso — do contrário R-2 recusaria a missão pela própria resposta
+  // do professor: um candidato que a resposta não cumpre nunca é candidato.
+  if (molecule.descriptors.stereocenters > 0 && molecule.descriptors.unspecifiedStereocenters === 0) {
     candidates.push({
       id: 'descriptor:unspecifiedStereocenters:0',
       label: 'nenhum centro estereogênico fica sem configuração',

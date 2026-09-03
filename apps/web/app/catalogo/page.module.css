@@ -1,0 +1,143 @@
+.page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: var(--sp-5) var(--sp-5) var(--sp-8);
+  display: grid;
+  gap: var(--sp-5);
+  align-content: start;
+  min-height: 100dvh;
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+}
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  text-decoration: none;
+  color: inherit;
+}
+
+.wordmark {
+  font-family: var(--font-display);
+  font-size: var(--step-1);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.who {
+  font-size: var(--step--1);
+  color: var(--ink-500);
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: var(--step-3);
+  letter-spacing: -0.014em;
+  margin: 0;
+}
+
+.wrap {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.searchField {
+  display: grid;
+  gap: var(--sp-1);
+  max-width: 480px;
+}
+
+.searchInput {
+  font-family: var(--font-ui);
+  font-size: var(--step-1);
+  color: var(--ink-900);
+  background: var(--sunk);
+  border: 1px solid var(--line-firm);
+  border-radius: var(--r-md);
+  padding: var(--sp-3) var(--sp-4);
+}
+
+.empty {
+  margin: 0;
+  font-size: var(--step-0);
+  color: var(--ink-500);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  background: var(--raised);
+}
+
+.row {
+  display: grid;
+  gap: var(--sp-1);
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--line);
+  min-height: var(--tap-min);
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.name {
+  font-size: var(--step-0);
+  color: var(--ink-900);
+  text-decoration: none;
+}
+
+.name:hover {
+  color: var(--brand-ink);
+  text-decoration: underline;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.track {
+  font-size: var(--step--2);
+  letter-spacing: var(--track-wide);
+  text-transform: uppercase;
+  color: var(--ink-400);
+}
+
+.author {
+  font-size: var(--step--1);
+  color: var(--ink-500);
+}
+
+.labels {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.label {
+  font-size: var(--step--2);
+  color: var(--ink-500);
+}
+
+.label:not(:last-child)::after {
+  content: '·';
+  margin-left: var(--sp-2);
+  color: var(--ink-300);
+}

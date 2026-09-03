@@ -7,6 +7,31 @@ import { AccountMenu } from './AccountMenu';
 import { SaveMolecule } from './SaveMolecule';
 import styles from './TopBar.module.css';
 
+/**
+ * Quando o professor está desenhando a resposta de uma missão (§6.3 de
+ * `docs/ROTEIROS.md`): a `TopBar` mantém os 46 px e troca o agrupamento da
+ * direita por `Criando missão · {nome da lista}` + `Salvar missão` +
+ * `Cancelar` — nada de exemplos, guardar na estante ou conta aqui, porque a
+ * molécula-resposta não é uma estrutura qualquer.
+ */
+export interface TopBarAuthoring {
+  readonly label: string;
+  readonly saveLabel: string;
+  readonly cancelLabel: string;
+  readonly canSave: boolean;
+  readonly saving: boolean;
+  readonly onSave: () => void;
+  readonly onCancel: () => void;
+  /**
+   * Onde o popover de confirmação de "Cancelar" se ancora — uma função, não
+   * um `RefObject`: embutir um `RefObject` num objeto de prop faz o linter do
+   * React Compiler tratar todo acesso a esse objeto durante a renderização
+   * como leitura de ref (`react-hooks/refs`). Uma função (aqui, sempre o
+   * `setState` de quem chama) não carrega esse problema.
+   */
+  readonly bindCancelButton: (node: HTMLButtonElement | null) => void;
+}
+
 export interface TopBarProps {
   readonly analysis: AnalysisResult | null;
   readonly waitingForEngine: boolean;
@@ -20,6 +45,7 @@ export interface TopBarProps {
   readonly onNew: () => void;
   /** Esvaziar a bancada ao sair da conta. */
   readonly onSignOut: () => void;
+  readonly authoring?: TopBarAuthoring | undefined;
 }
 
 /**
@@ -55,9 +81,25 @@ export function TopBar({
   onExample,
   onNew,
   onSignOut,
+  authoring,
 }: TopBarProps): ReactElement {
   const [examplesOpen, setExamplesOpen] = useState(false);
   const examplesRef = useRef<HTMLDivElement | null>(null);
+
+  /*
+   * O botão "Cancelar" precisa de um `ref` local — `Popover` ancora nele — e
+   * quem precisa saber onde ele está é o componente pai, que monta o
+   * popover de confirmação. Passar `authoring.bindCancelButton` direto para
+   * `ref=` faz o linter do React Compiler tratar qualquer acesso seguinte a
+   * `authoring.*` nesta renderização como leitura de ref (`react-hooks/refs`)
+   * — por isso o `ref` fica local, e o repasse acontece num efeito, que é
+   * onde a regra explicitamente permite ler `.current`.
+   */
+  const cancelButtonRef = useRef<HTMLButtonElement | null>(null);
+  useEffect(() => {
+    if (authoring === undefined) return;
+    authoring.bindCancelButton(cancelButtonRef.current);
+  }, [authoring]);
 
   // Clicar fora fecha o menu, como fecha qualquer menu.
   useEffect(() => {
@@ -104,75 +146,103 @@ export function TopBar({
 
       <span className={styles.spacer} />
 
-      {/* A chave é a molécula: guardar uma e desenhar outra não pode deixar o
-          aviso de "guardada" pendurado na barra. */}
-      <SaveMolecule
-        key={analysis?.ok === true ? analysis.molecule.inchiKey : 'sem-molecula'}
-        analysis={analysis}
-        onNew={onNew}
-      />
+      {authoring !== undefined ? (
+        <>
+          <span className={styles.authoringLabel} data-testid="rotulo-autoria">
+            {authoring.label}
+          </span>
+          <button
+            type="button"
+            ref={cancelButtonRef}
+            className={styles.action}
+            onClick={authoring.onCancel}
+            data-testid="cancelar-autoria"
+          >
+            {authoring.cancelLabel}
+          </button>
+          <button
+            type="button"
+            className={[styles.action, styles.authoringSave].join(' ')}
+            disabled={!authoring.canSave || authoring.saving}
+            onClick={authoring.onSave}
+            data-testid="salvar-missao-topbar"
+          >
+            {authoring.saveLabel}
+          </button>
+        </>
+      ) : (
+        <>
+          {/* A chave é a molécula: guardar uma e desenhar outra não pode deixar o
+              aviso de "guardada" pendurado na barra. */}
+          <SaveMolecule
+            key={analysis?.ok === true ? analysis.molecule.inchiKey : 'sem-molecula'}
+            analysis={analysis}
+            onNew={onNew}
+          />
 
-      <Status analysis={analysis} waitingForEngine={waitingForEngine} />
+          <Status analysis={analysis} waitingForEngine={waitingForEngine} />
 
-      <div className={styles.examples} ref={examplesRef}>
-        <button
-          type="button"
-          className={styles.action}
-          aria-expanded={examplesOpen}
-          aria-haspopup="menu"
-          data-testid="abrir-exemplos"
-          onClick={() => {
-            setExamplesOpen((current) => !current);
-          }}
-        >
-          Exemplos
-        </button>
+          <div className={styles.examples} ref={examplesRef}>
+            <button
+              type="button"
+              className={styles.action}
+              aria-expanded={examplesOpen}
+              aria-haspopup="menu"
+              data-testid="abrir-exemplos"
+              onClick={() => {
+                setExamplesOpen((current) => !current);
+              }}
+            >
+              Exemplos
+            </button>
 
-        {examplesOpen && (
-          <div className={styles.menu} role="menu" aria-label="Moléculas de exemplo">
-            {EXAMPLES.map((example) => (
-              <button
-                key={example.smiles}
-                type="button"
-                role="menuitem"
-                className={styles.menuItem}
-                data-testid={`exemplo-${example.smiles}`}
-                onClick={() => {
-                  onExample(example.smiles);
-                  setExamplesOpen(false);
-                }}
-              >
-                {example.name}
-              </button>
-            ))}
+            {examplesOpen && (
+              <div className={styles.menu} role="menu" aria-label="Moléculas de exemplo">
+                {EXAMPLES.map((example) => (
+                  <button
+                    key={example.smiles}
+                    type="button"
+                    role="menuitem"
+                    className={styles.menuItem}
+                    data-testid={`exemplo-${example.smiles}`}
+                    onClick={() => {
+                      onExample(example.smiles);
+                      setExamplesOpen(false);
+                    }}
+                  >
+                    {example.name}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
-        )}
-      </div>
 
-      <button
-        type="button"
-        className={styles.action}
-        data-testid="abrir-missoes"
-        onClick={() => {
-          onPanel('quests');
-        }}
-      >
-        Missões
-      </button>
+          <button
+            type="button"
+            className={styles.action}
+            data-testid="abrir-missoes"
+            onClick={() => {
+              onPanel('quests');
+            }}
+          >
+            Missões
+          </button>
 
-      <button
-        type="button"
-        className={[styles.action, styles.primary].join(' ')}
-        aria-pressed={panelOpen}
-        data-testid="abrir-analise"
-        onClick={() => {
-          onPanel('analysis');
-        }}
-      >
-        Análise
-      </button>
+          <button
+            type="button"
+            className={[styles.action, styles.primary].join(' ')}
+            aria-pressed={panelOpen}
+            data-testid="abrir-analise"
+            onClick={() => {
+              onPanel('analysis');
+            }}
+          >
+            Análise
+          </button>
 
-      {showAccount && <AccountMenu displayName={accountName} onSignOut={onSignOut} />}
+          {showAccount && <AccountMenu displayName={accountName} onSignOut={onSignOut} />}
+        </>
+      )}
     </header>
   );
 }

@@ -39,6 +39,9 @@ export function AccountMenu({ displayName, onSignOut }: AccountMenuProps): React
       <Link className={styles.link} href="/turmas" data-testid="turmas">
         Turmas
       </Link>
+      <Link className={styles.link} href="/catalogo" data-testid="catalogo">
+        Catálogo
+      </Link>
       <Link className={styles.link} href="/minhas" data-testid="minhas">
         Minhas moléculas
       </Link>

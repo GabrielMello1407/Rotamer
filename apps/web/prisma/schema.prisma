@@ -298,7 +298,9 @@ model TeacherQuest {
   /// contenha. Preenchido é "publicada no catálogo" — desde então qualquer conta
   /// alcança pela busca, com autoria visível (D-27). Publicar exige
   /// `Profile.institution` preenchida e a missão não arquivada; retirar do
-  /// catálogo (voltar a nulo) não afeta quem já abriu.
+  /// catálogo (voltar a nulo) encerra o acesso pelo catálogo — quem só chegava
+  /// por ali deixa de alcançar a missão. "Já abriu" (`QuestOpen`) nunca foi
+  /// concessão de acesso; é histórico, não chave (D-27, corrigido no mesmo dia).
   catalogedAt    DateTime?
 
   teacher Profile @relation(fields: [teacherId], references: [id], onDelete: Cascade)

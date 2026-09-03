@@ -4,9 +4,12 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import type { ReactElement } from 'react';
 import { CATALOG } from '@rotamer/quests';
+import { readAssignmentBoard, readAssignments } from '../../actions/assignment';
 import { readClassroomBoard } from '../../actions/classroom';
 import { currentProfile } from '../../../lib/auth';
 import { hasDatabase } from '../../../lib/db';
+import { AssignmentBoardSection } from './AssignmentBoardSection';
+import { AssignmentsSection } from './AssignmentsSection';
 import styles from './page.module.css';
 
 interface PageProps {
@@ -49,6 +52,16 @@ export default async function ClassroomPage({ params }: PageProps): Promise<Reac
   const titles = new Map(CATALOG.map((quest) => [quest.slug, quest.title]));
   const total = titles.size;
 
+  // "Listas da turma" (§6.1) e o quadro por lista publicada (§6.5).
+  const assignments = await readAssignments({ classroomId: id });
+  const published = assignments.filter((assignment) => assignment.publishedAt !== null);
+  const assignmentBoards = await Promise.all(
+    published.map(async (assignment) => ({
+      assignment,
+      board: await readAssignmentBoard({ assignmentId: assignment.id }),
+    })),
+  );
+
   return (
     <main className={styles.page}>
       <header className={styles.top}>
@@ -70,6 +83,14 @@ export default async function ClassroomPage({ params }: PageProps): Promise<Reac
             : `${String(board.students.length)} ${board.students.length === 1 ? 'aluno' : 'alunos'}, de ${String(total)} missões no catálogo.`}
         </p>
       </div>
+
+      <AssignmentsSection classroomId={id} assignments={assignments} />
+
+      {assignmentBoards.map(({ assignment, board: assignmentBoard }) =>
+        assignmentBoard === null ? null : (
+          <AssignmentBoardSection key={assignment.id} assignmentTitle={assignment.title} board={assignmentBoard} />
+        ),
+      )}
 
       {board.hardest.length > 0 && (
         <section className={styles.panel} data-testid="onde-travou">

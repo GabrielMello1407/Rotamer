@@ -23,8 +23,13 @@ async function moleculeOf(smiles: string): Promise<Molecule> {
   return result.molecule;
 }
 
-/** Um centro estereogênico sem cunha: existe, mas ninguém disse de que lado. */
-async function bromoclorofluormetanoSemConfiguracao(): Promise<Molecule> {
+/**
+ * Bromoclorofluormetano — um centro estereogênico, com a ligação ao flúor em
+ * cunha ou sem cunha, conforme `wedge`. Sem cunha, o RDKit conta o centro e
+ * não atribui configuração (`unspecifiedStereocenters: 1`); com cunha, o
+ * centro fica configurado (`unspecifiedStereocenters: 0`).
+ */
+async function bromoclorofluormetano(wedge: 'none' | 'up'): Promise<Molecule> {
   let graph = emptyGraph();
   const center = addAtom(graph, { element: 'C', x: 0, y: 0 });
   graph = center.graph;
@@ -42,8 +47,7 @@ async function bromoclorofluormetanoSemConfiguracao(): Promise<Molecule> {
   graph = addBond(graph, center.atomId, bromine.atomId).graph;
   if (first.bondId === null) throw new Error('a ligação com o flúor não foi criada');
 
-  // Sem cunha (`'none'`): o RDKit conta o centro e não atribui configuração.
-  return moleculeOf(toMolblock(setBondWedge(graph, first.bondId, 'none')));
+  return moleculeOf(toMolblock(setBondWedge(graph, first.bondId, wedge)));
 }
 
 describe('extractGoals — etanol', () => {
@@ -216,25 +220,39 @@ describe('extractGoals — cafeína', () => {
 });
 
 describe('centro estereogênico sem configuração', () => {
-  it('só aparece quando existe um centro, e lê o valor calculado', async () => {
+  it('sem centro estereogênico, não oferece o candidato', async () => {
     const semCentro = extractGoals(await moleculeOf('CCO'));
     expect(
       semCentro.some((candidato) => candidato.id === 'descriptor:unspecifiedStereocenters:0'),
     ).toBe(false);
+  });
 
-    const comCentro = extractGoals(await bromoclorofluormetanoSemConfiguracao());
-    const semDefinicao = comCentro.find(
+  it('com centro configurado (cunha), oferece o candidato e lê o valor calculado', async () => {
+    const configurado = extractGoals(await bromoclorofluormetano('up'));
+    const semDefinicao = configurado.find(
       (candidato) => candidato.id === 'descriptor:unspecifiedStereocenters:0',
     );
 
     expect(semDefinicao).toBeDefined();
     expect(semDefinicao?.label).toBe('nenhum centro estereogênico fica sem configuração');
-    expect(semDefinicao?.measured).toBe('1');
+    expect(semDefinicao?.measured).toBe('0');
     expect(semDefinicao?.condition).toEqual({
       kind: 'descriptor',
       descriptor: 'unspecifiedStereocenters',
       max: 0,
     });
+  });
+
+  it('com centro sem cunha, NÃO oferece o candidato — R-2 recusaria a missão pela própria resposta', async () => {
+    // Achado 4 da terceira revisão: o candidato "nenhum centro fica sem
+    // configuração" era oferecido mesmo quando a resposta do professor tinha
+    // um centro sem configuração, e R-2 recusava a missão pela própria
+    // resposta. `extractGoals` nunca deve oferecer um candidato que a
+    // molécula que o originou não cumpre.
+    const semConfiguracao = extractGoals(await bromoclorofluormetano('none'));
+    expect(
+      semConfiguracao.some((candidato) => candidato.id === 'descriptor:unspecifiedStereocenters:0'),
+    ).toBe(false);
   });
 });
 

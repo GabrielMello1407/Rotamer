@@ -8,7 +8,13 @@ import { currentProfile } from '../../lib/auth';
 import { analyzeOnServer } from '../../lib/chemistry-server';
 import { db, hasDatabase } from '../../lib/db';
 import { studentQuestAccess } from '../../lib/quest-resolve';
-import { ownedAssignment, ownedClassroom, ownedTeacherQuest, requireTeacher } from '../../lib/roles';
+import {
+  ownedAssignment,
+  ownedAssignmentAnyState,
+  ownedClassroom,
+  ownedTeacherQuest,
+  requireTeacher,
+} from '../../lib/roles';
 
 /**
  * Listas da turma (D-25) e catálogo compartilhado (D-27) — o professor monta,
@@ -140,6 +146,7 @@ const moveItemSchema = z.object({
 const removeItemSchema = z.object({ assignmentId: cuid, itemId: cuid });
 const publishAssignmentSchema = z.object({ assignmentId: cuid });
 const archiveAssignmentSchema = z.object({ assignmentId: cuid });
+const unarchiveAssignmentSchema = z.object({ assignmentId: cuid });
 const readAssignmentsSchema = z.object({ classroomId: cuid });
 const readAssignmentBoardSchema = z.object({ assignmentId: cuid });
 
@@ -548,6 +555,12 @@ export async function archiveTeacherQuest(input: { teacherQuestId: string }): Pr
  * só tira a missão do estado arquivado; não muda `catalogedAt` nem os
  * objetivos, e uma lista publicada que já usa esta missão nunca deixou de
  * funcionar (§3.5 de `docs/ROTEIROS.md` — arquivar não tira de mais nada).
+ *
+ * **Achado 2 da terceira revisão.** Desarquivar bota a missão de volta em
+ * "ativa" — o mesmo teto de `MAX_ACTIVE_TEACHER_QUESTS` que `createTeacherQuest`
+ * confere (R-12) precisa ser conferido aqui também, e do mesmo jeito: dentro
+ * da transação que faz a escrita, contando `archivedAt: null` no momento
+ * exato do `update`.
  */
 export async function unarchiveTeacherQuest(input: { teacherQuestId: string }): Promise<OkOutcome> {
   if (!hasDatabase()) return { status: 'rejected', reason: 'Indisponível neste ambiente.' };
@@ -564,8 +577,19 @@ export async function unarchiveTeacherQuest(input: { teacherQuestId: string }): 
   const quest = await ownedTeacherQuest(parsed.data.teacherQuestId, teacher.id);
   if (quest === null) return { status: 'rejected', reason: 'Essa missão não é sua.' };
 
-  await db.teacherQuest.update({ where: { id: quest.id }, data: { archivedAt: null } });
-  return { status: 'ok' };
+  return db.$transaction(async (tx) => {
+    // R-12: mesmo teto de `createTeacherQuest`, conferido dentro da transação.
+    const activeQuests = await tx.teacherQuest.count({ where: { teacherId: teacher.id, archivedAt: null } });
+    if (activeQuests >= MAX_ACTIVE_TEACHER_QUESTS) {
+      return {
+        status: 'rejected',
+        reason: `Você chegou ao limite de ${String(MAX_ACTIVE_TEACHER_QUESTS)} missões próprias. Arquive alguma antes de desarquivar esta.`,
+      } as const;
+    }
+
+    await tx.teacherQuest.update({ where: { id: quest.id }, data: { archivedAt: null } });
+    return { status: 'ok' } as const;
+  });
 }
 
 // ================================================================== addItem
@@ -772,9 +796,63 @@ export async function archiveAssignment(input: { assignmentId: string }): Promis
   return { status: 'ok' };
 }
 
+// ================================================================== unarchiveAssignment
+
+/**
+ * Desarquiva uma lista — simétrica a `archiveAssignment`. Achado 3 da
+ * terceira revisão: `archiveAssignment` não tinha volta.
+ *
+ * Do mesmo jeito que `unarchiveTeacherQuest`: `ownedAssignmentAnyState`
+ * (`roles.ts`) não filtra por `archivedAt`, porque precisa continuar achando
+ * a lista mesmo arquivada — é justamente o caso que esta ação resolve. E o
+ * teto de R-12 (50 listas por turma) é conferido dentro da transação, porque
+ * desarquivar bota a lista de volta em "ativa" na turma.
+ */
+export async function unarchiveAssignment(input: { assignmentId: string }): Promise<OkOutcome> {
+  if (!hasDatabase()) return { status: 'rejected', reason: 'Indisponível neste ambiente.' };
+
+  const parsed = unarchiveAssignmentSchema.safeParse(input);
+  if (!parsed.success) return { status: 'rejected', reason: 'Pedido mal formado.' };
+
+  const teacher = await requireTeacher();
+  if (teacher === null) return { status: 'rejected', reason: 'Só conta de professor desarquiva lista.' };
+
+  const assignment = await ownedAssignmentAnyState(parsed.data.assignmentId, teacher.id);
+  if (assignment === null) return { status: 'rejected', reason: 'Essa lista não é sua.' };
+
+  const full = await db.assignment.findUnique({
+    where: { id: assignment.id },
+    select: { classroomId: true },
+  });
+  if (full === null) return { status: 'rejected', reason: 'Essa lista não é sua.' };
+
+  return db.$transaction(async (tx) => {
+    // R-12: mesmo teto de `createAssignment`, conferido dentro da transação.
+    const count = await tx.assignment.count({ where: { classroomId: full.classroomId, archivedAt: null } });
+    if (count >= MAX_ASSIGNMENTS_PER_CLASSROOM) {
+      return {
+        status: 'rejected',
+        reason: `Você chegou ao limite de ${String(MAX_ASSIGNMENTS_PER_CLASSROOM)} listas nesta turma. Arquive alguma antes de desarquivar esta.`,
+      } as const;
+    }
+
+    await tx.assignment.update({ where: { id: assignment.id }, data: { archivedAt: null } });
+    return { status: 'ok' } as const;
+  });
+}
+
 // ================================================================== readAssignments
 
 export interface AssignmentItemView {
+  /**
+   * O `id` da linha de `AssignmentItem` — acrescentado pelo `frontend` nesta
+   * onda. `moveItem` e `removeItem` pedem `itemId` (§5.2), e sem ele nesta
+   * leitura a tela não tinha como montar "subir/descer/remover" (§6.2): a
+   * `position` sozinha não endereça a linha porque ela muda a cada
+   * reordenação. Não é dado sensível — é o identificador interno da posição,
+   * nunca a resposta (R-3 continua sobre `answerMolblock`/`answerInchiKey`).
+   */
+  readonly id: string;
   readonly position: number;
   readonly questSlug: string;
   readonly title: string;
@@ -808,7 +886,7 @@ export async function readAssignments(input: { classroomId: string }): Promise<r
       id: true,
       title: true,
       publishedAt: true,
-      items: { orderBy: { position: 'asc' }, select: { position: true, questSlug: true } },
+      items: { orderBy: { position: 'asc' }, select: { id: true, position: true, questSlug: true } },
     },
   });
 
@@ -820,6 +898,7 @@ export async function readAssignments(input: { classroomId: string }): Promise<r
     title: assignment.title,
     publishedAt: assignment.publishedAt?.toISOString() ?? null,
     items: assignment.items.map((item) => ({
+      id: item.id,
       position: item.position,
       questSlug: item.questSlug,
       ...itemView(item.questSlug, titles),
@@ -857,13 +936,14 @@ export async function readAssignmentBoard(input: { assignmentId: string }): Prom
     where: { id: assignment.id },
     select: {
       classroomId: true,
-      items: { orderBy: { position: 'asc' }, select: { position: true, questSlug: true } },
+      items: { orderBy: { position: 'asc' }, select: { id: true, position: true, questSlug: true } },
     },
   });
   if (full === null) return null;
 
   const titles = await teacherTitlesFor(full.items.map((item) => item.questSlug));
   const items: AssignmentItemView[] = full.items.map((item) => ({
+    id: item.id,
     position: item.position,
     questSlug: item.questSlug,
     ...itemView(item.questSlug, titles),

@@ -1,10 +1,13 @@
 'use client';
 
 import { fromMolblock, toMolblock } from '@rotamer/core';
-import { Editor2D, Toolbar, createEditorStore, type EditorNotice } from '@rotamer/editor2d';
+import { Editor2D, Popover, Toolbar, createEditorStore, type EditorNotice } from '@rotamer/editor2d';
 import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
 import { useStore } from 'zustand';
+import { createTeacherQuest } from '../actions/assignment';
+import { messages } from '../turmas/messages';
 import { AnalysisDrawer, type DrawerTab } from './AnalysisDrawer';
 import styles from './EditorWorkspace.module.css';
 import { MetricsBar } from './MetricsBar';
@@ -127,10 +130,23 @@ const Viewer3D = dynamic(
   { ssr: false },
 );
 
+/**
+ * A bancada em modo "criar missão desenhando" (§6.3): o professor desenha
+ * exatamente como o aluno desenha, e o que muda é a `TopBar` e a aba do
+ * painel. `assignmentTitle` é só para o rótulo — o resto da lista não é
+ * tocado daqui.
+ */
+export interface EditorAuthoringContext {
+  readonly assignmentId: string;
+  readonly assignmentTitle: string;
+  readonly classroomId: string;
+}
+
 export interface EditorWorkspaceProps {
   /** Quem está identificado, quando há banco e sessão. */
   readonly accountName?: string | null;
   readonly showAccount?: boolean;
+  readonly authoring?: EditorAuthoringContext | undefined;
 }
 
 /**
@@ -147,16 +163,30 @@ export interface EditorWorkspaceProps {
 export function EditorWorkspace({
   accountName = null,
   showAccount = false,
+  authoring,
 }: EditorWorkspaceProps): ReactElement {
   const store = useMemo(() => createEditorStore(), []);
   const graph = useStore(store, (state) => state.graph);
   const hover = useStore(store, (state) => state.hover);
   const focus = useStore(store, (state) => state.focus);
+  const router = useRouter();
 
   const [questSlug, setQuestSlug] = useState('');
-  const [panelOpen, setPanelOpen] = useState(false);
+  // Em modo autoria o painel já abre na aba certa — não se resolve missão
+  // aqui, se escreve uma (§6.3).
+  const [panelOpen, setPanelOpen] = useState(authoring !== undefined);
   const [sceneWide, setSceneWide] = useState(false);
-  const [tab, setTab] = useState<DrawerTab>('analysis');
+  const [tab, setTab] = useState<DrawerTab>(authoring !== undefined ? 'authoring' : 'analysis');
+
+  // ---------------------------------------------------------- autoria (§6.3)
+  const [authoringTitle, setAuthoringTitle] = useState('');
+  const [authoringBrief, setAuthoringBrief] = useState('');
+  const [authoringHints, setAuthoringHints] = useState<readonly string[]>([]);
+  const [selectedGoalIds, setSelectedGoalIds] = useState<ReadonlySet<string>>(new Set());
+  const [authoringError, setAuthoringError] = useState<string | null>(null);
+  const [authoringSaving, setAuthoringSaving] = useState(false);
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
+  const [cancelAnchor, setCancelAnchor] = useState<HTMLButtonElement | null>(null);
 
   const connection = useChemistryClient();
   // O desenho precisa saber quantos hidrogênios o RDKit contou em cada átomo.
@@ -181,6 +211,73 @@ export function EditorWorkspace({
     applyHydrogens,
     applyStereo,
   );
+
+  /**
+   * Salvar a missão (§6.3, §4.5).
+   *
+   * O que sai daqui é `goalIds`, nunca `Condition` — o servidor regenera
+   * `extractGoals` sobre o molblock reanalisado e só aceita `id` que está
+   * nessa lista (R-1). A validação local aqui é só para poupar uma ida ao
+   * servidor com erro óbvio; o veredito de química (R-2, teto de átomos, link
+   * no enunciado) é sempre o que a ação devolve.
+   */
+  const saveAuthoredQuest = useCallback(() => {
+    if (authoring === undefined) return;
+
+    if (analysis === null) {
+      setAuthoringError(messages.authoring.nothingDrawn);
+      return;
+    }
+    if (!analysis.ok) {
+      setAuthoringError(analysis.error.message);
+      return;
+    }
+    if (selectedGoalIds.size === 0) {
+      setAuthoringError(messages.authoring.noGoalMarked);
+      return;
+    }
+    if (authoringTitle.trim() === '' || authoringBrief.trim() === '') {
+      setAuthoringError(messages.authoring.emptyTitleOrBrief);
+      return;
+    }
+
+    setAuthoringSaving(true);
+    setAuthoringError(null);
+
+    const run = async (): Promise<void> => {
+      const outcome = await createTeacherQuest({
+        assignmentId: authoring.assignmentId,
+        title: authoringTitle,
+        brief: authoringBrief,
+        hints: authoringHints,
+        molblock: toMolblock(graph),
+        goalIds: [...selectedGoalIds],
+      });
+
+      setAuthoringSaving(false);
+
+      if (outcome.status === 'rejected') {
+        setAuthoringError(outcome.reason);
+        return;
+      }
+
+      const notice = messages.assignment.entered(authoringTitle, outcome.position);
+      router.push(
+        `/turmas/${authoring.classroomId}/listas/${authoring.assignmentId}?entered=${encodeURIComponent(notice)}`,
+      );
+    };
+
+    void run();
+  }, [authoring, analysis, selectedGoalIds, authoringTitle, authoringBrief, authoringHints, graph, router]);
+
+  const toggleGoal = useCallback((id: string) => {
+    setSelectedGoalIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
 
   /**
    * O modo normal em exibição.
@@ -223,6 +320,30 @@ export function EditorWorkspace({
 
   const fromLink = useInitialSmiles(store, connection);
   useDraft(store, !fromLink);
+
+  /*
+   * O catálogo buscável (D-26/D-27) manda para `/?missao=<slug>`: quem
+   * escolhe uma missão lá quer chegar no editor já com o painel de missões
+   * aberto naquele slug — sem isso, "escolher uma abre o editor com aquele
+   * slug" (item 5 desta entrega) não teria como acontecer.
+   */
+  const openedFromQuestLink = useRef(false);
+  useEffect(() => {
+    if (openedFromQuestLink.current || authoring !== undefined) return;
+
+    const wanted = new URLSearchParams(window.location.search).get('missao');
+    if (wanted === null || wanted.trim() === '') return;
+
+    openedFromQuestLink.current = true;
+    // Sincronizando com um sistema externo de verdade — a URL, lida depois da
+    // hidratação — não com estado derivado de prop. `useInitialSmiles` faz o
+    // mesmo pelo lado do grafo; aqui é local porque `questSlug` mora neste
+    // componente, não na store do editor.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setQuestSlug(wanted);
+    setTab('quests');
+    setPanelOpen(true);
+  }, [authoring]);
 
   // A primeira estrutura válida da visita: é o número que diz se quem abriu a
   // página chegou a desenhar alguma coisa.
@@ -444,6 +565,22 @@ export function EditorWorkspace({
     };
   }, [wanted, client, store]);
 
+  const authoringTopBar =
+    authoring === undefined
+      ? undefined
+      : {
+          label: messages.authoring.topBarLabel(authoring.assignmentTitle),
+          saveLabel: messages.authoring.save,
+          cancelLabel: messages.authoring.cancel,
+          canSave: analysis?.ok === true,
+          saving: authoringSaving,
+          onSave: saveAuthoredQuest,
+          onCancel: () => {
+            setCancelConfirmOpen(true);
+          },
+          bindCancelButton: setCancelAnchor,
+        };
+
   return (
     <div className={styles.shell}>
       <TopBar
@@ -463,7 +600,45 @@ export function EditorWorkspace({
           track('exemplo-carregado');
           setWanted(smiles);
         }}
+        authoring={authoringTopBar}
       />
+
+      {cancelConfirmOpen && (
+        <Popover
+          anchor={cancelAnchor}
+          label={messages.cancelAuthoringPopover.title}
+          onClose={() => {
+            setCancelConfirmOpen(false);
+          }}
+          testId="confirmar-cancelar-autoria"
+        >
+          <div className={styles.cancelConfirm}>
+            <p className={styles.cancelConfirmTitle}>{messages.cancelAuthoringPopover.title}</p>
+            <p className={styles.cancelConfirmBody}>{messages.cancelAuthoringPopover.body}</p>
+            <div className={styles.cancelConfirmActions}>
+              <button
+                type="button"
+                className={styles.cancelConfirmButton}
+                data-testid="confirmar-sair-autoria"
+                onClick={() => {
+                  if (authoring !== undefined) router.push(`/turmas/${authoring.classroomId}/listas/${authoring.assignmentId}`);
+                }}
+              >
+                {messages.cancelAuthoringPopover.confirm}
+              </button>
+              <button
+                type="button"
+                className={styles.cancelConfirmGhost}
+                onClick={() => {
+                  setCancelConfirmOpen(false);
+                }}
+              >
+                {messages.cancelAuthoringPopover.cancel}
+              </button>
+            </div>
+          </div>
+        </Popover>
+      )}
 
       <div className={styles.stage}>
         <div className={styles.canvasArea} ref={areaRef}>
@@ -535,6 +710,30 @@ export function EditorWorkspace({
             }}
             questSlug={questSlug}
             onQuestSlug={setQuestSlug}
+            authoring={
+              authoring === undefined
+                ? undefined
+                : {
+                    analysis,
+                    selectedGoalIds,
+                    onToggleGoal: toggleGoal,
+                    title: authoringTitle,
+                    onTitle: setAuthoringTitle,
+                    brief: authoringBrief,
+                    onBrief: setAuthoringBrief,
+                    hints: authoringHints,
+                    onHint: (index, value) => {
+                      setAuthoringHints((current) => current.map((hint, i) => (i === index ? value : hint)));
+                    },
+                    onAddHint: () => {
+                      setAuthoringHints((current) => (current.length >= 3 ? current : [...current, '']));
+                    },
+                    onRemoveHint: (index) => {
+                      setAuthoringHints((current) => current.filter((_, i) => i !== index));
+                    },
+                    error: authoringError,
+                  }
+            }
           />
         )}
       </div>

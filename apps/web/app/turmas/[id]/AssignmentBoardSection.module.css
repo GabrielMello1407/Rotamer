@@ -1,0 +1,158 @@
+.panel {
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--raised);
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: var(--step-1);
+  margin: 0;
+}
+
+.stuckBlock {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.stuckHeading {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  letter-spacing: var(--track-wide);
+  text-transform: uppercase;
+  color: var(--ink-400);
+}
+
+.stuckList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.stuckRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-1) 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.stuckRow:last-child {
+  border-bottom: none;
+}
+
+.stuckTitle {
+  font-size: var(--step-0);
+  color: var(--ink-900);
+}
+
+.stuckCount {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--step--1);
+  color: var(--warn);
+  white-space: nowrap;
+}
+
+.note {
+  margin: 0;
+  font-size: var(--step--1);
+  color: var(--ink-500);
+  line-height: 1.5;
+}
+
+.empty {
+  margin: 0;
+  font-size: var(--step--1);
+  color: var(--ink-500);
+}
+
+.legend {
+  margin: 0;
+  font-size: var(--step--1);
+  color: var(--ink-500);
+}
+
+/* A matriz rola na horizontal com a primeira coluna fixa — §6.8: sem isso, ao
+   rolar até o item 5 não se sabe mais de quem é a linha. */
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  border-collapse: collapse;
+  font-size: var(--step--1);
+  min-width: 100%;
+}
+
+.head {
+  text-align: center;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-400);
+  font-weight: 500;
+  padding: var(--sp-1) var(--sp-2);
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.sticky {
+  position: sticky;
+  left: 0;
+  background: var(--raised);
+  text-align: left;
+}
+
+.line {
+  border-bottom: 1px solid var(--line);
+}
+
+.line:last-child {
+  border-bottom: none;
+}
+
+.cell {
+  padding: var(--sp-1) var(--sp-2);
+  color: var(--ink-700);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.number {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--r-full);
+  font-size: var(--step--1);
+  line-height: 1;
+}
+
+.met {
+  color: var(--ok);
+  background: var(--ok-wash);
+}
+
+.stuck {
+  color: var(--warn);
+  border: 1px solid var(--warn);
+  background: transparent;
+}
+
+.untouched {
+  color: var(--ink-400);
+  background: var(--sunk);
+}

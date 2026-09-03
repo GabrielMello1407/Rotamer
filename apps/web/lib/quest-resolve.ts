@@ -60,13 +60,18 @@ export async function resolveQuest(slug: string): Promise<Assessable | null> {
  *
  * O catálogo de missões do **produto** continua livre (§9.3): qualquer conta
  * logada ou não abre missão de catálogo. Uma missão `professor:` é visível
- * por **dois** caminhos, qualquer um basta:
+ * por **três** caminhos, qualquer um basta:
  *
  * 1. **Matrícula.** Matrícula viva → turma não arquivada → lista publicada e
  *    não arquivada → item com este slug.
  * 2. **Catálogo (D-27).** `TeacherQuest.catalogedAt` não nulo e `archivedAt`
  *    nulo — o professor decidiu compartilhar esta missão com qualquer conta,
  *    de qualquer turma.
+ * 3. **Autoria.** `teacherId === profileId` — quem escreveu a missão sempre
+ *    alcança o que escreveu, publicada ou não, arquivada ou não. Achado 5 da
+ *    terceira revisão: sem este caminho, o autor não conseguia ver nem testar
+ *    a própria missão pelos caminhos de aluno (`readQuestDetail`, `openQuest`,
+ *    `saveAttempt`, `askTutor`) antes de publicá-la em alguma lista.
  *
  * **"Já abriu" não é caminho de acesso.** A primeira implementação tratava
  * `QuestOpen` como concessão vitalícia — bastava abrir uma vez para nunca
@@ -90,7 +95,7 @@ export async function studentQuestAccess(profileId: string, slug: string): Promi
   // Formato errado nunca toca o banco — mesma defesa de `resolveQuest`.
   if (!TEACHER_QUEST_ID.test(id)) return false;
 
-  const [viaEnrollment, viaCatalog] = await Promise.all([
+  const [viaEnrollment, viaCatalog, viaAuthorship] = await Promise.all([
     db.assignmentItem.findFirst({
       where: {
         questSlug: slug,
@@ -109,7 +114,11 @@ export async function studentQuestAccess(profileId: string, slug: string): Promi
       where: { id, catalogedAt: { not: null }, archivedAt: null },
       select: { id: true },
     }),
+    db.teacherQuest.findFirst({
+      where: { id, teacherId: profileId },
+      select: { id: true },
+    }),
   ]);
 
-  return viaEnrollment !== null || viaCatalog !== null;
+  return viaEnrollment !== null || viaCatalog !== null || viaAuthorship !== null;
 }

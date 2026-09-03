@@ -50,6 +50,21 @@ export async function ownedAssignment(id: string, profileId: string): Promise<Ow
   return row;
 }
 
+/**
+ * A lista, só se `profileId` for quem a criou — em qualquer estado, inclusive
+ * arquivada. Existe só para `unarchiveAssignment`, do mesmo jeito que
+ * `ownedTeacherQuest` já não filtra por `archivedAt` para `unarchiveTeacherQuest`
+ * poder achar a missão que ela existe para desarquivar.
+ */
+export async function ownedAssignmentAnyState(id: string, profileId: string): Promise<Owner | null> {
+  const row = await db.assignment.findFirst({
+    where: { id, createdById: profileId },
+    select: { id: true },
+  });
+
+  return row;
+}
+
 /** A missão do professor, só se `profileId` for quem a escreveu. */
 export async function ownedTeacherQuest(id: string, profileId: string): Promise<Owner | null> {
   const row = await db.teacherQuest.findFirst({

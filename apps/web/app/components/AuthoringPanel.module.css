@@ -1,0 +1,201 @@
+.panel {
+  display: grid;
+  gap: var(--sp-5);
+}
+
+.heading {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-400);
+  font-weight: 500;
+}
+
+.quiet {
+  margin: 0;
+  font-size: var(--step--1);
+  color: var(--ink-500);
+  line-height: 1.5;
+}
+
+.structure {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.structureLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  font-size: var(--step-0);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-900);
+}
+
+.dot {
+  color: var(--ink-400);
+}
+
+.badge {
+  margin-left: auto;
+}
+
+.goalsBlock {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.goalsHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.count {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--step--1);
+  color: var(--ink-500);
+}
+
+.block {
+  display: grid;
+  gap: var(--sp-1);
+}
+
+.goalList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.goalRow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: var(--tap-min);
+  padding: 0 var(--sp-2);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+}
+
+.goalRow:hover {
+  background: var(--sunk);
+}
+
+.goalDisabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.goalLabel {
+  flex: 1;
+  font-size: var(--step-0);
+  color: var(--ink-900);
+}
+
+.goalMeasured {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--step--1);
+  color: var(--ink-500);
+}
+
+.inchiWarning {
+  margin: var(--sp-1) 0 var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-sm);
+  background: var(--warn-wash);
+  color: var(--warn);
+  font-size: var(--step--1);
+  line-height: 1.5;
+}
+
+.writtenBlock {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.field {
+  display: grid;
+  gap: var(--sp-1);
+}
+
+.input,
+.textarea {
+  width: 100%;
+  font-family: var(--font-ui);
+  font-size: var(--step-0);
+  color: var(--ink-900);
+  background: var(--sunk);
+  border: 1px solid var(--line-firm);
+  border-radius: var(--r-sm);
+  padding: var(--sp-2) var(--sp-3);
+}
+
+.textarea {
+  resize: vertical;
+}
+
+.help {
+  margin: 0;
+  font-size: var(--step--2);
+  color: var(--ink-500);
+}
+
+.hintRow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.hintRow .input {
+  flex: 1;
+}
+
+.removeHint {
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
+  border: none;
+  background: transparent;
+  color: var(--ink-400);
+  font-size: var(--step-1);
+  cursor: pointer;
+}
+
+.removeHint:hover {
+  color: var(--danger);
+}
+
+.addHint {
+  justify-self: start;
+  min-height: var(--tap-min);
+  padding: 0 var(--sp-3);
+  border: 1px dashed var(--line-firm);
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--brand-ink);
+  font-size: var(--step--1);
+  cursor: pointer;
+}
+
+.footerCount {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--step--1);
+  color: var(--ink-500);
+}
+
+.error {
+  margin: 0;
+  font-size: var(--step-0);
+  color: var(--danger);
+}

@@ -100,6 +100,25 @@
   background: var(--brand-wash);
 }
 
+/* §6.3 — "Criando missão · {lista}" no lugar dos botões de sempre. */
+.authoringLabel {
+  font-family: var(--font-ui);
+  font-size: var(--step--1);
+  color: var(--ink-500);
+  white-space: nowrap;
+}
+
+.authoringSave {
+  border-color: var(--brand);
+  color: var(--brand-ink);
+  background: var(--brand-wash);
+}
+
+.authoringSave:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .examples {
   position: relative;
 }
