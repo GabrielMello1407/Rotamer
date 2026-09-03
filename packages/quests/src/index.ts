@@ -7,7 +7,10 @@
 export { CATALOG, findQuest, questsOfTrack } from './catalog';
 export { countElements, meets } from './conditions';
 export { evaluateAnalysis, evaluateQuest } from './evaluate';
+export { extractGoals } from './extract';
+export type { CandidateGoal, CandidateKind } from './extract';
 export type {
+  Assessable,
   Condition,
   Goal,
   GoalResult,

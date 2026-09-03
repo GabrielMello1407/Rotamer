@@ -34,16 +34,19 @@ model Profile {
   role         String   @default("aluno")
   createdAt    DateTime @default(now())
 
-  sessions     Session[]
-  molecules    Molecule[]
-  attempts     Attempt[]
-  tutorUsage   TutorUsage[]
-  namedBy      MoleculeName[]
-  resetCodes   ResetCode[]  @relation("codigoDaConta")
-  codesIssued  ResetCode[]  @relation("codigoEmitido")
-  teaching     Classroom[]
-  enrollments  Enrollment[]
-  questsOpened QuestOpen[]
+  sessions           Session[]
+  molecules          Molecule[]
+  attempts           Attempt[]
+  tutorUsage         TutorUsage[]
+  namedBy            MoleculeName[]
+  resetCodes         ResetCode[]    @relation("codigoDaConta")
+  codesIssued        ResetCode[]    @relation("codigoEmitido")
+  teaching           Classroom[]
+  enrollments        Enrollment[]
+  questsOpened       QuestOpen[]
+  teacherQuests      TeacherQuest[]
+  assignmentsCreated Assignment[]
+  questReports       QuestReport[]
 }
 
 /// Missão que alguém abriu.
@@ -71,17 +74,18 @@ model QuestOpen {
 /// código que o professor entrega em sala, pelo mesmo motivo de não haver
 /// e-mail na recuperação de senha (D-19).
 model Classroom {
-  id        String    @id @default(cuid())
-  name      String
-  teacherId String
+  id         String    @id @default(cuid())
+  name       String
+  teacherId  String
   /// Curto e sem caractere ambíguo: ele é ditado em voz alta para trinta pessoas.
-  code      String    @unique
-  createdAt DateTime  @default(now())
+  code       String    @unique
+  createdAt  DateTime  @default(now())
   /// Turma arquivada some da lista sem apagar o histórico de ninguém.
   archivedAt DateTime?
 
   teacher     Profile      @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   enrollments Enrollment[]
+  assignments Assignment[]
 
   @@index([teacherId])
 }
@@ -261,4 +265,103 @@ model PubChemKnown {
   cid       Int?
   title     String?
   checkedAt DateTime @default(now())
+}
+
+/// Uma missão escrita por um professor.
+///
+/// O que decide química aqui não foi digitado: `goals` só contém condições que
+/// saíram de `extractGoals` sobre `answerMolblock`, reanalisado pelo RDKit no
+/// servidor no momento de salvar (D-25). Título, enunciado e dicas são texto do
+/// professor e não entram em nenhuma conta.
+model TeacherQuest {
+  id             String    @id @default(cuid())
+  teacherId      String
+  title          String
+  /// O enunciado. Texto puro: sem HTML, sem markdown, sem link.
+  brief          String
+  /// `string[]`, no máximo 3, na ordem em que são liberadas.
+  hints          Json
+  /// `Goal[]` — a mesma forma do pacote `quests`: id, label e condition.
+  /// Só os objetivos escolhidos; candidato não escolhido não é guardado.
+  goals          Json
+  /// A resposta que o professor desenhou. **Nunca sai para o cliente do aluno.**
+  answerMolblock String
+  answerInchiKey String
+  createdAt      DateTime  @default(now())
+  /// Quem publica conteúdo lido por menor de idade deixa rastro de quando
+  /// escreveu — enunciado é editável depois de publicado.
+  updatedAt      DateTime  @updatedAt
+  /// Arquivar tira do seletor e não tira de mais nada. Apagar não existe.
+  archivedAt     DateTime?
+  /// Nulo é "só nas minhas listas": a missão nasce fora do catálogo do produto,
+  /// e só alcança aluno matriculado numa turma com lista publicada que a
+  /// contenha. Preenchido é "publicada no catálogo" — desde então qualquer conta
+  /// alcança pela busca, com autoria visível (D-27). Publicar exige
+  /// `Profile.institution` preenchida e a missão não arquivada; retirar do
+  /// catálogo (voltar a nulo) não afeta quem já abriu.
+  catalogedAt    DateTime?
+
+  teacher Profile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@index([teacherId])
+}
+
+/// Denúncia de uma missão do catálogo, por qualquer conta que a alcance.
+///
+/// Não existe tela de moderação nesta fatia (D-27): o que existe é o rastro —
+/// quem, quando e o motivo em uma linha — e o botão de retirar, que o próprio
+/// professor aciona ou quem administra o servidor por script. A missão
+/// continua no ar até alguém retirar.
+model QuestReport {
+  id         String    @id @default(cuid())
+  /// Slug do catálogo do produto ou `professor:<TeacherQuest.id>`.
+  questSlug  String
+  reporterId String
+  /// Motivo em uma linha; teto de 200 caracteres.
+  reason     String
+  createdAt  DateTime  @default(now())
+  /// Nulo é "em aberto". Preenchido é quando alguém tratou — sem tela própria,
+  /// é gravado pelo mesmo script que retira a missão do catálogo.
+  resolvedAt DateTime?
+
+  reporter Profile @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+
+  @@index([questSlug])
+}
+
+/// A sequência de missões de uma aula, dentro de uma turma.
+model Assignment {
+  id          String    @id @default(cuid())
+  classroomId String
+  /// Quem criou. Fica separado do dono da turma porque a autoria do conteúdo é
+  /// pergunta de escola, e coluna esquecida não se recupera depois.
+  createdById String
+  title       String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  /// Enquanto for nulo, é rascunho: o aluno não vê e não abre.
+  publishedAt DateTime?
+  archivedAt  DateTime?
+
+  classroom Classroom        @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  createdBy Profile          @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  items     AssignmentItem[]
+
+  @@index([classroomId])
+}
+
+/// Um item da lista. `questSlug` é do catálogo (`primeiro-traco`) ou de uma
+/// missão do professor (`professor:<TeacherQuest.id>`) — ver §3.4.
+model AssignmentItem {
+  id           String @id @default(cuid())
+  assignmentId String
+  /// 1, 2, 3… É o número que o aluno vê na lista e a coluna que o professor lê no quadro.
+  position     Int
+  questSlug    String
+
+  assignment Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+
+  @@unique([assignmentId, position])
+  @@unique([assignmentId, questSlug])
+  @@index([questSlug])
 }

@@ -1,10 +1,11 @@
 'use server';
 
-import { evaluateQuest, findQuest } from '@rotamer/quests';
+import { evaluateQuest } from '@rotamer/quests';
 import { z } from 'zod';
 import { currentProfile } from '../../lib/auth';
 import { analyzeOnServer } from '../../lib/chemistry-server';
 import { db, hasDatabase } from '../../lib/db';
+import { resolveQuest, studentQuestAccess } from '../../lib/quest-resolve';
 import { askGemini, tutorAvailable, tutorModel } from '../../lib/tutor/gemini';
 import { buildPrompt, referenceValues, type HintKind } from '../../lib/tutor/prompt';
 import { tutorHintSchema, type TutorHint } from '../../lib/tutor/schema';
@@ -23,6 +24,9 @@ import type { ReferenceKey } from '../../lib/tutor/schema';
  */
 
 const DEFAULT_LIMIT = 30;
+
+/** Mesma recusa de `saveAttempt`/`openQuest` (R-8): existência não se entrega em pista. */
+const QUEST_NOT_FOUND = 'Essa missão não existe.';
 
 const schema = z.object({
   molblock: z.string().min(1).max(200_000),
@@ -55,6 +59,33 @@ export async function askTutor(input: {
   if (!parsed.success) return { status: 'rejected', reason: 'Pedido mal formado.' };
   if (!tutorAvailable()) return { status: 'unavailable' };
 
+  const profile = await currentProfile();
+
+  // R-7: a quarta porta do aluno. Resolvido antes de qualquer análise — uma
+  // missão fora do alcance não ganha nem o trabalho do RDKit.
+  //
+  // Achado 4 do `reviewer`: esta checagem de conta precisa vir **antes** de
+  // `resolveQuest` tocar o banco. Antes, uma conta anônima recebia
+  // "Essa missão não existe." para um slug `professor:` forjado, e "Missão de
+  // turma precisa de conta." para um slug `professor:` real — a diferença
+  // entre as duas frases já entregava se a missão existe, para quem nem tem
+  // conta. Aqui o teste é só sintático (o prefixo do slug), então a resposta
+  // para uma conta anônima é sempre a mesma, exista ou não a missão.
+  if (parsed.data.questSlug !== null && parsed.data.questSlug.startsWith('professor:') && profile === null) {
+    return { status: 'rejected', reason: 'Missão de turma precisa de conta.' };
+  }
+
+  const quest = parsed.data.questSlug === null ? null : await resolveQuest(parsed.data.questSlug);
+  if (parsed.data.questSlug !== null && quest === null) {
+    return { status: 'rejected', reason: QUEST_NOT_FOUND };
+  }
+
+  if (quest !== null && quest.slug.startsWith('professor:') && profile !== null) {
+    if (!(await studentQuestAccess(profile.id, quest.slug))) {
+      return { status: 'rejected', reason: QUEST_NOT_FOUND };
+    }
+  }
+
   const analysis = await analyzeOnServer(parsed.data.molblock);
   if (!analysis.ok) {
     // Estrutura inválida não vai para o modelo: o erro de química já foi
@@ -63,7 +94,6 @@ export async function askTutor(input: {
   }
 
   const { molecule } = analysis;
-  const quest = parsed.data.questSlug === null ? null : (findQuest(parsed.data.questSlug) ?? null);
   const goals = quest === null ? [] : evaluateQuest(quest, molecule).goals;
   const values = referenceValues(molecule);
   const slug = quest?.slug ?? 'livre';
@@ -73,7 +103,6 @@ export async function askTutor(input: {
     return { status: 'ok', answer: { hint: cached, values, cached: true } };
   }
 
-  const profile = await currentProfile();
   if (profile !== null && !(await withinDailyLimit(profile.id))) {
     return { status: 'limit' };
   }

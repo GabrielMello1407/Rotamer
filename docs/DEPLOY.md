@@ -108,6 +108,19 @@ pnpm --filter @rotamer/web exec prisma migrate deploy
 pm2 reload rotamer
 ```
 
+**`20260903181540_listas_da_turma` (D-25, `docs/ROTEIROS.md` §3) é puramente aditiva:** cria
+`TeacherQuest`, `Assignment` e `AssignmentItem`; nenhuma coluna existente muda, nenhum dado é
+reescrito. Segue a mesma ordem de sempre — migrar **antes** de subir o build novo:
+
+```
+pnpm --filter @rotamer/web exec prisma migrate deploy
+pm2 reload rotamer
+```
+
+**`20260903190330_catalogo_e_denuncia` (D-27) também é puramente aditiva:** acrescenta
+`TeacherQuest.catalogedAt` (nulo continua significando "só nas listas do professor" — nenhuma
+missão existente entra no catálogo sozinha) e cria `QuestReport`. Mesma ordem, mesmo comando.
+
 O que passa a ser nosso, e precisa de rotina antes do primeiro aluno:
 
 - **Backup.** `scripts/backup-db.sh`, diário, com retenção e cópia fora da máquina.

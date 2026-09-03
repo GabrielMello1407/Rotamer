@@ -334,6 +334,12 @@ E a ordem certa de fazer: **depois** das primeiras sessões de observação. Ond
 a ordem deles não deveriam sair da nossa cabeça: é pedir o plano, transcrever, e comparar com as 16
 missões que existem — o que sobra e o que falta aparece sozinho.
 
+## Dívida da entrega de listas (D-25/D-27)
+
+- **Tetos em memória** (`apps/web/app/actions/assignment.ts` — salvamentos de autoria por dia;
+  `apps/web/app/actions/classroom.ts` — códigos errados por hora, R-15) — persistir quando houver
+  mais de um processo ou quando o deploy virar frequente.
+
 ## Considerado e adiado
 
 - [ ] Comparar dois análogos lado a lado — é para o usuário avançado, que não é o comprador (D-09)

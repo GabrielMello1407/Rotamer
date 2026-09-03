@@ -60,15 +60,25 @@ export interface Goal {
 
 export type Track = 'structure' | 'geometry' | 'property';
 
-export interface Quest {
+/**
+ * O que basta para avaliar: um slug e os objetivos.
+ *
+ * É a interface mínima que `evaluateQuest` pede. Uma missão de professor
+ * (`TeacherQuest`) não tem `track`, `difficulty` nem `hints` do catálogo — e
+ * fingir esses campos para caber no tipo `Quest` seria dado falso no banco.
+ */
+export interface Assessable {
   readonly slug: string;
+  readonly goals: readonly Goal[];
+}
+
+export interface Quest extends Assessable {
   readonly track: Track;
   /** 1 é primeira aula; 3 é para quem já pegou o jeito. */
   readonly difficulty: 1 | 2 | 3;
   readonly title: string;
   /** O enunciado. Fala de química, não de interface. */
   readonly brief: string;
-  readonly goals: readonly Goal[];
   /**
    * Dicas determinísticas, na ordem em que são liberadas.
    *

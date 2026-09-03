@@ -1,11 +1,12 @@
 'use server';
 
-import { evaluateQuest, findQuest } from '@rotamer/quests';
+import { evaluateQuest } from '@rotamer/quests';
 import { z } from 'zod';
 import { currentProfile } from '../../lib/auth';
 import { analyzeOnServer } from '../../lib/chemistry-server';
 import { db } from '../../lib/db';
 import { rememberMolecule } from '../../lib/molecule-store';
+import { resolveQuest, studentQuestAccess } from '../../lib/quest-resolve';
 
 /**
  * Gravar uma tentativa de missão.
@@ -15,8 +16,14 @@ import { rememberMolecule } from '../../lib/molecule-store';
  * reavaliada antes de qualquer coisa ir para o banco.
  */
 
+/** Mesma recusa para os dois casos (R-8): diferenciar vira oráculo de existência. */
+const QUEST_NOT_FOUND = 'Essa missão não existe.';
+
 const schema = z.object({
-  questSlug: z.string().min(1),
+  // R-16: sem `.max()` o slug vinha de constante do catálogo; agora ele
+  // também vem de dado (`professor:<cuid>`), e uma string sem teto é entrada
+  // não validada.
+  questSlug: z.string().min(1).max(80),
   molblock: z.string().min(1).max(200_000),
   elapsedMs: z.number().int().min(0).max(86_400_000),
 });
@@ -37,8 +44,15 @@ export async function saveAttempt(input: {
   const profile = await currentProfile();
   if (profile === null) return { status: 'anonymous' };
 
-  const quest = findQuest(parsed.data.questSlug);
-  if (!quest) return { status: 'rejected', reason: 'Essa missão não existe.' };
+  const quest = await resolveQuest(parsed.data.questSlug);
+  if (!quest) return { status: 'rejected', reason: QUEST_NOT_FOUND };
+
+  // R-7: a mesma recusa serve para slug inexistente e para slug de uma turma
+  // em que o aluno não está matriculado (ou não publicada, ou arquivada) —
+  // diferenciar contaria a existência de uma turma que não é dele (R-8).
+  if (!(await studentQuestAccess(profile.id, quest.slug))) {
+    return { status: 'rejected', reason: QUEST_NOT_FOUND };
+  }
 
   const analysis = await analyzeOnServer(parsed.data.molblock);
   if (!analysis.ok) return { status: 'rejected', reason: analysis.error.message };
@@ -78,7 +92,13 @@ export async function openQuest(input: { questSlug: string }): Promise<void> {
   const profile = await currentProfile();
   if (profile === null) return;
 
-  if (!findQuest(parsed.data.questSlug)) return;
+  const quest = await resolveQuest(parsed.data.questSlug);
+  if (!quest) return;
+
+  // R-7: mesma cadeia de acesso que `saveAttempt` — abrir uma missão de outra
+  // turma não grava nada, silenciosamente, como o resto desta função já faz
+  // para slug inválido.
+  if (!(await studentQuestAccess(profile.id, quest.slug))) return;
 
   await db.questOpen
     .upsert({

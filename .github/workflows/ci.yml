@@ -61,6 +61,12 @@ jobs:
     env:
       DATABASE_URL: postgresql://rotamer:rotamer@localhost:5432/rotamer?schema=public
       SESSION_SECRET: ci-nao-e-producao
+      # Achado 3 do `reviewer`: este job TEM Postgres de pé (`services:`
+      # acima). Um banco inalcançável aqui é defeito do job, não motivo para
+      # `describe.skip` silencioso deixar `app/actions/assignment.test.ts`
+      # verde sem rodar nada — com a variável, `test/db-guard.ts` lança em vez
+      # de pular.
+      REQUIRE_DATABASE: '1'
 
     steps:
       - uses: actions/checkout@v4
@@ -75,6 +81,12 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - run: pnpm --filter @rotamer/web exec prisma migrate deploy
+
+      # Único trabalho com Postgres de pé: os testes de ação de servidor que
+      # falam com o banco de verdade (`app/actions/assignment.test.ts`,
+      # achado 1 do `reviewer`) rodam aqui de fato, não só ficam pulados como
+      # no trabalho "lint · tipos · testes", que não tem banco.
+      - run: pnpm --filter @rotamer/web exec vitest run app/actions/assignment.test.ts
 
       - run: pnpm --filter @rotamer/web exec playwright install --with-deps chromium
 

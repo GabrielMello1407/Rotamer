@@ -5,6 +5,7 @@ import { findQuest } from '@rotamer/quests';
 import { currentProfile } from '../../lib/auth';
 import { generateCode, normalizeCode } from '../../lib/code';
 import { db, hasDatabase } from '../../lib/db';
+import { requireTeacher } from '../../lib/roles';
 
 /**
  * Turmas.
@@ -88,6 +89,35 @@ export type JoinOutcome =
   | { readonly status: 'already'; readonly name: string }
   | { readonly status: 'rejected'; readonly reason: string };
 
+/**
+ * Teto de códigos errados por conta, em memória (R-15).
+ *
+ * Antes o prêmio de adivinhar um código era só aparecer numa lista; com listas
+ * do professor, agora é ler o material publicado de uma turma. Um `Map` no
+ * processo é suficiente para o único servidor Node do VPS (D-11) — se o
+ * produto ganhar mais de uma instância, isto precisa virar tabela, e não há
+ * migração nesta entrega para isso.
+ */
+const WRONG_CODE_LIMIT = 10;
+const WRONG_CODE_WINDOW_MS = 60 * 60 * 1000;
+const wrongCodeAttempts = new Map<string, number[]>();
+
+function tooManyWrongCodes(profileId: string): boolean {
+  const now = Date.now();
+  const attempts = (wrongCodeAttempts.get(profileId) ?? []).filter(
+    (at) => now - at < WRONG_CODE_WINDOW_MS,
+  );
+  wrongCodeAttempts.set(profileId, attempts);
+
+  return attempts.length >= WRONG_CODE_LIMIT;
+}
+
+function registerWrongCode(profileId: string): void {
+  const attempts = wrongCodeAttempts.get(profileId) ?? [];
+  attempts.push(Date.now());
+  wrongCodeAttempts.set(profileId, attempts);
+}
+
 /** Entrar numa turma com o código que o professor escreveu no quadro. */
 export async function joinClassroom(input: { code: string }): Promise<JoinOutcome> {
   if (!hasDatabase()) return { status: 'rejected', reason: 'Indisponível neste ambiente.' };
@@ -100,12 +130,20 @@ export async function joinClassroom(input: { code: string }): Promise<JoinOutcom
   const profile = await currentProfile();
   if (profile === null) return { status: 'rejected', reason: 'Entre na sua conta primeiro.' };
 
+  if (tooManyWrongCodes(profile.id)) {
+    return {
+      status: 'rejected',
+      reason: 'Muitos códigos errados em pouco tempo. Espere um pouco e tente de novo.',
+    };
+  }
+
   const classroom = await db.classroom.findUnique({
     where: { code: normalizeCode(parsed.data.code) },
     select: { id: true, name: true, teacherId: true, archivedAt: true },
   });
 
   if (classroom === null || classroom.archivedAt !== null) {
+    registerWrongCode(profile.id);
     return { status: 'rejected', reason: 'Esse código não abre nenhuma turma. Confira com o professor.' };
   }
 
@@ -233,6 +271,34 @@ export async function readClassroomBoard(id: string): Promise<ClassroomBoard | n
 
   const ids = classroom.enrollments.map((entry) => entry.profileId);
 
+  /*
+   * R-11: uma tentativa carrega `questSlug` opaco, sem turma nenhuma anexada
+   * (D-12) — um aluno que passou por outra turma antes pode ter tentativa
+   * numa missão `professor:` de um professor que não é este. Sem filtrar,
+   * essa missão apareceria aqui, nem que só pelo `id`. O que pertence a esta
+   * turma é: qualquer missão de catálogo, e só as missões `professor:` que
+   * estão nos itens de alguma lista **desta** turma.
+   */
+  const classroomTeacherItems = await db.assignmentItem.findMany({
+    where: { questSlug: { startsWith: 'professor:' }, assignment: { classroomId: id } },
+    select: { questSlug: true },
+    distinct: ['questSlug'],
+  });
+  const visibleTeacherSlugs = new Set(classroomTeacherItems.map((row) => row.questSlug));
+  const isVisibleHere = (slug: string): boolean =>
+    !slug.startsWith('professor:') || visibleTeacherSlugs.has(slug);
+
+  const teacherTitleRows =
+    visibleTeacherSlugs.size === 0
+      ? []
+      : await db.teacherQuest.findMany({
+          where: { id: { in: [...visibleTeacherSlugs].map((slug) => slug.slice('professor:'.length)) } },
+          select: { id: true, title: true },
+        });
+  const teacherTitleBySlug = new Map<string, string>(
+    teacherTitleRows.map((row) => [`professor:${row.id}`, row.title]),
+  );
+
   // Duas leituras e nenhum laço por aluno: tentativas dizem quem cumpriu,
   // aberturas dizem quem chegou a tentar.
   const [attempts, opened] =
@@ -256,10 +322,12 @@ export async function readClassroomBoard(id: string): Promise<ClassroomBoard | n
   }
 
   for (const entry of opened) {
+    if (!isVisibleHere(entry.questSlug)) continue;
     byStudent.get(entry.profileId)?.tried.add(entry.questSlug);
   }
 
   for (const attempt of attempts) {
+    if (!isVisibleHere(attempt.questSlug)) continue;
     const entry = byStudent.get(attempt.profileId);
     if (!entry) continue;
 
@@ -290,23 +358,10 @@ export async function readClassroomBoard(id: string): Promise<ClassroomBoard | n
   const hardest = [...stuckCount.entries()]
     .map(([slug, stuck]) => ({
       slug,
-      title: findQuest(slug)?.title ?? slug,
+      title: slug.startsWith('professor:') ? (teacherTitleBySlug.get(slug) ?? slug) : (findQuest(slug)?.title ?? slug),
       stuck,
     }))
     .sort((first, second) => second.stuck - first.stuck);
 
   return { id: classroom.id, name: classroom.name, code: classroom.code, students, hardest };
-}
-
-/** `null` quando quem pediu não é professor. */
-async function requireTeacher(): Promise<{ readonly id: string } | null> {
-  const profile = await currentProfile();
-  if (profile === null) return null;
-
-  const row = await db.profile.findUnique({
-    where: { id: profile.id },
-    select: { role: true },
-  });
-
-  return row?.role === 'professor' ? { id: profile.id } : null;
 }

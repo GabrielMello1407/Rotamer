@@ -1,5 +1,5 @@
 import type { Molecule } from '@rotamer/core';
-import type { GoalResult, Quest } from '@rotamer/quests';
+import type { Assessable, GoalResult, Quest } from '@rotamer/quests';
 import { REFERENCE_KEYS, type ReferenceKey } from './schema';
 
 /**
@@ -10,6 +10,17 @@ import { REFERENCE_KEYS, type ReferenceKey } from './schema';
  * massa ou nota: essas perguntas já foram respondidas pelo RDKit e pelo motor de
  * missões antes de este texto existir.
  */
+
+/**
+ * `Quest` (catálogo) tem `title` e `brief`; `Assessable` (missão de professor,
+ * via `resolveQuest`) não tem nenhum dos dois campos — nem por engano um texto
+ * de professor chegaria ao modelo (R-9). A checagem é de tipo porque a
+ * ausência do campo já é a trava: não existe jeito de ler `brief` de uma
+ * missão de professor por aqui.
+ */
+function hasTeacherFacingText(quest: Assessable | Quest): quest is Quest {
+  return 'title' in quest && 'brief' in quest;
+}
 
 export type HintKind = 'proximo-passo' | 'por-que-nao-fechou' | 'entender-a-molecula';
 
@@ -36,7 +47,7 @@ Responda apenas com o JSON pedido.`;
 
 export interface PromptInput {
   readonly molecule: Molecule;
-  readonly quest: Quest | null;
+  readonly quest: Assessable | Quest | null;
   readonly goals: readonly GoalResult[];
   readonly kind: HintKind;
 }
@@ -90,11 +101,21 @@ export function buildPrompt({ molecule, quest, goals, kind }: PromptInput): stri
     `- grupos funcionais: ${groups}`,
   ];
 
-  if (quest !== null) {
+  if (quest !== null && hasTeacherFacingText(quest)) {
     lines.push(
       '',
       `MISSÃO: ${quest.title}`,
       `Enunciado: ${quest.brief}`,
+      'Objetivos, com o veredito que o motor de missões já deu:',
+      ...goals.map((goal) => `- [${goal.met ? 'cumprido' : 'em aberto'}] ${goal.label}`),
+    );
+  } else if (quest !== null) {
+    // R-9: missão `professor:` — nem título, nem enunciado, escrito por um
+    // professor, chega ao modelo. Só os rótulos gerados dos objetivos, que
+    // saíram do RDKit (`extractGoals`), não de texto livre.
+    lines.push(
+      '',
+      'MISSÃO EM CURSO, de um professor — o enunciado dela é do professor e não entra aqui.',
       'Objetivos, com o veredito que o motor de missões já deu:',
       ...goals.map((goal) => `- [${goal.met ? 'cumprido' : 'em aberto'}] ${goal.label}`),
     );
