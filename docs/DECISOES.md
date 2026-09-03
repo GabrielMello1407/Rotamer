@@ -857,3 +857,34 @@ menores de idade.
 **Em aberto.** O catálogo atual — as 16 missões que qualquer pessoa abre sem conta — continua
 existindo como exploração livre, ou passa a ser só matéria-prima para o roteiro do professor? As
 duas leituras cabem na decisão; a diferença é o que o aluno sem professor encontra ao entrar.
+
+---
+
+## D-26 · O catálogo é para quem tem conta, e é buscável
+
+**Decisão do dono do produto, 28 de agosto de 2026**, respondendo às perguntas da especificação
+das listas (`docs/ROTEIROS.md`, §9).
+
+1. **Nota de lista não sai do produto.** Nenhuma escola pediu nota que entre no diário; sem
+   exportar, sem CSV, sem prazo. Continua sendo progresso, no vocabulário do D-22.
+2. **O catálogo de missões é buscável, e aparece para o aluno quando ele cria conta.** Não é só a
+   lista da turma: é tudo o que existe para fazer, com busca — por nome, por trilha, por grupo
+   funcional. O aluno com professor vê a lista da turma primeiro e o catálogo abaixo; o aluno sem
+   professor vê o catálogo. O que muda em relação à escolha provisória da especificação é a
+   **conta**: o catálogo buscável é de quem entrou. O que o visitante sem conta encontra continua
+   sendo o editor e o painel de missões como está hoje — isso não foi tocado pela decisão, e fica
+   registrado aqui como leitura, não como ordem.
+3. **Professor publica conteúdo lido por menor de idade, e a mitigação é o D-19.** Aceito como
+   está: o papel é dado por quem administra, e não existe moderação nem canal de denúncia nesta
+   fatia. Dito em voz alta para a escola, quando houver escola.
+4. **A palavra da tela é "lista"**, sem consultar o professor: a medição do `researcher` (Google
+   Classroom, "lista de exercícios", "roteiro" ocupado pela bancada) basta. Se a sessão de
+   observação mostrar outra palavra na boca dele, troca-se `apps/web/app/turmas/messages.ts`.
+
+**Em aberto, e é pergunta de escopo.** "Tudo o que já foi criado" pode querer dizer só as missões
+do produto, ou também as missões que professores criaram. A segunda leitura é um **repositório
+compartilhado** de conteúdo de professor para alunos de qualquer turma — e a especificação a
+deixou de fora por três razões que continuam de pé: exige moderação (não existe), exige autoria
+visível (existe só o `createdById`), e o leitor é menor de idade. Esta decisão implementa a
+primeira leitura. A segunda, se for o que o dono quer, vira decisão própria, com essas três
+condições antes.

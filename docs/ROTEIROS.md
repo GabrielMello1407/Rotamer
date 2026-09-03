@@ -762,7 +762,15 @@ existe.
 
 ---
 
-## 9. Perguntas para o humano
+## 9. Perguntas para o humano — respondidas em 28/08/2026, ver D-26
+
+O dono respondeu no mesmo dia: (1) nota não sai do produto; (2) o catálogo é **buscável** e é de
+quem tem conta — entra na onda da tela como página de catálogo com busca, e o aluno com
+professor continua vendo a lista da turma primeiro; (3) o D-19 basta como mitigação, dito em voz
+alta para a escola; (4) "lista" fica, sem consultar o professor. O que sobrou em aberto está no
+D-26: se "tudo o que já foi criado" inclui missão de professor de outras turmas.
+
+As perguntas originais, para registro:
 
 1. **A nota da lista não sai do Rotamer nesta entrega** — sem exportar, sem CSV, sem boletim,
    sem prazo. Se alguma escola já pediu nota que entra no diário, isso muda a prioridade e eu
