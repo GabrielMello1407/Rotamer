@@ -263,6 +263,31 @@ de coisa que quebra a aula do professor que quer começar por onde ele quer.
   (41,59% de zeros na questão 9 da Unicamp 2005). As missões já pedem para desenhar a partir de uma
   descrição; isso é acerto, e vale reforçar em vez de inverter.
 
+### Missões de primeira visita — e o limite do que uma missão pode verificar
+
+Ideia de 28/08/2026: deixar algumas missões para o usuário novo **explorar a ferramenta**, não só a
+química. A ideia é boa e já está meio feita: "O primeiro traço" e "O álcool do dia a dia" ensinam
+clique, arrasto e a tecla `O` por dentro de um objetivo químico.
+
+O limite que precisa ficar dito: **missão verifica molécula, não gesto** (D-01 e o desenho do
+`quests`). "Faça uma ligação dupla" é verificável — a molécula tem a dupla. "Gire a molécula em
+3D", "organize o desenho" e "veja um modo de vibração" **não** são: nada muda no grafo. Pôr isso
+como objetivo de missão exigiria o motor de missões ler estado de interface, que é justamente o
+que ele não deve ler.
+
+Então são duas coisas, e não uma:
+
+- **Missões de tour** continuam sendo missões de química, escritas para que cumprir o objetivo
+  **obrigue** a descobrir uma ferramenta: dupla (clique na ligação), heteroátomo (tecla ou tabela
+  periódica), centro estereogênico (cunha), um pedaço grande (seleção). Cada uma verificada pelo
+  RDKit, como todas.
+- **Um roteiro de primeira visita** para o que não é química — girar, vibrar, organizar, modos
+  normais — é lista de conferência da interface, sem nota, sem tique, mostrada uma vez e apagável.
+  Não é missão e não deve parecer missão; a trilha Otimização nem tem gamificação (D-09).
+
+E a ordem certa de fazer: **depois** das primeiras sessões de observação. Onde o usuário novo trava
+é dado que só a sessão dá, e desenhar o tour antes de assistir é adivinhar o problema.
+
 ### O que decide tudo, e custa zero
 
 **O plano de ensino do Idelcio.** Ele está com a disciplina neste semestre. A lista de conceitos e
