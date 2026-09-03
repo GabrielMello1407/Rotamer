@@ -198,9 +198,48 @@ O que impede de entrar sem conversa:
 - Antes das duas: **perguntar ao Pedro o que ele faria com isso na aula**. Se o uso é "mostrar que
   a água é polar e o CO₂ não", a seta basta e é barata.
 
-## Missões como material de aula — proposta de estrutura, aguardando o `pm`
+## Missões como material de aula — o `pm` respondeu
 
-**28 de agosto de 2026.** As missões existem desde a v0.1 e foram pensadas como isca para quem
+**28 de agosto de 2026, mesmo dia.** A proposta abaixo foi lida e cortada. O que entrou está
+especificado em `docs/ROTEIROS.md`, pronto para o `backend`, o `frontend` e o `reviewer`
+executarem; o resto continua aqui, e continua adiado.
+
+**Virou entrega:**
+
+- **Escolher e ordenar** — o professor monta uma **lista** (é a palavra da tela; o código é
+  `Assignment`), dentro de uma turma que já existe, publicando quando quiser.
+- **Criar missão própria desenhando a resposta** — `extractGoals` extrai os objetivos
+  verificáveis da molécula que o RDKit aceitou, o professor marca quais cobrar e escreve
+  enunciado e dicas. Nada de química é digitado (D-25).
+- **Acompanhar por lista** — o quadro que já existe, restrito aos itens da lista, com três
+  estados por célula: cumpriu · travou · não abriu. Progresso, nunca molécula (D-22).
+
+**Continua adiado, e agora com razão escrita:**
+
+- **Prazo de entrega** — traz fuso, atraso e nota parcial; a pergunta do quadro é onde a turma
+  parou, não quem entregou a tempo.
+- **Nota que vira nota escolar, exportação, CSV, boletim** — promessa pedagógica que escola
+  nenhuma pediu ainda. Pergunta da Fase 3.
+- **Copiar lista entre turmas do mesmo professor** — corte de escopo puro, e o mais provável de
+  voltar cedo: é a primeira coisa que um professor com duas turmas vai pedir.
+- **Compartilhar lista entre professores** — exige autoria e moderação, e o leitor é menor de
+  idade.
+- **Missão com mais de uma resposta certa** (composição de `some`) — exigiria um editor de
+  condição, que é o que o D-25 existe para não construir. Já existe caminho: cobrar grupo e
+  contagem em vez de InChIKey aceita muitas respostas.
+- **Cadeado entre itens** — Classroom e Khan também não trancam por padrão; missão que só abre
+  depois de outra quebra a aula de quem quer começar por onde quer.
+- **Grafo de conceitos (`teaches`/`requires`)** — segue abaixo, e segue esperando o plano de
+  ensino do Idelcio.
+- **Tour de primeira visita** — segue abaixo: depois das sessões de observação.
+- **Tela de "quem publicou o quê"** — o `updatedAt` das duas tabelas entra agora, porque coluna
+  esquecida não se recupera; a tela só existe se a escola pedir.
+
+**Em aberto, na §9 de `docs/ROTEIROS.md`:** se o catálogo continua livre para quem não tem
+professor (resposta provisória: continua), e como o Idelcio chama isso — "lista", "atividade" ou
+outra coisa. A segunda troca um arquivo de textos e mais nada.
+
+As missões existem desde a v0.1 e foram pensadas como isca para quem
 chega sozinho. A pergunta nova é outra: **servir de exercício dentro da aula**, na sequência em que
 o professor ensina. É mudança de dono — de aluno curioso para professor com plano de ensino — e
 por isso precisa de decisão de escopo antes de código.

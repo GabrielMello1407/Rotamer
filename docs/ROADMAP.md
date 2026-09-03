@@ -179,6 +179,10 @@ continuar dito em voz alta enquanto for verdade.
 ## Fase 4 · Comercial — ~120h
 
 - [x] Painel do professor: turmas, acompanhamento de quem travou onde (D-22)
+- [ ] **Listas da turma: o professor monta a sequência de missões e cria as dele desenhando a
+      resposta** (D-25) — especificação de entrega fechada em `docs/ROTEIROS.md`: modelo de dados,
+      contrato das ações, textos de tela, ordem das tarefas e o e2e que prova a entrega. Nenhuma
+      linha de produto escrita ainda
 - [ ] Camadas de assinatura e cobrança — **adiado de propósito** até as sessões da Fase 3 (D-08).
       Escola pública compra por empenho, não com cartão; escolher a forma de cobrar antes de saber
       o que se cobra é construir a parte mais cara no escuro.
