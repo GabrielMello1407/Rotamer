@@ -888,3 +888,54 @@ deixou de fora por três razões que continuam de pé: exige moderação (não e
 visível (existe só o `createdById`), e o leitor é menor de idade. Esta decisão implementa a
 primeira leitura. A segunda, se for o que o dono quer, vira decisão própria, com essas três
 condições antes.
+
+---
+
+## D-27 · Missão de professor pode entrar no catálogo — com autoria, denúncia e opt-in
+
+**Decisão do dono do produto, 28 de agosto de 2026**, fechando o que o D-26 deixou em aberto: o
+catálogo buscável inclui **também as missões que professores criaram**, para aluno de qualquer
+turma. É um repositório compartilhado de conteúdo de professor.
+
+**As três condições que a especificação tinha posto como impedimento viram requisito.** Nenhuma
+delas é opcional, e a entrega não existe sem as três:
+
+1. **Opt-in por missão, nunca por padrão.** Missão nasce **só nas listas do professor**. Entrar no
+   catálogo é ação separada — "publicar no catálogo" — que ele faz missão a missão, e desfaz
+   quando quiser. Missão retirada do catálogo continua funcionando para quem já a abriu (é a
+   mesma regra do arquivar, §3.5 de `docs/ROTEIROS.md`).
+2. **Autoria visível, sempre.** No catálogo, missão de professor aparece com **quem escreveu e de
+   onde** — nome de exibição e instituição —, e nunca sem isso. É a regra do D-15 aplicada a
+   conteúdo: o que um humano assinou não circula sem a assinatura. Missão de professor sem
+   instituição preenchida não pode ser publicada no catálogo; a promoção (D-19) já exige o campo.
+3. **Denúncia existe, e retirar é imediato.** Toda missão pública tem "denunciar", com motivo em
+   uma linha. A denúncia grava quem, quando e o quê; a missão continua no ar até alguém retirar —
+   o próprio professor, ou quem administra o servidor por script (`scripts/`), como toda ação de
+   administração hoje. Não existe tela de moderação nesta fatia; existe o rastro e o botão de
+   retirar. Isso precisa ser dito para a escola junto com o D-19.
+
+**O que continua verdade, e é o que torna isto aceitável.** A parte que decide química numa
+missão de professor **não foi digitada**: os objetivos saíram de `extractGoals` sobre a resposta
+reanalisada (D-25). O que um humano escreveu é título, enunciado e dicas — texto puro, sem link,
+com os tetos de R-13 e R-14. Então o pior caso de uma missão pública é texto inadequado, nunca
+química errada ensinada para uma sala.
+
+**O que muda no que já está sendo construído.**
+
+- `TeacherQuest` ganha `catalogedAt DateTime?` — nulo é "só nas minhas listas". Migração aditiva.
+- A regra R-7 (acesso do aluno a slug `professor:`) ganha um **segundo caminho**: matrícula em
+  turma com lista publicada que contenha o slug, **ou** `catalogedAt IS NOT NULL` e
+  `archivedAt IS NULL`. As quatro portas continuam as mesmas.
+- R-3 continua absoluta: missão pública não expõe a resposta a ninguém que não seja o dono.
+- A busca do catálogo (D-26) indexa título e os rótulos gerados dos objetivos — que é como se
+  procura "algo com éster" sem que ninguém tenha digitado "éster" num campo de etiqueta.
+- Modelo novo `QuestReport`: `id`, `questSlug`, `reporterId`, `reason` (≤ 200), `createdAt`,
+  `resolvedAt?`. Índice por `questSlug`.
+
+**Fica de fora, e por quê.** Avaliação por outros professores, curadoria, "missão verificada",
+ranking de missões mais feitas: tudo isso é produto de comunidade, e comunidade é a Fase 4 do
+roadmap com ressalva própria (D-08). Aqui é o mínimo que torna o compartilhamento defensável para
+uma escola.
+
+**Revisar se.** A primeira denúncia real chegar sem ninguém para ler — aí o rastro não bastou, e
+a tela de moderação deixa de ser "depois".
