@@ -25,7 +25,8 @@ uma sala inteira.
 
 ## Experimente
 
-- **Na sua máquina, com Docker** — clone, copie o `.env.example` para `.env`, e:
+- **Na sua máquina, com Docker** — clone, copie o `.env.example` para `.env`, troque
+  `POSTGRES_PASSWORD`, e:
 
   ```
   docker compose up -d

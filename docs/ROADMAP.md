@@ -123,7 +123,7 @@ O Rotamer é código aberto, MIT, sem comercialização (D-28). O que essa decis
 - [x] Telemetria opt-in, dita em voz alta — desligada por padrão, e o `INSTALACAO.md` diz o que
       ela mede e o que nunca sai
 - [ ] **Primeira etiqueta `v0.1.0`**, para a imagem publicada existir e o `docker compose pull`
-      funcionar sem construir
+      funcionar sem construir — e tornar o pacote público no GHCR, porque ele nasce privado
 - [ ] **Landing page em repositório separado**, estática, que puxa `docs/` na hora de construir
 
 **Pergunta em aberto, anotada no `DEPOIS.md`:** o roadmap inteiro serve ao ensino. Sem a tensão

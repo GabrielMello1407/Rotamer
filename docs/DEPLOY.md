@@ -6,19 +6,22 @@ ela tem a mais em relação ao `INSTALACAO.md`, que é o procedimento base e val
 
 ## O que já funciona
 
-- **Integração contínua** em `.github/workflows/ci.yml`: a cada push e a cada pull request rodam
-  `pnpm lint`, `pnpm typecheck`, `pnpm test`, os testes de ação contra um Postgres de verdade,
-  `pnpm test:e2e` (Chromium, desktop e celular) e a construção da imagem Docker. O relatório do
-  Playwright sobe como artefato.
+- **Integração contínua** em `.github/workflows/ci.yml`: a cada push na `main` e a cada pull
+  request rodam `pnpm lint`, `pnpm typecheck`, `pnpm test`, os testes de ação contra um Postgres
+  de verdade, `pnpm test:e2e` (Chromium, desktop e celular), e a imagem Docker é construída e
+  posta de pé contra um banco novo — migração, página pública com RDKit no servidor, motor com
+  `immutable`, script de promoção. O relatório do Playwright sobe como artefato.
 - **Imagem publicada** em `ghcr.io/gabrielmello1407/rotamer` a cada etiqueta `v*`
-  (`.github/workflows/imagem.yml`):
+  (`.github/workflows/image.yml`):
 
   ```
   git tag v0.3.0
   git push --tags
   ```
 
-  Sai com as etiquetas `0.3.0`, `0.3` e `latest`.
+  Sai com as etiquetas `0.3.0`, `0.3` e `latest`. **O pacote nasce privado no GHCR**: depois da
+  primeira publicação, torne-o público nas configurações do pacote, no GitHub — sem isso,
+  `docker compose pull` de quem não tem conta recebe `denied`.
 
 ## O que a instância no ar tem a mais
 
@@ -88,6 +91,7 @@ o cron manda o e-mail, e silêncio deixa de ser sinal de que deu certo.
 **O ensaio**, uma vez por mês e sempre depois de mudar o schema:
 
 ```
+createdb -h 127.0.0.1 -U rotamer rotamer_ensaio     # uma vez; o pg_restore não cria banco
 DATABASE_URL='postgresql://rotamer:<senha>@127.0.0.1:5432/rotamer' ./scripts/restore-db.sh /var/backups/rotamer/rotamer-<carimbo>.dump
 ```
 

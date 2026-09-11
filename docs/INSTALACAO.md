@@ -39,13 +39,10 @@ O que se espera ver, nesta ordem: `Prisma schema loaded`, a lista de migrações
 `▲ Next.js … Ready`. Enquanto isso o Postgres já está de pé — o app só abre a porta depois de
 aplicar as migrações.
 
-**Sem construir.** A cada versão a imagem é publicada em
-`ghcr.io/gabrielmello1407/rotamer`. Para usá-la em vez de construir:
-
-```
-docker compose pull
-docker compose up -d
-```
+**Sem construir.** A partir da primeira versão etiquetada, a imagem fica publicada em
+`ghcr.io/gabrielmello1407/rotamer`, e `docker compose pull && docker compose up -d` dispensa a
+construção. Enquanto ela não existir — o `ROADMAP.md` diz se já existe —, `docker compose pull`
+responde `manifest unknown`, e `docker compose up -d` constrói na sua máquina, como acima.
 
 **O que `up -d` faz.** Sobe o Postgres com o volume `rotamer-postgres`, espera ele responder,
 sobe o app, aplica as migrações pendentes e abre a porta. Os dois containers reiniciam sozinhos
@@ -57,7 +54,7 @@ Ficam no `.env`, ao lado do `docker-compose.yml`. O arquivo não vai para o repo
 
 | Variável | O que faz | Sem ela |
 |---|---|---|
-| `POSTGRES_PASSWORD` | senha do banco que o compose cria | fica `rotamer`, que é a senha de desenvolvimento. **Troque antes da primeira subida**: ela é gravada no volume do banco, e mudar depois exige mudar no banco também (§ Quando algo dá errado) |
+| `POSTGRES_PASSWORD` | senha do banco que o compose cria — só letras, números e hífen, porque ela entra numa URL | fica `rotamer`, que é a senha de desenvolvimento. **Troque antes da primeira subida**: ela é gravada no volume do banco, e mudar depois exige mudar no banco também (§ Quando algo dá errado) |
 | `POSTGRES_USER`, `POSTGRES_DB` | usuário e nome do banco | ficam `rotamer` |
 | `ROTAMER_PORT` | a porta da máquina em que o app aparece | 3000 |
 | `GEMINI_API_KEY` | chave do Gemini para o **tutor**, usada só no servidor | o tutor se desliga e diz isso na tela: `O tutor está desligado neste ambiente. As dicas da missão continuam valendo`. Todo o resto funciona |
@@ -65,9 +62,9 @@ Ficam no `.env`, ao lado do `docker-compose.yml`. O arquivo não vai para o repo
 | `TUTOR_DAILY_LIMIT` | pedidos ao tutor por conta por dia | 30 |
 | `UMAMI_SCRIPT_URL`, `UMAMI_WEBSITE_ID` | telemetria, opcional (§ Telemetria) | nenhum script de medição é carregado |
 
-`DATABASE_URL` é montada pelo compose apontando para o serviço `postgres`, e ganha de qualquer
-valor no `.env`. Só é preciso escrevê-la à mão quando a imagem roda sem o compose
-(§ A imagem sozinha).
+`DATABASE_URL` é montada pelo compose apontando para o serviço `postgres`; o compose lê o
+`.env` sozinho e repassa ao app só as variáveis acima. `DATABASE_URL` só se escreve à mão quando
+a imagem roda sem o compose (§ A imagem sozinha).
 
 ## O primeiro professor
 
@@ -113,9 +110,12 @@ restaure o backup feito antes da atualização (§ Restaurar).
 O banco é o único estado. Um despejo diário, conferido, guardado **fora da máquina**:
 
 ```
-docker compose exec postgres pg_dump -U rotamer -Fc rotamer > rotamer-$(date +%Y%m%dT%H%M).dump
+docker compose exec -T postgres pg_dump -U rotamer -Fc rotamer > rotamer-$(date +%Y%m%dT%H%M).dump
 docker compose exec -T postgres pg_restore --list < rotamer-<carimbo>.dump > /dev/null && echo "backup legível"
 ```
+
+O `-T` importa: sem ele o `exec` abre um pseudoterminal, e o despejo binário chega ao arquivo
+com quebras de linha traduzidas — um arquivo que o `pg_restore` não abre.
 
 O formato `-Fc` é comprimido e permite restaurar tabela a tabela. Um arquivo que `pg_restore
 --list` não lê não é backup. Backup na mesma máquina que o banco não é backup: copie para outro
@@ -181,6 +181,9 @@ A imagem sobe sem banco: só o editor, com toda a química, e sem conta, turma n
 docker run --rm -p 3000:3000 ghcr.io/gabrielmello1407/rotamer:latest
 ```
 
+A etiqueta é a mesma que `docker compose up -d` dá à imagem que constrói na sua máquina, então
+o comando funciona depois de uma construção local mesmo antes de a imagem estar publicada.
+
 O log diz `subindo sem banco`. Para usar um Postgres que já existe em vez do compose, passe
 `-e DATABASE_URL='postgresql://usuario:senha@host:5432/banco'`: as migrações rodam na subida.
 
@@ -212,7 +215,7 @@ e-mail, nem texto escrito por professor. Sem chave, nada vai ao Gemini.
 | O que aparece | O que é | O que fazer |
 |---|---|---|
 | A tela abre, mas fica em `carregando o motor` e clicar não desenha | `/chem/RDKit_minimal.wasm` não está sendo servido | `curl -I http://localhost:3000/chem/RDKit_minimal.wasm` precisa dar 200. Se der 404, a imagem foi construída sem o `prebuild`: `docker compose build --no-cache app` |
-| O app reinicia sem parar; o log diz `o banco não respondeu depois de 10 tentativas` | o app não alcança o Postgres, ou a senha não confere | `docker compose ps` mostra o `postgres` saudável? A senha no `.env` mudou depois da primeira subida? Nesse caso, troque no banco: `docker compose exec postgres psql -U rotamer -c "alter user rotamer password '<nova>';"` |
+| O app reinicia sem parar; o log diz `o banco não respondeu depois de 10 tentativas` | o app não alcança o Postgres, a senha não confere, ou a senha tem caractere que não cabe numa URL (`@`, `#`, `/`, `:`) | `docker compose ps` mostra o `postgres` saudável? A senha tem só letras, números e hífen? Ela mudou depois da primeira subida? Nesse caso, troque no banco: `docker compose exec postgres psql -U rotamer -c "alter user rotamer password '<nova>';"` |
 | `ports are not available … 3000` | a porta já está em uso na máquina | `ROTAMER_PORT=3100` no `.env` |
 | A construção falha baixando fontes ou pacotes | sem internet durante o `docker compose build` | conecte e repita; a construção retoma do ponto em que parou |
 | `Só conta de professor emite código` | a conta ainda é aluno | § O primeiro professor |

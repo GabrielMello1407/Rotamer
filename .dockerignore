@@ -21,10 +21,12 @@ apps/web/public/chem
 apps/web/generated
 apps/web/next-env.d.ts
 
-# Segredo nunca entra na imagem.
-.env
-.env.*
-!.env.example
+# Segredo nunca entra na imagem — nem o `.env` da raiz, nem o de `apps/web`,
+# que o `next build` copiaria para dentro da saída standalone. Padrão sem
+# `**/` só casa na raiz do contexto.
+**/.env
+**/.env.*
+!**/.env.example
 
 .git
 .github
@@ -36,4 +38,3 @@ brand
 scripts
 DEPOIS.md
 *.md
-!apps/web/README.md

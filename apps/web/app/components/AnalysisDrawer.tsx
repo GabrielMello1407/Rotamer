@@ -295,7 +295,7 @@ function Identity({
           testId="estereocentros"
           note={
             descriptors.unspecifiedStereocenters > 0
-              ? 'Sem cunha nem traço no desenho, a configuração deste centro fica em aberto. A ferramenta Estereoquímica (W) define o lado.'
+              ? 'Centro sem cunha nem traço fica sem configuração no desenho. A ferramenta Estereoquímica (W) define o lado.'
               : undefined
           }
         />

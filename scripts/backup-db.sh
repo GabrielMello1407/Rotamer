@@ -26,32 +26,32 @@ BACKUP_DIR="${BACKUP_DIR:-/var/backups/rotamer}"
 BACKUP_KEEP="${BACKUP_KEEP:-30}"
 BACKUP_REMOTE="${BACKUP_REMOTE:-}"
 
-carimbo="$(date -u +%Y%m%dT%H%M%SZ)"
-arquivo="${BACKUP_DIR}/rotamer-${carimbo}.dump"
+stamp="$(date -u +%Y%m%dT%H%M%SZ)"
+file="${BACKUP_DIR}/rotamer-${stamp}.dump"
 
 mkdir -p "${BACKUP_DIR}"
 
 # Formato custom (-Fc): comprimido, e o pg_restore consegue restaurar tabela a
 # tabela a partir dele.
-pg_dump --dbname="${DATABASE_URL}" --format=custom --no-owner --file="${arquivo}"
+pg_dump --dbname="${DATABASE_URL}" --format=custom --no-owner --file="${file}"
 
 # Um arquivo que não abre não é backup. `pg_restore --list` lê o índice do
 # despejo sem tocar em banco nenhum.
-if ! pg_restore --list "${arquivo}" > /dev/null; then
-  echo "backup ilegível, apagando: ${arquivo}" >&2
-  rm -f "${arquivo}"
+if ! pg_restore --list "${file}" > /dev/null; then
+  echo "backup ilegível, apagando: ${file}" >&2
+  rm -f "${file}"
   exit 1
 fi
 
-tamanho="$(du -h "${arquivo}" | cut -f1)"
-echo "backup ok: ${arquivo} (${tamanho})"
+size="$(du -h "${file}" | cut -f1)"
+echo "backup ok: ${file} (${size})"
 
 # Fora da máquina, quando houver destino configurado.
 if [ -n "${BACKUP_REMOTE}" ]; then
-  rsync --archive --quiet "${arquivo}" "${BACKUP_REMOTE}"
+  rsync --archive --quiet "${file}" "${BACKUP_REMOTE}"
   echo "cópia enviada para ${BACKUP_REMOTE}"
 fi
 
 # Retenção. `-mtime +N` conta dias completos.
-apagados="$(find "${BACKUP_DIR}" -name 'rotamer-*.dump' -type f -mtime "+${BACKUP_KEEP}" -print -delete | wc -l)"
-echo "retenção: ${apagados} arquivo(s) além de ${BACKUP_KEEP} dias apagado(s)"
+deleted="$(find "${BACKUP_DIR}" -name 'rotamer-*.dump' -type f -mtime "+${BACKUP_KEEP}" -print -delete | wc -l)"
+echo "retenção: ${deleted} arquivo(s) além de ${BACKUP_KEEP} dias apagado(s)"

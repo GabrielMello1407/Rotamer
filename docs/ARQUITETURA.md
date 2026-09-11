@@ -162,8 +162,8 @@ o código executa, e a nota mudaria sem ninguém ter mexido em nada. `Attempt.qu
   instância mantida pelo autor, em `DEPLOY.md`.
 - **Integração contínua** (`.github/workflows/ci.yml`): um trabalho sem banco (lint, tipos,
   testes de núcleo — os de ação pulam avisando), um com Postgres (migração, testes de ação com
-  `REQUIRE_DATABASE=1`, Playwright em desktop e celular), e um que constrói a imagem. A imagem é
-  publicada no GHCR a cada etiqueta `v*` (`imagem.yml`).
+  `REQUIRE_DATABASE=1`, Playwright em desktop e celular), e um que constrói a imagem e a sobe
+  contra um banco novo. A imagem é publicada no GHCR a cada etiqueta `v*` (`image.yml`).
 
 ## Desempenho — restrições, não sugestões
 

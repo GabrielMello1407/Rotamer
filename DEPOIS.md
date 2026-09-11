@@ -222,7 +222,7 @@ As listas da turma, a missão criada desenhando a resposta e o catálogo compart
 
 - **Imagem para `arm64`.** A imagem é `amd64`. Raspberry Pi e Mac com Apple Silicon constroem
   localmente com `docker compose up -d --build`, que funciona e demora; publicar as duas
-  arquiteturas é um `platforms:` no `imagem.yml` e o dobro do tempo de CI.
+  arquiteturas é um `platforms:` no `image.yml` e o dobro do tempo de CI.
 - **Proxy com TLS dentro do compose.** Hoje o `docs/INSTALACAO.md` mostra o Caddy por fora.
   Entraria como perfil opcional do compose, com o domínio numa variável. Espera a primeira
   escola que instale e peça.

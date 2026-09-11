@@ -9,9 +9,10 @@
 #
 #   docker compose up -d postgres
 #
-# As variáveis de `.env` (ao lado deste arquivo) entram no app; DATABASE_URL é
-# montada aqui, apontando para o serviço `postgres`, e ganha de qualquer valor
-# que esteja no `.env`.
+# O compose lê o `.env` ao lado deste arquivo sozinho e repassa ao app só o
+# que está listado em `environment`. DATABASE_URL é montada aqui, apontando
+# para o serviço `postgres`. Vazio é o mesmo que ausente: o tutor desliga, a
+# telemetria não carrega.
 services:
   app:
     image: ghcr.io/gabrielmello1407/rotamer:latest
@@ -20,11 +21,13 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    env_file:
-      - path: .env
-        required: false
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-rotamer}:${POSTGRES_PASSWORD:-rotamer}@postgres:5432/${POSTGRES_DB:-rotamer}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-}
+      TUTOR_DAILY_LIMIT: ${TUTOR_DAILY_LIMIT:-30}
+      UMAMI_SCRIPT_URL: ${UMAMI_SCRIPT_URL:-}
+      UMAMI_WEBSITE_ID: ${UMAMI_WEBSITE_ID:-}
     ports:
       - '${ROTAMER_PORT:-3000}:3000'
 

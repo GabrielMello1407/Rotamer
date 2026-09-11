@@ -100,8 +100,9 @@ jobs:
     runs-on: ubuntu-latest
 
     # A imagem do self-host (D-28) precisa continuar construindo a cada mudança,
-    # não só no dia de publicar uma versão. Aqui ela só é construída; quem
-    # publica é `imagem.yml`, a cada etiqueta `v*`.
+    # não só no dia de publicar uma versão. Construir não basta: ela sobe
+    # contra um banco novo e precisa responder — é o que quem faz self-host
+    # vai ver. Quem publica é `image.yml`, a cada etiqueta `v*`.
     steps:
       - uses: actions/checkout@v4
 
@@ -111,5 +112,28 @@ jobs:
         with:
           context: .
           push: false
+          load: true
+          tags: ghcr.io/gabrielmello1407/rotamer:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      # Sem `.env`: os padrões do compose, como na primeira subida de alguém.
+      - run: docker compose up -d --no-build
+
+      - name: a instância responde
+        run: |
+          for i in $(seq 1 40); do
+            curl -fsS http://127.0.0.1:3000/marca > /dev/null && break
+            sleep 3
+          done
+          curl -fsS http://127.0.0.1:3000/marca > /dev/null
+          curl -fsS http://127.0.0.1:3000/m/CCO | grep -q 'C2H6O'
+          curl -fsSI http://127.0.0.1:3000/chem/RDKit_minimal.wasm | grep -qi 'immutable'
+          docker compose logs app | grep -q 'All migrations have been successfully applied'
+          docker compose exec -T app node scripts/promote-teacher.mjs ninguem@rotamer.test --escola CI 2>&1 | grep -q 'Não existe conta'
+
+      - if: ${{ failure() }}
+        run: docker compose logs
+
+      - if: ${{ always() }}
+        run: docker compose down -v

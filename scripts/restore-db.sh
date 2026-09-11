@@ -20,8 +20,8 @@
 
 set -euo pipefail
 
-arquivo="${1:-}"
-if [ -z "${arquivo}" ] || [ ! -f "${arquivo}" ]; then
+file="${1:-}"
+if [ -z "${file}" ] || [ ! -f "${file}" ]; then
   echo "uso: ./scripts/restore-db.sh <arquivo.dump>" >&2
   exit 2
 fi
@@ -35,7 +35,7 @@ if [ "${RESTORE_URL}" = "${DATABASE_URL}" ] && [ "${RESTORE_CONFIRMO:-}" != "sim
   exit 3
 fi
 
-echo "restaurando ${arquivo}"
+echo "restaurando ${file}"
 echo "     em      ${RESTORE_URL}"
 
 # `--clean --if-exists` derruba o que estiver lá antes de recriar; sem isso a
@@ -43,9 +43,11 @@ echo "     em      ${RESTORE_URL}"
 pg_restore \
   --dbname="${RESTORE_URL}" \
   --clean --if-exists --no-owner --exit-on-error \
-  "${arquivo}"
+  "${file}"
 
-echo "restaurado. Confira o que importa antes de dar por encerrado:"
-echo "  psql \"${RESTORE_URL}\" -c 'select count(*) from \"Profile\";'"
-echo "  psql \"${RESTORE_URL}\" -c 'select count(*) from \"Attempt\";'"
-echo "  psql \"${RESTORE_URL}\" -c 'select count(*) from \"MoleculeName\";'"
+# As três contagens que dizem se o backup vale alguma coisa: contas,
+# tentativas e batismos. Zero onde devia haver gente é o sinal de dump vazio.
+echo "restaurado. O que veio:"
+for table in Profile Attempt MoleculeName; do
+  printf '  %-14s %s\n' "${table}" "$(psql "${RESTORE_URL}" -tAc "select count(*) from \"${table}\";")"
+done

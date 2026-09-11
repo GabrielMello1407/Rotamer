@@ -28,6 +28,14 @@ RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
 # fala com o Google.
 RUN pnpm --filter @rotamer/web build
 
+# O `next build` arrasta o `sharp` e o libvips para a saída standalone por
+# causa do otimizador de imagem, que o produto não usa: nenhuma página usa
+# `next/image`, e a imagem de link sai do `next/og`. O libvips é LGPL, e uma
+# biblioteca que nada chama não tem por que viajar numa imagem que se
+# redistribui (D-28; `docs/TERCEIROS.md`). Sai aqui, antes da cópia para o
+# estágio final — apagar depois deixaria os bytes na camada copiada.
+RUN rm -rf apps/web/.next/standalone/node_modules/.pnpm/sharp@*     apps/web/.next/standalone/node_modules/.pnpm/@img+*
+
 # ---------------------------------------------------------------- execução
 FROM node:24-bookworm-slim AS runner
 ENV NODE_ENV=production \

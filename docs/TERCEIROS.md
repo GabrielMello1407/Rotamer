@@ -32,6 +32,15 @@ Os avisos de copyright viajam dentro do `node_modules` que a imagem Docker carre
 repositório, no `LICENSE` de cada pacote. A página pública de molécula diz, no rodapé, que a
 química é do RDKit.
 
+## O que fica de fora da imagem
+
+O Next.js traz o `sharp` como dependência opcional, e com ele os binários do **libvips**
+(`@img/sharp-libvips-*`, licença `Apache-2.0 AND LGPL-3.0-or-later`). Servem ao otimizador de
+imagem, que o produto não usa — nenhuma página usa `next/image`, e a imagem de link da página
+pública sai do `next/og`. O `Dockerfile` apaga os dois da saída standalone antes de fechar a
+imagem: biblioteca que nada chama não tem por que ser redistribuída, e LGPL não entra sem
+conversa (D-28). Se um dia alguém usar `next/image`, esta linha volta a ser pergunta.
+
 ## Serviços de fora
 
 Nenhum deles é dependência do pacote. Cada um é opcional, e o produto funciona inteiro sem ele.

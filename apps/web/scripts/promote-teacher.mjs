@@ -14,7 +14,8 @@
  *
  *   docker compose exec app node scripts/promote-teacher.mjs ana@escola.br --escola "EE Dom Pedro II"
  *
- * Precisa de `DATABASE_URL` no ambiente — o mesmo banco que o app usa.
+ * Precisa de `DATABASE_URL`: do ambiente, ou do `.env` de `apps/web` em
+ * desenvolvimento — o mesmo banco que o app usa. O ambiente ganha do arquivo.
  *
  * Fala SQL direto, sem Prisma: o cliente gerado é TypeScript e só existe depois
  * do build do Next. Uma promoção é um `UPDATE` de duas colunas, e depender do
@@ -23,6 +24,16 @@
  */
 
 import pg from 'pg';
+
+// O ambiente ganha do arquivo: `process.loadEnvFile` não sobrescreve o que já
+// está definido, mas ler antes deixa isso explícito. Sem `.env` — no
+// container, por exemplo — vale só o ambiente.
+const fromEnvironment = process.env.DATABASE_URL;
+try {
+  process.loadEnvFile('.env');
+} catch {
+  // Sem `.env`, vale o que já estiver no ambiente.
+}
 
 const args = process.argv.slice(2);
 const email = args.find((entry) => !entry.startsWith('--'))?.trim().toLowerCase();
@@ -36,7 +47,7 @@ if (!email) {
   process.exit(2);
 }
 
-const connectionString = process.env.DATABASE_URL ?? '';
+const connectionString = fromEnvironment ?? process.env.DATABASE_URL ?? '';
 if (connectionString === '') {
   console.error('DATABASE_URL não está definida.');
   process.exit(2);

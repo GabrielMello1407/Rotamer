@@ -14,16 +14,16 @@ cd /app/apps/web
 if [ -z "${DATABASE_URL:-}" ]; then
   echo "rotamer: DATABASE_URL não está definida — subindo sem banco. O editor funciona; conta, turma e lista ficam desligadas."
 else
-  tentativa=1
+  attempt=1
   # O Postgres do docker-compose já responde ao healthcheck quando este
   # script roda, mas um banco em outra máquina pode demorar a aceitar conexão.
   until node_modules/prisma/build/index.js migrate deploy; do
-    if [ "${tentativa}" -ge 10 ]; then
-      echo "rotamer: o banco não respondeu depois de ${tentativa} tentativas. Confira DATABASE_URL." >&2
+    if [ "${attempt}" -ge 10 ]; then
+      echo "rotamer: o banco não respondeu depois de ${attempt} tentativas. Confira DATABASE_URL." >&2
       exit 1
     fi
-    tentativa=$((tentativa + 1))
-    echo "rotamer: banco ainda não respondeu, tentando de novo em 3 s (${tentativa}/10)…"
+    attempt=$((attempt + 1))
+    echo "rotamer: banco ainda não respondeu, tentando de novo em 3 s (${attempt}/10)…"
     sleep 3
   done
 fi

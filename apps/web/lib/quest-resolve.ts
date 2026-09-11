@@ -84,9 +84,9 @@ export async function resolveQuest(slug: string): Promise<Assessable | null> {
  * chega por uma lista publicada da própria turma continua, porque o
  * caminho 1 continua valendo.
  *
- * **Cinco portas chamam esta função** — nunca reimplementam a cadeia:
- * `saveAttempt`, `openQuest` (`attempt.ts`), a leitura da missão pelo aluno e
- * `reportQuest` (`assignment.ts`), e `askTutor` (`tutor.ts`).
+ * **Seis portas chamam esta função** — nunca reimplementam a cadeia:
+ * `saveAttempt`, `openQuest` (`attempt.ts`); `readQuestDetail`, `checkQuest` e
+ * `reportQuest` (`assignment.ts`); e `askTutor` (`tutor.ts`).
  */
 export async function studentQuestAccess(profileId: string, slug: string): Promise<boolean> {
   if (!slug.startsWith(TEACHER_QUEST_PREFIX)) return true;

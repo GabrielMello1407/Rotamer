@@ -61,6 +61,10 @@ test.describe('estereoquímica', () => {
     await openAnalysis(page);
     // Sem cunha, o centro existe e ninguém disse de que lado.
     await expect(page.getByTestId('estereocentros')).toContainText('sem configuração');
+    // A nota da linha diz como resolver. Ela é texto de química lido por
+    // aluno, e já sobreviveu uma entrega inteira dizendo que o editor não
+    // representa cunhas — por isso é conferida aqui, e não só o valor.
+    await expect(page.getByTestId('estereocentros')).toHaveAttribute('title', /Estereoquímica \(W\)/);
 
     await page.getByRole('button', { name: 'Estereoquímica' }).click();
 
@@ -69,10 +73,12 @@ test.describe('estereoquímica', () => {
     const ligacao = await pointOnCanvas(page, 0.75 * SCALE);
     await page.mouse.click(ligacao.x, ligacao.y);
 
-    // Definida a cunha, o descritor deixa de acusar centro em aberto.
+    // Definida a cunha, o descritor deixa de acusar centro em aberto — e a
+    // nota some junto.
     await expect(page.getByTestId('estereocentros')).not.toContainText('sem configuração', {
       timeout: 60_000,
     });
+    await expect(page.getByTestId('estereocentros')).not.toHaveAttribute('title', /Estereoquímica/);
   });
 
   test('a estereoquímica atravessa o SMILES e volta', async ({ page }) => {
