@@ -1,8 +1,8 @@
 # Design system
 
-> Primeira versão. Os valores abaixo foram medidos e validados, mas o sistema é para ser
-> estendido conforme o produto crescer — faltam ainda estados de componente, formulários,
-> tabelas de dados e tudo que só aparece quando as telas existirem.
+> O que está aqui é o que o produto usa hoje. Cor, tipografia, forma e movimento foram medidos
+> e validados; o que uma tela nova precisar e não estiver aqui entra primeiro nos tokens, depois
+> neste documento.
 
 Fonte da verdade em código: [`packages/ui/src/tokens.css`](../packages/ui/src/tokens.css). Nenhum hex solto no
 código da aplicação.

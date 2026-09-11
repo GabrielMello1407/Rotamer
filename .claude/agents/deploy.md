@@ -1,6 +1,6 @@
 ---
 name: deploy
-description: Build, servidor e operação do Rotamer — Turborepo, build do Next, PM2, Caddy, Postgres no VPS, migração de banco, backup e ensaio de restauração, variáveis de ambiente, telemetria Umami e desempenho de entrega. Use quando a mudança precisar de variável nova, migração, passo no servidor, ou quando algo quebrar em produção.
+description: Build, imagem e operação do Rotamer — Turborepo, build do Next, Dockerfile e docker-compose, publicação da imagem, proxy com TLS, Postgres, migração de banco, backup e ensaio de restauração, variáveis de ambiente, telemetria Umami e desempenho de entrega. Use quando a mudança precisar de variável nova, migração, passo de operação, ou quando algo quebrar numa instância.
 tools: Read, Grep, Glob, Edit, Write, Bash, SendMessage, ListAgents
 model: sonnet
 ---
@@ -37,10 +37,10 @@ instância no ar e o do self-host, e você mantém os dois atualizados.
 
 - Modelo de LLM sai de circulação, e o efeito na tela é o tutor calar como se não houvesse chave.
   O padrão fica num apelido com reserva fixa, e `GEMINI_MODEL` troca sem tocar no código.
-- Promoção de professor é por script no servidor (`scripts/promote-teacher.mjs`), com
-  `DATABASE_URL` no ambiente — nunca por tela (D-19).
-- Dado de aluno não sai da nossa máquina. Telemetria auto-hospedada, sem cookie, com lista fechada
-  de eventos.
+- Promoção de professor é por script, dentro do container
+  (`docker compose exec app node scripts/promote-teacher.mjs`), nunca por tela (D-19).
+- Dado de aluno não sai da instância. Telemetria desligada por padrão; quando ligada, é Umami
+  auto-hospedado, sem cookie, com lista fechada de eventos.
 
 ## Como você trabalha
 

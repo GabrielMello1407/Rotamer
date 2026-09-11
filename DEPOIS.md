@@ -1,119 +1,93 @@
 # Depois
 
-Toda ideia que não está no escopo do MVP mora aqui, não no código.
-Escopo estourando é o risco número um deste projeto.
+Toda ideia que não está no escopo mora aqui, não no código. Escopo estourando é o risco número
+um deste projeto.
 
 Regra: se surgiu no meio de outra tarefa, escreva aqui e volte ao que estava fazendo.
 
-> Revisado depois de a v0.1 ficar de pé. A lista antiga foi escrita antes de existir código;
-> esta foi escrita depois de construir, e por isso tem sete itens que ninguém tinha previsto.
-
-## v0.2 · Atrito e confiança
-
-O critério do corte: **o que faz um professor voltar na segunda semana.** Nada aqui é
-funcionalidade nova impressionante — é tirar pedra do caminho de quem já quer usar.
-
-- [x] **Templates de anel em um clique** — benzeno, cicloexano, ciclopentano e piridina.
-- [x] **Rascunho salvo no navegador** — volta ao abrir; link com molécula ganha dele.
-- [x] **Exportar SVG e PNG** — SVG é o desenho do RDKit; PNG é a tela como está.
-- [x] **Pinça** — dois dedos ancorados no ponto do grafo que está embaixo deles. Falta o resto
-      do polimento de celular, que só a Fase 3 vai dizer qual é.
-- [x] **Busca por nome, via PubChem** — um campo só: o RDKit tenta ler como estrutura, e o que
-      ele não lê vira consulta de nome. Levou junto a verificação de novidade do batismo (D-15):
-      composto já conhecido não se batiza, e a tela mostra o nome que o PubChem registra.
-- [x] **Centros estereogênicos nas métricas** — com a ressalva "sem configuração" do lado,
-      enquanto o editor não representar cunhas e traços.
-- [ ] **Recuperação de senha** — numa turma de trinta, alguém esquece na primeira semana.
-- [ ] **"Minhas moléculas"** — a tabela existe e só é escrita por tentativa de missão. A conta
-      guarda progresso e não guarda o trabalho.
-
-## v0.3 · Estereoquímica
-
-- [ ] **Cunhas e traços, feito direito** — mexe no grafo, no molblock, na percepção CIP e na
-      coerência com a cena 3D.
-
-Tirada da v0.2 de propósito. É a primeira coisa que um químico vai pedir e o `CLAUDE.md` diz que
-merece ser feita direito; espremer junto com oito itens pequenos é exatamente como se faz errado.
+> Revisado em 11 de setembro de 2026, depois do D-28. O que já foi entregue saiu daqui — mora
+> no `docs/ROADMAP.md`, marcado como feito. O que ficou é o que está fora de propósito, com o
+> porquê e com o que destrancaria cada item.
 
 ## Perguntas em aberto
 
-- ~~O produto vai nomear molécula?~~ **Respondido (D-15):** não calcula nomenclatura; registra
-  autoria. Estrutura válida que ninguém batizou pode receber apelido de quem a desenhou, sempre
-  exibido com o nome de quem deu. Falta a parte que depende do PubChem: hoje "ninguém batizou"
-  quer dizer "ninguém batizou aqui dentro", e o produto não sabe se o composto já existe lá fora.
-  **Reaberta e refechada em 27/08/2026.** O `researcher` derrubou a premissa — "não existe
-  motor aberto e permissivo" é falso, o `openclatura` 0.3.1 é MIT e determinístico — e o D-15
-  foi reescrito por cima com justificativa nova. A resposta continua **não**, agora por escolha
-  e não por impossibilidade. O que ficou aberto é só a **direção**, e quem responde é o professor,
-  na sessão de observação da Fase 3. Os caminhos estão logo abaixo.
-- **Acessibilidade do canvas.** Desenhar exige ponteiro; teclado só tem atalhos. Compra
-  institucional costuma exigir acessibilidade, e isso pode virar bloqueio de venda antes de virar
-  pedido de usuário.
+- **A direção da nomenclatura.** O produto não nomeia, por escolha (D-15) — e a pergunta que
+  sobrou não é "se", é "em que direção": o professor quer *nomeie o que eu desenhei* ou *corrija
+  o nome que meu aluno escreveu*? Quem responde é a sessão de observação da Fase 3, com as
+  perguntas exatas do `docs/ROADMAP.md`. Os caminhos, com o preço de cada um, estão logo abaixo.
+- **Acessibilidade do canvas.** Desenhar exige ponteiro; o teclado só tem atalhos. Um aluno que
+  não usa mouse nem toque fica fora da aula, e escola pública tem obrigação legal de
+  acessibilidade. Não tem resposta barata: o editor é canvas próprio, e uma interface por
+  teclado é um segundo editor.
+- **Trilha de pesquisa.** O roadmap inteiro serve ao ensino. Para quem pesquisa — o químico
+  medicinal, o mestrando — não existe trilha: nem comparação sistemática, nem lote, nem
+  reprodutibilidade. O D-09 dizia que o pesquisador é usuário avançado e não cliente; o D-28
+  tirou a palavra "cliente" e deixou a pergunta legítima. O que precisaria existir, e cada um é
+  uma fase inteira: comparar moléculas lado a lado com os descritores em tabela; lote, com dezenas
+  de estruturas de uma vez e a planilha saindo; conjunto de conformações com energia relativa e
+  população de Boltzmann; histórico de exploração; exportar SDF com propriedades; e citação —
+  versão do RDKit, do campo de força e da semente, junto do resultado. **Por que não entra
+  agora:** compete com a Fase 3, que é o contato com professores de verdade. **Destranca se**
+  algum professor da Fase 3 for também pesquisador e disser o que faria com isso — aí o D-09 é
+  reafirmado ou revisto por escrito, com fase própria no roadmap.
 
 ## Nomenclatura — os cinco caminhos, e o que destranca cada um
 
 **Escrito em 27/08/2026, a partir de `docs/pesquisa/nomenclatura.md`.** Nada disto entra agora. O
-D-15 fica de pé com justificativa nova, e a escolha entre os caminhos abaixo **espera a sessão de
-observação**, que responde de graça a única pergunta que decide tudo: o professor quer "nomeie o
-que eu desenhei" ou "corrija o nome que meu aluno escreveu"? As perguntas exatas estão na Fase 3
-do `docs/ROADMAP.md`.
+D-15 fica de pé com justificativa nova, e a escolha entre os caminhos abaixo espera a sessão de
+observação.
 
 Ordem de preço, do mais barato ao mais caro.
 
 **(a) Não nomear, e dizer isso em voz alta.** É o que está valendo. Custo quase zero: a
-justificativa reescrita (feita) e uma frase na tela que responda antes de o professor perguntar.
-Risco: ele lê como limitação em vez de escolha — o que encolhe se a frase disser **o que** o
-produto não faz e **por quê**, em vez de "não dá". Obriga para sempre: a disciplina de recusar
-apelido que se passe por nomenclatura — hoje sustentada mais pela atribuição de autoria do que
-pela regra escrita, e isso agora está dito no D-15.
+justificativa reescrita (feita) e a frase na tela que responde antes de o professor perguntar
+(feita: "Apelido é autoria, não nomenclatura. O Rotamer escolheu não nomear"). Risco: ele lê como
+limitação em vez de escolha. Obriga para sempre: a disciplina de recusar apelido que se passe por
+nomenclatura — sustentada pela atribuição de autoria e pela regra escrita no D-15.
 
 **(b) O aluno nomeia e o produto confere** (nome → estrutura). **Metade já existe e custa zero:** a
-condição `inchiKey` das missões (`packages/quests/src/types.ts`) já compara o que o aluno desenhou
-com o alvo, e o nome do alvo é digitado por um humano no dado da missão — nenhum motor, nenhuma
-rede, o D-15 intacto. É a direção que ENEM, Unicamp e SEDUC-SP cobram, é onde o aluno erra (41,59%
-de zeros na Unicamp 2005) e é o que Shute (2008) prescreve: o aluno produz, o software confere. A
-**outra** metade — nomenclatura livre, o aluno escrevendo qualquer nome — exige OPSIN (JVM no VPS,
-ou o serviço do EBI) mais uma camada pt→en que **decide estrutura** e portanto não pode ser o LLM
-(D-01). Obriga para sempre: um dicionário pt→en revisado por químico, mais um processo em produção
-ou uma dependência de terceiro. **Contra, e é sério:** reabre o item 3 do D-09, que pôs entrada por
-nome depois do MVP. **Destranca se** a sessão disser "corrija o nome do meu aluno" — e aí a
-primeira entrega é a metade grátis: missão com alvo dado por nome, sem motor nenhum.
+condição `inchiKey` das missões (`packages/quests/src/types.ts`) compara o que o aluno desenhou
+com o alvo, e o nome do alvo é digitado por um humano no enunciado — nenhum motor, nenhuma rede,
+o D-15 intacto. É a direção que ENEM, Unicamp e SEDUC-SP cobram, é onde o aluno erra (41,59% de
+zeros na Unicamp 2005) e é o que Shute (2008) prescreve: o aluno produz, o software confere. A
+**outra** metade — nomenclatura livre, o aluno escrevendo qualquer nome — exige OPSIN (JVM na
+instância, ou o serviço do EBI) mais uma camada pt→en que **decide estrutura** e portanto não pode
+ser o LLM (D-01). Obriga para sempre: um dicionário pt→en revisado por químico, mais um processo
+em produção ou uma dependência de terceiro. **Destranca se** a sessão disser "corrija o nome do
+meu aluno" — e aí a primeira entrega é a metade grátis: missão com alvo dado por nome, que o
+professor já consegue criar hoje cobrando "é exatamente esta molécula".
 
 **(c) Integrar motor de terceiro** (estrutura → nome). Candidato realista único: `openclatura`
 0.3.1, MIT, determinístico, sobre o RDKit, como microsserviço Python ao lado do Next.js. Custo: um
-serviço a mais em produção para sempre, **mais** a localização pt-BR, que é o trabalho de verdade.
-Risco: beta 0.3.1 de um laboratório só; inglês; chamada de rede por nome, que não funciona offline
-e cai junto com o VPS. Obriga para sempre: **só mostrar nome que a verificação confirmou** — e
-ativar o `verify_with_opsin` puxa o OPSIN, o Java e a LGPL junto. A favor, e é o argumento forte: o
-`NameAnalysis` devolve o nome **em pedaços**, com índices de átomo que casam com o grafo — daria
-para acender no desenho a parte que corresponde a cada pedaço do nome, que é a mesma ideia do
-"átomo aceso é um só nas duas telas" (D-18). Isso deixa de ser dar a resposta e vira explicação.
-**Destranca se** os três gatilhos do D-15 forem satisfeitos, nesta ordem: sessão → químico marcando
-nome a nome → pt-BR determinístico.
+serviço a mais em toda instância para sempre — inclusive no self-host, que passaria a ser dois
+containers e não um —, **mais** a localização pt-BR, que é o trabalho de verdade. Risco: beta
+0.3.1 de um laboratório só; inglês; chamada de rede por nome. Obriga para sempre: **só mostrar
+nome que a verificação confirmou** — e ativar o `verify_with_opsin` puxa o OPSIN, o Java e a LGPL
+junto, que o D-28 deixa de fora. A favor, e é o argumento forte: o `NameAnalysis` devolve o nome
+**em pedaços**, com índices de átomo que casam com o grafo — daria para acender no desenho a
+parte que corresponde a cada pedaço do nome, a mesma ideia do "átomo aceso é um só" (D-18).
+**Destranca se** os três gatilhos do D-15 forem satisfeitos, nesta ordem: sessão → químico
+marcando nome a nome → pt-BR determinístico.
 
 **(d) Faixa restrita** — nomear só o que dá para garantir e calar no resto. Risco: a fronteira é
-invisível ao usuário, e a faixa **cresce** — escopo estourando é o risco número um deste projeto.
-Observação que muda o preço: com o round-trip do `openclatura`, a faixa não precisa ser escrita à
-mão — pode ser "tudo que a verificação confirmou", que é fronteira medida e não opinada. Na
-prática isto não é caminho separado: é o (c) feito direito.
+invisível ao usuário, e a faixa **cresce**. Com o round-trip do `openclatura`, a faixa não
+precisa ser escrita à mão — pode ser "tudo que a verificação confirmou". Na prática isto não é
+caminho separado: é o (c) feito direito.
 
-**(e) Nomear só o conteúdo curado, em tempo de build.** Rodar o motor uma vez sobre a lista fechada
-das missões, um químico conferir nome a nome, e o resultado entrar como **dado** — do mesmo jeito
-que o nome já entra hoje na missão. Custo zero em produção: nenhum serviço, funciona offline e no
-celular fraco. Risco: só responde dentro da missão, e o professor vai desenhar fora da lista — que
-é exatamente o que ele fará na sessão. Obriga para sempre: revisão humana a cada mudança da lista,
-trabalho de professor que some se ninguém for pago para fazê-lo. **E isto não é nomear, é
-catálogo** — a diferença precisa estar dita na tela, ou vira a impressão de que o produto nomeia,
-que é justamente o que o D-15 quis evitar. **Destranca se** a sessão disser "nomeie o que eu
-desenhei" **e** o professor aceitar que o produto responda só dentro da trilha.
+**(e) Nomear só o conteúdo curado, em tempo de build.** Rodar o motor uma vez sobre o catálogo,
+um químico conferir nome a nome, e o resultado entrar como **dado**. Custo zero em produção:
+nenhum serviço, funciona offline e no celular fraco. Risco: só responde dentro da missão, e o
+professor vai desenhar fora da lista. Obriga para sempre: revisão humana a cada mudança do
+catálogo — e agora o catálogo tem missão de professor (D-27), que ninguém revisa. **E isto não é
+nomear, é catálogo** — a diferença precisa estar dita na tela. **Destranca se** a sessão disser
+"nomeie o que eu desenhei" **e** o professor aceitar que o produto responda só dentro da trilha.
 
 **Vetado, e o motivo já está escrito.** Qualquer motor **neural** de nomenclatura, incluindo o
 STOUT (MIT): 83,52% a 89,86% de acerto medidos pelos próprios autores é o mesmo perfil que o
 `CLAUDE.md` usa para vetar o LLM. `chem-dl-iupac` (AGPL-3.0) e `iupac-to-structure` (GPL-3.0) caem
-pela licença; `smiles2iupac` e o fork em espanhol do OPSIN não têm licença nenhuma. O ChemDoodle
-**não** está vetado por política — a licença comercial da iChemLabs serve a produto fechado; ele
-está fora por preço (US$ 29/mês por usuário, sem desconto acadêmico) e por depender do servidor
-deles a cada chamada. Chamar isso de "vetado" transformaria juízo de negócio em proibição de regra.
+pela licença (D-28); `smiles2iupac` e o fork em espanhol do OPSIN não têm licença nenhuma. O
+ChemDoodle é proprietário — não se redistribui num repositório MIT — e ainda depende do servidor
+da iChemLabs a cada chamada.
 
 ## Duas dívidas menores que a nomenclatura deixou
 
@@ -123,8 +97,8 @@ deles a cada chamada. Chamar isso de "vetado" transformaria juízo de negócio e
   mostrar que a colisão incomoda de verdade. Até lá quem carrega o peso é a atribuição de autoria:
   "batizada por Camila" ao lado do apelido.
 - **`condense_abbreviations` do RDKit.** Produz rótulos como `CO2Et`, que o aluno lê como nome. Não
-  está ligado em lugar nenhum do produto hoje (verificado por grep). Se alguém ligar, esses rótulos
-  caem sob a regra do D-15 e precisam de origem dita na tela.
+  está ligado em lugar nenhum do produto. Se alguém ligar, esses rótulos caem sob a regra do D-15
+  e precisam de origem dita na tela.
 
 ## Seleção — o que ficou de fora do primeiro corte
 
@@ -162,8 +136,7 @@ sobre a molécula em 3D é justamente o que uma aula de polaridade precisa, mais
 
 **Validado pelo professor em 28/08/2026**, antes de qualquer teste: *"Mostraria a polaridade da
 molécula. Só a seta, com a direção do dipolo resultante, ajuda bastante."* Ou seja, a saída barata
-— seta sem número — é exatamente a que serve para a aula dele. Vale como dado de sessão de
-observação, e chegou de graça.
+— seta sem número — é exatamente a que serve para a aula dele.
 
 **Só que ela não é barata, e isso foi medido em 28/08/2026.** Nenhum dos dois motores entrega
 carga parcial pela API que usamos:
@@ -180,7 +153,8 @@ Logo, as saídas possíveis, e nenhuma é de uma tarde:
 1. **Achar outra fonte de carga com licença que sirva** (MIT, BSD, Apache) — pergunta para o
    `researcher`.
 2. **Compilar a nossa própria MinimalLib** com a função do RDKit exposta. É o caminho mais correto
-   quimicamente e o mais caro em infraestrutura; muda o `prebuild` e o `docs/DEPLOY.md`.
+   quimicamente e o mais caro em infraestrutura; muda o `prebuild`, a imagem Docker e o
+   `docs/INSTALACAO.md`.
 3. **Implementar Gasteiger–Marsili à mão.** Tentador e proibido pelo espírito do D-01 e do D-02:
    seria kernel próprio outra vez, agora em carga parcial, e o erro sairia silencioso numa seta que
    aponta para o lado errado.
@@ -196,158 +170,85 @@ O que impede de entrar sem conversa:
   número, dizendo que é a direção da polaridade e não uma medida), ou mostrar o número com a
   origem dita e uma comparação — o que exige medir antes o quanto ele erra em moléculas de aula.
 - Antes das duas: **perguntar ao Pedro o que ele faria com isso na aula**. Se o uso é "mostrar que
-  a água é polar e o CO₂ não", a seta basta e é barata.
+  a água é polar e o CO₂ não", a seta basta.
 
-## Missões como material de aula — o `pm` respondeu
+## Listas e catálogo — o que ficou de fora (D-25, D-26, D-27)
 
-**28 de agosto de 2026, mesmo dia.** A proposta abaixo foi lida e cortada. O que entrou está
-especificado em `docs/ROTEIROS.md`, pronto para o `backend`, o `frontend` e o `reviewer`
-executarem; o resto continua aqui, e continua adiado.
-
-**Virou entrega:**
-
-- **Escolher e ordenar** — o professor monta uma **lista** (é a palavra da tela; o código é
-  `Assignment`), dentro de uma turma que já existe, publicando quando quiser.
-- **Criar missão própria desenhando a resposta** — `extractGoals` extrai os objetivos
-  verificáveis da molécula que o RDKit aceitou, o professor marca quais cobrar e escreve
-  enunciado e dicas. Nada de química é digitado (D-25).
-- **Acompanhar por lista** — o quadro que já existe, restrito aos itens da lista, com três
-  estados por célula: cumpriu · travou · não abriu. Progresso, nunca molécula (D-22).
-
-**Continua adiado, e agora com razão escrita:**
+As listas da turma, a missão criada desenhando a resposta e o catálogo compartilhado existem
+(`docs/ROTEIROS.md`). O que ficou fora, e por quê:
 
 - **Prazo de entrega** — traz fuso, atraso e nota parcial; a pergunta do quadro é onde a turma
-  parou, não quem entregou a tempo.
+  parou, não quem entregou a tempo (D-22).
 - **Nota que vira nota escolar, exportação, CSV, boletim** — promessa pedagógica que escola
   nenhuma pediu ainda. Pergunta da Fase 3.
 - **Copiar lista entre turmas do mesmo professor** — corte de escopo puro, e o mais provável de
   voltar cedo: é a primeira coisa que um professor com duas turmas vai pedir.
-- **Compartilhar lista entre professores** — exige autoria e moderação, e o leitor é menor de
-  idade.
 - **Missão com mais de uma resposta certa** (composição de `some`) — exigiria um editor de
   condição, que é o que o D-25 existe para não construir. Já existe caminho: cobrar grupo e
-  contagem em vez de InChIKey aceita muitas respostas.
+  contagem em vez de InChIKey aceita muitas respostas, e a tela de autoria diz isso.
 - **Cadeado entre itens** — Classroom e Khan também não trancam por padrão; missão que só abre
   depois de outra quebra a aula de quem quer começar por onde quer.
-- **Grafo de conceitos (`teaches`/`requires`)** — segue abaixo, e segue esperando o plano de
-  ensino do Idelcio.
-- **Tour de primeira visita** — segue abaixo: depois das sessões de observação.
-- **Tela de "quem publicou o quê"** — o `updatedAt` das duas tabelas entra agora, porque coluna
-  esquecida não se recupera; a tela só existe se a escola pedir.
+- **Tempo por item e número de tentativas no quadro** — `Attempt.elapsedMs` e a contagem de linhas
+  já existem, e a grade por item convida a mostrá-los. Três estados por célula, e ponto. Passar
+  disso é o D-22 virando boletim sem ninguém ter decidido.
+- **Grafo de conceitos (`teaches`/`requires`).** Cada missão declararia o que ensina e o que
+  pressupõe, em conceitos da disciplina; a ordem sugerida derivaria do grafo em vez de ser fixada
+  à mão, e `difficulty` viraria consequência. Entra como **sugestão, nunca como cadeado**. Espera
+  o plano de ensino do Idelcio: a lista de conceitos e a ordem deles não deveriam sair da nossa
+  cabeça — é pedir o plano, transcrever, e comparar com as 16 missões; o que sobra e o que falta
+  aparece sozinho.
+- **Tour de primeira visita.** Missão verifica molécula, não gesto (D-01): "gire a molécula",
+  "organize o desenho" e "veja um modo de vibração" não mudam o grafo e não podem ser objetivo.
+  O que cabe são **missões de tour** — missões de química escritas para que cumprir o objetivo
+  obrigue a descobrir uma ferramenta (dupla, heteroátomo, cunha, seleção) — e um **roteiro de
+  primeira visita** para o que não é química, como lista de conferência sem nota nem tique. Só
+  depois das sessões de observação: onde o usuário novo trava é dado que só a sessão dá.
+- **Tela de moderação de denúncia.** Hoje a denúncia (D-27) grava quem, quando e o motivo, e
+  retirar do catálogo é ação do próprio professor ou de quem administra, por script. Vira tela na
+  primeira denúncia real que chegar sem ninguém para ler.
+- **Como o Idelcio chama isso.** "Lista" foi decidido pela medição do `researcher` (D-26). Se a
+  sessão mostrar outra palavra na boca dele, troca-se `apps/web/app/turmas/messages.ts` e nada
+  mais.
 
-**Em aberto, na §9 de `docs/ROTEIROS.md`:** se o catálogo continua livre para quem não tem
-professor (resposta provisória: continua), e como o Idelcio chama isso — "lista", "atividade" ou
-outra coisa. A segunda troca um arquivo de textos e mais nada.
+## Dívida da entrega de listas
 
-As missões existem desde a v0.1 e foram pensadas como isca para quem
-chega sozinho. A pergunta nova é outra: **servir de exercício dentro da aula**, na sequência em que
-o professor ensina. É mudança de dono — de aluno curioso para professor com plano de ensino — e
-por isso precisa de decisão de escopo antes de código.
+- **Tetos em memória** (`apps/web/app/actions/assignment.ts` — salvamentos de autoria por dia,
+  conferências por minuto; `apps/web/app/actions/classroom.ts` — códigos errados por hora) —
+  persistir quando houver mais de um processo do app. Com um container só, como o
+  `docker-compose.yml` sobe, está correto; reiniciar o container zera a contagem, o que é
+  aceitável para um teto de abuso e inaceitável para uma cota de cobrança — e cobrança não existe.
 
-### O que trava hoje
+## Self-host — o que ficou de fora (D-28)
 
-O catálogo tem 16 missões, cada uma com `track` e `difficulty: 1 | 2 | 3`. O número é **rótulo, não
-progressão**: ele não diz o que a missão ensina, não diz o que ela pressupõe, e não tem relação
-nenhuma com a ordem em que o conteúdo aparece no semestre. Para o produto, "dificuldade 2" é uma
-fatia; para o professor, a unidade é "aula de funções oxigenadas, semana 4".
-
-Falta também o que agrupa: não existe jeito de o professor dizer "estas cinco, nesta ordem, para a
-minha turma".
-
-### A ideia: conceito e pré-requisito, e a ordem deixa de ser opinião
-
-Cada missão passaria a declarar o que **ensina** e o que **pressupõe**, em conceitos da disciplina
-— não em números:
-
-```
-teaches:  ['carbonila', 'cetona']
-requires: ['valencia-do-carbono', 'ligacao-dupla']
-```
-
-Com isso a ordem **deriva do grafo de conceitos** em vez de ser fixada à mão, a mesma missão pode
-ser alcançada por caminhos diferentes, e `difficulty` vira consequência (quantos conceitos ela
-exige) em vez de declaração. Também aparece de graça a resposta para "o que vem depois desta?".
-
-### O que o professor precisa, em ordem de valor
-
-1. **Escolher** — montar um roteiro: um punhado de missões, na ordem dele, com um nome ("Funções
-   oxigenadas — 3ª série"). É o que transforma o produto em material de aula, e não exige que ele
-   escreva missão nenhuma.
-2. **Acompanhar** — já existe (D-22): o painel mostra onde a turma parou, não quem foi melhor.
-3. **Criar missão própria** — capacidade **só do professor**, e opcional para ele (D-25,
-   28/08/2026): o roteiro pode ser só de catálogo, só de missões dele, ou misto. O jeito de fazer isso sem quebrar o
-   D-01 é o professor **desenhar a resposta** e o produto extrair os objetivos verificáveis dela;
-   ele escolhe quais cobrar e escreve o enunciado. A parte que decide química nunca é digitada.
-
-### A escolha que precisa ser feita, e a recomendação
-
-Duas leituras de "de acordo com o aprendizado do aluno":
-
-- **Adaptativo automático** — o produto escolhe a próxima missão pelo desempenho. Tentador e
-  arriscado: é afirmação sobre aprendizagem que não temos como sustentar, tira o controle do
-  professor, e exigiria dado de aluno que hoje o produto de propósito não guarda.
-- **Sequência do professor, com o produto medindo** — ele monta o roteiro, o grafo de conceitos
-  **sugere** o que vem depois, e o painel mostra onde a turma travou.
-
-A segunda é a que cabe no D-09 (o professor decide) e no D-22 (progresso, não ranking). O grafo de
-conceitos entra como sugestão, **nunca como cadeado**: missão que só abre depois de outra é o tipo
-de coisa que quebra a aula do professor que quer começar por onde ele quer.
-
-### O que já está certo e não se mexe
-
-- **Dica só quando pedida**, uma de cada vez (`QuestPanel` libera por clique). Isso não é detalhe de
-  interface: Shute (2008) mede que resposta dada antes da tentativa anula o efeito do retorno.
-- **A nota sai do motor determinístico**, e cada objetivo vale a mesma fatia — nota que o aluno
-  consegue explicar.
-- **A direção do exercício.** ENEM e Unicamp cobram *nome → estrutura*, e é onde o aluno erra
-  (41,59% de zeros na questão 9 da Unicamp 2005). As missões já pedem para desenhar a partir de uma
-  descrição; isso é acerto, e vale reforçar em vez de inverter.
-
-### Missões de primeira visita — e o limite do que uma missão pode verificar
-
-Ideia de 28/08/2026: deixar algumas missões para o usuário novo **explorar a ferramenta**, não só a
-química. A ideia é boa e já está meio feita: "O primeiro traço" e "O álcool do dia a dia" ensinam
-clique, arrasto e a tecla `O` por dentro de um objetivo químico.
-
-O limite que precisa ficar dito: **missão verifica molécula, não gesto** (D-01 e o desenho do
-`quests`). "Faça uma ligação dupla" é verificável — a molécula tem a dupla. "Gire a molécula em
-3D", "organize o desenho" e "veja um modo de vibração" **não** são: nada muda no grafo. Pôr isso
-como objetivo de missão exigiria o motor de missões ler estado de interface, que é justamente o
-que ele não deve ler.
-
-Então são duas coisas, e não uma:
-
-- **Missões de tour** continuam sendo missões de química, escritas para que cumprir o objetivo
-  **obrigue** a descobrir uma ferramenta: dupla (clique na ligação), heteroátomo (tecla ou tabela
-  periódica), centro estereogênico (cunha), um pedaço grande (seleção). Cada uma verificada pelo
-  RDKit, como todas.
-- **Um roteiro de primeira visita** para o que não é química — girar, vibrar, organizar, modos
-  normais — é lista de conferência da interface, sem nota, sem tique, mostrada uma vez e apagável.
-  Não é missão e não deve parecer missão; a trilha Otimização nem tem gamificação (D-09).
-
-E a ordem certa de fazer: **depois** das primeiras sessões de observação. Onde o usuário novo trava
-é dado que só a sessão dá, e desenhar o tour antes de assistir é adivinhar o problema.
-
-### O que decide tudo, e custa zero
-
-**O plano de ensino do Idelcio.** Ele está com a disciplina neste semestre. A lista de conceitos e
-a ordem deles não deveriam sair da nossa cabeça: é pedir o plano, transcrever, e comparar com as 16
-missões que existem — o que sobra e o que falta aparece sozinho.
-
-## Dívida da entrega de listas (D-25/D-27)
-
-- **Tetos em memória** (`apps/web/app/actions/assignment.ts` — salvamentos de autoria por dia;
-  `apps/web/app/actions/classroom.ts` — códigos errados por hora, R-15) — persistir quando houver
-  mais de um processo ou quando o deploy virar frequente.
+- **Imagem para `arm64`.** A imagem é `amd64`. Raspberry Pi e Mac com Apple Silicon constroem
+  localmente com `docker compose up -d --build`, que funciona e demora; publicar as duas
+  arquiteturas é um `platforms:` no `imagem.yml` e o dobro do tempo de CI.
+- **Proxy com TLS dentro do compose.** Hoje o `docs/INSTALACAO.md` mostra o Caddy por fora.
+  Entraria como perfil opcional do compose, com o domínio numa variável. Espera a primeira
+  escola que instale e peça.
+- **Exportar e importar entre instâncias.** Cada self-host é um mundo próprio, com os seus
+  apelidos e o seu catálogo (D-28). Uma escola que migre da instância no ar para a própria leva o
+  progresso dos alunos como? Hoje, não leva. É pergunta de escola, e nenhuma perguntou.
+- **Umami dentro do compose.** Telemetria é opt-in e quem liga sobe o próprio Umami. Um perfil
+  do compose com ele pronto deixaria a opção mais barata — e a decisão de ligar continua sendo
+  de quem hospeda.
+- **Imagem mais leve.** A linha de comando do Prisma pesa perto de 250 MB dentro da imagem e só
+  serve para `prisma migrate deploy` na subida; ela exige ao carregar os módulos do
+  `prisma studio` e do `prisma dev`, então não dá para podar (medido em 11/09/2026: podar
+  quebrou a migração em `effect` e em `@prisma/studio-core`). As saídas seriam aplicar as
+  migrações por outro caminho ou esperar o Prisma separar a CLI. Entra quando alguém reclamar do
+  tamanho — a imagem inteira fica abaixo de 1 GB e sobe em segundos.
 
 ## Considerado e adiado
 
-- [ ] Comparar dois análogos lado a lado — é para o usuário avançado, que não é o comprador (D-09)
+- [ ] Comparar dois análogos lado a lado — é para o usuário avançado, e faz parte da trilha de
+      pesquisa (acima)
 - [ ] Modo apresentação para o professor projetar sem a interface de edição
-- [ ] Retrossíntese e previsão de reação — precisa de modelo em servidor com GPU
+- [ ] Retrossíntese e previsão de reação — precisa de modelo em servidor com GPU, e é o que o
+      produto promete não fazer
 - [ ] Docking com proteína — servidor pesado, e cria expectativa de afirmação biológica
 - [ ] DFT / química quântica — impossível no navegador
-- [ ] Campanhas abertas da comunidade — depende de massa crítica e do modelo de negócio
+- [ ] Campanhas abertas da comunidade — depende de massa crítica e de moderação, que não existe
 - [ ] Edição colaborativa em tempo real
 - [ ] App nativo
 - [ ] Espectros simulados (RMN, IV) — tentador, mas é outro produto
@@ -355,43 +256,3 @@ missões que existem — o que sobra e o que falta aparece sozinho.
 ## Ideias soltas
 
 _(anote aqui e siga em frente)_
-
----
-
-## O roadmap não tem trilha de pesquisa — e isso é decisão ou esquecimento?
-
-**Levantado em 26/08/2026, durante a Fase 4.**
-
-Lendo o plano de ponta a ponta: tudo o que está escrito serve ao ensino. Missões, turmas,
-painel do professor, escola como compradora. Para quem **pesquisa** — o químico medicinal, o
-aluno de mestrado, o laboratório — não existe trilha nenhuma no roadmap: nem descoberta, nem
-comparação sistemática, nem o que fazer com um resultado que valeu a pena guardar.
-
-**A tensão com o que já está decidido.** O D-09 diz, com todas as letras, que o pesquisador é
-usuário avançado e **não é cliente** — e a trilha Otimização existe justamente para ele, sem
-missão, sem pontuação, sem conquista. Ou seja: a ausência de trilha de pesquisa no roadmap é
-coerente com uma decisão tomada, não é esquecimento. O que **não** foi decidido é se essa
-decisão continua valendo agora que o produto tem conta, biblioteca, modos normais e
-estereoquímica — coisas que um pesquisador usa.
-
-**O que precisaria existir para dizer que o produto serve à pesquisa** — e cada um destes é uma
-fase inteira, não um item:
-
-- comparar moléculas lado a lado, com os descritores em tabela e diferença destacada;
-- lote: rodar dezenas de estruturas de uma vez e exportar a planilha;
-- conjunto de conformações em vez de uma só, com energia relativa e população de Boltzmann;
-- histórico de exploração — o que foi tentado, o que foi descartado e por quê;
-- exportar em formato que outra ferramenta leia de verdade (SDF com propriedades, não só SMILES);
-- citação e reprodutibilidade: versão do RDKit, do campo de força e da semente, junto do
-  resultado.
-
-**Por que não entra agora.** Cada linha dessa lista compete com a Fase 3, que é o contato com
-professores de verdade — e o risco número um do projeto, escrito no `CLAUDE.md`, é escopo
-estourando. Também há uma pergunta de negócio antes da técnica: pesquisador **paga**? Se a
-resposta for não, isso é trabalho que não se sustenta; se for sim, é outro produto, com outro
-preço e outro ciclo de venda.
-
-**O que fazer com isto.** Levar a pergunta às sessões da Fase 3 — se algum professor for também
-pesquisador, ele responde de graça o que nenhuma reunião responderia. Depois disso, ou o D-09 é
-reafirmado, ou é revisto por escrito, com uma fase própria no roadmap. As duas respostas servem;
-o silêncio, não.

@@ -171,18 +171,26 @@ de orgânica aprende justamente para enxergar conformação.
 
 > Histórico completo em `DECISOES.md` D-07.
 
-## A virada comercial
+## A virada comercial — e a volta
 
 A recomendação original era AGPL-3.0 com marca reservada — abrir o código servia à comunidade,
 ao portfólio e a uma eventual formalização como extensão universitária.
 
-A decisão foi outra: **produto fechado, para vender.**
+A decisão foi outra: **produto fechado, para vender.** Era legítimo e tecnicamente viável — RDKit
+é BSD-3 e Three.js é MIT, ambas permitem uso comercial em produto proprietário — e ficou
+registrado no `DECISOES.md` D-08, com três pontos abertos: nenhuma dependência GPL, o modelo de
+campanhas comunitárias por repensar, e a relação com a UENP por verificar.
 
-Isso é legítimo e tecnicamente viável — RDKit é BSD-3 e Three.js é MIT, ambas permitem uso
-comercial em produto proprietário. Mas muda três coisas que ficaram registradas como pontos
-abertos em `DECISOES.md` D-08: nenhuma dependência GPL pode entrar, o modelo de campanhas
-comunitárias precisa ser repensado, e a relação com a UENP precisa ser verificada antes de
-qualquer vínculo institucional.
+Durou até o produto ficar de pé. Com o editor, as missões, as turmas e as listas prontas e
+testadas, a pergunta "para quem se vende isto?" não tinha resposta que valesse mais do que a
+resposta a "quem isto ajuda?". Em 11 de setembro de 2026 a decisão foi desfeita por escrito: o
+Rotamer é **aberto, sob licença MIT, e não será comercializado** — existe uma instância no ar
+mantida pelo autor, e qualquer escola sobe a sua com Docker (`DECISOES.md` D-28).
+
+O que a volta ensinou: a licença fechada tinha custo diário que ninguém somava. Cada documento
+falava em cliente, comprador e camada paga; o veto a GPL existia para proteger um negócio que não
+existia; a trilha de pesquisa estava travada por uma tensão comercial. Abrir o código foi menos
+uma decisão nova do que a retirada de uma que já não era verdade.
 
 ## O público só ficou claro no fim
 

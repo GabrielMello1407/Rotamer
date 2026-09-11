@@ -25,11 +25,17 @@ uma sala inteira.
 
 ## Experimente
 
-- **Na sua máquina, com Docker:** [docs/INSTALACAO.md](docs/INSTALACAO.md) — três comandos, banco
-  próprio, tudo seu.
+- **Na sua máquina, com Docker** — clone, copie o `.env.example` para `.env`, e:
+
+  ```
+  docker compose up -d
+  ```
+
+  Sobe o app e o Postgres, aplica as migrações e abre `http://localhost:3000`. Variáveis, primeiro
+  professor, atualização, backup e proxy com TLS em [docs/INSTALACAO.md](docs/INSTALACAO.md).
 - **Na instância mantida pelo autor:** o endereço entra aqui quando ela estiver no ar.
-- **Para desenvolver:** `pnpm install`, `docker compose up -d`, `pnpm dev`. Detalhes em
-  [docs/ARQUITETURA.md](docs/ARQUITETURA.md).
+- **Para desenvolver:** `pnpm install`, `docker compose up -d postgres`, `pnpm dev`. O caminho
+  inteiro está em [CONTRIBUTING.md](CONTRIBUTING.md).
 
 Como usar, tela a tela: [docs/GUIA.md](docs/GUIA.md).
 
@@ -130,10 +136,10 @@ recusando.
 
 ## Contribuir
 
-Leia [CLAUDE.md](CLAUDE.md) — é onde estão as regras que não se negociam — e
-[docs/ARQUITETURA.md](docs/ARQUITETURA.md). Toda mudança termina com teste que falharia sem ela;
-química nova pede caso em `packages/core/test/` rodando sem navegador. Ideia fora do escopo vai
-para [DEPOIS.md](DEPOIS.md) antes de virar código.
+Comece por [CONTRIBUTING.md](CONTRIBUTING.md). As regras que não se negociam estão em
+[CLAUDE.md](CLAUDE.md), e o mapa do código em [docs/ARQUITETURA.md](docs/ARQUITETURA.md). Toda
+mudança termina com teste que falharia sem ela; química nova pede caso em `packages/core/test/`
+rodando sem navegador. Ideia fora do escopo vai para [DEPOIS.md](DEPOIS.md) antes de virar código.
 
 ```
 pnpm dev          # app em desenvolvimento

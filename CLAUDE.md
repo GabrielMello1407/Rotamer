@@ -10,7 +10,9 @@ Contexto completo em `README.md`. Quando precisar de profundidade, leia sob dema
 `docs/ORIGEM.md` (como a ideia nasceu e o que cada erro ensinou) · `docs/PITCH.md` (por que o
 produto existe) · `docs/DECISOES.md` (o porquê de cada escolha, inclusive as revogadas) ·
 `docs/ARQUITETURA.md` · `docs/DESIGN-SYSTEM.md` · `docs/ROADMAP.md` · `docs/ROTEIROS.md` (as
-listas da turma). Ideia fora de escopo vai para `DEPOIS.md`, não para o código.
+listas da turma) · `docs/GUIA.md` (o produto tela a tela) · `docs/INSTALACAO.md` (o self-host) ·
+`CONTRIBUTING.md` (o caminho de quem mexe no código). Ideia fora de escopo vai para `DEPOIS.md`,
+não para o código.
 
 ## Licença e dependências
 
@@ -98,8 +100,8 @@ missão é reavaliada no servidor, toda entrada passa por schema, dono é sempre
   quando linear (D-20)
 - Three.js + React Three Fiber — apenas render, nenhuma química dentro
 - Canvas 2D próprio + Zustand — o editor é escrito à mão, sem lib de desenho molecular
-- Postgres + Prisma — container em desenvolvimento e no self-host, serviço no VPS da instância
-  no ar (D-11)
+- Postgres + Prisma — container em desenvolvimento, no self-host e na instância no ar, que roda
+  a mesma imagem (D-11)
 - Gemini via rota de servidor para o tutor — opcional: sem chave, o tutor se desliga e o produto
   continua inteiro
 
@@ -166,12 +168,14 @@ chamar cada um e como eles conversam. O caminho normal de uma entrega é `pm` �
 ## Comandos
 
 ```
+docker compose up -d postgres   # só o banco de desenvolvimento
 pnpm dev          # app em desenvolvimento (Turborepo)
 pnpm build        # build de produção
 pnpm test         # Vitest — o núcleo roda sem navegador; os testes de ação pedem Postgres
 pnpm test:e2e     # Playwright (desktop e celular)
 pnpm lint
 pnpm typecheck
+docker compose up -d            # a instância inteira, app e banco, como quem faz self-host
 ```
 
 O RDKit compilado é copiado de `node_modules` para `apps/web/public/chem/` nos passos

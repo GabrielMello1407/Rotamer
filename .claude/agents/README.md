@@ -10,7 +10,7 @@ chamar; o corpo do arquivo é a instrução que aquele agente recebe.
 | `frontend` | `apps/web`, `editor2d`, `viewer3d` | componente, estado, canvas, cena 3D |
 | `backend` | server action, Prisma, `core`, worker, tutor | persistência, validação, cálculo químico |
 | `security` | conta, sessão, dado de aluno, licença | antes de mexer em qualquer um dos quatro |
-| `deploy` | build, VPS, migração, backup, variável | quando a mudança precisa de passo no servidor |
+| `deploy` | build, imagem Docker, migração, backup, variável | quando a mudança precisa de passo de operação |
 | `researcher` | o que se sabe, de onde veio, o que falta | quando a decisão depende de algo que ninguém sabe de cabeça |
 | `marketing` | o que o produto diz de si em público | postagem, convite para testar, e-mail para escola |
 | `reviewer` | se a entrega passa | ao final, sempre |

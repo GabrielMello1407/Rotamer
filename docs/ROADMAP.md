@@ -114,12 +114,17 @@ no `DEPOIS.md`; a pesquisa que os fundamenta, em `docs/pesquisa/nomenclatura.md`
 O Rotamer é código aberto, MIT, sem comercialização (D-28). O que essa decisão obriga:
 
 - [x] Licença MIT, `CLAUDE.md` e os agentes descrevendo um projeto aberto
-- [ ] **Self-host em três comandos** — `Dockerfile`, `docker-compose.yml` com app e Postgres,
-      migração na subida, imagem publicada a cada versão, `docs/INSTALACAO.md`
-- [ ] **Documentação para três públicos**, em `docs/`: quem usa (`GUIA.md`), quem instala
-      (`INSTALACAO.md`), quem contribui (`ARQUITETURA.md`, `CONTRIBUTING.md`)
+- [x] **Self-host em três comandos** — `Dockerfile` em três estágios com a saída `standalone`,
+      `docker-compose.yml` com app e Postgres, migração na subida pelo `docker/entrypoint.sh`,
+      imagem construída no CI a cada push e publicada no GHCR a cada etiqueta `v*`
+- [x] **Documentação para três públicos**, em `docs/`: quem usa (`GUIA.md`), quem instala
+      (`INSTALACAO.md`), quem contribui (`ARQUITETURA.md`, `CONTRIBUTING.md`); os documentos que
+      descreviam intenção passaram a descrever o que existe, e o que morreu saiu
+- [x] Telemetria opt-in, dita em voz alta — desligada por padrão, e o `INSTALACAO.md` diz o que
+      ela mede e o que nunca sai
+- [ ] **Primeira etiqueta `v0.1.0`**, para a imagem publicada existir e o `docker compose pull`
+      funcionar sem construir
 - [ ] **Landing page em repositório separado**, estática, que puxa `docs/` na hora de construir
-- [ ] Telemetria opt-in, dita em voz alta
 
 **Pergunta em aberto, anotada no `DEPOIS.md`:** o roadmap inteiro serve ao ensino. Sem a tensão
 comercial que a segurava, a trilha de pesquisa volta a ser pergunta legítima — e continua
