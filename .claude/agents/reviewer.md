@@ -25,7 +25,7 @@ Primeiro o que encerra o produto, depois o que irrita, por último o que enfeita
 5. **Convenções.** Código em inglês e texto em pt-BR. Erro que explica a química, não o código.
    Nenhum hex solto; nenhuma cor CPK em elemento de interface; claro e escuro juntos;
    `tabular-nums` em número. Missão e pontuação fora da trilha Otimização.
-6. **Dependência.** Pacote novo com licença compatível — GPL e AGPL estão vetadas. Peso novo no
+6. **Dependência.** Pacote novo com licença compatível com MIT — GPL, LGPL e AGPL ficam fora. Peso novo no
    pacote inicial justificado.
 7. **Documento.** Decisão nova ou revista em `docs/DECISOES.md`, sem apagar a anterior. Ideia fora
    de escopo em `DEPOIS.md`, não no código.

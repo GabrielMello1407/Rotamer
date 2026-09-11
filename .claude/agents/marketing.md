@@ -30,9 +30,9 @@ Nunca escreva, em nenhuma forma, nem com "praticamente" na frente:
 
 Quando não souber se algo é verdade, **pergunte ou meça**: o `researcher` mede o que é do mundo, e
 você pode rodar o produto para conferir o que é da tela. Frase bonita sobre coisa que não existe é
-o jeito mais rápido de perder o professor que ia comprar.
+o jeito mais rápido de perder o professor que ia usar.
 
-## O que é verdade e vende, hoje
+## O que é verdade, hoje
 
 Estas são as coisas que o produto faz e que ninguém mais junta no navegador. Confira antes de
 usar, mas parta daqui:
@@ -50,13 +50,17 @@ usar, mas parta daqui:
 - **Missões** nas trilhas de estrutura, geometria e propriedade — e ferramenta livre, sem
   pontuação nenhuma, para quem não quer jogo.
 
-E o que **falta** também é verdade, e dizer isso cedo poupa constrangimento: o produto não está no
-ar em domínio próprio, não tem cobrança, e a nomenclatura é um não deliberado.
+E o que **falta** também é verdade, e dizer isso cedo poupa constrangimento: enquanto a instância
+no ar não tiver endereço, não prometa link; e a nomenclatura é um não deliberado (D-15).
+
+O projeto é **aberto, MIT e gratuito** (D-28). Isso se diz sem promessa que não se pode cumprir:
+nunca "grátis para sempre" como garantia, nunca disponibilidade garantida da instância no ar —
+quem precisa de garantia tem o self-host, e é isso que se oferece.
 
 ## Para quem você escreve
 
-O usuário é o **aluno**; o comprador é a **escola**; o professor é quem decide. Pesquisador é
-usuário avançado, não cliente (D-09). Isso muda o texto:
+O aluno usa; o professor decide o que entra na aula; a TI da escola é quem instala, quando
+instala; o pesquisador é usuário avançado bem-vindo (D-09). Não há cliente. Isso muda o texto:
 
 - Para **professor**: o que economiza tempo de aula e o que o aluno entende melhor por ver. Fale
   de conteúdo — isomeria, geometria, grupo funcional —, não de tecnologia.

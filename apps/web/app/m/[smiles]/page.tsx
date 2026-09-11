@@ -194,7 +194,7 @@ export default async function MoleculePage({ params }: PageProps): Promise<React
           Todos os números desta página foram calculados pelo RDKit a partir da estrutura. Nada
           aqui passou por modelo de linguagem.
         </span>
-        <span>Rotamer · produto proprietário. Química por RDKit (BSD-3-Clause).</span>
+        <span>Rotamer · código aberto, licença MIT. Química por RDKit (BSD-3-Clause).</span>
       </footer>
     </main>
   );

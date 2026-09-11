@@ -284,7 +284,7 @@ export default function BrandPage(): ReactElement {
       </section>
 
       <footer className={styles.footer}>
-        <span>Rotamer · produto proprietário. Todos os direitos reservados.</span>
+        <span>Rotamer · código aberto, licença MIT.</span>
         <span>
           Química por RDKit (BSD-3-Clause). Tipografia Archivo e IBM Plex (SIL Open Font License
           1.1).

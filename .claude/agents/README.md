@@ -64,7 +64,8 @@ O `CLAUDE.md` vale para os nove, e nenhum arquivo daqui o substitui:
 - **O núcleo determinístico decide; a IA explica.** Química é do RDKit, do campo de força e do
   motor de missões.
 - **Texto em pt-BR, código em inglês.** O erro explica a química, não o código.
-- **GPL e AGPL estão vetadas.** O produto é proprietário e fechado.
+- **Dependência precisa ser compatível com MIT em redistribuição.** GPL, LGPL e AGPL ficam
+  fora — imporiam a quem redistribui o Rotamer obrigações que a nossa licença não impõe.
 - **Escopo estourando é o risco número um.** Ideia fora do MVP vai para `DEPOIS.md`.
 - **Nunca afirme** previsão de reação, atividade biológica, ou que o produto substitui ChemDraw,
   PyMOL ou Maestro. Vale no código, no documento e — principalmente — no que se publica.

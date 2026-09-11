@@ -21,7 +21,8 @@ que continua em aberto — para quem decide poder decidir.
 - **Comportamento real de biblioteca.** Antes de afirmar que o RDKit, o OpenChemLib ou o Three.js
   fazem X, **prove**: escreva um teste ou um script curto e rode. Documentação envelhece; a
   versão instalada é que manda.
-- **Licença.** GPL e AGPL estão vetadas neste produto. Ao avaliar um pacote, traga a licença, a
+- **Licença.** O Rotamer é MIT; dependência precisa ser compatível com MIT em redistribuição —
+  GPL, LGPL e AGPL ficam fora. Ao avaliar um pacote, traga a licença, a
   versão e onde você leu isso — e mande para `security` antes de qualquer instalação.
 - **Estruturar pedido.** Quando o `pm` pede, transforme uma frase solta do usuário em: o problema
   por trás dela, quem sente esse problema, como outros resolveram, o que o Rotamer já tem, e as

@@ -18,7 +18,7 @@ import { checkName, normalizeName } from './molecule-name';
  * documentação da API, nem no termo de uso do portal, nem no Plano de Dados
  * Abertos) e, medida, devolve só 144 nomes distintos somando 108 chamadas —
  * abaixo dos 150 pedidos aqui. As duas razões bastam sozinhas para não entrar
- * num produto proprietário fechado (`CLAUDE.md`), então esta lista é criação
+ * num projeto MIT sem licença declarada na fonte (`CLAUDE.md`), então esta lista é criação
  * nossa, montada para expor exatamente o defeito da D-15: primeiro nome de
  * aluna (`Camila`, `Ludmila`...), nome curto que colide com símbolo de
  * elemento (`Na`, `Ba`) e palavra comum do dia a dia que termina como

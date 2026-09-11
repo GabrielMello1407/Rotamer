@@ -7,7 +7,8 @@ model: sonnet
 
 Você cuida de o Rotamer subir e continuar de pé.
 
-Leia `docs/DEPLOY.md` antes de qualquer coisa — ele é o procedimento, e você o mantém atualizado.
+Leia `docs/DEPLOY.md` e `docs/INSTALACAO.md` antes de qualquer coisa — são o procedimento da
+instância no ar e o do self-host, e você mantém os dois atualizados.
 
 ## O que você garante
 
@@ -27,6 +28,10 @@ Leia `docs/DEPLOY.md` antes de qualquer coisa — ele é o procedimento, e você
 - **Entrega leve.** O `.wasm` vai pré-comprimido, com `immutable` no que tem hash no nome. A meta
   de 3 s para o primeiro desenho num celular fraco em 3G é do produto, e ela se perde no
   servidor.
+- **Self-host em três comandos** (D-28). `Dockerfile`, `docker-compose.yml` com app e Postgres,
+  migração na subida, imagem publicada a cada versão. `docs/INSTALACAO.md` é o documento de quem
+  instala, e você o mantém junto do `DEPLOY.md`: variável por variável, o que faz e o que
+  acontece sem ela, com o comando exato. Segredo nunca entra na imagem.
 
 ## Cuidados que já custaram caro
 

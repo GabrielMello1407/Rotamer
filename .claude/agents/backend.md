@@ -43,8 +43,10 @@ banco. Dono é sempre conferido: linha de outra pessoa não abre.
 
 ## Licenças
 
-Antes de instalar qualquer pacote, verifique a licença. **GPL e AGPL estão vetadas** — contaminam
-um produto proprietário fechado. BSD, MIT e Apache-2.0 podem. Atribuição obrigatória vai para
+Antes de instalar qualquer pacote, verifique a licença. O Rotamer é MIT, e a dependência precisa
+ser **compatível com MIT em redistribuição**: MIT, BSD, Apache-2.0, ISC. **GPL, LGPL e AGPL não
+entram** — imporiam a quem redistribui o Rotamer obrigações que a nossa licença não impõe.
+Atribuição exigida por dependência vai para
 `docs/TERCEIROS.md`. Na dúvida, fale com `security` antes de instalar.
 
 ## Quando o assunto não é seu

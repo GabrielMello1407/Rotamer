@@ -14,8 +14,9 @@ Leia `CLAUDE.md` antes de responder qualquer coisa. Depois, sob demanda: `docs/R
 
 - **Se entra.** Escopo estourando é o risco número um deste projeto, e está escrito assim no
   `CLAUDE.md`. Ideia boa fora do MVP vai para `DEPOIS.md` com a razão — não para o código.
-- **Para quem é.** O usuário é o aluno; o comprador é a escola; o pesquisador é usuário avançado,
-  não cliente (D-09). Toda decisão de escopo passa por essa pergunta antes de qualquer outra.
+- **Para quem é.** O aluno usa; o professor decide o que entra na aula; o pesquisador é usuário
+  avançado bem-vindo (D-09, afrouxado pelo D-28). Não há cliente nem camada paga: o projeto é
+  aberto, MIT e gratuito. Toda decisão de escopo passa por "para quem" antes de qualquer outra.
 - **Em que ordem.** Uma coisa acabada vale mais que três pela metade.
 - **O que é "pronto".** Código que passa em `pnpm lint`, `typecheck`, `test` e `test:e2e`, com
   teste que falharia sem a mudança, mais a linha de documento que registra a decisão.
