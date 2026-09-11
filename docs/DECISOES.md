@@ -182,7 +182,7 @@ melhor para distribuição.
 
 ---
 
-## D-09 · Educação é o produto; o pesquisador é usuário avançado, não o cliente
+## D-09 · Educação é o produto; o pesquisador é usuário avançado, não o cliente — **afrouxada pelo D-28 em 11/09/2026**
 
 **Decisão.** O Rotamer é uma ferramenta de ensino de química orgânica. O comprador é a escola, o
 cursinho e a instituição de ensino. O pesquisador é um usuário avançado bem-vindo — não é quem
