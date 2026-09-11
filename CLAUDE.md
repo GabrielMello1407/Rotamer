@@ -2,26 +2,28 @@
 
 Editor de moléculas na web: desenha-se a estrutura em 2D e a geometria 3D aparece no mesmo
 instante — dobrando-se até encontrar a forma e depois vibrando sob dinâmica molecular.
-Química orgânica e medicinal no mesmo motor, para estudantes e pesquisadores.
+Química orgânica para quem ensina e para quem aprende. **Código aberto, licença MIT, sem
+comercialização** (D-28): existe uma instância no ar mantida pelo autor, e qualquer pessoa pode
+subir a sua com Docker.
 
 Contexto completo em `README.md`. Quando precisar de profundidade, leia sob demanda:
-`docs/ORIGEM.md` (como a ideia nasceu e o que cada erro ensinou) · `docs/PITCH.md` (produto e
-negócio) · `docs/DECISOES.md` (o porquê de cada escolha) ·
-`docs/ARQUITETURA.md` · `docs/DESIGN-SYSTEM.md` · `docs/ROADMAP.md`.
-Ideia fora de escopo vai para `DEPOIS.md`, não para o código.
+`docs/ORIGEM.md` (como a ideia nasceu e o que cada erro ensinou) · `docs/PITCH.md` (por que o
+produto existe) · `docs/DECISOES.md` (o porquê de cada escolha, inclusive as revogadas) ·
+`docs/ARQUITETURA.md` · `docs/DESIGN-SYSTEM.md` · `docs/ROADMAP.md` · `docs/ROTEIROS.md` (as
+listas da turma). Ideia fora de escopo vai para `DEPOIS.md`, não para o código.
 
-<!-- Referências em crase de propósito: com @ elas seriam importadas em toda sessão e
-     consumiriam contexto à toa. Assim o Claude lê só quando precisa. -->
+## Licença e dependências
 
-**Este é um produto proprietário e fechado.** Toda dependência precisa de licença que permita
-uso comercial em software fechado — BSD, MIT, Apache-2.0. **Nunca adicione dependência GPL ou
-AGPL** sem levantar a questão antes; ela contamina o produto inteiro. Atribuições obrigatórias
-ficam em `docs/TERCEIROS.md`.
+O Rotamer é MIT. Toda dependência precisa de licença **compatível com o MIT em redistribuição**:
+MIT, BSD, Apache-2.0, ISC. **GPL, LGPL e AGPL não entram** sem conversa antes — imporiam a quem
+redistribui o Rotamer obrigações que a nossa licença não impõe. Atribuições exigidas por
+dependências ficam em `docs/TERCEIROS.md`.
 
 ## Para quem é
 
-**Ferramenta de ensino de química orgânica.** O usuário é o aluno; o comprador é a escola. O
-pesquisador é usuário avançado, não cliente — ver `docs/DECISOES.md` D-09.
+**Ferramenta de ensino de química orgânica.** O aluno usa; o professor decide o que entra na
+aula; o pesquisador é bem-vindo como usuário avançado (D-09, afrouxado pelo D-28). Não há
+cliente: não existe camada paga, nem funcionalidade guardada para uma.
 
 Consequências ao escrever qualquer interface ou texto:
 
@@ -30,19 +32,18 @@ Consequências ao escrever qualquer interface ou texto:
   ferramenta livre, e gamificação lida como brinquedo afasta o usuário avançado.
 - Escreva para quem está aprendendo: o erro explica a química, não o código.
 - **Educação não autoriza imprecisão.** Professor de química é químico. Um erro no app não
-  confunde um usuário, confunde uma sala inteira. As regras D-01 e D-02 valem igual ou mais.
+  confunde um usuário, confunde uma sala inteira.
 
-## Este repositório é um ponto de partida
+## Documento descreve o que existe
 
-O que está documentado aqui é o **primeiro modelo** do produto, escrito antes do código de
-produção existir. O sistema final será maior e diferente. Trate estes documentos como intenção
-e contexto, não como especificação congelada:
+O que está em `docs/` começou como intenção, antes do código; hoje descreve o produto que
+existe. Quando um documento e o código discordarem, **o documento está errado** — corrija-o, e
+diga isso. Documento desatualizado se atualiza; regra morta se remove; comentário que só repete o
+que a linha faz se apaga.
 
-- Quando a realidade contrariar um documento, **diga isso** em vez de forçar o código a caber
-  no texto.
-- Decisão revista se registra em `docs/DECISOES.md`, sem apagar a anterior — o histórico do que
-  não deu certo vale mais que o texto limpo.
-- A única coisa que não se negocia por conveniência é a regra abaixo.
+A exceção deliberada é `docs/DECISOES.md`: é o registro do que foi decidido e desfeito. Decisão
+revogada fica lá, marcada como revogada, nunca apagada — saber o que foi tentado e por que não
+deu vale mais do que o texto limpo.
 
 ## A regra que não se quebra
 
@@ -51,8 +52,8 @@ e contexto, não como especificação congelada:
 - Validade, valência, fórmula, massa, SMILES, InChIKey, TPSA, logP, anéis, rotacionáveis,
   aromaticidade, frequência de modo normal, nota de missão → **sempre RDKit, o campo de força ou o
   motor de missões. Nunca o LLM.**
-- Por que falhou, o que trocar, se parece sintetizável → LLM, lendo os números já calculados,
-  sempre marcado como hipótese na interface.
+- Por que falhou, o que trocar → LLM, lendo os números já calculados, sempre marcado como hipótese
+  na interface.
 - O prompt do tutor recebe os descritores prontos e é instruído a nunca recalcular nem contradizer.
 - Saída do LLM em JSON de schema fechado, sem nenhum campo numérico.
 - Todo bloco de análise na tela carrega indicador de origem: verde = calculado, âmbar = gerado.
@@ -66,11 +67,11 @@ Monorepo Turborepo. **Regra de dependência: `core` não depende de ninguém, e 
 `editor2d`.** O núcleo roda em teste de linha de comando, sem navegador.
 
 ```
-apps/web        Next.js 16 App Router — rotas, contas, API
-packages/core       grafo · RDKit worker · geometria · descritores
-packages/editor2d   canvas 2D próprio, ferramentas, histórico
+apps/web        Next.js 16 App Router — rotas, contas, turmas, listas, tutor
+packages/core       grafo · RDKit worker · geometria · descritores · modos normais
+packages/editor2d   canvas 2D próprio, ferramentas, seleção, histórico
 packages/viewer3d   Three.js · dobramento e dinâmica molecular
-packages/quests     missões declarativas e pontuação
+packages/quests     missões declarativas, extração de objetivos e pontuação
 packages/ui         tokens e componentes
 ```
 
@@ -79,20 +80,28 @@ packages/ui         tokens e componentes
 (D-18). É o que liga o vértice do desenho à esfera da cena.
 
 **O grafo é a única fonte de verdade.** Fórmula, descritores, coordenadas 3D, nota e texto do
-tutor são derivados dele e recalculáveis. Nada além do grafo é persistido como estado do usuário.
+tutor são derivados dele e recalculáveis. O que se persiste como estado do usuário é o grafo
+(molblock) e o que ele produziu — tentativas, listas, apelidos.
+
+**O servidor não confia no cliente.** O navegador manda o desenho, nunca o veredito: nota de
+missão é reavaliada no servidor, toda entrada passa por schema, dono é sempre conferido.
 
 ## Stack
 
-- Next.js 16 (App Router) + TypeScript estrito
-- RDKit.js (WASM) em Web Worker via Comlink — toda pergunta química
+- Next.js 16 (App Router) + TypeScript estrito (`exactOptionalPropertyTypes`,
+  `noUncheckedIndexedAccess`)
+- RDKit.js (WASM) em Web Worker via Comlink — toda pergunta química; também no servidor, para
+  a página pública e para reavaliar o que o cliente mandou
 - OpenChemLib no mesmo worker — conformação 3D e MMFF94, depois que o RDKit aprovou (D-10)
 - Vibração por velocity-Verlet sobre o gradiente numérico do MMFF94, a 300 K (D-14)
 - Modos normais por Hessiana numérica do MMFF94, com projeção do corpo rígido — 3N−6, ou 3N−5
   quando linear (D-20)
 - Three.js + React Three Fiber — apenas render, nenhuma química dentro
 - Canvas 2D próprio + Zustand — o editor é escrito à mão, sem lib de desenho molecular
-- Postgres + Prisma no próprio servidor — container em desenvolvimento, serviço no VPS (D-11)
-- Gemini via rota de servidor para o tutor
+- Postgres + Prisma — container em desenvolvimento e no self-host, serviço no VPS da instância
+  no ar (D-11)
+- Gemini via rota de servidor para o tutor — opcional: sem chave, o tutor se desliga e o produto
+  continua inteiro
 
 ## Convenções
 
@@ -100,17 +109,16 @@ tutor são derivados dele e recalculáveis. Nada além do grafo é persistido co
   código: "O átomo de C tem 5 ligações, mas suporta no máximo 4", nunca "valence error".
 - **Código em inglês, texto em português.** Nome de arquivo, pasta, variável, função, tipo,
   classe de CSS e chave de dado: **sempre em inglês**. Comentário, JSDoc, nome de teste, string
-  de interface e mensagem de erro: **sempre em pt-BR**. `analyze(input)` devolvendo
-  "Não há nenhum átomo para analisar." é o padrão da casa.
+  de interface e mensagem de erro: **sempre em pt-BR**.
+- **Comentário explica por quê.** Nome de teste diz o que protege. Nada de referência a rodada de
+  revisão, número de achado ou conversa que gerou a mudança — quem lê daqui a um ano não estava lá.
 - **Números:** sempre `font-variant-numeric: tabular-nums`. Fórmulas moleculares em mono com
-  subscrito real, nunca `C6H6` em texto corrido.
+  subscrito real e carga em expoente, nunca `C6H6` em texto corrido.
 - **Cores CPK são reservadas aos átomos.** Nenhum botão, link, borda ou estado semântico pode usar
-  cor CPK. Se a interface pinta de vermelho, o vermelho deixa de significar oxigênio. O acento da
-  marca é turquesa justamente porque nenhum elemento comum é turquesa no CPK. Os 118 elementos
-  estão em `packages/ui/src/cpk.css`, em dois conjuntos: `--cpk-*` é a esfera desenhada, e
-  `--cpk-ink-*` é a mesma cor legível contra a superfície, para quando o elemento aparece escrito
-  (D-17). O símbolo do elemento pode ser colorido — ele *é* o átomo; o fundo e a borda do botão,
-  nunca.
+  cor CPK. Se a interface pinta de vermelho, o vermelho deixa de significar oxigênio. Os 118
+  elementos estão em `packages/ui/src/cpk.css`, em dois conjuntos: `--cpk-*` é a esfera desenhada,
+  e `--cpk-ink-*` é a mesma cor legível contra a superfície, para quando o elemento aparece escrito
+  (D-17). O símbolo pode ser colorido — ele *é* o átomo; o fundo e a borda do botão, nunca.
 - **Tokens:** toda cor, espaço, raio e duração vem de `packages/ui/src/tokens.css`. Nenhum hex
   solto no código.
 - **Tipografia:** Archivo (display), IBM Plex Sans (interface), IBM Plex Mono (dados).
@@ -118,6 +126,8 @@ tutor são derivados dele e recalculáveis. Nada além do grafo é persistido co
   bloco `@media (prefers-color-scheme)` ou `[data-theme]`.
 - **Movimento:** `prefers-reduced-motion` desliga dobramento e vibração e vai direto à geometria
   final.
+- **Atalhos** valem na página inteira, menos em campo de texto e com folha modal aberta
+  (`packages/editor2d/src/keys.ts`). Letra de elemento não divide tecla com ferramenta.
 
 ## Desempenho — restrições, não sugestões
 
@@ -128,10 +138,11 @@ tutor são derivados dele e recalculáveis. Nada além do grafo é persistido co
 - O WASM do RDKit carrega **depois** da primeira pintura. Meta: primeiro desenho interativo em
   menos de 3 s num celular fraco em 3G. Escola pública é o caso de uso, não o caso extremo.
 
-## Fora de escopo no MVP
+## Fora de escopo
 
-Não implemente sem conversar antes: retrossíntese ou previsão de reação, docking, DFT,
-campanhas abertas da comunidade, edição colaborativa em tempo real, app nativo.
+Não implemente sem conversar antes: retrossíntese ou previsão de reação, docking, DFT, edição
+colaborativa em tempo real, app nativo, nomenclatura IUPAC (D-15: o produto não nomeia, deixa
+batizar).
 
 **Estereoquímica existe** (D-21): cunha e traço no editor, `wedge` no grafo, molblock V2000 com a
 coluna de estereoquímica, e `R`/`S`/`E`/`Z` atribuídos pelo RDKit. Nunca calcule prioridade CIP à
@@ -142,32 +153,31 @@ mão — é a mesma regra do D-01, e o erro sairia silencioso.
 - Que o sistema previu o produto de uma reação.
 - Que uma molécula tem atividade biológica. Descritores são descritores.
 - Que o Rotamer substitui PyMOL, ChemDraw ou Maestro.
+- Que o Rotamer nomeia compostos. Ele deixa batizar, que é autoria de apelido.
 
 ## O time de agentes
 
 Nove papéis vivem em `.claude/agents/`, um arquivo cada: `pm`, `ui-ux`, `frontend`, `backend`,
 `security`, `deploy`, `researcher`, `marketing` e `reviewer`. O `README.md` de lá diz quando
-chamar cada um e como eles conversam entre si. O caminho normal de uma entrega é `pm` → especialista →
-`reviewer`, o `researcher` entra em qualquer ponto onde falte informação, o `marketing` fala
-para fora depois que o `pm` disse o que já pode ser prometido, e o `reviewer` tem veto sobre a
-regra que não se quebra.
-
-Nenhum desses arquivos substitui este aqui: o que está escrito no `CLAUDE.md` vale para os nove —
-e a seção **Nunca afirme** vale com força extra no que sai para o público.
+chamar cada um e como eles conversam. O caminho normal de uma entrega é `pm` → especialista →
+`reviewer`; o `researcher` entra onde faltar informação; o `marketing` fala para fora; e o
+`reviewer` tem veto sobre a regra que não se quebra. Nenhum desses arquivos substitui este.
 
 ## Comandos
 
 ```
 pnpm dev          # app em desenvolvimento (Turborepo)
 pnpm build        # build de produção
-pnpm test         # Vitest — core roda sem navegador
+pnpm test         # Vitest — o núcleo roda sem navegador; os testes de ação pedem Postgres
 pnpm test:e2e     # Playwright (desktop e celular)
 pnpm lint
 pnpm typecheck
 ```
 
 O RDKit compilado é copiado de `node_modules` para `apps/web/public/chem/` nos passos
-`predev`/`prebuild`. Não versione essa pasta e não edite os arquivos dela à mão.
+`predev`/`prebuild`. Não versione essa pasta e não edite os arquivos dela à mão. Os testes de ação
+(`apps/web/app/actions/*.test.ts`) falam com o Postgres do `docker-compose.yml`; sem banco, eles
+pulam avisando; com `REQUIRE_DATABASE=1`, falham.
 
 ## Casos de teste que precisam continuar passando
 
@@ -181,7 +191,7 @@ Estes são os valores que o **RDKit** calcula, verificados em
 | Benzeno | C6H6 | 78,11 | 0 | hexágono regular, 120°, plano |
 | Paracetamol | C8H9NO2 | 151,16 | 49,33 | amida + fenol + aromático |
 | Aspirina | C9H8O4 | 180,16 | 63,60 | ácido + éster + aromático, **2** rotacionáveis |
-| Cafeína | C8H10N4O2 | 194,19 | **61,82** | **imidazol precisa ser aromático** |
+| Cafeína | C8H10N4O2 | 194,19 | **61,82** | **imidazol precisa ser aromático** — dois anéis aromáticos |
 
 A cafeína é o caso que o protótipo errava com kernel próprio: o anel de cinco com nitrogênio é
 aromático de verdade e um detector caseiro não pega. Com RDKit tem que passar.
@@ -201,6 +211,8 @@ bater com tabela de terceiro.
 
 - Nunca contorne o RDKit para "resolver rápido" uma pergunta química.
 - Ao criar uma cor, um espaçamento ou uma duração, adicione nos tokens primeiro.
-- Antes de instalar qualquer pacote, verifique a licença. GPL e AGPL estão vetadas.
-- Toda ideia nova que não estiver no escopo do MVP vai para `DEPOIS.md`, não para o código.
-  Escopo estourando é o risco número um deste projeto.
+- Antes de instalar qualquer pacote, verifique a licença: compatível com MIT, ou não entra.
+- Toda ideia nova fora do escopo vai para `DEPOIS.md`, não para o código. Escopo estourando é o
+  risco número um deste projeto.
+- Toda entrega termina com teste que falharia sem ela, e com o documento que ela tornou
+  desatualizado corrigido na mesma entrega.
