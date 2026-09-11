@@ -46,6 +46,13 @@ const config: NextConfig = {
   outputFileTracingRoot: monorepoRoot,
 
   /**
+   * A saída `standalone` é o que a imagem Docker carrega: o servidor com só as
+   * dependências que ele usa, em vez do `node_modules` inteiro do monorepo.
+   * `pnpm start` continua funcionando fora do container.
+   */
+  output: 'standalone',
+
+  /**
    * O motor de química é imutável por versão.
    *
    * `RDKit_minimal.wasm` tem 6,7 MB (2 MB comprimido) e `ocl-resources.json`

@@ -2,9 +2,9 @@
 #
 # Backup do banco do Rotamer.
 #
-# Roda no VPS, uma vez por dia, pelo cron. Faz três coisas e nada mais: despeja
-# o banco em formato próprio do Postgres, verifica que o arquivo é legível, e
-# apaga o que passou da retenção.
+# Roda na máquina que hospeda o banco, uma vez por dia, pelo cron. Faz três
+# coisas e nada mais: despeja o banco em formato próprio do Postgres, verifica
+# que o arquivo é legível, e apaga o que passou da retenção.
 #
 # Dado de aluno perdido não se recupera com desculpa (D-11). Por isso o script
 # falha alto: qualquer passo que não der certo aborta com código diferente de

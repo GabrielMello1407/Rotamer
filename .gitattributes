@@ -1,2 +1,10 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# O que roda dentro do container precisa chegar lá com quebra de linha LF,
+# mesmo quando o repositório é clonado no Windows com autocrlf ligado: um
+# `entrypoint.sh` com CRLF morre na primeira linha, e um Dockerfile com CRLF
+# quebra nas continuações de linha.
+*.sh text eol=lf
+Dockerfile text eol=lf
+.dockerignore text eol=lf

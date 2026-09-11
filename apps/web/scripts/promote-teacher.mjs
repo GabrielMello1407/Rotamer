@@ -10,6 +10,10 @@
  *   node scripts/promote-teacher.mjs ana@escola.br --escola "EE Dom Pedro II"
  *   node scripts/promote-teacher.mjs ana@escola.br --rebaixar
  *
+ * Numa instância que roda com Docker, o mesmo comando dentro do container:
+ *
+ *   docker compose exec app node scripts/promote-teacher.mjs ana@escola.br --escola "EE Dom Pedro II"
+ *
  * Precisa de `DATABASE_URL` no ambiente — o mesmo banco que o app usa.
  *
  * Fala SQL direto, sem Prisma: o cliente gerado é TypeScript e só existe depois

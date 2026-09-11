@@ -1,26 +1,51 @@
-# Banco de desenvolvimento.
+# O Rotamer inteiro: o app e o banco dele.
 #
-# É Postgres local, sem serviço gerenciado: em produção o mesmo banco roda no
-# VPS, ao lado do PM2, e a única coisa que muda é a DATABASE_URL. Quem preferir
-# instalar o Postgres direto na máquina não precisa deste arquivo.
+# Para subir a sua instância (ver docs/INSTALACAO.md):
+#
+#   cp .env.example .env      # e troque POSTGRES_PASSWORD
+#   docker compose up -d
+#
+# Para desenvolver, só o banco sobe daqui — o app roda com `pnpm dev`:
+#
+#   docker compose up -d postgres
+#
+# As variáveis de `.env` (ao lado deste arquivo) entram no app; DATABASE_URL é
+# montada aqui, apontando para o serviço `postgres`, e ganha de qualquer valor
+# que esteja no `.env`.
 services:
+  app:
+    image: ghcr.io/gabrielmello1407/rotamer:latest
+    build: .
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-rotamer}:${POSTGRES_PASSWORD:-rotamer}@postgres:5432/${POSTGRES_DB:-rotamer}
+    ports:
+      - '${ROTAMER_PORT:-3000}:3000'
+
   postgres:
     image: postgres:18-alpine
-    container_name: rotamer-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: rotamer
-      POSTGRES_PASSWORD: rotamer
-      POSTGRES_DB: rotamer
+      POSTGRES_USER: ${POSTGRES_USER:-rotamer}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-rotamer}
+      POSTGRES_DB: ${POSTGRES_DB:-rotamer}
       # Ordenação e acentuação em português: nome de aluno com acento precisa
       # ordenar direito.
       LANG: pt_BR.utf8
+    # Só a própria máquina alcança a porta: é o que permite `pnpm dev` e os
+    # scripts de backup falarem com o banco sem expor o 5432 à rede.
     ports:
-      - '5432:5432'
+      - '127.0.0.1:5432:5432'
     volumes:
       - rotamer-postgres:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U rotamer -d rotamer']
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-rotamer} -d ${POSTGRES_DB:-rotamer}']
       interval: 5s
       timeout: 3s
       retries: 10

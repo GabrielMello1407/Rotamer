@@ -41,8 +41,8 @@ jobs:
     name: navegador
     runs-on: ubuntu-latest
 
-    # Postgres local, o mesmo do docker-compose.yml e o mesmo que vai rodar no
-    # VPS: sem serviço gerenciado em lugar nenhum.
+    # O mesmo Postgres do docker-compose.yml: sem serviço gerenciado em lugar
+    # nenhum.
     services:
       postgres:
         image: postgres:18-alpine
@@ -60,12 +60,9 @@ jobs:
 
     env:
       DATABASE_URL: postgresql://rotamer:rotamer@localhost:5432/rotamer?schema=public
-      SESSION_SECRET: ci-nao-e-producao
-      # Achado 3 do `reviewer`: este job TEM Postgres de pé (`services:`
-      # acima). Um banco inalcançável aqui é defeito do job, não motivo para
-      # `describe.skip` silencioso deixar `app/actions/assignment.test.ts`
-      # verde sem rodar nada — com a variável, `test/db-guard.ts` lança em vez
-      # de pular.
+      # Este trabalho tem Postgres de pé. Um banco inalcançável aqui é defeito
+      # do trabalho, não motivo para os testes de ação pularem em silêncio —
+      # com a variável, `test/db-guard.ts` falha em vez de pular.
       REQUIRE_DATABASE: '1'
 
     steps:
@@ -83,9 +80,8 @@ jobs:
       - run: pnpm --filter @rotamer/web exec prisma migrate deploy
 
       # Único trabalho com Postgres de pé: os testes de ação de servidor que
-      # falam com o banco de verdade (`app/actions/assignment.test.ts`,
-      # achado 1 do `reviewer`) rodam aqui de fato, não só ficam pulados como
-      # no trabalho "lint · tipos · testes", que não tem banco.
+      # falam com o banco de verdade rodam aqui de fato, e não ficam pulados
+      # como no trabalho "lint · tipos · testes", que não tem banco.
       - run: pnpm --filter @rotamer/web exec vitest run app/actions/assignment.test.ts
 
       - run: pnpm --filter @rotamer/web exec playwright install --with-deps chromium
@@ -98,3 +94,22 @@ jobs:
           name: playwright-report
           path: apps/web/playwright-report/
           retention-days: 7
+
+  imagem:
+    name: imagem Docker
+    runs-on: ubuntu-latest
+
+    # A imagem do self-host (D-28) precisa continuar construindo a cada mudança,
+    # não só no dia de publicar uma versão. Aqui ela só é construída; quem
+    # publica é `imagem.yml`, a cada etiqueta `v*`.
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

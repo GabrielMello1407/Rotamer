@@ -1,0 +1,39 @@
+# O que não entra no contexto de construção da imagem. A regra é a mesma do
+# `.gitignore`, mais o que só serve a quem desenvolve.
+
+node_modules
+**/node_modules
+.pnpm-store
+
+.next
+**/.next
+dist
+out
+build
+*.tsbuildinfo
+.turbo
+coverage
+playwright-report
+test-results
+
+# Gerado no `prebuild` e no `postinstall`, dentro da própria imagem.
+apps/web/public/chem
+apps/web/generated
+apps/web/next-env.d.ts
+
+# Segredo nunca entra na imagem.
+.env
+.env.*
+!.env.example
+
+.git
+.github
+.claude
+.codex
+.vscode
+docs
+brand
+scripts
+DEPOIS.md
+*.md
+!apps/web/README.md
