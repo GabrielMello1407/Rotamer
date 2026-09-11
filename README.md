@@ -171,6 +171,10 @@ redistribuição.
 | [docs/DEPLOY.md](docs/DEPLOY.md) | A instância mantida pelo autor |
 | [DEPOIS.md](DEPOIS.md) | Tudo que ficou fora, com o porquê |
 
+A página do produto e esta documentação em forma de site vivem em outro repositório,
+`rotamer-site`, que puxa a pasta `docs/` daqui na hora de construir — o site nunca descreve uma
+versão que não é a do código.
+
 ---
 
 <details>
