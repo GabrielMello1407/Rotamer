@@ -1,14 +1,16 @@
-# Rotamer — pitch
+# Rotamer — por que existe
 
 > **Desenhe uma molécula em 2D. Descubra o que ela é em 3D.**
-> O primeiro ambiente em português onde estrutura molecular deixa de ser decoreba e vira
-> intuição espacial — com a química validada por motor determinístico, não por chute de IA.
+> Um ambiente em português onde estrutura molecular deixa de ser decoreba e vira intuição
+> espacial — com a química validada por motor determinístico, não por chute de IA.
 
 ---
 
-**Posicionamento:** ferramenta de **ensino** de química orgânica. O usuário é o aluno, o
-comprador é a escola. O pesquisador é usuário avançado bem-vindo, não é o cliente — e o produto
-não compete com ChemDraw, Maestro ou PyMOL. Ver [DECISOES.md](DECISOES.md) D-09.
+**O que é:** ferramenta de **ensino** de química orgânica, **aberta, sob licença MIT e
+gratuita** (D-28). O aluno usa; o professor decide o que entra na aula; o pesquisador é usuário
+avançado bem-vindo. Não compete com ChemDraw, Maestro ou PyMOL — e não é vendida a ninguém: existe
+uma instância no ar mantida pelo autor, e qualquer escola pode subir a sua com Docker
+([INSTALACAO.md](INSTALACAO.md)).
 
 > Como a ideia chegou até aqui, com os pivôs e os erros pelo caminho: [ORIGEM.md](ORIGEM.md).
 
@@ -39,100 +41,80 @@ E nenhuma delas fala português.
 Três coisas passaram a ser possíveis quase ao mesmo tempo:
 
 1. **RDKit compila para WebAssembly.** Vinte anos de química computacional validada rodam dentro
-   do navegador, sem servidor, de graça. Isso não existia de forma prática até pouco tempo atrás.
+   do navegador, sem servidor, de graça.
 2. **WebGL é universal.** Renderização 3D fluida no celular de escola pública, sem instalar nada.
-3. **LLM barato o bastante para ser tutor.** Explicar por que a tentativa falhou, em português,
-   personalizado, a custo de centavos por aluno por mês.
+3. **LLM barato o bastante para ser tutor.** Explicar por que a tentativa falhou, em português, a
+   custo de centavos — desde que ele nunca decida a química.
 
-Quem juntar os três primeiro em português ocupa um espaço vazio.
-
-## A solução
+## O que o produto faz
 
 Um ambiente web onde se desenha a estrutura em fórmula plana — como todo químico faz — e a
 geometria tridimensional aparece no mesmo instante:
 
 - **Dobra.** A molécula nasce emaranhada e se dobra até encontrar a forma. Não é animação
-  decorativa: são os quadros reais da minimização de energia.
-- **Vibra.** Dinâmica molecular no mesmo campo de força. A ligação simples gira livremente, a
-  dupla fica rígida, o anel aromático treme sem sair do plano. O aluno *vê* a regra, não decora.
-- **Julga.** Valência, fórmula, massa, grupos funcionais, TPSA, Lipinski — tudo calculado e
-  exibido enquanto ele desenha.
-- **Ensina.** Quando erra, o tutor explica em português por que errou e o que fazer.
+  decorativa: são os quadros reais da minimização de energia no campo de força MMFF94.
+- **Vibra.** Dinâmica molecular no mesmo campo de força, a 300 K — e os **modos normais**, um a um,
+  cada um com a sua frequência. A ligação simples gira, a dupla fica rígida, o anel aromático
+  treme sem sair do plano. O aluno *vê* a regra, não decora.
+- **Julga.** Valência, fórmula, massa, grupos funcionais, TPSA, logP, centros estereogênicos —
+  tudo calculado pelo RDKit e exibido enquanto ele desenha. Onde o RDKit diverge do PubChem, a
+  tela mostra o valor do RDKit e diz de quem é a definição.
+- **Ensina.** Quando erra, o erro explica a química; e, se houver chave configurada, o tutor
+  explica em português por que errou — lendo os números já calculados, marcado como hipótese.
 
-E tem enredo: missões que começam em "monte um éster com quatro carbonos" e terminam em "reduza
-o logP sem perder o farmacóforo". A mesma ferramenta serve o aluno de 16 anos e o mestrando.
+E tem enredo: **missões** nas trilhas de estrutura, geometria e propriedade, do "monte um éster
+com quatro carbonos" ao centro estereogênico que só fecha com a cunha certa; **listas da turma**,
+que o professor monta com missões do catálogo ou cria **desenhando a resposta** — o produto extrai
+os objetivos da molécula, nunca de texto digitado; e um **catálogo buscável**, com as missões que
+professores publicaram, assinadas. A mesma ferramenta serve o aluno de 16 anos e o mestrando.
 
-## O diferencial defensável
-
-Qualquer um pode plugar uma biblioteca de visualização. O que não se copia rápido:
+## O que não se copia rápido
 
 1. **O editor 2D escrito à mão.** É onde mora o toque — arrastar de um átomo e ver o próximo
-   nascer já ligado. Nenhuma lib pronta entrega isso, e acertar leva meses.
-2. **A fronteira rígida entre motor e IA.** O núcleo determinístico decide, a IA só explica.
-   É uma decisão de arquitetura, não uma feature — e é o que faz um químico confiar. Concorrente
-   que colocar LLM respondendo valência vai errar em público e queimar a confiança.
+   nascer já ligado, selecionar um pedaço e mover em bloco, organizar o desenho e saber o que
+   aconteceu com cada cunha. Nenhuma lib pronta entrega isso.
+2. **A fronteira rígida entre motor e IA.** O núcleo determinístico decide, a IA só explica. É
+   uma decisão de arquitetura, não uma feature — e é o que faz um químico confiar.
 3. **Rigor científico dentro de uma ferramenta de ensino.** A concorrência educacional simplifica
    a química até ela ficar errada. Aqui o motor é o mesmo que um pesquisador usaria — e isso
    importa porque **professor de química é químico**: um erro no app não confunde um aluno,
-   queima o produto com quem decide a adoção.
-4. **Português como cidadão de primeira classe.** Não tradução: nomenclatura, mensagens de erro
-   que explicam a química, e um corpo de missões alinhado ao currículo brasileiro.
-5. **O acervo de missões e o mapa de dificuldade.** Cada tentativa registrada mostra onde as
-   pessoas travam. Isso vira dado que ninguém mais tem.
+   confunde uma sala inteira.
+4. **Português como cidadão de primeira classe.** Mensagens de erro que explicam a química, e um
+   corpo de missões alinhado ao que se ensina no Brasil.
+5. **O professor vê onde a turma parou** — não quem foi melhor, não o que cada aluno desenhou
+   (D-22). É informação de aula, não de ranking.
 
-## Quem paga
+## O que custa, e para quem
 
-Modelo em camadas, com a base gratuita fazendo o trabalho de distribuição:
-
-| Camada | Quem | Proposta |
-|---|---|---|
-| **Livre** | Aluno, professor individual | Editor completo e as missões básicas. É o funil e a prova social. |
-| **Pro** | Aluno de graduação, professor | Missões avançadas, histórico, exportação em qualidade de publicação, tutor sem limite |
-| **Turma** | Escola, cursinho | Painel do professor, turmas, acompanhamento de quem travou onde |
-| **Instituição** | Universidade, laboratório | Licença por campus, campanhas privadas, dados de uso |
-
-O professor é o canal. Ele adota de graça, leva a turma junto, e a escola compra o painel.
-Venda direta para secretaria de educação existe, mas é ciclo longo — é o segundo movimento,
-não o primeiro.
-
-**Sobre o pesquisador.** Ele usa e é bem-vindo, mas não é o cliente. Não tem missão, não tem
-pontuação: cola o SMILES do composto que já tem e trabalha. O valor dele para o negócio é
-credibilidade — um pós-graduando usando a ferramenta é o argumento que convence o coordenador
-de curso de que aquilo não é brinquedo. Ele é prova social, não linha de receita.
-
-> **A preencher antes de qualquer conversa de investimento:** número de matrículas no ensino
-> médio e em cursos de química no Brasil, ticket praticado por plataformas educacionais
-> comparáveis, e custo de aquisição por escola. Não invente esses números — levante.
+Nada. O código é MIT; a instância no ar é mantida pelo autor sem garantia de disponibilidade; e
+quem precisa de garantia — a TI de uma secretaria, uma universidade — sobe a própria instância com
+três comandos e cuida do próprio banco. O custo que existe é o do autor: um servidor pequeno e uma
+chave de modelo de linguagem para o tutor. Se um dia ele não couber, a instância encolhe; o código
+não fecha (D-28).
 
 ## O que já existe
 
-Um protótipo funcional do núcleo, construído do zero, que prova a parte tecnicamente arriscada:
-editor 2D próprio, geometria 3D por campo de força próprio, dinâmica molecular e validação
-determinística — tudo no navegador, sem biblioteca de química.
+Tudo o que está descrito acima, com testes: 300 e tantos de núcleo e servidor que rodam sem
+navegador, e 210 de ponta a ponta em desktop e celular. Os valores batem com a literatura —
+aspirina em C₉H₈O₄ com 180,16 g/mol e TPSA 63,6; benzeno em hexágono regular de 120°; a cafeína
+com o imidazol aromático, que era o caso que o protótipo de kernel próprio errava.
 
-Os valores batem com a literatura: aspirina em C₉H₈O₄ com 180,16 g/mol e TPSA 63,6; benzeno
-convergindo para hexágono regular de 120°; ciclohexano caindo em cadeira a 110,6°.
+O que falta é campo: sessões de observação com professores e alunos, a revisão de linguagem por
+um químico, e a instância no ar com endereço próprio ([ROADMAP.md](ROADMAP.md)).
 
-## O caminho
+## Riscos assumidos
 
-| Fase | Entrega |
-|---|---|
-| Fundação | monorepo, tokens, RDKit em worker |
-| Núcleo | editor, química, geometria, 3D — tudo no cliente |
-| Enredo | missões, tutor, contas → **produto vendável** |
-| Realidade | validação com professores e alunos |
-| Escala | painel de turma, cobrança, campanhas |
-
-## Riscos que assumo
-
-- **Escopo.** O maior de todos. Mitigado por lista de missões congelada e `DEPOIS.md`.
+- **Escopo.** O maior de todos. Mitigado por `DEPOIS.md`: ideia fora do escopo vai para lá, não
+  para o código.
 - **Erro químico em público.** Um químico achando um erro sutil derruba a confiança. Por isso
-  nunca contornamos o RDKit.
+  nunca se contorna o RDKit, e o `reviewer` tem veto sobre isso.
 - **Adoção.** Professor de escola pública tem pouco tempo e pouca banda. O produto precisa
   funcionar em celular fraco e fazer sentido em cinco minutos, ou não entra em sala.
-- **Custo de IA.** Controlado por cache, teto por usuário e degradação para dica determinística.
+- **Custo do tutor.** Controlado por cache, teto por usuário e degradação para dica escrita à mão
+  — e o tutor é opcional: sem chave, ele se desliga e o produto continua inteiro.
 
-## O pedido
+## O que ajuda
 
-_(preencher conforme o interlocutor: professor para validar, escola para piloto, investidor
-para capital, ou parceiro técnico. Um pitch sem pedido é uma apresentação.)_
+Professor testando com a molécula da própria aula e dizendo onde travou. TI instalando e dizendo
+onde a instalação enganou. Químico lendo o texto da tela. Quem programa, lendo
+[ARQUITETURA.md](ARQUITETURA.md) e a regra que não se quebra em [`CLAUDE.md`](../CLAUDE.md).

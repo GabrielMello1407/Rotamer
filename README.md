@@ -2,41 +2,36 @@
   <img src="brand/rotamer-mark.svg" width="88" alt="Rotamer">
   <h1>Rotamer</h1>
   <p><strong>Desenhe uma molécula em 2D. Descubra o que ela é em 3D.</strong></p>
-  <p>Química orgânica e medicinal no mesmo motor — validação determinística, geometria calculada, IA como tutora e nunca como juíza.</p>
+  <p>Ferramenta de ensino de química orgânica — validação determinística, geometria calculada, IA como tutora e nunca como juíza. Código aberto, licença MIT, gratuita.</p>
 </div>
 
 ---
-
-> ### 📌 Status: primeiro modelo
->
-> Este repositório é o **ponto de partida**, não a especificação final. É a ideia destilada em
-> documento antes da primeira linha de código de produção: o escopo, a arquitetura pretendida,
-> o design system e as decisões com o porquê de cada uma.
->
-> **Tudo aqui vai mudar.** O produto final será maior e diferente do que está escrito — o que
-> estes documentos garantem é que ele mude por um motivo, e não por esquecimento. Quando uma
-> decisão for revista, atualize [docs/DECISOES.md](docs/DECISOES.md) em vez de apagar a antiga:
-> saber o que foi tentado e por que não deu vale mais do que o texto limpo.
 
 ## O que é
 
 Um ambiente web onde se desenha uma estrutura em fórmula plana e a geometria tridimensional
 aparece no mesmo instante — dobrando-se até encontrar a forma e depois vibrando sob dinâmica
-molecular real. Junto vêm a fórmula, a massa, os grupos funcionais, os descritores e o veredito
-sobre a missão em curso.
+molecular. Junto vêm a fórmula, a massa, os grupos funcionais, os descritores, os modos normais de
+vibração e o veredito sobre a missão em curso.
 
-**Para quem é.** É uma ferramenta de **ensino de química orgânica**. Quem paga é a escola, o
-cursinho e a instituição de ensino. O pesquisador é usuário avançado bem-vindo — não é o cliente,
-e o produto não finge competir com ChemDraw ou PyMOL. (Ver `docs/DECISOES.md` D-09.)
-
-Uma trilha de profundidade, um motor: o aluno entra por **Estrutura** ("monte um éster com quatro
-carbonos"); o usuário avançado entra por **Otimização** ("reduza o logP mantendo o farmacóforo"),
-sem missão nem pontuação, colando o SMILES do composto que já tem em mãos. Química medicinal é
-química orgânica aplicada — não são dois produtos.
+**Para quem é.** Para quem ensina e para quem aprende química orgânica. O aluno usa; o professor
+monta listas de exercícios para a turma e cria missões desenhando a resposta; o pesquisador é
+usuário avançado bem-vindo — cola o SMILES do composto que já tem e trabalha sem missão nem
+pontuação. O produto não compete com ChemDraw, Maestro ou PyMOL, e não finge que compete.
 
 **Rigor não é opcional por ser educação.** Professor de química é químico: se o app afirmar algo
 errado, quem pega é ele. E numa ferramenta de ensino um erro não confunde um usuário, confunde
 uma sala inteira.
+
+## Experimente
+
+- **Na sua máquina, com Docker:** [docs/INSTALACAO.md](docs/INSTALACAO.md) — três comandos, banco
+  próprio, tudo seu.
+- **Na instância mantida pelo autor:** o endereço entra aqui quando ela estiver no ar.
+- **Para desenvolver:** `pnpm install`, `docker compose up -d`, `pnpm dev`. Detalhes em
+  [docs/ARQUITETURA.md](docs/ARQUITETURA.md).
+
+Como usar, tela a tela: [docs/GUIA.md](docs/GUIA.md).
 
 ## A regra que não se quebra
 
@@ -44,53 +39,49 @@ uma sala inteira.
 
 | Pergunta | Quem responde |
 |---|---|
-| É válido? Valência, fórmula, massa, SMILES, InChIKey, TPSA, anéis, rotacionáveis | **RDKit.** Nunca o LLM. |
-| A missão foi cumprida? Qual a pontuação? | **Motor de missões.** Nunca o LLM. |
-| Por que está errado e como consertar? | LLM, lendo os números já calculados |
-| Que grupo trocar para melhorar uma propriedade? | LLM, marcado como hipótese na interface |
+| É válido? Valência, fórmula, massa, SMILES, InChIKey, TPSA, anéis, rotacionáveis, R/S/E/Z | **RDKit.** Nunca o LLM. |
+| Qual é a forma? Como vibra? Quais são os modos normais? | **MMFF94**, pelo OpenChemLib. Nunca o LLM. |
+| A missão foi cumprida? Qual a pontuação? | **Motor de missões**, no servidor. Nunca o LLM. |
+| Por que está errado e como consertar? | LLM, lendo os números já calculados, marcado como hipótese |
 
 Um LLM acerta 90% das perguntas de valência e nos outros 10% produz uma explicação linda,
-confiante e errada. Com aluno, passa. Com cientista, encerra o produto. Cada bloco na tela
-declara sua origem: ponto verde para calculado, âmbar para gerado.
+confiante e errada. Com aluno, passa. Com químico, encerra o produto. Cada bloco na tela declara
+sua origem: ponto verde para calculado, âmbar para gerado. O tutor é opcional: sem chave
+configurada, ele se desliga e o produto continua inteiro.
 
 ## Arquitetura
 
 ```
-apps/web            Next.js 16 · App Router · rotas, contas, API
+apps/web            Next.js 16 · App Router · rotas, contas, turmas, listas, tutor
   └── packages/
-      editor2d      canvas 2D próprio, ferramentas, histórico
+      core          grafo · RDKit worker · geometria · descritores · modos normais
+      editor2d      canvas 2D próprio, ferramentas, seleção, histórico
       viewer3d      Three.js · dobramento e dinâmica molecular
-      quests        missões declarativas e pontuação
+      quests        missões declarativas, extração de objetivos e pontuação
       ui            tokens e componentes
-      core          grafo · RDKit worker · geometria · descritores
 ```
 
 **Regra de dependência:** `core` não depende de ninguém e ninguém depende de `editor2d`.
-O núcleo roda em teste de linha de comando, sem navegador; a interface é substituível.
+O núcleo roda em teste de linha de comando, sem navegador.
 
 O **grafo é a única fonte de verdade**. Fórmula, descritores, coordenadas 3D, nota e texto do
-tutor são todos derivados dele e recalculáveis. Nada além do grafo é persistido como estado.
-
-### Stack
+tutor são derivados dele e recalculáveis. O **servidor não confia no cliente**: o navegador manda
+o desenho, nunca o veredito.
 
 | Camada | Escolha |
 |---|---|
-| Aplicação | Next.js 16 + TypeScript |
-| Química | RDKit.js (WASM) em Web Worker via Comlink |
+| Aplicação | Next.js 16 + TypeScript estrito |
+| Química | RDKit.js (WASM) em Web Worker via Comlink — e no servidor, para reavaliar |
 | Geometria | OpenChemLib · conformação + MMFF94 |
-| Vibração | Velocity-Verlet sobre o gradiente do MMFF94, a 300 K |
+| Vibração | velocity-Verlet sobre o gradiente do MMFF94, a 300 K; modos normais por Hessiana numérica |
 | 3D | Three.js + React Three Fiber |
-| Editor 2D | Canvas 2D próprio + Zustand |
-| Dados | Postgres + Prisma, na própria infraestrutura |
-| LLM | Gemini, rota de servidor, saída em JSON de schema fechado |
+| Editor 2D | canvas 2D próprio + Zustand |
+| Dados | Postgres + Prisma |
+| Tutor | Gemini, rota de servidor, JSON de schema fechado sem campo numérico |
 
-### Desempenho
-
-- Sanitização, descritores e conformação **sempre** no worker — o desenho não pode cair de 60 fps.
-- Debounce por intenção: métricas a cada 120 ms de silêncio; geometria só quando a topologia muda.
-- Cache por InChIKey — conformação e descritores são função pura do grafo.
-- Meta: primeiro desenho interativo em menos de 3 s num celular fraco em 3G. O WASM carrega
-  **depois** da primeira pintura.
+Meta de desempenho: primeiro desenho interativo em menos de 3 s num celular fraco em 3G — o WASM
+carrega depois da primeira pintura, a cena 3D sob demanda. Escola pública é o caso de uso, não o
+caso extremo.
 
 ## Design system
 
@@ -105,23 +96,20 @@ cone azul do bico de Bunsen: cinzas com viés azul-violeta, nunca cinza puro.
 | Erro | Lítio | `#DE1A4E` | `#FF6B85` |
 | Informação | Césio | `#4C5FD5` | `#8B99F5` |
 
-Todas medidas contra a superfície do tema e aprovadas em WCAG AA (≥ 4,5:1).
-
-> ⚠️ **CPK pertence ao átomo.** Nenhum botão, link, borda ou estado semântico pode usar uma cor
-> CPK. Se a interface pinta de vermelho, o vermelho deixa de significar oxigênio. É por isso que
-> o acento da marca é turquesa: nenhum elemento comum é turquesa no CPK.
+> **CPK pertence ao átomo.** Nenhum botão, link, borda ou estado semântico usa cor CPK. Se a
+> interface pinta de vermelho, o vermelho deixa de significar oxigênio. O acento da marca é
+> turquesa porque nenhum elemento comum é turquesa no CPK.
 
 Tipografia: **Archivo** (display), **IBM Plex Sans** (interface), **IBM Plex Mono** (todo número,
-sempre com `tabular-nums`).
-
-Tokens completos em [`packages/ui/src/tokens.css`](packages/ui/src/tokens.css).
+sempre com `tabular-nums`). Tokens em [`packages/ui/src/tokens.css`](packages/ui/src/tokens.css);
+o resto em [docs/DESIGN-SYSTEM.md](docs/DESIGN-SYSTEM.md).
 
 ## Marca
 
 Uma **projeção de Newman** na conformação escalonada: você olha ao longo do eixo de uma ligação
 simples. O círculo é o átomo de trás; as três hastes que partem do centro são as ligações do átomo
-da frente; as três que saem da borda são as de trás. Os 60° de separação não são estética — é a
-conformação de menor energia, aquela para a qual a molécula tende.
+da frente; as três que saem da borda são as de trás. Os 60° de separação são a conformação de
+menor energia — aquela para a qual a molécula tende.
 
 | Arquivo | Uso |
 |---|---|
@@ -129,63 +117,64 @@ conformação de menor energia, aquela para a qual a molécula tende.
 | `brand/rotamer-mark-mono.svg` | uma cor só, para gravação e fundo complexo |
 | `brand/rotamer-favicon.svg` | abaixo de 32px — traço mais grosso, círculo menor |
 
-**A cor separa profundidade:** frente em turquesa, trás e círculo na cor do texto. Nunca inverta —
-inverter faz o átomo de trás parecer o da frente. Não gire para a conformação eclipsada, não
-preencha o círculo, não acrescente seta de rotação.
-
-## Sobre o nome
-
 Um rotâmero é o isômero que existe por causa da rotação em torno de uma ligação simples — o
 momento assinatura do produto, quando a vibração mostra o etano girando livre e o eteno se
-recusando. Em português é *rotâmero*, reconhecível sem tradução.
-
-Nomes descartados por colisão verificada: **Kekulé** (Kekule.js, paper no JCIM), **Bunsen**
-(produto da Schrödinger), **Ylide** (ylide.io), **Anomer** (anomer.bio), **Moiety** (Moiety, Inc.)
-e **Kovalent** ([Grupo Kovalent](https://grupokovalent.com.br/), empresa brasileira de reagentes
-para análises clínicas — mesmo país, campo adjacente).
-
-> ⚠️ DNS sem registro ≠ disponível no registrador ≠ livre no INPI. Confirme os dois antes de
-> comprar domínio ou depositar pedido.
-
-## Roadmap
-
-| Fase | Entrega | Situação |
-|---|---|---|
-| 0 · Fundação | monorepo, tokens, RDKit em worker, integração contínua | ✅ |
-| 1 · Núcleo | editor 2D, química, geometria, dobramento e vibração | ✅ |
-| 2 · Enredo | missões, tutor com guardrails, contas, página pública → **v0.1** | ✅ |
-| 3 · Realidade | telemetria, backup, atrito de uso, validação com professores e alunos → v0.2 | — |
-| v0.3 | estereoquímica com cunhas e traços | — |
-| 4 · Comercial | painel do professor, assinatura, material de venda → v1.0 | — |
-
-Cada fase publica algo que vale sozinho. O tutor está escrito e desligado: liga quando a chave do
-Gemini entrar no ambiente. O corte da v0.2 e o critério dele estão em [DEPOIS.md](DEPOIS.md).
+recusando.
 
 ## O que este projeto não faz
 
 - Não prevê o produto de uma reação nem propõe rota de síntese.
 - Não afirma atividade biológica. Descritores são descritores.
-- Não compete com PyMOL, ChemDraw ou Maestro — e não finge que compete.
+- Não nomeia compostos. Deixa **batizar** — autoria de apelido, sempre com o nome de quem deu.
+- Não compete com PyMOL, ChemDraw ou Maestro.
+
+## Contribuir
+
+Leia [CLAUDE.md](CLAUDE.md) — é onde estão as regras que não se negociam — e
+[docs/ARQUITETURA.md](docs/ARQUITETURA.md). Toda mudança termina com teste que falharia sem ela;
+química nova pede caso em `packages/core/test/` rodando sem navegador. Ideia fora do escopo vai
+para [DEPOIS.md](DEPOIS.md) antes de virar código.
+
+```
+pnpm dev          # app em desenvolvimento
+pnpm test         # Vitest — o núcleo roda sem navegador; os testes de ação pedem Postgres
+pnpm test:e2e     # Playwright, desktop e celular
+pnpm lint · pnpm typecheck
+```
 
 ## Licença
 
-**Proprietário. Todos os direitos reservados.** Ver [LICENSE](LICENSE).
-
-Este repositório é fechado. As bibliotecas de base — RDKit (BSD-3) e Three.js (MIT) — permitem
-uso comercial em produto proprietário, desde que as atribuições sejam mantidas em
-[docs/TERCEIROS.md](docs/TERCEIROS.md) e exibidas na interface. Confirme cada licença no
-repositório de origem antes do lançamento comercial.
+**MIT.** Ver [LICENSE](LICENSE). As bibliotecas de base e suas licenças estão em
+[docs/TERCEIROS.md](docs/TERCEIROS.md); toda dependência precisa ser compatível com o MIT em
+redistribuição.
 
 ## Documentação
 
 | Documento | O que cobre |
 |---|---|
-| [docs/ORIGEM.md](docs/ORIGEM.md) | Como a ideia nasceu, os pivôs e o que cada erro ensinou |
-| [docs/PITCH.md](docs/PITCH.md) | Problema, solução, diferencial, mercado e modelo de negócio |
-| [docs/DECISOES.md](docs/DECISOES.md) | Registro de decisões e o porquê de cada uma |
+| [docs/GUIA.md](docs/GUIA.md) | Como usar, para aluno e professor |
+| [docs/INSTALACAO.md](docs/INSTALACAO.md) | Como subir a sua instância com Docker |
 | [docs/ARQUITETURA.md](docs/ARQUITETURA.md) | Camadas, pacotes, fluxo de dados, modelo de dados |
 | [docs/DESIGN-SYSTEM.md](docs/DESIGN-SYSTEM.md) | Cor, tipografia, forma, movimento, marca |
-| [docs/ROADMAP.md](docs/ROADMAP.md) | Fases até janeiro, riscos e métricas |
-| [docs/DEPLOY.md](docs/DEPLOY.md) | O que já está automatizado e o que falta para o produto ficar no ar |
-| [DEPOIS.md](DEPOIS.md) | Tudo que ficou fora do MVP |
-| [CLAUDE.md](CLAUDE.md) | Instruções permanentes para o Claude Code |
+| [docs/ROTEIROS.md](docs/ROTEIROS.md) | As listas da turma: modelo, regras de servidor, telas |
+| [docs/DECISOES.md](docs/DECISOES.md) | Registro de decisões e o porquê de cada uma, inclusive as revogadas |
+| [docs/PITCH.md](docs/PITCH.md) | Por que o projeto existe |
+| [docs/ORIGEM.md](docs/ORIGEM.md) | Como a ideia nasceu, os pivôs e o que cada erro ensinou |
+| [docs/ROADMAP.md](docs/ROADMAP.md) | O que está feito, o que falta, riscos |
+| [docs/DEPLOY.md](docs/DEPLOY.md) | A instância mantida pelo autor |
+| [DEPOIS.md](DEPOIS.md) | Tudo que ficou fora, com o porquê |
+
+---
+
+<details>
+<summary><strong>English</strong></summary>
+
+**Rotamer** is a web-based molecular editor for teaching organic chemistry. Draw a structure in
+2D and watch its 3D geometry appear at once — folding into shape, then vibrating under molecular
+dynamics — with formula, mass, functional groups, descriptors, normal modes and mission feedback
+alongside. Everything chemical is computed deterministically (RDKit and MMFF94); the optional
+LLM tutor only explains numbers that were already calculated, and is always labelled as a
+hypothesis. The interface is in Brazilian Portuguese. Open source under the MIT license; run your
+own instance with Docker ([docs/INSTALACAO.md](docs/INSTALACAO.md)).
+
+</details>
