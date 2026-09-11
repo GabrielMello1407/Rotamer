@@ -138,7 +138,7 @@ proteína do que a moléculas pequenas.
 
 ---
 
-## D-08 · Produto fechado e comercial
+## D-08 · Produto fechado e comercial — **revogada pelo D-28 em 11/09/2026**
 
 **Decisão.** Código proprietário, todos os direitos reservados. Monetização em camadas, com
 uma base gratuita fazendo a distribuição.
@@ -943,3 +943,56 @@ uma escola.
 
 **Revisar se.** A primeira denúncia real chegar sem ninguém para ler — aí o rastro não bastou, e
 a tela de moderação deixa de ser "depois".
+
+---
+
+## D-28 · Aberto, MIT, sem comercialização
+
+**Decisão do dono do produto, 11 de setembro de 2026.** O Rotamer passa a ser **código aberto sob
+licença MIT**, e **não será comercializado**: o objetivo é compartilhar a ferramenta com quem
+ensina e aprende química. Duas formas de usar, as duas gratuitas: a **instância no ar**, mantida
+pelo autor, e o **self-host** — qualquer pessoa sobe o produto inteiro com Docker e cuida do
+próprio banco.
+
+**O que isso revoga.** O D-08 inteiro: não há produto fechado, não há camadas de assinatura, não há
+"o que se cobra". A Fase 4 do roadmap deixa de ser "Comercial". O veto a GPL e AGPL muda de
+natureza: ele existia para proteger um produto fechado; agora a regra é **compatibilidade com o
+MIT em redistribuição** — MIT, BSD, Apache-2.0 e ISC entram; GPL, LGPL e AGPL continuam fora,
+porque imporiam obrigações a quem redistribui o Rotamer, e não é isso que uma licença MIT promete.
+
+**O que isso afrouxa.** O D-09 dizia que o pesquisador é usuário avançado, não cliente. Sem
+cliente, todos são usuários — o aluno continua sendo o primeiro, o professor continua decidindo o
+que entra na aula, e a trilha de pesquisa registrada no `DEPOIS.md` volta a ser pergunta
+legítima, sem a tensão comercial que a segurava.
+
+**O que muda de significado.** "Vale para todo mundo" no batismo (D-15) e no catálogo
+compartilhado (D-27) passa a valer **por instância**: cada self-host é um mundo próprio, com os
+seus apelidos e o seu catálogo. A instância no ar é um desses mundos, não o centro.
+
+**Por que MIT, e não AGPL.** AGPL protege um negócio hospedado de quem pega o código e vende
+serviço em cima. Não há negócio a proteger. MIT é a licença de menor atrito para a TI de uma
+secretaria de educação, para uma universidade e para quem quer estudar o código — e é a família
+do RDKit e do OpenChemLib, que são BSD.
+
+**O que a decisão obriga a construir**, nesta ordem:
+
+1. **Instalação em três comandos** — `Dockerfile`, `docker-compose.yml` com app e Postgres,
+   migração na subida, imagem publicada a cada versão, e `docs/INSTALACAO.md` dizendo o que cada
+   variável faz e o que acontece sem ela.
+2. **Documentação para três públicos**, e as três moram em `docs/` para versionar com o código:
+   quem usa (aluno e professor), quem instala (a TI), quem contribui (arquitetura, a regra que
+   não se quebra, testes). O que hoje existe serve ao terceiro público; os dois primeiros não têm
+   uma página.
+3. **Uma landing page em repositório separado**, estática, que mostra o produto, leva à instância
+   no ar, ensina a instalar e **puxa a documentação de `docs/` na hora de construir** — para o
+   site nunca descrever uma versão que não é a do código.
+4. **Telemetria opt-in e dita com clareza.** Em código aberto, isso é reputação.
+
+**A regra sobre documento, reafirmada com mais força.** Documento desatualizado se atualiza;
+regra morta se remove; comentário que só repete o que a linha faz se apaga. Este arquivo é a
+exceção deliberada: é o registro do que foi decidido e desfeito, e decisão revogada fica aqui
+marcada como revogada — nunca apagada. Todo o resto descreve o que existe, e onde não descrever,
+o documento está errado, não o código.
+
+**Revisar se.** Aparecer custo que o autor não consiga sustentar sozinho na instância no ar — aí
+a resposta é reduzir a instância, nunca fechar o código.
