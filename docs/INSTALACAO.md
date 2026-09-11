@@ -105,6 +105,10 @@ aditivas — criam tabela ou coluna, nunca apagam nem reescrevem dado.
 (ou apontando `image:` para a etiqueta anterior). O banco não volta sozinho: para voltar o banco,
 restaure o backup feito antes da atualização (§ Restaurar).
 
+**O Postgres não muda de versão maior sozinho.** O compose fixa o Postgres 18 e o caminho dos
+dados (`/var/lib/postgresql/18/docker`, dentro do volume). Subir para o 19, um dia, é um
+`pg_upgrade` deliberado, com backup antes — nunca só trocar a etiqueta da imagem.
+
 ## Backup
 
 O banco é o único estado. Um despejo diário, conferido, guardado **fora da máquina**:

@@ -38,6 +38,12 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-rotamer}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-rotamer}
       POSTGRES_DB: ${POSTGRES_DB:-rotamer}
+      # A partir do Postgres 18 a imagem guarda os dados numa pasta com o
+      # número da versão, dentro de /var/lib/postgresql, e recusa o ponto de
+      # montagem antigo (/var/lib/postgresql/data). O caminho fica escrito
+      # aqui para não depender de qual construção da imagem foi puxada — e
+      # para a subida de versão maior, um dia, ser um `pg_upgrade` deliberado.
+      PGDATA: /var/lib/postgresql/18/docker
       # Ordenação e acentuação em português: nome de aluno com acento precisa
       # ordenar direito.
       LANG: pt_BR.utf8
@@ -46,7 +52,7 @@ services:
     ports:
       - '127.0.0.1:5432:5432'
     volumes:
-      - rotamer-postgres:/var/lib/postgresql/data
+      - rotamer-postgres:/var/lib/postgresql
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-rotamer} -d ${POSTGRES_DB:-rotamer}']
       interval: 5s
