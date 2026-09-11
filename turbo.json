@@ -5,7 +5,6 @@
   "globalEnv": [
     "CI",
     "DATABASE_URL",
-    "SESSION_SECRET",
     "GEMINI_API_KEY",
     "GEMINI_MODEL",
     "TUTOR_DAILY_LIMIT",

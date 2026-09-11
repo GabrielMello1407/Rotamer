@@ -4,11 +4,11 @@
 // derivados dele e recalculáveis. O que é guardado aqui é o mínimo — o grafo, e
 // o rastro do que a pessoa fez com ele.
 //
-// Diferença consciente em relação ao `docs/ARQUITETURA.md`: não existe tabela
-// `quest`. O catálogo de missões vive no código, versionado junto com as
-// condições que ele avalia — uma missão no banco poderia discordar da `spec` que
-// o motor executa, e aí a nota mudaria sem ninguém ter mexido em nada. A
-// tentativa guarda o `slug`.
+// Não existe tabela de missão do catálogo. O catálogo vive no código,
+// versionado junto com as condições que ele avalia — uma missão no banco
+// poderia discordar da `spec` que o motor executa, e aí a nota mudaria sem
+// ninguém ter mexido em nada (D-12). A tentativa guarda o `slug`. A missão que
+// um professor cria é outra coisa: `TeacherQuest`, mais abaixo.
 
 generator client {
   provider     = "prisma-client"
@@ -70,7 +70,7 @@ model QuestOpen {
 /// Uma turma.
 ///
 /// Existe para o professor ver onde a turma dele travou — que é a pergunta que
-/// faz a escola comprar o produto. Entrar numa turma é o aluno digitar um
+/// faz uma escola adotar o produto. Entrar numa turma é o aluno digitar um
 /// código que o professor entrega em sala, pelo mesmo motivo de não haver
 /// e-mail na recuperação de senha (D-19).
 model Classroom {

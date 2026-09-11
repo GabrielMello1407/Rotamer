@@ -295,7 +295,7 @@ function Identity({
           testId="estereocentros"
           note={
             descriptors.unspecifiedStereocenters > 0
-              ? 'O editor ainda não representa cunhas e traços: a configuração não está definida no desenho.'
+              ? 'Sem cunha nem traço no desenho, a configuração deste centro fica em aberto. A ferramenta Estereoquímica (W) define o lado.'
               : undefined
           }
         />

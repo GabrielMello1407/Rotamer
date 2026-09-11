@@ -188,9 +188,8 @@ describe('extractGoals — cafeína', () => {
     // A cafeína é o caso do CLAUDE.md que um detector caseiro erra: o anel de
     // cinco com nitrogênio (imidazol) é aromático, e o RDKit o reconhece. O
     // `packages/core/test/molecules.test.ts` já prova `aromaticRings: 2` — os
-    // dois anéis, não só o de seis. O texto da §7 do ROTEIROS.md ("1
-    // aromático") diverge desse cálculo; quem manda é o RDKit (D-01), e este
-    // teste segue o valor calculado, não o texto da especificação.
+    // dois anéis, não só o de seis. Quem manda é o RDKit (D-01): este teste
+    // segue o valor calculado.
     const cafeina = await moleculeOf('Cn1cnc2c1c(=O)n(C)c(=O)n2C');
     expect(cafeina.formula).toBe('C8H10N4O2');
     expect(cafeina.descriptors.rings).toBe(2);

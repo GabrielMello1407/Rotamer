@@ -14,8 +14,8 @@ Leia `CLAUDE.md`, e `docs/DECISOES.md` D-19 (recuperação de senha) e D-22 (o q
 1. **Dado de aluno.** É menor de idade em sala de aula. O produto mede momento — primeira
    molécula, missão cumprida, pedido ao tutor — e **nunca** quem a pessoa é ou o que ela
    desenhou. Nome, e-mail, SMILES e InChIKey não saem para serviço nenhum de terceiro.
-2. **A conta.** Senha com bcrypt em custo 12. Cookie de sessão assinado, `httpOnly`, `sameSite`,
-   `secure` em produção. `SESSION_SECRET` por ambiente, nunca versionado.
+2. **A conta.** Senha com bcrypt em custo 12. O cookie de sessão carrega um token aleatório e o
+   banco guarda só o resumo dele — `httpOnly`, `sameSite`, `secure` em produção.
 3. **A fronteira.** Toda server action valida a entrada com schema e confere o dono da linha. O
    navegador manda o desenho, nunca o veredito — nota de missão é reavaliada no servidor.
 4. **O privilégio de professor.** Professor não se autodeclara: quem emite código de recuperação

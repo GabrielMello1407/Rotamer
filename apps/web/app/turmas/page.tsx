@@ -17,8 +17,8 @@ export const metadata: Metadata = {
 /**
  * Turmas.
  *
- * O que faz a escola comprar não é o editor: é o professor conseguir ver onde a
- * turma travou. A tela é a mesma para os dois lados — quem dá aula abre turma,
+ * O que faz uma escola adotar o produto não é o editor: é o professor conseguir
+ * ver onde a turma travou. A tela é a mesma para os dois lados — quem dá aula abre turma,
  * quem estuda entra com o código (D-22).
  */
 export default async function ClassroomsPage(): Promise<ReactElement> {

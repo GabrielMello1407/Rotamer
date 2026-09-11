@@ -4,7 +4,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { openQuests } from './painel';
 
 /**
- * Turmas: o que faz a escola comprar.
+ * Turmas: o que faz uma escola adotar o produto.
  *
  * O professor abre a turma, escreve o código no quadro, o aluno entra — e o que
  * o professor vê é **onde a turma parou**, não quem foi melhor (D-22).

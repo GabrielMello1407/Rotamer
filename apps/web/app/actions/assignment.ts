@@ -171,17 +171,16 @@ export type OkOutcome = { readonly status: 'ok' } | { readonly status: 'rejected
  * Sem uma tabela de evento (a migração aditiva desta onda, D-27, só traz
  * `TeacherQuest.catalogedAt` e `QuestReport` — nenhuma tabela de contagem),
  * o mesmo padrão que R-15 já usa em `classroom.ts` (teto de códigos errados)
- * resolve: um `Map` no processo, suficiente para o único servidor Node do
- * VPS (D-11).
+ * resolve: um `Map` no processo, suficiente enquanto a instância roda um
+ * container só do app (D-11).
  *
  * **Limitação conhecida, decidida por escrito — não defeito escondido.** Este
  * `Map` mora em memória: reiniciar o processo zera a janela, e ele não é
- * compartilhado entre instâncias. Decisão explícita: **não persistir agora**
- * — a migração já cresceu nesta entrega (D-27), e o VPS de hoje roda um
- * processo só (D-11). Isso precisa virar tabela no dia em que o produto
- * ganhar mais de uma instância, ou o deploy passar a reiniciar com
- * frequência o bastante para a janela de 24 h perder sentido — registrado em
- * `DEPOIS.md`.
+ * compartilhado entre processos. Decisão explícita: **não persistir agora**
+ * — a migração já cresceu nesta entrega (D-27), e a instância roda um
+ * processo só (D-11). Isso precisa virar tabela no dia em que o app ganhar
+ * mais de um container, ou o container passar a reiniciar com frequência o
+ * bastante para a janela de 24 h perder sentido — registrado em `DEPOIS.md`.
  */
 const authoringSaves = new Map<string, number[]>();
 
@@ -217,9 +216,9 @@ function registerAuthoringSave(teacherId: string): void {
  * molblock válido.
  *
  * Mesmo padrão de `authoringSaves` e `wrongCodeAttempts` (`classroom.ts`, R-15):
- * um `Map` no processo. **Limitação conhecida:** reiniciar o servidor zera a
- * janela, e não há coordenação entre instâncias — aceitável enquanto o VPS
- * roda um processo só (D-11); vira tabela no dia em que isso mudar.
+ * um `Map` no processo. **Limitação conhecida:** reiniciar o container zera a
+ * janela, e não há coordenação entre processos — aceitável enquanto a
+ * instância roda um processo só (D-11); vira tabela no dia em que isso mudar.
  */
 const questChecks = new Map<string, number[]>();
 

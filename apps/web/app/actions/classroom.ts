@@ -10,8 +10,8 @@ import { requireTeacher } from '../../lib/roles';
 /**
  * Turmas.
  *
- * O que faz a escola comprar não é o editor: é o professor conseguir ver onde a
- * turma dele travou. Uma turma é uma lista de alunos e um código que ele escreve
+ * O que faz uma escola adotar o produto não é o editor: é o professor conseguir
+ * ver onde a turma dele travou. Uma turma é uma lista de alunos e um código que ele escreve
  * no quadro — sem convite por e-mail, pela mesma razão da recuperação de senha
  * (D-19): em muita escola o aluno não tem caixa de entrada, e a que tem não abre
  * na aula.
@@ -94,9 +94,8 @@ export type JoinOutcome =
  *
  * Antes o prêmio de adivinhar um código era só aparecer numa lista; com listas
  * do professor, agora é ler o material publicado de uma turma. Um `Map` no
- * processo é suficiente para o único servidor Node do VPS (D-11) — se o
- * produto ganhar mais de uma instância, isto precisa virar tabela, e não há
- * migração nesta entrega para isso.
+ * processo é suficiente enquanto a instância roda um container só do app
+ * (D-11) — se o app ganhar mais de um, isto precisa virar tabela.
  */
 const WRONG_CODE_LIMIT = 10;
 const WRONG_CODE_WINDOW_MS = 60 * 60 * 1000;

@@ -9,8 +9,9 @@ import type { ReactElement } from 'react';
  *
  * O que **não** vai daqui para lugar nenhum: e-mail, nome, molécula desenhada,
  * SMILES, InChIKey. Umami não usa cookie, não guarda endereço de IP completo e
- * o servidor é nosso, no mesmo VPS. Sem as duas variáveis de ambiente, este
- * componente não renderiza nada e o produto funciona igual.
+ * o servidor é de quem hospeda a instância. Desligado por padrão: sem as duas
+ * variáveis de ambiente, este componente não renderiza nada e o produto
+ * funciona igual.
  */
 export function Telemetry(): ReactElement | null {
   const script = process.env['UMAMI_SCRIPT_URL'] ?? '';
