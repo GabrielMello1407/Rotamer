@@ -42,7 +42,7 @@ export interface AssignmentProps {
   /**
    * A posição do item que acabou de entrar, vinda de `.../criar` — §6.3(d).
    *
-   * Achado 12 do `reviewer`: o que atravessa a URL é `feito=missao-criada` +
+   * O que atravessa a URL é `feito=missao-criada` +
    * `posicao`, nunca a frase pronta — `page.tsx` já validou os dois contra o
    * conjunto fechado antes de chegar aqui. O título vem de `items`, que já
    * está carregado; não há por que o texto do professor passar pela URL
@@ -55,8 +55,8 @@ export interface AssignmentProps {
  * A lista, com o professor montando (§6.2 de `docs/ROTEIROS.md`).
  *
  * `publishedAt` não tem estado local próprio: é o que a página do servidor
- * mandou. `items` já teve o mesmo desenho, mas achado 6 desta rodada mostrou
- * o preço: remover uma linha só sumia da tela depois da viagem completa ao
+ * mandou. `items` já teve o mesmo desenho, e o preço apareceu: remover uma
+ * linha só sumia da tela depois da viagem completa ao
  * servidor. Agora `items` é espelho otimista — some/volta na hora — e o
  * efeito logo abaixo resincroniza com `initialItems` sempre que
  * `router.refresh()` traz a lista de novo, então não existe uma segunda
@@ -82,7 +82,7 @@ export function Assignment({
   const router = useRouter();
 
   /*
-   * Achado 6 — `items` precisa aceitar atualização otimista: remover some da
+   * `items` precisa aceitar atualização otimista: remover some da
    * tela na hora, e o desfazer parte do que está na tela agora, não de um
    * retrato velho. Continua espelhando o servidor: sempre que `router.refresh()`
    * traz `initialItems` de novo, o ajuste abaixo resincroniza — durante a
@@ -117,7 +117,7 @@ export function Assignment({
   const removedTimer = useRef<number | undefined>(undefined);
 
   /*
-   * Achado 4 — a faixa "entrou na lista, na posição N" (`enteredAtPosition`)
+   * A faixa "entrou na lista, na posição N" (`enteredAtPosition`)
    * acha o item pela posição em `items`; depois de mover qualquer linha, a
    * posição N passa a apontar para outro item, e a faixa nomeava quem quer que
    * estivesse lá agora. Ela some no primeiro mover/remover e nunca mais volta,
@@ -155,7 +155,7 @@ export function Assignment({
 
   const move = (itemId: string, direction: 'up' | 'down'): void => {
     setError(null);
-    setEnteredVisible(false); // achado 4
+    setEnteredVisible(false);
     void moveItem({ assignmentId, itemId, direction }).then((outcome) => {
       if (outcome.status === 'rejected') {
         setError(outcome.reason);
@@ -167,9 +167,9 @@ export function Assignment({
 
   const remove = (item: AssignmentItemView): void => {
     setError(null);
-    setEnteredVisible(false); // achado 4
+    setEnteredVisible(false);
 
-    // Achado 6 desta rodada — tira a linha da tela na hora; se o servidor
+    // Tira a linha da tela na hora; se o servidor
     // recusar, a linha volta (o retrato de antes da remoção fica só nesta
     // closure).
     const beforeRemoval = items;
@@ -202,14 +202,14 @@ export function Assignment({
    * na lista, só não voltou para o lugar certo, e a tela diz isso. Cada
    * leitura fresca (`readAssignments`) também atualiza `items` na hora — o
    * desfazer nunca trabalha sobre um retrato antigo enquanto espera o
-   * `router.refresh()` do fim da função (achado 6 desta rodada).
+   * `router.refresh()` do fim da função.
    */
   const undoRemoval = (): void => {
     if (removedNotice === null) return;
     const { slug, title, position: originalPosition } = removedNotice;
     setRemovedNotice(null);
     setError(null);
-    setEnteredVisible(false); // achado 4
+    setEnteredVisible(false);
 
     const run = async (): Promise<void> => {
       const added = await addItem({ assignmentId, questSlug: slug });
@@ -227,7 +227,7 @@ export function Assignment({
         return;
       }
 
-      // Achado 6 desta rodada — o desfazer parte da lista atual: assim que o
+      // O desfazer parte da lista atual: assim que o
       // servidor confirma o item de volta, a tela reflete isso na hora, sem
       // esperar pelo `router.refresh()` do fim da função.
       setItems(freshItems);
@@ -309,10 +309,10 @@ export function Assignment({
 
   const existingSlugs = useMemo(() => new Set(items.map((item) => item.questSlug)), [items]);
 
-  // Achado 12 — o título vem do item já carregado, nunca da URL: só a
+  // O título vem do item já carregado, nunca da URL: só a
   // posição atravessa o query string, e é ela que aponta para a linha certa.
   //
-  // Achado 4 desta rodada — a busca por posição só vale enquanto nada foi
+  // A busca por posição só vale enquanto nada foi
   // movido ou removido (`enteredVisible`): mover qualquer linha muda quem
   // ocupa a posição N, e sem essa guarda a faixa passava a nomear outro item.
   const enteredItem =

@@ -26,11 +26,11 @@ async function pingOnce(): Promise<boolean> {
  * `hasDatabase()` só confere se `DATABASE_URL` foi definida; um Postgres fora
  * do ar com a variável setada passaria por essa checagem e quebraria a
  * primeira consulta. Os testes de ação (`app/actions/*.test.ts`) falam com o
- * banco de verdade, e o CI tem um trabalho sem Postgres (achado 1 do
- * `reviewer`) — sem isso, `pnpm test` ali falharia, em vez de pular com um
+ * banco de verdade, e o CI tem um trabalho sem Postgres — sem isso,
+ * `pnpm test` ali falharia, em vez de pular com um
  * aviso claro.
  *
- * **Achado 3 do `reviewer`.** O timeout de 2 s podia derrubar um banco que
+ * O timeout de 2 s podia derrubar um banco que
  * estava só devagar para responder à primeira consulta (container acabando
  * de subir, disco lento) — e o job "navegador" do CI, que **tem** Postgres de
  * pé, ficaria verde pulando tudo, em vez de rodar os testes de verdade. Duas

@@ -39,7 +39,7 @@ export function evaluateQuest(quest: Assessable, molecule: Molecule): QuestResul
  * Estrutura inválida não reprova a missão: ela ainda não é uma molécula, e o
  * erro de química já está sendo mostrado em outro lugar da tela.
  *
- * Recebe `Assessable`, como `evaluateQuest` (achado 5 do `reviewer`): uma
+ * Recebe `Assessable`, como `evaluateQuest`: uma
  * missão de professor também passa por aqui — o painel local do aluno reage à
  * digitação sem esperar o servidor, e não tinha por que só a `Quest` do
  * catálogo ganhar essa resposta instantânea.

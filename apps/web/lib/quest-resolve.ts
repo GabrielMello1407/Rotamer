@@ -57,7 +57,7 @@ export async function resolveQuest(slug: string): Promise<Assessable | null> {
 
 /**
  * Se uma conta tem acesso a este `slug` — a cadeia do R-7, com o segundo
- * caminho do D-27 (corrigido em 28/08/2026, no mesmo dia).
+ * caminho do D-27.
  *
  * O catálogo de missões do **produto** continua livre (§9.3): qualquer conta
  * logada ou não abre missão de catálogo. Uma missão `professor:` é visível
@@ -69,8 +69,8 @@ export async function resolveQuest(slug: string): Promise<Assessable | null> {
  *    nulo — o professor decidiu compartilhar esta missão com qualquer conta,
  *    de qualquer turma.
  * 3. **Autoria.** `teacherId === profileId` — quem escreveu a missão sempre
- *    alcança o que escreveu, publicada ou não, arquivada ou não. Achado 5 da
- *    terceira revisão: sem este caminho, o autor não conseguia ver nem testar
+ *    alcança o que escreveu, publicada ou não, arquivada ou não. Sem este
+ *    caminho, o autor não conseguia ver nem testar
  *    a própria missão pelos caminhos de aluno (`readQuestDetail`, `openQuest`,
  *    `saveAttempt`, `askTutor`) antes de publicá-la em alguma lista.
  *
@@ -132,7 +132,7 @@ export type ValidateAuthoredGoalsResult =
 
 /**
  * As duas travas de `createTeacherQuest` (§4.5 do `docs/ROTEIROS.md`), como
- * função pura — achado 8 do `reviewer`: a R-2 ("a própria resposta precisa
+ * função pura: a R-2 ("a própria resposta precisa
  * cumprir a missão") vivia só embutida na ação, sem caso de teste que
  * alcançasse a recusa de verdade — hoje os candidatos vêm de `extractGoals`
  * sobre a mesma molécula que o servidor acabou de reanalisar, e por

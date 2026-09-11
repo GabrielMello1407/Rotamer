@@ -43,7 +43,7 @@ import { joinClassroom, readClassroomBoard } from './classroom';
  * pote de cookie em memória — o resto (sessão, papel, dono, RDKit, banco)
  * roda sem simulação nenhuma.
  *
- * **Achado 1 do `reviewer`.** Este arquivo fala com o banco de verdade, e o
+ * Este arquivo fala com o banco de verdade, e o
  * CI tem um trabalho sem Postgres ("lint · tipos · testes"). `databaseAvailable`
  * é checado uma vez, antes de qualquer `describe`, com um `await` de nível de
  * módulo — e todo `describe` daqui para baixo usa `maybeDescribe`, que vira
@@ -56,8 +56,8 @@ import { joinClassroom, readClassroomBoard } from './classroom';
 const databaseAvailable = await isDatabaseReachable();
 
 /**
- * Achado 2 do `reviewer`: com a interceptação de console ligada (o padrão do
- * Vitest), o reporter "default" engolia este aviso — medido em 28/08/2026,
+ * Com a interceptação de console ligada (o padrão do Vitest), o reporter
+ * "default" engolia este aviso — medido,
  * `DATABASE_URL` apontando para a porta 1: "33 skipped" no resumo e nenhuma
  * linha de aviso, mesmo com o `console.warn` de nível de módulo aqui embaixo.
  * Só aparecia com `--reporter=verbose`, que não é o comando que ninguém roda
@@ -79,7 +79,7 @@ const TEACHER_PREFIX = 'professor:';
 
 /**
  * Espiona `analyzeOnServer` mantendo o comportamento real (RDKit de verdade) —
- * só para o achado 1 contar quantas vezes o servidor de fato rodou o RDKit,
+ * só para o teste do teto de conferências contar quantas vezes o servidor de fato rodou o RDKit,
  * em vez de inferir isso pela frase de recusa.
  */
 vi.mock('../../lib/chemistry-server', async (importOriginal) => {
@@ -89,8 +89,8 @@ vi.mock('../../lib/chemistry-server', async (importOriginal) => {
 
 vi.mock('next/headers', () => {
   const jar = new Map<string, string>();
-  // `x-forwarded-for` de teste — só o teste anônimo do achado 1 (rate limit de
-  // `checkQuest`) lê `headers()`; os demais rodam logados e nunca chamam isto.
+  // `x-forwarded-for` de teste — nenhum teste depende dele hoje: o teto de
+  // `checkQuest` é por conta, e chamada anônima é recusada antes de ler cabeçalho.
   const requestHeaders = new Map<string, string>([['x-forwarded-for', '203.0.113.7']]);
   return {
     cookies: () =>
@@ -436,7 +436,7 @@ maybeDescribe('R-1 — nada digitado vira Condition', () => {
   });
 });
 
-describe('achado 8 — validateAuthoredGoals recusa direto, sem passar pela ação', () => {
+describe('validateAuthoredGoals recusa direto, sem passar pela ação', () => {
   /**
    * `createTeacherQuest` sempre monta `candidates` a partir de `extractGoals`
    * rodando sobre a mesma molécula que valida a missão — por construção, a
@@ -489,7 +489,7 @@ describe('achado 8 — validateAuthoredGoals recusa direto, sem passar pela aç�
 
 maybeDescribe('R-2 — a própria resposta precisa cumprir a missão', () => {
   /**
-   * Achado 4 da terceira revisão: até aqui, `extractGoals` oferecia o
+   * Sem esta regra, `extractGoals` oferecia o
    * candidato «nenhum centro estereogênico fica sem configuração» sempre que
    * existia um centro — mesmo quando o próprio butan-2-ol desenhado (sem
    * cunha) **tinha** um centro sem configuração. O professor selecionava um
@@ -804,7 +804,7 @@ maybeDescribe('R-16 — questSlug tem teto de tamanho', () => {
   });
 });
 
-maybeDescribe('Achado 6 do reviewer — o teto diário conta toda escrita de autoria', () => {
+maybeDescribe('o teto diário conta toda escrita de autoria', () => {
   it(
     'editar a mesma missão repetidas vezes soma no mesmo teto de criar, não fica de fora',
     async () => {
@@ -856,7 +856,7 @@ maybeDescribe('Achado 6 do reviewer — o teto diário conta toda escrita de aut
   );
 });
 
-maybeDescribe('Achado 6 do reviewer — unarchiveTeacherQuest existe', () => {
+maybeDescribe('unarchiveTeacherQuest — missão arquivada por engano tem volta', () => {
   it('arquiva, tenta publicar (recusa nomeando o caminho), desarquiva, publica (ok)', async () => {
     const teacher = await makeTeacher();
     await loginAs(teacher.id);
@@ -896,7 +896,7 @@ maybeDescribe('Achado 6 do reviewer — unarchiveTeacherQuest existe', () => {
   });
 });
 
-maybeDescribe('Achado 2 da terceira revisão — unarchiveTeacherQuest confere o teto de R-12', () => {
+maybeDescribe('unarchiveTeacherQuest confere o teto de R-12', () => {
   it('com 200 missões ativas, desarquivar uma missão a mais é recusado', async () => {
     const teacher = await makeTeacher();
     await loginAs(teacher.id);
@@ -950,7 +950,7 @@ maybeDescribe('Achado 2 da terceira revisão — unarchiveTeacherQuest confere o
   });
 });
 
-maybeDescribe('Achado 3 da terceira revisão — unarchiveAssignment existe, simétrica a archiveAssignment', () => {
+maybeDescribe('unarchiveAssignment — simétrica a archiveAssignment', () => {
   it('arquiva, lê a lista de listas (some), desarquiva, volta a aparecer', async () => {
     const teacher = await makeTeacher();
     await loginAs(teacher.id);
@@ -1017,7 +1017,7 @@ maybeDescribe('Achado 3 da terceira revisão — unarchiveAssignment existe, sim
   });
 });
 
-maybeDescribe('Achado 7 do reviewer — institution nunca é string vazia', () => {
+maybeDescribe('institution nunca é string vazia', () => {
   it('professor sem instituição preenchida: byTeacher.institution sai null em readStudentAssignments e readQuestDetail', async () => {
     const teacher = await makeTeacher();
     await loginAs(teacher.id);
@@ -1097,7 +1097,7 @@ maybeDescribe('Achado 7 do reviewer — institution nunca é string vazia', () =
   });
 });
 
-maybeDescribe('Achado 2 do reviewer — a leitura da missão pelo aluno', () => {
+maybeDescribe('a leitura da missão pelo aluno', () => {
   it('aluno matriculado lê título, enunciado, dicas e objetivos, sem a resposta', async () => {
     const cenario = await publishedTeacherQuest();
     const aluno = await makeStudent();
@@ -1113,8 +1113,8 @@ maybeDescribe('Achado 2 do reviewer — a leitura da missão pelo aluno', () => 
       expect(outcome.quest.goals[0]).not.toHaveProperty('condition');
     }
 
-    // Achado 6 da terceira revisão: o teste checava `V2000` (o molblock) mas
-    // não `answerInchiKey` — R-3 exige que nenhum dos dois vaze, e só um
+    // R-3 exige que nem o molblock (`V2000`) nem a `answerInchiKey` vazem, e
+    // conferir só um
     // estava coberto.
     const row = await db.teacherQuest.findUniqueOrThrow({
       where: { id: cenario.questSlug.slice(TEACHER_PREFIX.length) },
@@ -1242,7 +1242,7 @@ maybeDescribe('D-27 corrigido — retirar do catálogo encerra o acesso pelo cat
   });
 });
 
-maybeDescribe('Achado 5 da terceira revisão — o autor alcança a própria missão', () => {
+maybeDescribe('o autor alcança a própria missão', () => {
   it('autor lê a própria missão não publicada em lista nenhuma, nem catalogada', async () => {
     const teacher = await makeTeacher();
     await loginAs(teacher.id);
@@ -1476,7 +1476,7 @@ maybeDescribe('D-27 — denúncia grava e respeita o teto', () => {
   });
 });
 
-maybeDescribe('checkQuest — conferir sem gravar (achado 5)', () => {
+maybeDescribe('checkQuest — conferir sem gravar', () => {
   it('chama três vezes seguidas e nenhum Attempt é gravado', async () => {
     const cenario = await publishedTeacherQuest();
     const aluno = await makeStudent();
@@ -1523,7 +1523,7 @@ maybeDescribe('checkQuest — conferir sem gravar (achado 5)', () => {
     expect(vi.mocked(analyzeOnServer).mock.calls.length - chamadasAntes).toBe(0);
   });
 
-  it('achado 1 — teto de 120/minuto por conta conta antes de resolver a missão e antes do RDKit; molblock inválido conta', async () => {
+  it('o teto de 120/minuto por conta é contado antes de resolver a missão e antes do RDKit; molblock inválido conta', async () => {
     const student = await makeStudent();
     await loginAs(student.id);
 
@@ -1556,7 +1556,7 @@ maybeDescribe('checkQuest — conferir sem gravar (achado 5)', () => {
   });
 });
 
-maybeDescribe('readAssignments — includeArchived (achado 2)', () => {
+maybeDescribe('readAssignments — includeArchived', () => {
   it('com includeArchived: true, também devolve a lista arquivada, marcada por archivedAt', async () => {
     const teacher = await makeTeacher();
     await loginAs(teacher.id);

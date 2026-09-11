@@ -244,7 +244,7 @@ describe('centro estereogênico sem configuração', () => {
   });
 
   it('com centro sem cunha, NÃO oferece o candidato — R-2 recusaria a missão pela própria resposta', async () => {
-    // Achado 4 da terceira revisão: o candidato "nenhum centro fica sem
+    // O candidato "nenhum centro fica sem
     // configuração" era oferecido mesmo quando a resposta do professor tinha
     // um centro sem configuração, e R-2 recusava a missão pela própria
     // resposta. `extractGoals` nunca deve oferecer um candidato que a

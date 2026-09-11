@@ -13,7 +13,7 @@ interface PageProps {
 }
 
 /**
- * O único código que este `feito` aceita hoje (achado 12 do `reviewer`).
+ * O único código que este `feito` aceita hoje.
  *
  * Fechado de propósito: a tela nunca escreve o valor do query string direto,
  * só o traduz por `messages.ts` — um link forjado com outro `feito`, ou sem

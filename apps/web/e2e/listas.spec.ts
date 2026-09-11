@@ -147,7 +147,7 @@ test.describe('listas da turma', () => {
     await expect(page.getByTestId('origem-primeiro-carbono')).toContainText('catálogo');
 
     /*
-     * Achado 6 — "remover" precisa tirar a linha da tela na hora, sem esperar
+     * "Remover" precisa tirar a linha da tela na hora, sem esperar
      * o servidor confirmar, e o desfazer precisa partir da lista que está na
      * tela agora. Para provar a ordem dos acontecimentos (não só o resultado
      * final), a resposta de `removeItem` é segurada de propósito: se a linha
@@ -199,7 +199,7 @@ test.describe('listas da turma', () => {
     await expect(page.getByTestId('painel-autoria')).toContainText('calculado', { timeout: 30_000 });
 
     /*
-     * Achado 8 — marcar "é exatamente esta molécula" precisa desligar os
+     * Marcar "é exatamente esta molécula" precisa desligar os
      * demais objetivos com UMA frase só, no topo da lista — não uma repetida
      * debaixo de cada objetivo desligado. Marca, confere, desmarca: a missão
      * real desta lista cobra grupo e contagem, não a InChIKey.
@@ -234,7 +234,7 @@ test.describe('listas da turma', () => {
 
     // O slug `professor:<id>` desta missão — único por execução do teste, ao
     // contrário do nome "Professora Ana", que se repete entre execuções e não
-    // serve para distinguir qual missão é a desta rodada no catálogo (D-27).
+    // serve para distinguir qual missão é a desta execução no catálogo (D-27).
     const teacherItemTestId = await page
       .getByTestId('itens-da-lista')
       .locator('[data-testid^="item-professor:"]')
@@ -243,7 +243,7 @@ test.describe('listas da turma', () => {
     if (teacherQuestSlug === undefined) throw new Error('não achei o slug da missão própria');
 
     /*
-     * Achado 4 — a faixa "entrou na lista, na posição 2" não pode voltar
+     * A faixa "entrou na lista, na posição 2" não pode voltar
      * depois que a lista foi mexida, mesmo que o item acabe retornando à
      * mesma posição de antes: sobe (banner some), desce de volta (banner
      * continua sumido, mesmo de volta na posição 2 — sem a correção, a busca
@@ -272,7 +272,7 @@ test.describe('listas da turma', () => {
     await expect(page.getByTestId(`estado-lista-${assignmentId}`)).toContainText('publicado');
 
     /*
-     * Achado 7 — a mesma frase de "turma sem aluno" no resumo do topo e no
+     * A mesma frase de "turma sem aluno" no resumo do topo e no
      * quadro por lista publicada: nenhum aluno entrou ainda nesta turma, e as
      * duas seções precisam dizer exatamente a mesma coisa, não duas frases
      * diferentes para o mesmo estado.
@@ -291,7 +291,7 @@ test.describe('listas da turma', () => {
      * Registrado **antes** do login do aluno, para não perder nada do que a
      * conta dele recebe do primeiro pixel em diante.
      *
-     * Achado 5 — a varredura original podia passar sem ter coletado corpo
+     * Uma varredura podia passar sem ter coletado corpo
      * nenhum (um `page.content()` só, ou uma lista vazia por sorte de
      * `content-type`). Guardamos também se a resposta veio de uma ação de
      * servidor (cabeçalho `Next-Action`, ou `content-type: text/x-component`
@@ -350,7 +350,7 @@ test.describe('listas da turma', () => {
     await page.getByRole('tab', { name: 'Análise' }).click();
 
     /*
-     * Achado 2 — o portão "`saveAttempt` só quando passou" vive só no
+     * O portão "`saveAttempt` só quando passou" vive só no
      * cliente (`QuestPanel.tsx`); sem um teste que force o caminho errado,
      * ele pode quebrar sem barulho. Três estruturas válidas — o RDKit aceita
      * as três — mas nenhuma cumpre "um álcool com exatamente 2 carbonos":
@@ -417,7 +417,7 @@ test.describe('listas da turma', () => {
      * nem InChIKey, nem quando é o próprio desenho do aluno: essa análise
      * roda inteira no worker, no navegador, e nunca volta do servidor.
      *
-     * Achado 5 — a varredura só prova algo se de fato coletou corpo: exige
+     * A varredura só prova algo se de fato coletou corpo: exige
      * pelo menos 5 respostas com conteúdo, e ao menos uma delas vinda de uma
      * ação de servidor de verdade (não só a navegação inicial).
      */
@@ -447,7 +447,7 @@ test.describe('listas da turma', () => {
     // O título coincide com uma missão do catálogo do produto — o mesmo texto
     // usado no exemplo da especificação — e com missões de mesmo nome criadas
     // em execuções anteriores deste teste. O slug capturado acima (único
-    // desta rodada) é o que distingue qual das entradas é a de agora.
+    // desta execução) é o que distingue qual das entradas é a de agora.
     const missaoDoProfessor = page.getByTestId(`catalogo-resultado-${teacherQuestSlug}`);
     await expect(missaoDoProfessor).toContainText('missão de Professora Ana');
     await expect(missaoDoProfessor).toContainText(ESCOLA);
@@ -480,7 +480,7 @@ test.describe('listas da turma', () => {
     expect(paginaDoProfessor).not.toContain('V2000');
 
     /*
-     * Achado 10 — "Listas arquivadas (n)" precisa de `tabular-nums`, como
+     * "Listas arquivadas (n)" precisa de `tabular-nums`, como
      * todo número da interface. Arquivar por último: uma lista arquivada some
      * do quadro por lista, e as asserções acima já leram tudo que precisavam
      * dela.

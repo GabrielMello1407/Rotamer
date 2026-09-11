@@ -161,8 +161,7 @@ const checkQuestSchema = z.object({
 export type OkOutcome = { readonly status: 'ok' } | { readonly status: 'rejected'; readonly reason: string };
 
 /**
- * Contagem de "salvamentos de autoria" nas últimas 24 h — R-12, achado 6 do
- * `reviewer` (e achado 5 da segunda revisão).
+ * Contagem de "salvamentos de autoria" nas últimas 24 h (R-12).
  *
  * A versão anterior contava `TeacherQuest` **distintas** tocadas hoje — uma
  * mesma missão salva 300 vezes no mesmo dia contava 1, porque `createdAt`/
@@ -201,8 +200,7 @@ function registerAuthoringSave(teacherId: string): void {
 }
 
 /**
- * Teto de `checkQuest` — 120 conferências por conta (ou por IP, sem conta)
- * por minuto (achado 2 da primeira revisão; achado 1 desta).
+ * Teto de `checkQuest` — 120 conferências por conta por minuto.
  *
  * `checkQuest` não grava nada (nem `Attempt`, nem `QuestOpen`): é a mesma
  * reavaliação de `saveAttempt`, só que sem persistir, para o aluno conferir
@@ -427,7 +425,7 @@ export async function createTeacherQuest(input: {
     };
   }
 
-  // R-1 e R-2, extraídas em `validateAuthoredGoals` (achado 8): regenera os
+  // R-1 e R-2, em `validateAuthoredGoals`: regenera os
   // candidatos a partir desta mesma molécula, aceita só `id` presente ali, e
   // confere que a própria resposta cumpre o que foi marcado.
   const candidates = new Map(extractGoals(molecule).map((candidate) => [candidate.id, candidate] as const));
@@ -436,7 +434,7 @@ export async function createTeacherQuest(input: {
 
   const goals: Goal[] = [...validated.goals];
 
-  // Achado 6: o teto diário conta toda escrita de autoria, em memória — ver
+  // O teto diário conta toda escrita de autoria, em memória — ver
   // `authoringSavesToday`. Checado antes da transação porque não depende do
   // banco; o registro (`registerAuthoringSave`) só acontece depois do sucesso.
   if (authoringSavesToday(teacher.id) >= MAX_AUTHORING_SAVES_PER_DAY) {
@@ -543,7 +541,7 @@ export async function updateTeacherQuestText(input: {
     hints.push(hint.value);
   }
 
-  // Achado 6: mesmo teto diário de `createTeacherQuest`, contado em memória —
+  // Mesmo teto diário de `createTeacherQuest`, contado em memória —
   // editar conta tanto quanto criar.
   if (authoringSavesToday(teacher.id) >= MAX_AUTHORING_SAVES_PER_DAY) {
     return { status: 'rejected', reason: 'Você chegou ao limite de salvamentos de hoje. Volte amanhã.' };
@@ -586,14 +584,14 @@ export async function archiveTeacherQuest(input: { teacherQuestId: string }): Pr
 /**
  * Desarquiva uma missão do professor — simétrica a `archiveTeacherQuest`.
  *
- * Achado 6 do `reviewer`: `publishToCatalog` recusa missão arquivada com
+ * `publishToCatalog` recusa missão arquivada com
  * "Desarquive antes de publicar", e até aqui não existia ação nenhuma que
  * fizesse isso — a mensagem mandava um caminho que não existia. Desarquivar
  * só tira a missão do estado arquivado; não muda `catalogedAt` nem os
  * objetivos, e uma lista publicada que já usa esta missão nunca deixou de
  * funcionar (§3.5 de `docs/ROTEIROS.md` — arquivar não tira de mais nada).
  *
- * **Achado 2 da terceira revisão.** Desarquivar bota a missão de volta em
+ * Desarquivar bota a missão de volta em
  * "ativa" — o mesmo teto de `MAX_ACTIVE_TEACHER_QUESTS` que `createTeacherQuest`
  * confere (R-12) precisa ser conferido aqui também, e do mesmo jeito: dentro
  * da transação que faz a escrita, contando `archivedAt: null` no momento
@@ -836,8 +834,8 @@ export async function archiveAssignment(input: { assignmentId: string }): Promis
 // ================================================================== unarchiveAssignment
 
 /**
- * Desarquiva uma lista — simétrica a `archiveAssignment`. Achado 3 da
- * terceira revisão: `archiveAssignment` não tinha volta.
+ * Desarquiva uma lista — simétrica a `archiveAssignment`, que sem isto não
+ * tinha volta.
  *
  * Do mesmo jeito que `unarchiveTeacherQuest`: `ownedAssignmentAnyState`
  * (`roles.ts`) não filtra por `archivedAt`, porque precisa continuar achando
@@ -908,7 +906,7 @@ export interface AssignmentSummary {
 /**
  * R-3: `answerMolblock` e `answerInchiKey` não entram em nenhum `select` daqui.
  *
- * `includeArchived` é achado 5: sem ele, uma lista arquivada some das duas
+ * `includeArchived` existe porque, sem ele, uma lista arquivada some das duas
  * telas (§3.5 do `docs/ROTEIROS.md`) e o professor não tinha como achá-la de
  * volta para `unarchiveAssignment`. Continua vindo **junto** com as ativas
  * quando pedido — não substitui a leitura padrão — e cada lista carrega
@@ -1091,7 +1089,7 @@ function clientGoal(goal: Goal): StudentGoalView {
  * este par acompanha. É a regra do D-15 aplicada a conteúdo: o que um humano
  * assinou não circula sem a assinatura.
  *
- * **Achado 7 do `reviewer`.** `institution` é `string | null`, nunca string
+ * `institution` é `string | null`, nunca string
  * vazia. O D-27 exige instituição preenchida para **publicar no catálogo**
  * (`publishToCatalog`) — isso já é imposto lá, e é por isso que `readCatalog`
  * sempre traz uma instituição de verdade. **Fora do catálogo** — item de uma
@@ -1251,7 +1249,7 @@ const readQuestDetailSchema = z.object({ questSlug: z.string().min(1).max(80) })
  *
  * Catálogo do produto é livre (§9.3): não precisa de conta. Missão
  * `professor:` precisa, e a checagem de conta vem **antes** de tocar o banco
- * — mesma defesa do achado 4 em `askTutor`: uma conta anônima não pode
+ * — a mesma defesa de `askTutor`: uma conta anônima não pode
  * distinguir "existe, mas você não alcança" de "não existe" pela resposta.
  *
  * R-3: nunca `answerMolblock`/`answerInchiKey`. R-4: nunca `condition`, só
@@ -1323,7 +1321,7 @@ export async function readQuestDetail(input: { questSlug: string }): Promise<Rea
 // ================================================================== checkQuest
 
 /**
- * Conferir se um desenho cumpre uma missão, **sem** gravar nada — achado 5.
+ * Conferir se um desenho cumpre uma missão, **sem** gravar nada.
  *
  * Mesma reavaliação de `saveAttempt`: o molblock passa de novo pelo RDKit no
  * servidor e a mesma `evaluateQuest` decide, nunca o cliente. A diferença é
@@ -1429,7 +1427,7 @@ export async function publishToCatalog(input: { teacherQuestId: string }): Promi
 
 /**
  * Retirar uma missão do catálogo. Desfaz `publishToCatalog`, missão a
- * missão, quando o professor quiser (D-27, corrigido em 28/08/2026).
+ * missão, quando o professor quiser (D-27).
  *
  * **Retirar encerra o acesso pelo catálogo.** Quem só alcançava esta missão
  * porque ela estava catalogada deixa de alcançar — "já abriu" não é chave de

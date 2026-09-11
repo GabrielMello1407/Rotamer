@@ -154,7 +154,7 @@ export function TopBar({
             {authoring.label}
           </span>
 
-          {/* Achado 4 do `reviewer`: fechar o painel em modo autoria não
+          {/* Fechar o painel em modo autoria não
               deixava jeito de reabrir — o "X" do `AnalysisDrawer` some, e só
               sobravam Cancelar/Salvar aqui. O botão espelha "Análise" do modo
               normal. */}

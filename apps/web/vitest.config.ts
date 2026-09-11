@@ -15,7 +15,7 @@ export default defineConfig({
     // `app/actions/assignment.test.ts` fala com o banco de verdade — o `.env`
     // precisa estar carregado antes de `lib/db.ts` ler `DATABASE_URL`.
     setupFiles: ['./test/setup-env.ts'],
-    // Achado 2 do `reviewer`: com a interceptação ligada (padrão), o reporter
+    // Com a interceptação ligada (padrão), o reporter
     // "default" engole `console.warn`/`console.log` de qualquer arquivo cujos
     // testes não falharam — inclusive o aviso de "banco indisponível, testes
     // pulados" de `assignment.test.ts`, medido não aparecendo nem com o teste

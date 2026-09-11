@@ -11,8 +11,8 @@ export interface AuthoringPanelProps {
   readonly analysis: AnalysisResult | null;
   readonly selectedGoalIds: ReadonlySet<string>;
   /**
-   * `exclusive` é o mesmo `candidate.exclusive` do InChIKey (achado 7 do
-   * `reviewer`): quem chama precisa saber para desligar os outros marcados
+   * `exclusive` é o mesmo `candidate.exclusive` do InChIKey: quem chama
+   * precisa saber para desligar os outros marcados
    * ao ligar este, em vez de só travá-los sem dizer.
    */
   readonly onToggleGoal: (id: string, exclusive: boolean) => void;
@@ -111,7 +111,7 @@ export function AuthoringPanel({
           </span>
         </div>
 
-        {/* Achado 8 — a frase de exclusividade aparecia debaixo de CADA
+        {/* A frase de exclusividade aparece uma vez, no topo. Debaixo de CADA
             objetivo desligado; com dez objetivos, dez repetições da mesma
             linha. Uma vez só, no topo, enquanto o InChIKey estiver marcado. */}
         {exclusiveMarked && (

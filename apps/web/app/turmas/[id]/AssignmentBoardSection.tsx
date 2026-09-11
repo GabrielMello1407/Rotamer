@@ -52,7 +52,7 @@ export function AssignmentBoardSection({ assignmentTitle, board }: AssignmentBoa
       )}
 
       {board.students.length === 0 ? (
-        // Achado 7 — o mesmo texto de turma sem aluno da porta de entrada
+        // O mesmo texto de turma sem aluno da porta de entrada
         // (`/turmas/[id]`), não uma segunda frase para a mesma situação.
         <p className={styles.empty}>{messages.empty.noStudents}</p>
       ) : (

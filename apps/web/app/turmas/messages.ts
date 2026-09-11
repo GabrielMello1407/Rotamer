@@ -25,7 +25,7 @@ export const messages = {
     itemCount: (n: number): string => `${String(n)} ${pluralize(n, 'missão', 'missões')}`,
     namePlaceholder: 'Funções oxigenadas — 3ª série',
     /**
-     * Achado 5 — `unarchiveAssignment` já existia sem caminho de tela: a
+     * `unarchiveAssignment` existia sem caminho de tela: a
      * única leitura desta seção vinha sem `archivedAt`, e uma lista
      * arquivada simplesmente sumia, sem jeito de voltar.
      */
@@ -52,7 +52,7 @@ export const messages = {
     remove: 'Remover',
     removed: (title: string): string => `«${title}» saiu da lista.`,
     undo: 'Desfazer',
-    /** Achado 6 — desfazer devolve para a posição de origem; se a subida falhar no meio, a tela diz. */
+    /** Desfazer devolve para a posição de origem; se a subida falhar no meio, a tela diz. */
     undoMoveFailed: (title: string): string =>
       `«${title}» voltou para a lista, mas não consegui trazê-la de volta para a posição de antes. Suba com ↑.`,
     pickFromCatalog: 'Escolher do catálogo',
@@ -68,7 +68,6 @@ export const messages = {
     withdrawFromCatalog: 'Retirar do catálogo',
     onCatalog: 'no catálogo',
     offCatalog: 'fora do catálogo',
-    /** Achado 11 — vivia solto em `Assignment.tsx`, fora deste arquivo. */
     archivedNotice: 'Esta lista foi arquivada. Ela some das duas telas até você desarquivar.',
   },
 
@@ -157,7 +156,7 @@ export const messages = {
     catalogFreedom: 'O catálogo é livre: dá para explorar por conta, mesmo fora da lista.',
     inProgressOption: (title: string): string => `Da sua turma · ${title}`,
     /**
-     * Achado 1 — o objetivo de InChIKey (ou uma missão de professor alcançada
+     * O objetivo de InChIKey (ou uma missão de professor alcançada
      * só pelo catálogo, sem a condição que "Da sua turma" traria) não tem
      * como ser avaliado no cliente (R-4). Nunca "por cumprir": o servidor
      * ainda não respondeu, e dizer "não cumprido" seria mentir enquanto se
@@ -206,7 +205,7 @@ export const messages = {
     noItems: 'Escolha do catálogo, ou desenhe a resposta e crie a sua.',
     noCatalogMatch: 'Nenhuma missão desta trilha fora da lista.',
     /**
-     * Achado 7 — a mesma frase para "turma sem aluno" nas duas seções da
+     * A mesma frase para "turma sem aluno" nas duas seções da
      * página da turma: o resumo do topo (`page.tsx`) e o quadro por lista
      * publicada (`AssignmentBoardSection`). Duas frases diferentes para o
      * mesmo estado liam como dois bugs, não como um.

@@ -91,10 +91,10 @@ function findNextUp(
  * O veredito de uma missão do catálogo sai do motor de missões rodando aqui
  * mesmo, comparando os números que o RDKit calculou — `evaluateAnalysis`. Uma
  * missão de professor faz o mesmo **quando a lista da turma trouxe a
- * condição** (achado 1 do `reviewer`): o objetivo de InChIKey nunca manda a
+ * condição**: o objetivo de InChIKey nunca manda a
  * condição para o cliente (R-4), e aí quem decide é `checkQuest`, sem gravar
  * nada, a cada estrutura válida nova. `saveAttempt` só entra depois que um
- * dos dois já disse que passou — nunca antes (achado 2), para um desenho de
+ * dos dois já disse que passou — nunca antes, para um desenho de
  * passagem não virar tentativa gravada.
  */
 export function QuestPanel({ analysis, slug, onSlug }: QuestPanelProps): ReactElement {
@@ -112,7 +112,7 @@ export function QuestPanel({ analysis, slug, onSlug }: QuestPanelProps): ReactEl
 
   /**
    * A `condition` de uma missão de professor só chega ao cliente pela lista
-   * "Da sua turma" (achado 1) — `readStudentAssignments` manda `condition` em
+   * "Da sua turma" — `readStudentAssignments` manda `condition` em
    * todo objetivo, **menos** no de InChIKey (R-4), e esse objetivo nunca vem
    * sozinho fora de uma exclusividade que o servidor garante na criação. Uma
    * missão alcançada só pelo catálogo (fora das listas do aluno) não passa
@@ -157,7 +157,7 @@ export function QuestPanel({ analysis, slug, onSlug }: QuestPanelProps): ReactEl
   const usingServerCheck = isTeacherQuest && localAssessable === null;
 
   /**
-   * Achado 9 — arrastar um átomo não muda a topologia, mas recalcula
+   * Arrastar um átomo não muda a topologia, mas recalcula
    * `analysis` (nova referência, mesma InChIKey) a cada debounce de métrica.
    * Sem esta memória, cada arrasto perguntava `checkQuest` de novo para a
    * mesma molécula. O veredito é função pura da missão e da InChIKey — cache
@@ -273,7 +273,7 @@ export function QuestPanel({ analysis, slug, onSlug }: QuestPanelProps): ReactEl
 
   /**
    * A tentativa cumprida vai para o servidor com o desenho, nunca com a nota
-   * — e nunca por desenho intermediário (achado 2 do `reviewer`).
+   * — e nunca por desenho intermediário.
    *
    * Catálogo e missão de professor com condição local: só manda quando o
    * veredito **local** já bateu — a mesma regra, porque `result` cobre os
@@ -333,7 +333,7 @@ export function QuestPanel({ analysis, slug, onSlug }: QuestPanelProps): ReactEl
   const hints = quest?.hints ?? teacherQuestForSlug?.hints ?? [];
 
   /**
-   * O estado real por objetivo (achado 1 do `reviewer`).
+   * O estado real por objetivo.
    *
    * `result` já cobre catálogo e missão de professor com condição local — o
    * mesmo `evaluateAnalysis` dos dois casos. Sem condição local, o único
@@ -351,7 +351,7 @@ export function QuestPanel({ analysis, slug, onSlug }: QuestPanelProps): ReactEl
       : (teacherQuestForSlug?.goals.map((goal) => ({ id: goal.id, label: goal.label, met: false })) ?? []));
 
   /**
-   * Achado 3 — `checkQuest` recusado (sem acesso, teto de conferências) não
+   * `checkQuest` recusado (sem acesso, teto de conferências) não
    * pode virar "por cumprir": a lista de objetivos mentiria dizendo que nada
    * foi medido ainda, quando na verdade o servidor já respondeu que não dá
    * para conferir. O motivo do servidor substitui a lista inteira.

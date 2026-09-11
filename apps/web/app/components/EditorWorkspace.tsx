@@ -213,7 +213,7 @@ export function EditorWorkspace({
   );
 
   /**
-   * A seleção de objetivos é sobre **esta** molécula (achado 3 do `reviewer`).
+   * A seleção de objetivos é sobre **esta** molécula.
    *
    * `extractGoals` roda de novo sobre cada análise nova, e um `id` marcado
    * antes do desenho mudar pode não existir mais no conjunto novo — ou pior,
@@ -281,7 +281,7 @@ export function EditorWorkspace({
       }
 
       /*
-       * Achado 12 — o query string leva um código fechado, nunca a frase
+       * O query string leva um código fechado, nunca a frase
        * pronta: `feito=missao-criada` é o único valor que a lista aceita
        * (§6.6), e a posição basta para achar o item na lista já carregada e
        * montar o texto com `messages.assignment.entered`. Nada além disso

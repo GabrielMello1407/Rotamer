@@ -64,7 +64,7 @@ export async function askTutor(input: {
   // R-7: a quarta porta do aluno. Resolvido antes de qualquer análise — uma
   // missão fora do alcance não ganha nem o trabalho do RDKit.
   //
-  // Achado 4 do `reviewer`: esta checagem de conta precisa vir **antes** de
+  // Esta checagem de conta precisa vir **antes** de
   // `resolveQuest` tocar o banco. Antes, uma conta anônima recebia
   // "Essa missão não existe." para um slug `professor:` forjado, e "Missão de
   // turma precisa de conta." para um slug `professor:` real — a diferença
