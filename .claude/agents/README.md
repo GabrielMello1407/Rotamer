@@ -66,6 +66,6 @@ O `CLAUDE.md` vale para os nove, e nenhum arquivo daqui o substitui:
 - **Texto em pt-BR, código em inglês.** O erro explica a química, não o código.
 - **Dependência precisa ser compatível com MIT em redistribuição.** GPL, LGPL e AGPL ficam
   fora — imporiam a quem redistribui o Rotamer obrigações que a nossa licença não impõe.
-- **Escopo estourando é o risco número um.** Ideia fora do MVP vai para `DEPOIS.md`.
+- **Escopo estourando é o risco número um.** Ideia fora do MVP vai para `docs/FORA-DE-ESCOPO.md`.
 - **Nunca afirme** previsão de reação, atividade biológica, ou que o produto substitui ChemDraw,
   PyMOL ou Maestro. Vale no código, no documento e — principalmente — no que se publica.

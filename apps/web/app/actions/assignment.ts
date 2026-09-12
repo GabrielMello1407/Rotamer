@@ -180,7 +180,8 @@ export type OkOutcome = { readonly status: 'ok' } | { readonly status: 'rejected
  * — a migração já cresceu nesta entrega (D-27), e a instância roda um
  * processo só (D-11). Isso precisa virar tabela no dia em que o app ganhar
  * mais de um container, ou o container passar a reiniciar com frequência o
- * bastante para a janela de 24 h perder sentido — registrado em `DEPOIS.md`.
+ * bastante para a janela de 24 h perder sentido — registrado no
+ * `docs/FORA-DE-ESCOPO.md`.
  */
 const authoringSaves = new Map<string, number[]>();
 

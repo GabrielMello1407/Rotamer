@@ -16,8 +16,8 @@ Contexto completo em `README.md`. Quando precisar de profundidade, leia sob dema
 produto existe) · `docs/DECISOES.md` (o porquê de cada escolha, inclusive as revogadas) ·
 `docs/ARQUITETURA.md` · `docs/DESIGN-SYSTEM.md` · `docs/ROADMAP.md` · `docs/ROTEIROS.md` (as
 listas da turma) · `docs/GUIA.md` (o produto tela a tela) · `docs/INSTALACAO.md` (o self-host) ·
-`CONTRIBUTING.md` (o caminho de quem mexe no código). Ideia fora de escopo vai para `DEPOIS.md`,
-não para o código.
+`CONTRIBUTING.md` (o caminho de quem mexe no código). Ideia fora de escopo vai para
+`docs/FORA-DE-ESCOPO.md`, não para o código.
 
 ## Licença e dependências
 
@@ -221,7 +221,7 @@ bater com tabela de terceiro.
 - Nunca contorne o RDKit para "resolver rápido" uma pergunta química.
 - Ao criar uma cor, um espaçamento ou uma duração, adicione nos tokens primeiro.
 - Antes de instalar qualquer pacote, verifique a licença: compatível com MIT, ou não entra.
-- Toda ideia nova fora do escopo vai para `DEPOIS.md`, não para o código. Escopo estourando é o
-  risco número um deste projeto.
+- Toda ideia nova fora do escopo vai para `docs/FORA-DE-ESCOPO.md`, não para o código. Escopo
+  estourando é o risco número um deste projeto.
 - Toda entrega termina com teste que falharia sem ela, e com o documento que ela tornou
   desatualizado corrigido na mesma entrega.

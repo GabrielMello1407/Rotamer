@@ -140,7 +140,8 @@ recusando.
 Comece por [CONTRIBUTING.md](CONTRIBUTING.md). As regras que não se negociam estão em
 [CLAUDE.md](CLAUDE.md), e o mapa do código em [docs/ARQUITETURA.md](docs/ARQUITETURA.md). Toda
 mudança termina com teste que falharia sem ela; química nova pede caso em `packages/core/test/`
-rodando sem navegador. Ideia fora do escopo vai para [DEPOIS.md](DEPOIS.md) antes de virar código.
+rodando sem navegador. Ideia fora do escopo vai para
+[docs/FORA-DE-ESCOPO.md](docs/FORA-DE-ESCOPO.md) antes de virar código.
 
 ```
 pnpm dev          # app em desenvolvimento
@@ -169,7 +170,7 @@ redistribuição.
 | [docs/ORIGEM.md](docs/ORIGEM.md) | Como a ideia nasceu, os pivôs e o que cada erro ensinou |
 | [docs/ROADMAP.md](docs/ROADMAP.md) | O que está feito, o que falta, riscos |
 | [docs/DEPLOY.md](docs/DEPLOY.md) | A instância mantida pelo autor |
-| [DEPOIS.md](DEPOIS.md) | Tudo que ficou fora, com o porquê |
+| [docs/FORA-DE-ESCOPO.md](docs/FORA-DE-ESCOPO.md) | Tudo que ficou fora, com o porquê |
 
 A página do produto e esta documentação em forma de site vivem em outro repositório,
 `rotamer-site`, que puxa a pasta `docs/` daqui na hora de construir — o site nunca descreve uma

@@ -1,9 +1,11 @@
-# Depois
+# Fora de escopo
 
-Toda ideia que não está no escopo mora aqui, não no código. Escopo estourando é o risco número
-um deste projeto.
+O que **não** entra no produto agora, e por quê. Cada item traz o custo de fazê-lo e o que
+destrancaria a decisão — uma pergunta respondida, um pedido de professor, uma medição.
 
-Regra: se surgiu no meio de outra tarefa, escreva aqui e volte ao que estava fazendo.
+É o irmão do `DECISOES.md`: lá está o que foi decidido fazer, aqui o que foi decidido não fazer
+por enquanto. Ideia que surgiu no meio de outra tarefa se escreve aqui, e se volta ao que estava
+fazendo. Escopo estourando é o risco número um deste projeto.
 
 > Revisado em 11 de setembro de 2026, depois do D-28. O que já foi entregue saiu daqui — mora
 > no `docs/ROADMAP.md`, marcado como feito. O que ficou é o que está fora de propósito, com o

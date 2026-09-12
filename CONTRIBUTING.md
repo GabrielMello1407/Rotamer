@@ -20,8 +20,8 @@ As que mais importam:
   raio e duração vem de `packages/ui/src/tokens.css`. Temas claro e escuro sempre juntos.
 - **Licença compatível com o MIT.** MIT, BSD, Apache-2.0, ISC entram; GPL, LGPL e AGPL não.
   Toda dependência nova vai para `docs/TERCEIROS.md` no mesmo commit.
-- **Ideia fora de escopo vai para `DEPOIS.md`**, não para o código. Escopo estourando é o risco
-  número um do projeto.
+- **Ideia fora de escopo vai para `docs/FORA-DE-ESCOPO.md`**, não para o código. Escopo
+  estourando é o risco número um do projeto.
 
 ## Subir o ambiente
 

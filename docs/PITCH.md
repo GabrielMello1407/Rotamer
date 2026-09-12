@@ -104,8 +104,8 @@ um químico, e a instância no ar com endereço próprio ([ROADMAP.md](ROADMAP.m
 
 ## Riscos assumidos
 
-- **Escopo.** O maior de todos. Mitigado por `DEPOIS.md`: ideia fora do escopo vai para lá, não
-  para o código.
+- **Escopo.** O maior de todos. Mitigado por `FORA-DE-ESCOPO.md`: ideia fora do escopo vai para
+  lá, não para o código.
 - **Erro químico em público.** Um químico achando um erro sutil derruba a confiança. Por isso
   nunca se contorna o RDKit, e o `reviewer` tem veto sobre isso.
 - **Adoção.** Professor de escola pública tem pouco tempo e pouca banda. O produto precisa

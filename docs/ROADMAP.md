@@ -105,7 +105,7 @@ se introduz: **espera-se**.
 
 A terceira pergunta é a que decide o preço de qualquer caminho: separa um mapeamento de termos
 de um dicionário de nomenclatura mantido para sempre. Os caminhos, com o custo de cada um, estão
-no `DEPOIS.md`; a pesquisa que os fundamenta, em `docs/pesquisa/nomenclatura.md`.
+no `FORA-DE-ESCOPO.md`; a pesquisa que os fundamenta, em `docs/pesquisa/nomenclatura.md`.
 
 ---
 
@@ -130,8 +130,8 @@ O Rotamer é código aberto, MIT, sem comercialização (D-28). O que essa decis
 - [ ] **Publicar o `rotamer-site`** — criar o repositório no GitHub e ligar as páginas; com o
       Rotamer privado, o workflow precisa de um token de leitura em `ROTAMER_TOKEN`
 
-**Pergunta em aberto, anotada no `DEPOIS.md`:** o roadmap inteiro serve ao ensino. Sem a tensão
-comercial que a segurava, a trilha de pesquisa volta a ser pergunta legítima — e continua
+**Pergunta em aberto, anotada no `FORA-DE-ESCOPO.md`:** o roadmap inteiro serve ao ensino. Sem a
+tensão comercial que a segurava, a trilha de pesquisa volta a ser pergunta legítima — e continua
 esperando as sessões da Fase 3 para ser respondida por escrito.
 
 ---
@@ -140,7 +140,7 @@ esperando as sessões da Fase 3 para ser respondida por escrito.
 
 | Risco | Sinal de que aconteceu | O que fazer |
 |---|---|---|
-| **Escopo estourar** — o mais provável | Uma ideia nova entrando no código sem passar pelo `DEPOIS.md` | Ideia nova vai para `DEPOIS.md`. O `pm` decide se entra. |
+| **Escopo estourar** — o mais provável | Uma ideia nova entrando no código sem passar pelo `FORA-DE-ESCOPO.md` | Ideia nova vai para `FORA-DE-ESCOPO.md`. O `pm` decide se entra. |
 | **Um químico achar um erro** | Alguém aponta tautomeria ou estereoquímica errada | Nunca contornar o RDKit. Admitir rápido constrói mais confiança do que erro nenhum. |
 | **Custo do tutor fugir** | Conta subindo sem uso proporcional | Cache por InChIKey, teto diário, degradação para dica escrita; e o tutor é opcional. |
 | **Ninguém usar** | Fase 3 sem professor interessado | Conversar com professores **agora**, com o produto como está. |

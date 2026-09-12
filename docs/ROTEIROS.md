@@ -3,7 +3,7 @@
 > O que existe no código para as listas da turma (D-25), o catálogo buscável (D-26) e o catálogo
 > compartilhado de missões de professor (D-27): modelo de dados, regras de servidor, extração de
 > objetivos, telas e os testes que provam cada regra. As decisões estão em `DECISOES.md`; o que
-> ficou de fora está no `DEPOIS.md`.
+> ficou de fora está no `FORA-DE-ESCOPO.md`.
 >
 > O arquivo se chama `ROTEIROS.md` porque foi assim que a tarefa nasceu. A palavra da tela é
 > **lista**, e o porquê está na §2. O código aponta para as seções daqui pelo número.
@@ -31,7 +31,8 @@ encontra pela busca, com o nome e a escola de quem escreveu, e pode denunciá-la
 
 **O que ficou de fora** — prazo, nota que vira boletim, copiar lista entre turmas, mais de uma
 resposta certa por composição, cadeado entre itens, grafo de conceitos, tour de primeira visita,
-tempo por item no quadro, tela de moderação — está no `DEPOIS.md`, cada um com o porquê.
+tempo por item no quadro, tela de moderação — está no `FORA-DE-ESCOPO.md`, cada um com o
+porquê.
 
 **A trilha Otimização continua sem missão** (D-09). Ela não aparece no seletor de trilha do
 catálogo, e nenhuma lista tem como conter item dela.

@@ -7,7 +7,7 @@ dia, com o endereço de cada coisa.
 > Escrito quando o produto era fechado (D-08). Em 11 de setembro de 2026 o D-28 abriu o código
 > sob MIT e mudou a regra de licença — o que este levantamento diz sobre licença comercial e
 > produto fechado é registro daquele dia, não a regra de hoje. A leitura atual dos caminhos está
-> no `DEPOIS.md`, em "Nomenclatura — os cinco caminhos".
+> no `docs/FORA-DE-ESCOPO.md`, em "Nomenclatura — os cinco caminhos".
 
 ---
 

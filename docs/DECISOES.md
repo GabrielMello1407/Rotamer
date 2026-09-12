@@ -516,7 +516,8 @@ valem juntas:**
 Antes das três, a pergunta que custa zero: **qual das duas direções o professor quer** — "nomeie o
 que eu desenhei" ou "corrija o nome que meu aluno escreveu". São produtos diferentes, com custos
 muito diferentes, e a sessão de observação da Fase 3 responde de graça. As perguntas exatas estão
-no `docs/ROADMAP.md`. Os caminhos que ficaram em pé, com o preço de cada um, estão no `DEPOIS.md`.
+no `docs/ROADMAP.md`. Os caminhos que ficaram em pé, com o preço de cada um, estão no
+`FORA-DE-ESCOPO.md`.
 
 **Atualização — 27/08/2026: a regra do apelido errava nos dois sentidos, e o remédio muda de
 lugar.**
@@ -540,8 +541,8 @@ teste que a trava, em vez de ser hábito.
 A regra escrita continua recusando o caso inequívoco (fórmula, SMILES, e nomenclatura sistemática
 que um químico reconheceria como tal), mas nenhum apelido é recusado sem que exista um caso
 verdadeiro que justifique a recusa. **A lista de nomes triviais de composto é dado de química e
-não se inventa aqui**: ou vem de fonte revisada por químico, ou não vem. Fica no `DEPOIS.md`, e só
-entra se a revisão da Fase 3 mostrar que a colisão incomoda de verdade.
+não se inventa aqui**: ou vem de fonte revisada por químico, ou não vem. Fica no
+`FORA-DE-ESCOPO.md`, e só entra se a revisão da Fase 3 mostrar que a colisão incomoda de verdade.
 
 
 ---
@@ -780,7 +781,7 @@ nenhum.
 
 **A travessia do fragmento mora no núcleo**, não no editor: é grafo, e grafo se testa sem
 navegador. Anel e grupo funcional continuam sendo pergunta para o RDKit — "selecionar o anel" não
-entra por isso, e está no `DEPOIS.md`.
+entra por isso, e está no `FORA-DE-ESCOPO.md`.
 
 **Um gesto mudou de sentido.** Shift+clique parado no vazio deixou de criar átomo e passou a
 soltar a seleção. Está coberto por teste de regressão nomeado, porque gesto que muda em silêncio
@@ -962,7 +963,7 @@ porque imporiam obrigações a quem redistribui o Rotamer, e não é isso que um
 
 **O que isso afrouxa.** O D-09 dizia que o pesquisador é usuário avançado, não cliente. Sem
 cliente, todos são usuários — o aluno continua sendo o primeiro, o professor continua decidindo o
-que entra na aula, e a trilha de pesquisa registrada no `DEPOIS.md` volta a ser pergunta
+que entra na aula, e a trilha de pesquisa registrada no `FORA-DE-ESCOPO.md` volta a ser pergunta
 legítima, sem a tensão comercial que a segurava.
 
 **O que muda de significado.** "Vale para todo mundo" no batismo (D-15) e no catálogo

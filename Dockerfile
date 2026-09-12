@@ -55,7 +55,7 @@ RUN apt-get update \
 #
 # A linha de comando carrega junto o que `prisma studio` e `prisma dev` usam, e
 # não dá para tirar: o pacote exige esses módulos ao subir, mesmo para
-# `migrate deploy`. É o maior peso da imagem, e está anotado no `DEPOIS.md`.
+# `migrate deploy`. É o maior peso da imagem, e está anotado no `docs/FORA-DE-ESCOPO.md`.
 RUN mkdir -p /opt/prisma \
     && cd /opt/prisma \
     && npm init --yes > /dev/null \
