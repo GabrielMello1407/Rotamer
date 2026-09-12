@@ -102,13 +102,22 @@ test.describe('listas da turma', () => {
     page,
   }) => {
     /*
-     * Robustez — mais de vinte passos, quatro workers, e uma navegação final
-     * depois de todas as asserções: já estourou os 60 s padrão uma vez, no
-     * celular, sob carga. `test.slow()` triplica o tempo deste teste (o
-     * Playwright já faz a conta); não mexe em workers nem no timeout global,
-     * que continuam servindo a suíte inteira.
+     * Cinco minutos, e o que sobra é para a fila do servidor.
+     *
+     * **Sozinho este teste leva 36 s** (medido em 12/09/2026, um trabalhador,
+     * sem mais nada rodando). Os cinco minutos não são o custo do caminho:
+     * são a folga para quando ele divide o servidor com os outros.
+     *
+     * O que enfileira é o servidor ser **um processo só** do Next, com
+     * `saveAttempt`, `checkQuest` e a página pública rodando o RDKit lá
+     * dentro — WebAssembly que segura o laço de eventos enquanto calcula.
+     * Com quatro trabalhadores, a espera passou de um minuto e derrubou este
+     * teste em `expect.poll` por uma tentativa que o servidor já tinha
+     * gravado: o aviso "Progresso salvo" estava na tela do aluno, e a
+     * resposta ainda não tinha voltado. Por isso o CI caiu para dois
+     * trabalhadores (`playwright.config.ts`), e o teto aqui é escrito à mão.
      */
-    test.slow();
+    test.setTimeout(300_000);
 
     const professora = novoEmail('professora');
     const alunoTurma = novoEmail('aluno-turma');

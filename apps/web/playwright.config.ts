@@ -37,13 +37,22 @@ export default defineConfig({
   timeout: 60_000,
 
   /**
-   * Quatro de cada vez.
+   * Quatro de cada vez na máquina de quem desenvolve, dois no CI.
    *
-   * Cada teste sobe um Chromium com o WASM do RDKit dentro e ainda faz o
-   * servidor rodar o RDKit dele. Um por núcleo deixa a máquina sem fôlego e o
-   * que reprova é a espera, não o produto.
+   * Cada teste sobe um Chromium com o WASM do RDKit dentro. O que não escala
+   * junto é o outro lado: o servidor é **um processo só** do Next, e
+   * `saveAttempt`, `checkQuest` e a página pública de molécula rodam o RDKit
+   * lá dentro. Pedido de química no servidor não corre em paralelo — ele
+   * entra na fila.
+   *
+   * Com quatro trabalhadores no runner do CI, que tem menos núcleo que a
+   * máquina de desenvolvimento, essa fila passou de um minuto e derrubou o
+   * teste das listas: o veredito local já dizia "cumprida" e a gravação da
+   * tentativa ainda não tinha voltado do servidor. Metade dos trabalhadores
+   * custa alguns minutos de espera e devolve o que o CI existe para dar —
+   * reprovação que quer dizer defeito.
    */
-  workers: 4,
+  workers: process.env['CI'] === undefined ? 4 : 2,
 
   use: {
     baseURL: `http://127.0.0.1:${String(PORTA)}`,

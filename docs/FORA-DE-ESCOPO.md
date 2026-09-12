@@ -220,6 +220,33 @@ As listas da turma, a missão criada desenhando a resposta e o catálogo compart
   `docker-compose.yml` sobe, está correto; reiniciar o container zera a contagem, o que é
   aceitável para um teto de abuso e inaceitável para uma cota de cobrança — e cobrança não existe.
 
+## O RDKit do servidor segura o laço de eventos
+
+**Medido em 12 de setembro de 2026, na suíte de ponta a ponta.** `saveAttempt`, `checkQuest` e a
+página pública de molécula rodam o RDKit dentro do processo do Next, e WebAssembly não devolve o
+laço de eventos enquanto calcula. Logo, **pedido de química no servidor não corre em paralelo**:
+ele entra na fila, e enquanto ele calcula o processo não serve mais nada — nem outra ação, nem
+uma página.
+
+O que isso custou até agora foi teste: com quatro navegadores em paralelo, a fila passou de um
+minuto e derrubou o teste das listas. A suíte caiu para dois trabalhadores e voltou a passar.
+
+O que isso pode custar numa aula: trinta alunos cumprindo a mesma missão no mesmo minuto são
+trinta análises enfileiradas. Cada uma é de dezenas a poucas centenas de milissegundos, então a
+espera é de segundos, não de minutos — mas ela existe, e cresce com o tamanho da molécula.
+
+**Não entra agora, e as saídas conhecidas são estas**, em ordem de custo:
+
+- **Medir antes de mexer.** Ninguém cronometrou `analyzeOnServer` com molécula de aula sob carga
+  real. Sem esse número, qualquer das saídas abaixo é chute com forma de engenharia.
+- **Tirar o RDKit do laço**, num `worker_threads` dentro do próprio processo. É a correção certa
+  e cabe no self-host de um container só.
+- **Mais de um processo do app.** Resolve a fila e quebra os tetos em memória
+  (`assignment.ts`, `classroom.ts`), que viram tabela no mesmo dia — está anotado logo acima.
+
+**Revisar se** um professor relatar espera ao fim da aula, ou se a instância no ar mostrar
+requisição lenta com mais de uma turma ativa.
+
 ## Self-host — o que ficou de fora (D-28)
 
 - **Imagem para `arm64`.** A imagem é `amd64`. Raspberry Pi e Mac com Apple Silicon constroem
