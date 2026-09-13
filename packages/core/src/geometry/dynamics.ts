@@ -1,4 +1,5 @@
 import { openFastField, type FastField } from './field-access';
+import { massesOf } from './masses';
 import { loadOpenChemLib } from './openchemlib';
 import type { Geometry } from './types';
 
@@ -19,23 +20,6 @@ import type { Geometry } from './types';
  * trajetória.
  */
 
-/** Massas atômicas, em u. Não é perícia química: é tabela periódica. */
-const MASSES: Readonly<Record<string, number>> = {
-  H: 1.008,
-  B: 10.81,
-  C: 12.011,
-  N: 14.007,
-  O: 15.999,
-  F: 18.998,
-  Si: 28.085,
-  P: 30.974,
-  S: 32.06,
-  Cl: 35.45,
-  Br: 79.904,
-  I: 126.904,
-};
-
-const DEFAULT_MASS = 12.011;
 
 /**
  * Constante de Boltzmann em u·Å²/(ps²·K).
@@ -156,7 +140,8 @@ export async function simulateDynamics(
   const fast = openFastField(field, atomCount);
   if (fast === null) return null;
 
-  const masses = geometry.atoms.map((atom) => MASSES[atom.element] ?? DEFAULT_MASS);
+  const masses = massesOf(geometry);
+  if (masses === null) return null;
   const random = randomStream(options.seed ?? DEFAULTS.seed);
   const velocities = drawVelocities(masses, temperature, random);
 
@@ -214,7 +199,7 @@ function accelerations(fast: FastField, masses: readonly number[]): number[] {
 
     // Força é menos o gradiente da energia.
     const force = -(forward - backward) / (2 * DELTA);
-    const mass = masses[Math.floor(index / 3)] ?? DEFAULT_MASS;
+    const mass = masses[Math.floor(index / 3)] ?? 0;
     result[index] = (force * FORCE_TO_ACCELERATION) / mass;
   }
 
@@ -230,7 +215,7 @@ function drawVelocities(
   const velocities = new Array<number>(masses.length * 3).fill(0);
 
   for (let atom = 0; atom < masses.length; atom += 1) {
-    const mass = masses[atom] ?? DEFAULT_MASS;
+    const mass = masses[atom] ?? 0;
     const sigma = Math.sqrt((BOLTZMANN * temperature) / mass);
 
     for (let axis = 0; axis < 3; axis += 1) {
@@ -245,7 +230,7 @@ function drawVelocities(
 function thermostat(velocities: number[], masses: readonly number[], temperature: number): void {
   let kinetic = 0;
   for (let atom = 0; atom < masses.length; atom += 1) {
-    const mass = masses[atom] ?? DEFAULT_MASS;
+    const mass = masses[atom] ?? 0;
     for (let axis = 0; axis < 3; axis += 1) {
       const speed = velocities[atom * 3 + axis] ?? 0;
       kinetic += mass * speed * speed;
@@ -281,7 +266,7 @@ function removeDrift(
   const momentum = [0, 0, 0];
 
   for (let atom = 0; atom < count; atom += 1) {
-    const mass = masses[atom] ?? DEFAULT_MASS;
+    const mass = masses[atom] ?? 0;
     totalMass += mass;
 
     for (let axis = 0; axis < 3; axis += 1) {
@@ -315,7 +300,7 @@ function removeSpin(
   const inertia = [0, 0, 0, 0, 0, 0, 0, 0, 0];
 
   for (let atom = 0; atom < count; atom += 1) {
-    const mass = masses[atom] ?? DEFAULT_MASS;
+    const mass = masses[atom] ?? 0;
     const x = (positions[atom * 3] ?? 0) - (centre[0] ?? 0);
     const y = (positions[atom * 3 + 1] ?? 0) - (centre[1] ?? 0);
     const z = (positions[atom * 3 + 2] ?? 0) - (centre[2] ?? 0);

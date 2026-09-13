@@ -120,10 +120,12 @@ export class GeometryUnavailable extends Error {
  * Elementos que o MMFF94 parametriza.
  *
  * A lista **não decide nada** — quem decide é a própria tentativa de montar o
- * campo de força. Ela existe só para a mensagem poder dizer qual elemento está
- * fora, em vez de um "não foi possível" que não ensina nada.
+ * campo de força. Ela existe para a mensagem poder dizer qual elemento está
+ * fora, em vez de um "não foi possível" que não ensina nada — e é exportada
+ * para o teste que a trava contra a tabela de massas: elemento que o campo de
+ * força alcança e cuja massa falte sai da tela sem vibração, em silêncio.
  */
-const PARAMETRIZED = new Set([
+export const PARAMETRIZED = new Set([
   'H', 'C', 'N', 'O', 'F', 'Si', 'P', 'S', 'Cl', 'Br', 'I',
   'Li', 'Na', 'K', 'Mg', 'Ca', 'Fe', 'Cu', 'Zn',
 ]);

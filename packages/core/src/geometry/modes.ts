@@ -1,5 +1,6 @@
 import { openFastField, type FastField } from './field-access';
 import { jacobiEigen } from './jacobi';
+import { massesOf } from './masses';
 import { loadOpenChemLib } from './openchemlib';
 import type { Geometry } from './types';
 
@@ -34,23 +35,6 @@ import type { Geometry } from './types';
  * de infravermelho experimental. A interface diz isso.
  */
 
-/** Massas atômicas, em u. Não é perícia química: é tabela periódica. */
-const MASSES: Readonly<Record<string, number>> = {
-  H: 1.008,
-  B: 10.81,
-  C: 12.011,
-  N: 14.007,
-  O: 15.999,
-  F: 18.998,
-  Si: 28.085,
-  P: 30.974,
-  S: 32.06,
-  Cl: 35.45,
-  Br: 79.904,
-  I: 126.904,
-};
-
-const DEFAULT_MASS = 12.011;
 
 /**
  * De autovalor da Hessiana ponderada por massa para número de onda, em cm⁻¹.
@@ -154,7 +138,8 @@ export async function normalModes(
   const fast = openFastField(field, atomCount);
   if (fast === null) return null;
 
-  const masses = geometry.atoms.map((atom) => MASSES[atom.element] ?? DEFAULT_MASS);
+  const masses = massesOf(geometry);
+  if (masses === null) return null;
   const equilibrium = [...fast.positions];
 
   const hessian = massWeighted(hessianOf(fast, atomCount), masses);
@@ -268,8 +253,8 @@ function massWeighted(hessian: number[][], masses: readonly number[]): number[][
     if (!line) continue;
 
     for (let column = 0; column < size; column += 1) {
-      const first = masses[Math.floor(row / 3)] ?? DEFAULT_MASS;
-      const second = masses[Math.floor(column / 3)] ?? DEFAULT_MASS;
+      const first = masses[Math.floor(row / 3)] ?? 0;
+      const second = masses[Math.floor(column / 3)] ?? 0;
       line[column] = (line[column] ?? 0) / Math.sqrt(first * second);
     }
   }
@@ -295,7 +280,7 @@ function rigidBody(positions: readonly number[], masses: readonly number[]): num
   const center = [0, 0, 0];
 
   for (let atom = 0; atom < atomCount; atom += 1) {
-    const mass = masses[atom] ?? DEFAULT_MASS;
+    const mass = masses[atom] ?? 0;
     totalMass += mass;
 
     for (let axis = 0; axis < 3; axis += 1) {
@@ -312,7 +297,7 @@ function rigidBody(positions: readonly number[], masses: readonly number[]): num
   for (let axis = 0; axis < 3; axis += 1) {
     const translation = new Array<number>(size).fill(0);
     for (let atom = 0; atom < atomCount; atom += 1) {
-      translation[atom * 3 + axis] = Math.sqrt(masses[atom] ?? DEFAULT_MASS);
+      translation[atom * 3 + axis] = Math.sqrt(masses[atom] ?? 0);
     }
     candidates.push(translation);
   }
@@ -321,7 +306,7 @@ function rigidBody(positions: readonly number[], masses: readonly number[]): num
     const rotation = new Array<number>(size).fill(0);
 
     for (let atom = 0; atom < atomCount; atom += 1) {
-      const root = Math.sqrt(masses[atom] ?? DEFAULT_MASS);
+      const root = Math.sqrt(masses[atom] ?? 0);
       const relative = [0, 1, 2].map(
         (coordinate) => (positions[atom * 3 + coordinate] ?? 0) - (center[coordinate] ?? 0),
       );
@@ -420,7 +405,7 @@ function columnOf(vectors: readonly (readonly number[])[], column: number): numb
  */
 function unweight(vector: readonly number[], masses: readonly number[]): number[] {
   const cartesian = vector.map(
-    (value, index) => value / Math.sqrt(masses[Math.floor(index / 3)] ?? DEFAULT_MASS),
+    (value, index) => value / Math.sqrt(masses[Math.floor(index / 3)] ?? 0),
   );
 
   let largest = 0;

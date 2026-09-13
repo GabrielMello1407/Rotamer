@@ -43,6 +43,48 @@ export function atomicNumber(symbol: string): number | null {
 }
 
 /**
+ * Massa atômica padrão, em u — os pesos atômicos da IUPAC, abreviados.
+ *
+ * Isto **entra na conta**: a massa pondera a Hessiana dos modos normais e
+ * sorteia as velocidades da dinâmica, então errá-la desloca toda frequência em
+ * que o átomo se mexe. Por isso não existe valor de reserva. Elemento que não
+ * está aqui devolve `null`, e quem calcula recusa vibrar — dizer "não sei" é a
+ * única saída honesta quando a alternativa é publicar um número errado com o
+ * selo de calculado.
+ *
+ * A tabela cobre o que o campo de força alcança (ver `PARAMETRIZED`, em
+ * `geometry/conformer.ts`), e um teste trava as duas listas juntas: elemento
+ * que o MMFF94 parametriza e cuja massa falte aqui reprova.
+ */
+const ATOMIC_MASSES: Readonly<Record<string, number>> = {
+  H: 1.008,
+  Li: 6.94,
+  B: 10.81,
+  C: 12.011,
+  N: 14.007,
+  O: 15.999,
+  F: 18.998,
+  Na: 22.99,
+  Mg: 24.305,
+  Si: 28.085,
+  P: 30.974,
+  S: 32.06,
+  Cl: 35.45,
+  K: 39.098,
+  Ca: 40.078,
+  Fe: 55.845,
+  Cu: 63.546,
+  Zn: 65.38,
+  Br: 79.904,
+  I: 126.904,
+};
+
+/** A massa atômica padrão, em u, ou `null` para elemento que não está na tabela. */
+export function atomicMass(symbol: string): number | null {
+  return ATOMIC_MASSES[symbol] ?? null;
+}
+
+/**
  * Valência máxima do elemento **neutro**, usada só para escrever a mensagem de
  * erro em português. Quando o átomo tem carga ou o elemento não está aqui, a
  * mensagem cai para a versão genérica em vez de arriscar afirmação errada.
