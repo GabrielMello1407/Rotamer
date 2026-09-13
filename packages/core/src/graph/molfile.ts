@@ -1,5 +1,5 @@
 import { emptyGraph } from './operations';
-import type { BondOrder, BondWedge, GraphAtom, GraphBond, MoleculeGraph } from './types';
+import type { BondWedge, GraphAtom, GraphBond, MoleculeGraph } from './types';
 
 /**
  * Tradução entre o grafo e o molblock V2000 — o formato que o RDKit lê.
@@ -184,9 +184,4 @@ function wedgeOf(flag: number | null): BondWedge {
   // 4 é "either" — cunha ondulada, que diz "não se sabe". O produto ainda não
   // desenha isso, e tratar como plano é mais honesto do que inventar um lado.
   return 'none';
-}
-
-/** A ordem de ligação como o molblock a escreve. */
-export function bondOrderFromMolfile(value: number): BondOrder | null {
-  return value === 1 || value === 2 || value === 3 ? value : null;
 }

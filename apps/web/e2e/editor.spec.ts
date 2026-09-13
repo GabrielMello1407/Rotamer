@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { openAnalysis } from './painel';
+import { openAnalysis } from './bancada';
 
 /**
  * O caminho inteiro do produto num teste só: traço na tela, RDKit no worker,

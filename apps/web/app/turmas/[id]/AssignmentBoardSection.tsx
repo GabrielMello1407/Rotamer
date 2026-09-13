@@ -55,6 +55,12 @@ export function AssignmentBoardSection({ assignmentTitle, board }: AssignmentBoa
         // O mesmo texto de turma sem aluno da porta de entrada
         // (`/turmas/[id]`), não uma segunda frase para a mesma situação.
         <p className={styles.empty}>{messages.empty.noStudents}</p>
+      ) : board.students.every((student) => student.cells.every((cell) => cell === 'untouched')) ? (
+        // A matriz existiria, toda em "não abriu" — dizer isso em uma linha é
+        // mais honesto do que uma grade inteira de traços (§6.6).
+        <p className={styles.empty} data-testid="ninguem-abriu">
+          {messages.board.emptyOpened}
+        </p>
       ) : (
         <>
           <p className={styles.legend}>{messages.board.legend}</p>

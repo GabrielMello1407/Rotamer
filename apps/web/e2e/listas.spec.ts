@@ -1,7 +1,6 @@
-import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
-import { expect, test, type Page, type Response } from '@playwright/test';
-import { openQuests } from './painel';
+import { expect, test, type Response } from '@playwright/test';
+import { criarConta, ESCOLA, entrar, novoEmail, promover, sair } from './conta-de-teste';
+import { carregarSmiles, desenharUmCarbono, openQuests } from './bancada';
 
 /**
  * Listas da turma (D-25) e o catálogo compartilhado (D-26, D-27) — o
@@ -14,88 +13,10 @@ import { openQuests } from './painel';
  * professor confere o quadro sem nunca ver uma molécula.
  */
 
-const SENHA = 'molecula-com-8';
-const ESCOLA = 'EE Dom Pedro II';
 
 /** A InChIKey do etanol — nunca deve aparecer numa tela de aluno antes de ele mesmo desenhar. */
 const INCHI_ETANOL = 'LFQSCWFLJHTTHZ-UHFFFAOYSA-N';
 
-function promover(email: string, escola: string): void {
-  const url = process.env['DATABASE_URL'] ?? urlFromEnvFile();
-  if (url === undefined || url === '') throw new Error('sem DATABASE_URL no ambiente nem no .env');
-
-  execFileSync('node', ['scripts/promote-teacher.mjs', email, '--escola', escola], {
-    env: { ...process.env, DATABASE_URL: url },
-    stdio: 'pipe',
-  });
-}
-
-function urlFromEnvFile(): string | undefined {
-  try {
-    return readFileSync('.env', 'utf8')
-      .split(/\r?\n/)
-      .find((entry) => entry.startsWith('DATABASE_URL'))
-      ?.split('=')
-      .slice(1)
-      .join('=')
-      .trim()
-      .replace(/^"|"$/g, '');
-  } catch {
-    return undefined;
-  }
-}
-
-function novoEmail(quem: string): string {
-  return `${quem}-${String(Date.now())}-${String(Math.floor(Math.random() * 10_000))}@rotamer.test`;
-}
-
-async function criarConta(page: Page, email: string, nome: string): Promise<void> {
-  await page.goto('/entrar');
-  await page.getByTestId('criar-nome').fill(nome);
-  await page.getByTestId('criar-email').fill(email);
-  await page.getByTestId('criar-senha').fill(SENHA);
-  await page.getByTestId('criar-instituicao').fill(ESCOLA);
-  await page.getByRole('button', { name: 'Criar conta' }).click();
-  await expect(page.getByTestId('conta')).toBeVisible({ timeout: 30_000 });
-}
-
-async function entrar(page: Page, email: string): Promise<void> {
-  await page.goto('/entrar');
-  await page.getByTestId('entrar-email').fill(email);
-  await page.getByTestId('entrar-senha').fill(SENHA);
-  await page.getByRole('button', { name: 'Entrar', exact: true }).click();
-  await expect(page.getByTestId('conta')).toBeVisible({ timeout: 30_000 });
-}
-
-async function sair(page: Page): Promise<void> {
-  await page.goto('/');
-  await page.getByRole('button', { name: 'Sair' }).click();
-  await expect(page.getByTestId('entrar')).toBeVisible({ timeout: 30_000 });
-}
-
-/** Um clique no meio da tela de desenho: um átomo de carbono, metano com os hidrogênios do RDKit. */
-async function desenharUmCarbono(page: Page): Promise<void> {
-  const canvas = page.getByTestId('tela-de-desenho');
-  await canvas.scrollIntoViewIfNeeded();
-
-  const box = await canvas.boundingBox();
-  if (!box) throw new Error('a tela de desenho não tem tamanho');
-
-  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
-}
-
-/**
- * Etanol pela entrada de SMILES — mais confiável que clicar coordenadas
- * exatas do canvas, e é um caminho do próprio editor (`entrada-smiles`).
- * Espera a aba "Análise" já estar aberta; quem chama decide para qual aba
- * volta depois, porque isso muda entre a tela do professor (autoria) e a do
- * aluno (missões).
- */
-async function carregarEtanol(page: Page): Promise<void> {
-  await page.getByTestId('entrada-smiles').fill('CCO');
-  await page.getByRole('button', { name: 'Carregar' }).click();
-  await expect(page.getByTestId('formula')).toHaveText('C2H6O', { timeout: 60_000 });
-}
 
 test.describe('listas da turma', () => {
   test('o professor monta a lista, a turma resolve, e o catálogo compartilhado alcança outra turma', async ({
@@ -124,7 +45,7 @@ test.describe('listas da turma', () => {
     const alunoOutro = novoEmail('aluno-outro');
 
     // 1-2. Promover e criar a turma.
-    await criarConta(page, professora, 'Professora Ana');
+    await criarConta(page, { email: professora, nome: 'Professora Ana' });
     promover(professora, ESCOLA);
 
     await page.goto('/turmas');
@@ -203,7 +124,7 @@ test.describe('listas da turma', () => {
 
     // 7. Desenhar etanol — a estrutura lida mostra a fórmula e o selo calculado.
     await page.getByRole('tab', { name: 'Análise' }).click();
-    await carregarEtanol(page);
+    await carregarSmiles(page, 'CCO', 'C2H6O');
     await page.getByRole('tab', { name: 'Autoria' }).click();
     await expect(page.getByTestId('painel-autoria')).toContainText('calculado', { timeout: 30_000 });
 
@@ -349,7 +270,7 @@ test.describe('listas da turma', () => {
     });
 
     // 11-14. O aluno da turma entra, vê "Da sua turma" e resolve as duas missões.
-    await criarConta(page, alunoTurma, 'Aluno Bruno');
+    await criarConta(page, { email: alunoTurma, nome: 'Aluno Bruno' });
     await page.goto('/turmas');
     await page.getByTestId('codigo-da-turma').fill(codigo);
     await page.getByRole('button', { name: 'Entrar na turma' }).click();
@@ -428,7 +349,7 @@ test.describe('listas da turma', () => {
      * ou tarde — sem depender de registrar um `waitForResponse` no instante
      * exato que precede a chamada.
      */
-    await carregarEtanol(page);
+    await carregarSmiles(page, 'CCO', 'C2H6O');
     await page.getByTestId('abrir-missoes').click();
     await expect(page.getByTestId('faixa-proxima')).toContainText(
       'Cumprida. Você fechou a lista «Funções oxigenadas — 3ª série».',
@@ -466,7 +387,7 @@ test.describe('listas da turma', () => {
 
     // D-27 — um aluno de OUTRA turma encontra a mesma missão pela busca do
     // catálogo, com a autoria visível, resolve, e denuncia.
-    await criarConta(page, alunoOutro, 'Aluna Diana');
+    await criarConta(page, { email: alunoOutro, nome: 'Aluna Diana' });
     await page.goto('/catalogo');
     await page.getByTestId('busca-catalogo').fill('álcool');
 
@@ -483,7 +404,7 @@ test.describe('listas da turma', () => {
     await missaoDoProfessor.getByRole('link', { name: 'O álcool do dia a dia' }).click();
     await openQuests(page);
     await page.getByRole('tab', { name: 'Análise' }).click();
-    await carregarEtanol(page);
+    await carregarSmiles(page, 'CCO', 'C2H6O');
     await page.getByTestId('abrir-missoes').click();
     await expect(page.getByTestId('progresso-salvo')).toBeVisible({ timeout: 60_000 });
 

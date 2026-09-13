@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { openAnalysis, openQuests } from './painel';
+import { openAnalysis, openQuests } from './bancada';
 
 /**
  * A missão fecha o laço do produto: o aluno lê o enunciado, desenha, e o

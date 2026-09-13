@@ -247,6 +247,35 @@ espera é de segundos, não de minutos — mas ela existe, e cresce com o tamanh
 **Revisar se** um professor relatar espera ao fim da aula, ou se a instância no ar mostrar
 requisição lenta com mais de uma turma ativa.
 
+## Sobras da leitura de 12 de setembro de 2026
+
+Duas revisões leram o repositório inteiro com os olhos de quem chega nele pela primeira vez. O
+que era defeito foi corrigido; o que segue é o que foi visto, medido e deixado de propósito.
+
+- **A paleta do teste de chama não pinta nada.** `--flame-litio`, `--flame-sodio` e as outras
+  cinco existem só para alimentar `--cat-1`…`--cat-7`, e nenhum arquivo usa `--cat-*`: o produto
+  ainda não tem gráfico. `--t-fold`, `--t-slow` e `--track-flat` também estão sem consumidor. São
+  a narrativa de marca do `DESIGN-SYSTEM.md`, então apagá-las é decisão do `ui-ux`, não limpeza —
+  e o primeiro gráfico do produto decide se elas ficam como estão ou mudam.
+- **`assignment.ts` tem 1594 linhas e três assuntos.** Lista e item, missão de professor, e
+  catálogo com denúncia. O corte já está desenhado: `actions/teacher-quest.ts`,
+  `actions/catalog.ts`, `checkQuest` indo para `attempt.ts` junto do irmão `saveAttempt`,
+  `lib/text.ts` para as regras R-13 e R-14, e `lib/rate-limit.ts` para a janela em memória que
+  hoje está escrita três vezes igual. Não entra agora porque mover trinta exports de uma vez
+  atravessa a entrega inteira das listas; entra na próxima mudança que já mexer nesses arquivos.
+- **`Editor2D.tsx` tem 1453 linhas.** Dois pedaços saem sem tocar no DOM: a construção do menu
+  de contexto (`entriesFor`, `selectionEntries`, `commonElementOf` e as constantes de carga,
+  ordem e cunha) e o texto de dica (`hintFor`, `selectionCount`, `selectedWord`). Os dois viram
+  função pura testável em linha de comando. `render.ts`, com 641 linhas, **não** entra: é uma
+  responsabilidade só, na ordem em que a cena é pintada.
+- **`questsOfTrack` existe e ninguém usa.** Duas telas filtram o catálogo à mão e perdem a
+  ordenação por dificuldade que a função do motor faz. Trocar é de uma linha em cada lugar; o que
+  falta é decidir se a ordem por dificuldade é a que as telas querem.
+- **Identificador de teste em português.** São 142, todos em pt-BR, contra uma regra escrita que
+  manda chave de dado em inglês. Trocar mexe em cada `data-testid` e em cada teste que o procura,
+  sem nada mudar para quem usa o produto. A saída barata é a regra dizer que identificador de
+  teste é a exceção, e é isso que o `ui-ux` decide.
+
 ## Self-host — o que ficou de fora (D-28)
 
 - **Imagem para `arm64`.** A imagem é `amd64`. Raspberry Pi e Mac com Apple Silicon constroem

@@ -2,7 +2,7 @@
 
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
-import { currentProfile, endSession, hashPassword, startSession, verifyPassword } from '../../lib/auth';
+import { endSession, hashPassword, startSession, verifyPassword } from '../../lib/auth';
 import { db } from '../../lib/db';
 
 /**
@@ -84,9 +84,4 @@ export async function signIn(_state: AccountState, form: FormData): Promise<Acco
 export async function signOut(): Promise<void> {
   await endSession();
   redirect('/');
-}
-
-export async function whoAmI(): Promise<{ readonly displayName: string } | null> {
-  const profile = await currentProfile();
-  return profile === null ? null : { displayName: profile.displayName };
 }

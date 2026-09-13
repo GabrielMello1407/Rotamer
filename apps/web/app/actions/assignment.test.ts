@@ -403,7 +403,7 @@ maybeDescribe('R-4 — objetivo de InChIKey não manda condição ao cliente', (
     await loginAs(aluno.id);
     const payload = await readStudentAssignments();
 
-    const item = payload[0]?.items[0];
+    const item = payload.assignments[0]?.items[0];
     expect(item).toBeDefined();
     expect(item?.goals).toHaveLength(1);
     expect(item?.goals[0]?.condition).toBeUndefined();
@@ -1049,7 +1049,7 @@ maybeDescribe('institution nunca é string vazia', () => {
     await loginAs(aluno.id);
 
     const assignments = await readStudentAssignments();
-    const item = assignments[0]?.items[0];
+    const item = assignments.assignments[0]?.items[0];
     expect(item?.byTeacher).not.toBeNull();
     expect(item?.byTeacher?.institution).toBeNull();
 

@@ -102,6 +102,7 @@ export function QuestPanel({ analysis, slug, onSlug }: QuestPanelProps): ReactEl
   const [outcome, setOutcome] = useState<AttemptOutcome | null>(null);
   const [progress, setProgress] = useState<readonly QuestProgress[]>([]);
   const [assignments, setAssignments] = useState<readonly StudentAssignment[]>([]);
+  const [inClassroom, setInClassroom] = useState(false);
   const [teacherQuest, setTeacherQuest] = useState<StudentQuestDetail | null>(null);
 
   const startedAt = useRef<number | null>(null);
@@ -223,7 +224,9 @@ export function QuestPanel({ analysis, slug, onSlug }: QuestPanelProps): ReactEl
   useEffect(() => {
     let alive = true;
     void readStudentAssignments().then((rows) => {
-      if (alive) setAssignments(rows);
+      if (!alive) return;
+      setAssignments(rows.assignments);
+      setInClassroom(rows.inClassroom);
     });
     return () => {
       alive = false;
@@ -360,7 +363,13 @@ export function QuestPanel({ analysis, slug, onSlug }: QuestPanelProps): ReactEl
 
   return (
     <section className={styles.panel} aria-label="Missão">
-      <StudentAssignmentsSection slug={slug} onSlug={onSlug} done={done} assignments={assignments} />
+      <StudentAssignmentsSection
+        slug={slug}
+        onSlug={onSlug}
+        done={done}
+        assignments={assignments}
+        inClassroom={inClassroom}
+      />
 
       <p className={styles.catalogLink}>
         <Link href="/catalogo">{messages.catalog.linkFromMenu}</Link>
@@ -468,7 +477,7 @@ export function QuestPanel({ analysis, slug, onSlug }: QuestPanelProps): ReactEl
 
           {outcome?.status === 'anonymous' && (
             <p className={styles.hint}>
-              <Link href="/entrar">Entre na sua conta</Link> para guardar o que já cumpriu.
+              <Link href="/entrar">{messages.errors.enterAccount}</Link> para guardar o que já cumpriu.
             </p>
           )}
 

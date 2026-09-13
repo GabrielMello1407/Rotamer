@@ -654,7 +654,11 @@ export function Assignment({
             <p className={styles.confirmTitle}>
               {messages.editQuestPopover.title.replace('{titulo}', editing.title)}
             </p>
-            <p className={styles.confirmBody}>{messages.editQuestPopover.body}</p>
+            <p className={styles.confirmBody}>
+              {publishedAt === null
+                ? messages.editQuestPopover.body
+                : messages.errors.editAfterPublish}
+            </p>
 
             <label className={styles.editField}>
               <span className={styles.editLabel}>{messages.authoring.titleLabel}</span>

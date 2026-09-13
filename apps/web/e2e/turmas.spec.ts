@@ -1,7 +1,6 @@
-import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
-import { expect, test, type Page } from '@playwright/test';
-import { openQuests } from './painel';
+import { expect, test } from '@playwright/test';
+import { criarConta, ESCOLA, novoEmail, promover, sair, SENHA } from './conta-de-teste';
+import { desenharUmCarbono, openQuests } from './bancada';
 
 /**
  * Turmas: o que faz uma escola adotar o produto.
@@ -10,76 +9,10 @@ import { openQuests } from './painel';
  * o professor vê é **onde a turma parou**, não quem foi melhor (D-22).
  */
 
-const SENHA = 'molecula-com-8';
-const ESCOLA = 'EE Dom Pedro II';
-
-function promover(email: string, escola: string): void {
-  /*
-   * A URL do banco vem do ambiente, e o arquivo é só o plano B.
-   *
-   * O `.env` existe na máquina de quem desenvolve e **não existe no CI**, onde o
-   * endereço do Postgres vem do próprio trabalho. Ler o arquivo primeiro fazia
-   * estes testes falharem lá por não achar um arquivo que nunca esteve lá — um
-   * erro de ambiente vestido de teste quebrado.
-   */
-  const url = process.env['DATABASE_URL'] ?? urlFromEnvFile();
-  if (url === undefined || url === '') throw new Error('sem DATABASE_URL no ambiente nem no .env');
-
-  execFileSync('node', ['scripts/promote-teacher.mjs', email, '--escola', escola], {
-    env: { ...process.env, DATABASE_URL: url },
-    stdio: 'pipe',
-  });
-}
-
-/** A linha `DATABASE_URL` do `.env`, quando existe. */
-function urlFromEnvFile(): string | undefined {
-  try {
-    return readFileSync('.env', 'utf8')
-      .split(/\r?\n/)
-      .find((entry) => entry.startsWith('DATABASE_URL'))
-      ?.split('=')
-      .slice(1)
-      .join('=')
-      .trim()
-      .replace(/^"|"$/g, '');
-  } catch {
-    return undefined;
-  }
-}
-
-function novoEmail(quem: string): string {
-  return `${quem}-${String(Date.now())}-${String(Math.floor(Math.random() * 10_000))}@rotamer.test`;
-}
-
-async function criarConta(page: Page, email: string, nome: string): Promise<void> {
-  await page.goto('/entrar');
-  await page.getByTestId('criar-nome').fill(nome);
-  await page.getByTestId('criar-email').fill(email);
-  await page.getByTestId('criar-senha').fill(SENHA);
-  await page.getByTestId('criar-instituicao').fill(ESCOLA);
-  await page.getByRole('button', { name: 'Criar conta' }).click();
-  await expect(page.getByTestId('conta')).toBeVisible({ timeout: 30_000 });
-}
-
-async function sair(page: Page): Promise<void> {
-  await page.goto('/');
-  await page.getByRole('button', { name: 'Sair' }).click();
-  await expect(page.getByTestId('entrar')).toBeVisible({ timeout: 30_000 });
-}
-
-async function desenharUmCarbono(page: Page): Promise<void> {
-  const canvas = page.getByTestId('tela-de-desenho');
-  await canvas.scrollIntoViewIfNeeded();
-
-  const box = await canvas.boundingBox();
-  if (!box) throw new Error('a tela de desenho não tem tamanho');
-
-  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
-}
 
 test.describe('turmas', () => {
   test('quem não é professor não abre turma', async ({ page }) => {
-    await criarConta(page, novoEmail('aluno'), 'Aluno Bruno');
+    await criarConta(page, { email: novoEmail('aluno'), nome: 'Aluno Bruno' });
 
     await page.goto('/turmas');
     await expect(page.getByTestId('turmas-que-frequento')).toBeVisible();
@@ -87,7 +20,7 @@ test.describe('turmas', () => {
   });
 
   test('código errado não entra em turma nenhuma', async ({ page }) => {
-    await criarConta(page, novoEmail('aluno'), 'Aluno Bruno');
+    await criarConta(page, { email: novoEmail('aluno'), nome: 'Aluno Bruno' });
 
     await page.goto('/turmas');
     await page.getByTestId('codigo-da-turma').fill('ZZZZZZ');
@@ -104,7 +37,7 @@ test.describe('turmas', () => {
     const professora = novoEmail('professora');
     const aluno = novoEmail('aluno');
 
-    await criarConta(page, professora, 'Professora Ana');
+    await criarConta(page, { email: professora, nome: 'Professora Ana' });
     promover(professora, ESCOLA);
 
     await page.goto('/turmas');
@@ -120,7 +53,7 @@ test.describe('turmas', () => {
     await sair(page);
 
     // O aluno entra com o código e cumpre a primeira missão.
-    await criarConta(page, aluno, 'Aluno Bruno');
+    await criarConta(page, { email: aluno, nome: 'Aluno Bruno' });
     await page.goto('/turmas');
     await page.getByTestId('codigo-da-turma').fill(codigo);
     await page.getByRole('button', { name: 'Entrar na turma' }).click();
@@ -161,7 +94,7 @@ test.describe('turmas', () => {
     const dona = novoEmail('professora');
     const outra = novoEmail('professora');
 
-    await criarConta(page, dona, 'Professora Ana');
+    await criarConta(page, { email: dona, nome: 'Professora Ana' });
     promover(dona, ESCOLA);
 
     await page.goto('/turmas');
@@ -177,7 +110,7 @@ test.describe('turmas', () => {
 
     await sair(page);
 
-    await criarConta(page, outra, 'Professor Carlos');
+    await criarConta(page, { email: outra, nome: 'Professor Carlos' });
     promover(outra, ESCOLA);
 
     await page.goto(endereco ?? '/turmas');

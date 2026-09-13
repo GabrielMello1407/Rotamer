@@ -12,6 +12,8 @@ export interface StudentAssignmentsSectionProps {
   /** Slugs já cumpridos — o mesmo `done` que a estante de missões já lê. */
   readonly done: ReadonlySet<string>;
   readonly assignments: readonly StudentAssignment[];
+  /** Se a pessoa está em alguma turma — muda a frase de quando não há lista. */
+  readonly inClassroom: boolean;
 }
 
 /**
@@ -23,8 +25,22 @@ export function StudentAssignmentsSection({
   onSlug,
   done,
   assignments,
+  inClassroom,
 }: StudentAssignmentsSectionProps): ReactElement | null {
-  if (assignments.length === 0) return null;
+  /*
+   * Sem lista, a seção explica por quê em vez de sumir. Some é o que ela
+   * fazia: o aluno de uma turma cujo professor ainda não publicou via o
+   * catálogo e nada dizendo que havia uma turma. Os dois textos estão na §6.6.
+   */
+  if (assignments.length === 0) {
+    return (
+      <div className={styles.wrap} data-testid="da-sua-turma-vazia">
+        <p className={styles.empty}>
+          {inClassroom ? messages.empty.studentNoPublished : messages.empty.studentNoClassroom}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.wrap} data-testid="da-sua-turma">

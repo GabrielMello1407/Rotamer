@@ -10,6 +10,7 @@ import { askGemini, tutorAvailable, tutorModel } from '../../lib/tutor/gemini';
 import { buildPrompt, referenceValues, type HintKind } from '../../lib/tutor/prompt';
 import { tutorHintSchema, type TutorHint } from '../../lib/tutor/schema';
 import type { ReferenceKey } from '../../lib/tutor/schema';
+import { messages } from '../turmas/messages';
 
 /**
  * O tutor.
@@ -26,7 +27,7 @@ import type { ReferenceKey } from '../../lib/tutor/schema';
 const DEFAULT_LIMIT = 30;
 
 /** Mesma recusa de `saveAttempt`/`openQuest` (R-8): existência não se entrega em pista. */
-const QUEST_NOT_FOUND = 'Essa missão não existe.';
+const QUEST_NOT_FOUND = messages.errors.questNotFound;
 
 const schema = z.object({
   molblock: z.string().min(1).max(200_000),
@@ -72,7 +73,7 @@ export async function askTutor(input: {
   // conta. Aqui o teste é só sintático (o prefixo do slug), então a resposta
   // para uma conta anônima é sempre a mesma, exista ou não a missão.
   if (parsed.data.questSlug !== null && parsed.data.questSlug.startsWith('professor:') && profile === null) {
-    return { status: 'rejected', reason: 'Missão de turma precisa de conta.' };
+    return { status: 'rejected', reason: messages.errors.anonymousTeacherQuest };
   }
 
   const quest = parsed.data.questSlug === null ? null : await resolveQuest(parsed.data.questSlug);

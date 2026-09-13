@@ -7,6 +7,7 @@ import { analyzeOnServer } from '../../lib/chemistry-server';
 import { db } from '../../lib/db';
 import { rememberMolecule } from '../../lib/molecule-store';
 import { resolveQuest, studentQuestAccess } from '../../lib/quest-resolve';
+import { messages } from '../turmas/messages';
 
 /**
  * Gravar uma tentativa de missão.
@@ -17,7 +18,7 @@ import { resolveQuest, studentQuestAccess } from '../../lib/quest-resolve';
  */
 
 /** Mesma recusa para os dois casos (R-8): diferenciar vira oráculo de existência. */
-const QUEST_NOT_FOUND = 'Essa missão não existe.';
+const QUEST_NOT_FOUND = messages.errors.questNotFound;
 
 const schema = z.object({
   // R-16: sem `.max()` o slug vinha de constante do catálogo; agora ele

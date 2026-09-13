@@ -1,5 +1,6 @@
-import { expect, test, type Page } from '@playwright/test';
-import { openAnalysis } from './painel';
+import { expect, test } from '@playwright/test';
+import { criarConta, novoEmail } from './conta-de-teste';
+import { carregarSmiles } from './bancada';
 
 /**
  * A estante: o que a pessoa guardou.
@@ -9,32 +10,11 @@ import { openAnalysis } from './painel';
  * mostra é derivado dele.
  */
 
-const SENHA = 'molecula-com-8';
-
-function novoEmail(): string {
-  return `estante-${String(Date.now())}-${String(Math.floor(Math.random() * 10_000))}@rotamer.test`;
-}
-
-async function criarConta(page: Page): Promise<void> {
-  await page.goto('/entrar');
-  await page.getByTestId('criar-nome').fill('Professora Ana');
-  await page.getByTestId('criar-email').fill(novoEmail());
-  await page.getByTestId('criar-senha').fill(SENHA);
-  await page.getByRole('button', { name: 'Criar conta' }).click();
-  await expect(page.getByTestId('conta')).toBeVisible({ timeout: 30_000 });
-}
-
-async function carregar(page: Page, smiles: string): Promise<void> {
-  await openAnalysis(page);
-  await page.getByTestId('entrada-smiles').fill(smiles);
-  await page.getByRole('button', { name: 'Carregar' }).click();
-  await expect(page.getByTestId('formula')).toBeVisible({ timeout: 60_000 });
-}
 
 test.describe('estante', () => {
   test('guardar põe a molécula na estante, e de lá ela volta para o editor', async ({ page }) => {
-    await criarConta(page);
-    await carregar(page, 'CC(=O)Oc1ccccc1C(=O)O');
+    await criarConta(page, { email: novoEmail('estante'), nome: 'Professora Ana' });
+    await carregarSmiles(page, 'CC(=O)Oc1ccccc1C(=O)O');
     await expect(page.getByTestId('formula')).toHaveText('C9H8O4', { timeout: 60_000 });
 
     await page.getByTestId('guardar-molecula').click();
@@ -52,8 +32,8 @@ test.describe('estante', () => {
   });
 
   test('guardar a mesma estrutura duas vezes continua sendo uma linha só', async ({ page }) => {
-    await criarConta(page);
-    await carregar(page, 'CCO');
+    await criarConta(page, { email: novoEmail('estante'), nome: 'Professora Ana' });
+    await carregarSmiles(page, 'CCO');
     await expect(page.getByTestId('formula')).toHaveText('C2H6O', { timeout: 60_000 });
 
     await page.getByTestId('guardar-molecula').click();
@@ -76,8 +56,8 @@ test.describe('estante', () => {
   });
 
   test('tirar da estante pede confirmação e some da lista', async ({ page }) => {
-    await criarConta(page);
-    await carregar(page, 'CC(=O)O');
+    await criarConta(page, { email: novoEmail('estante'), nome: 'Professora Ana' });
+    await carregarSmiles(page, 'CC(=O)O');
     await expect(page.getByTestId('formula')).toHaveText('C2H4O2', { timeout: 60_000 });
 
     await page.getByTestId('guardar-molecula').click();
@@ -93,7 +73,7 @@ test.describe('estante', () => {
 
   test('sem conta, guardar convida a entrar — e a estante nem abre', async ({ page }) => {
     await page.goto('/');
-    await carregar(page, 'CCO');
+    await carregarSmiles(page, 'CCO');
     await expect(page.getByTestId('formula')).toHaveText('C2H6O', { timeout: 60_000 });
 
     await page.getByTestId('guardar-molecula').click();
@@ -105,8 +85,8 @@ test.describe('estante', () => {
   test('guardar e começar outra: a tela esvazia e a molécula continua na estante', async ({
     page,
   }) => {
-    await criarConta(page);
-    await carregar(page, 'CC(=O)Oc1ccccc1C(=O)O');
+    await criarConta(page, { email: novoEmail('estante'), nome: 'Professora Ana' });
+    await carregarSmiles(page, 'CC(=O)Oc1ccccc1C(=O)O');
     await expect(page.getByTestId('formula')).toHaveText('C9H8O4', { timeout: 60_000 });
 
     await page.getByTestId('guardar-molecula').click();
@@ -126,7 +106,7 @@ test.describe('estante', () => {
 
   test('começar outra é reversível: desfazer traz o desenho de volta', async ({ page }) => {
     await page.goto('/');
-    await carregar(page, 'CCO');
+    await carregarSmiles(page, 'CCO');
     await expect(page.getByTestId('formula')).toHaveText('C2H6O', { timeout: 60_000 });
 
     await page.getByRole('button', { name: 'Nova molécula' }).click();
@@ -136,7 +116,7 @@ test.describe('estante', () => {
     await expect(page.getByTestId('formula')).toHaveText('C2H6O', { timeout: 60_000 });
   });
   test('guardar está na faixa de cima, sem abrir painel nenhum', async ({ page }) => {
-    await criarConta(page);
+    await criarConta(page, { email: novoEmail('estante'), nome: 'Professora Ana' });
 
     await page.goto('/');
     await expect(page.getByTestId('tela-de-desenho')).toBeVisible();

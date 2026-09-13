@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { openAnalysis } from './painel';
+import { openAnalysis } from './bancada';
 
 /**
  * Estereoquímica: cunha e traço.

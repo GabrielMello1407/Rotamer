@@ -1,6 +1,5 @@
-import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import { criarConta, ESCOLA, entrar, novoEmail, promover, sair, SENHA } from './conta-de-teste';
 
 /**
  * Recuperação de senha sem e-mail (D-19).
@@ -10,86 +9,11 @@ import { expect, test, type Page } from '@playwright/test';
  * para alguém da mesma escola, e o código morre no primeiro uso.
  */
 
-const SENHA = 'molecula-com-8';
 const NOVA = 'senha-nova-123';
-const ESCOLA = 'EE Dom Pedro II';
-
-/**
- * Promove uma conta a professor pelo mesmo caminho que o servidor usa.
- *
- * Não existe caminho pela tela, e é de propósito (D-19) — então o teste do
- * caminho feliz precisa rodar o script, que é como isso acontece de verdade.
- */
-function promover(email: string, escola: string): void {
-  /*
-   * A URL do banco vem do ambiente, e o arquivo é só o plano B.
-   *
-   * O `.env` existe na máquina de quem desenvolve e **não existe no CI**, onde o
-   * endereço do Postgres vem do próprio trabalho. Ler o arquivo primeiro fazia
-   * estes testes falharem lá por não achar um arquivo que nunca esteve lá — um
-   * erro de ambiente vestido de teste quebrado.
-   */
-  const url = process.env['DATABASE_URL'] ?? urlFromEnvFile();
-  if (url === undefined || url === '') throw new Error('sem DATABASE_URL no ambiente nem no .env');
-
-  execFileSync('node', ['scripts/promote-teacher.mjs', email, '--escola', escola], {
-    env: { ...process.env, DATABASE_URL: url },
-    stdio: 'pipe',
-  });
-}
-
-/** A linha `DATABASE_URL` do `.env`, quando existe. */
-function urlFromEnvFile(): string | undefined {
-  try {
-    return readFileSync('.env', 'utf8')
-      .split(/\r?\n/)
-      .find((entry) => entry.startsWith('DATABASE_URL'))
-      ?.split('=')
-      .slice(1)
-      .join('=')
-      .trim()
-      .replace(/^"|"$/g, '');
-  } catch {
-    return undefined;
-  }
-}
-
-function novoEmail(quem: string): string {
-  return `${quem}-${String(Date.now())}-${String(Math.floor(Math.random() * 10_000))}@rotamer.test`;
-}
-
-async function criarConta(
-  page: Page,
-  email: string,
-  nome: string,
-  escola: string | null,
-): Promise<void> {
-  await page.goto('/entrar');
-  await page.getByTestId('criar-nome').fill(nome);
-  await page.getByTestId('criar-email').fill(email);
-  await page.getByTestId('criar-senha').fill(SENHA);
-  if (escola !== null) await page.getByTestId('criar-instituicao').fill(escola);
-  await page.getByRole('button', { name: 'Criar conta' }).click();
-  await expect(page.getByTestId('conta')).toBeVisible({ timeout: 30_000 });
-}
-
-/** Sair só existe na bancada, que é de onde se usa o produto. */
-async function sair(page: Page): Promise<void> {
-  await page.goto('/');
-  await page.getByRole('button', { name: 'Sair' }).click();
-  await expect(page.getByTestId('entrar')).toBeVisible({ timeout: 30_000 });
-}
-
-async function entrar(page: Page, email: string, senha: string): Promise<void> {
-  await page.goto('/entrar');
-  await page.getByTestId('entrar-email').fill(email);
-  await page.getByTestId('entrar-senha').fill(senha);
-  await page.getByRole('button', { name: 'Entrar', exact: true }).click();
-}
 
 test.describe('recuperação de senha', () => {
   test('quem não é professor não emite código', async ({ page }) => {
-    await criarConta(page, novoEmail('aluno'), 'Aluno Bruno', ESCOLA);
+    await criarConta(page, { email: novoEmail('aluno'), nome: 'Aluno Bruno' });
 
     await page.goto('/codigos');
     await expect(page.getByTestId('sem-permissao')).toBeVisible();
@@ -111,7 +35,7 @@ test.describe('recuperação de senha', () => {
 
   test('código errado não troca senha nenhuma', async ({ page }) => {
     const email = novoEmail('aluno');
-    await criarConta(page, email, 'Aluno Bruno', ESCOLA);
+    await criarConta(page, { email: email, nome: 'Aluno Bruno' });
     await sair(page);
 
     await page.goto('/senha');
@@ -131,10 +55,10 @@ test.describe('recuperação de senha', () => {
     const professora = novoEmail('professora');
     const aluno = novoEmail('aluno');
 
-    await criarConta(page, aluno, 'Aluno Bruno', ESCOLA);
+    await criarConta(page, { email: aluno, nome: 'Aluno Bruno' });
     await sair(page);
 
-    await criarConta(page, professora, 'Professora Ana', ESCOLA);
+    await criarConta(page, { email: professora, nome: 'Professora Ana' });
     promover(professora, ESCOLA);
 
     // A sessão continua a mesma; o papel novo vale na próxima leitura.
@@ -176,10 +100,10 @@ test.describe('recuperação de senha', () => {
     const professora = novoEmail('professora');
     const aluno = novoEmail('aluno');
 
-    await criarConta(page, aluno, 'Aluno Bruno', 'EE Machado de Assis');
+    await criarConta(page, { email: aluno, nome: 'Aluno Bruno', escola: 'EE Machado de Assis' });
     await sair(page);
 
-    await criarConta(page, professora, 'Professora Ana', ESCOLA);
+    await criarConta(page, { email: professora, nome: 'Professora Ana' });
     promover(professora, ESCOLA);
 
     await page.goto('/codigos');

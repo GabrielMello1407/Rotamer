@@ -15,6 +15,7 @@ import {
   ownedTeacherQuest,
   requireTeacher,
 } from '../../lib/roles';
+import { messages } from '../turmas/messages';
 
 /**
  * Listas da turma (D-25) e catálogo compartilhado (D-27) — o professor monta,
@@ -54,9 +55,9 @@ const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 const TEACHER_PREFIX = 'professor:';
 
 /** Mesma recusa de `saveAttempt`/`openQuest`/`askTutor` (R-8). */
-const QUEST_NOT_FOUND = 'Essa missão não existe.';
+const QUEST_NOT_FOUND = messages.errors.questNotFound;
 const EMPTY_TITLE_OR_BRIEF = 'A missão precisa de um título e de um enunciado. O aluno lê isto antes de desenhar.';
-const LINK_REJECTED = 'O enunciado não aceita link — cole o endereço no quadro ou no material da escola.';
+const LINK_REJECTED = messages.errors.linkRejected;
 
 // -------------------------------------------------------------- texto (R-13/R-14)
 
@@ -706,7 +707,7 @@ export async function addItem(input: { assignmentId: string; questSlug: string }
     if (existing !== null) {
       return {
         status: 'rejected',
-        reason: `«${title}» já está nesta lista. A mesma missão duas vezes contaria o progresso duas vezes.`,
+        reason: messages.errors.slugRepeated(title),
       } as const;
     }
 
@@ -834,7 +835,7 @@ export async function publishAssignment(input: { assignmentId: string }): Promis
 
   const count = await db.assignmentItem.count({ where: { assignmentId: assignment.id } });
   if (count === 0) {
-    return { status: 'rejected', reason: 'Não dá para publicar uma lista vazia. Acrescente pelo menos uma missão.' };
+    return { status: 'rejected', reason: messages.errors.publishEmpty };
   }
 
   const row = await db.assignment.update({
@@ -1153,6 +1154,18 @@ export interface StudentAssignmentItem {
   readonly goals: readonly StudentGoalView[];
 }
 
+/**
+ * O que o painel do aluno recebe.
+ *
+ * `inClassroom` existe porque lista vazia tem duas causas com respostas
+ * diferentes na tela (§6.6): quem não entrou em turma nenhuma precisa do
+ * código do professor; quem entrou está esperando ele publicar.
+ */
+export interface StudentAssignments {
+  readonly inClassroom: boolean;
+  readonly assignments: readonly StudentAssignment[];
+}
+
 export interface StudentAssignment {
   readonly title: string;
   readonly classroomName: string;
@@ -1222,17 +1235,19 @@ function studentItem(
 }
 
 /** Não devolve `answerMolblock`, `answerInchiKey`, nem `condition` de objetivo InChIKey (R-4). */
-export async function readStudentAssignments(): Promise<readonly StudentAssignment[]> {
-  if (!hasDatabase()) return [];
+const SEM_TURMA: StudentAssignments = { inClassroom: false, assignments: [] };
+
+export async function readStudentAssignments(): Promise<StudentAssignments> {
+  if (!hasDatabase()) return SEM_TURMA;
 
   const profile = await currentProfile();
-  if (profile === null) return [];
+  if (profile === null) return SEM_TURMA;
 
   const enrollments = await db.enrollment.findMany({
     where: { profileId: profile.id, classroom: { archivedAt: null } },
     select: { classroom: { select: { id: true, name: true } } },
   });
-  if (enrollments.length === 0) return [];
+  if (enrollments.length === 0) return SEM_TURMA;
 
   const classroomIds = enrollments.map((entry) => entry.classroom.id);
   const classroomNames = new Map(enrollments.map((entry) => [entry.classroom.id, entry.classroom.name] as const));
@@ -1250,11 +1265,14 @@ export async function readStudentAssignments(): Promise<readonly StudentAssignme
   const allSlugs = assignments.flatMap((assignment) => assignment.items.map((item) => item.questSlug));
   const teacherFacts = await teacherFactsFor(allSlugs);
 
-  return assignments.map((assignment) => ({
-    title: assignment.title,
-    classroomName: classroomNames.get(assignment.classroomId) ?? '',
-    items: assignment.items.map((item) => studentItem(item.position, item.questSlug, teacherFacts)),
-  }));
+  return {
+    inClassroom: true,
+    assignments: assignments.map((assignment) => ({
+      title: assignment.title,
+      classroomName: classroomNames.get(assignment.classroomId) ?? '',
+      items: assignment.items.map((item) => studentItem(item.position, item.questSlug, teacherFacts)),
+    })),
+  };
 }
 
 // ================================================================== readQuestDetail
@@ -1323,7 +1341,7 @@ export async function readQuestDetail(input: { questSlug: string }): Promise<Rea
 
   const profile = await currentProfile();
   if (profile === null) {
-    return { status: 'rejected', reason: 'Missão de turma precisa de conta.' };
+    return { status: 'rejected', reason: messages.errors.anonymousTeacherQuest };
   }
 
   if (!(await studentQuestAccess(profile.id, questSlug))) {

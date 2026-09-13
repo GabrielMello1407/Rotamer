@@ -1,21 +1,11 @@
-import { expect, test, type Page } from '@playwright/test';
-import { openQuests } from './painel';
+import { expect, test } from '@playwright/test';
+import { desenharUmCarbono, openQuests } from './bancada';
 
 /**
  * O tutor é a única parte da tela que pode estar errada — e por isso é a única
  * marcada em âmbar. Sem chave configurada, ele se desliga e o produto continua
  * inteiro: as dicas da missão são escritas à mão.
  */
-
-async function desenharUmCarbono(page: Page): Promise<void> {
-  const canvas = page.getByTestId('tela-de-desenho');
-  await canvas.scrollIntoViewIfNeeded();
-
-  const box = await canvas.boundingBox();
-  if (!box) throw new Error('a tela de desenho não tem tamanho');
-
-  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
-}
 
 /**
  * O ambiente tem chave do Gemini?

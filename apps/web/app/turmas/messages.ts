@@ -67,12 +67,10 @@ export const messages = {
     publishToCatalog: 'Publicar no catálogo',
     withdrawFromCatalog: 'Retirar do catálogo',
     onCatalog: 'no catálogo',
-    offCatalog: 'fora do catálogo',
     archivedNotice: 'Esta lista foi arquivada. Ela some das duas telas até você desarquivar.',
     editQuest: 'Editar texto',
     archiveQuest: 'Arquivar missão',
     unarchiveQuest: 'Desarquivar missão',
-    questArchived: 'arquivada',
   },
 
   // ------------------------------------------ editar a missão própria, na lista
@@ -158,7 +156,6 @@ export const messages = {
       `${String(goals)} ${pluralize(goals, 'objetivo', 'objetivos')} · ${String(hints)} ${pluralize(hints, 'dica', 'dicas')}`,
     nothingDrawn: 'Desenhe a resposta. Os objetivos que dá para cobrar saem dela.',
     noGoalMarked: 'Marque pelo menos um objetivo.',
-    noGoalMarkedBody: 'Sem objetivo, a missão não teria como ser cumprida — nem errada.',
     emptyTitleOrBrief:
       'A missão precisa de um título e de um enunciado. O aluno lê isto antes de desenhar.',
   },
@@ -173,7 +170,6 @@ export const messages = {
     nextItem: (title: string): string => `Próxima: ${title} →`,
     listClosed: (assignmentTitle: string): string =>
       `Cumprida. Você fechou a lista «${assignmentTitle}».`,
-    catalogLabel: (met: number, total: number): string => `catálogo · ${String(met)} de ${String(total)}`,
     catalogFreedom: 'O catálogo é livre: dá para explorar por conta, mesmo fora da lista.',
     inProgressOption: (title: string): string => `Da sua turma · ${title}`,
     /**
@@ -196,7 +192,6 @@ export const messages = {
     byTeacher: (name: string, institution: string | null): string =>
       institution === null ? `missão de ${name}` : `missão de ${name} · ${institution}`,
     report: 'Denunciar',
-    reportPrompt: 'Motivo da denúncia',
     reportPlaceholder: 'Em uma linha: o que está errado nesta missão?',
     reportSend: 'Enviar denúncia',
     reportCancel: 'Cancelar',
@@ -213,7 +208,6 @@ export const messages = {
     untouchedLabel: (name: string, position: number): string =>
       `${name}, item ${String(position)}: não abriu`,
     metCountHeading: 'cumpridas',
-    lastSeenHeading: 'última vez',
     footer:
       'O que aparece aqui é progresso de missão, avaliado no servidor a cada tentativa. As moléculas que o aluno desenhou não entram nesta tela.',
     emptyOpened: 'Ninguém abriu nenhuma missão desta lista ainda.',
@@ -221,10 +215,6 @@ export const messages = {
 
   // ---------------------------------------------------------- §6.6 — vazios
   empty: {
-    noAssignments:
-      'Uma lista é a sequência de missões de uma aula. Você escolhe do catálogo, cria as suas desenhando a resposta, ou mistura os dois.',
-    noItems: 'Escolha do catálogo, ou desenhe a resposta e crie a sua.',
-    noCatalogMatch: 'Nenhuma missão desta trilha fora da lista.',
     /**
      * A mesma frase para "turma sem aluno" nas duas seções da
      * página da turma: o resumo do topo (`page.tsx`) e o quadro por lista
@@ -232,7 +222,6 @@ export const messages = {
      * mesmo estado liam como dois bugs, não como um.
      */
     noStudents: 'Ninguém entrou ainda. Escreva o código no quadro.',
-    noOneOpened: 'Ninguém abriu nenhuma missão desta lista ainda.',
     studentNoPublished:
       'Seu professor ainda não publicou nenhuma lista. Enquanto isso, o catálogo aqui embaixo é todo seu.',
     studentNoClassroom:

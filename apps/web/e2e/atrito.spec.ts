@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { openAnalysis, openQuests } from './painel';
+import { openAnalysis, openQuests } from './bancada';
 
 /**
  * Os itens da v0.2 que existem para tirar pedra do caminho: anel pronto,

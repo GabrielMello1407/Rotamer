@@ -1,5 +1,5 @@
 import { expect, test, type APIRequestContext } from '@playwright/test';
-import { openAnalysis } from './painel';
+import { openAnalysis } from './bancada';
 
 /**
  * Busca por nome e verificação de novidade.
