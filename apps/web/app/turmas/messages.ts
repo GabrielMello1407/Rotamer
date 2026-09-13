@@ -69,6 +69,27 @@ export const messages = {
     onCatalog: 'no catálogo',
     offCatalog: 'fora do catálogo',
     archivedNotice: 'Esta lista foi arquivada. Ela some das duas telas até você desarquivar.',
+    editQuest: 'Editar texto',
+    archiveQuest: 'Arquivar missão',
+    unarchiveQuest: 'Desarquivar missão',
+    questArchived: 'arquivada',
+  },
+
+  // ------------------------------------------ editar a missão própria, na lista
+  editQuestPopover: {
+    title: 'Editar «{titulo}»',
+    /**
+     * O que muda e o que não muda. Objetivo não entra aqui de propósito: em
+     * lista publicada ele está travado (§3.5), porque mudá-lo mudaria a nota
+     * de quem já tentou.
+     */
+    body: 'Título, enunciado e dicas. Os objetivos não mudam — eles saíram da molécula que você desenhou, e mudá-los mudaria a nota de quem já tentou.',
+    save: 'Salvar',
+    cancel: 'Cancelar',
+    saved: 'Texto atualizado.',
+    archived: (title: string): string =>
+      `«${title}» foi arquivada. Ela sai do seletor de missões e do catálogo; as listas que já a usam continuam funcionando.`,
+    unarchived: (title: string): string => `«${title}» voltou para o seletor de missões.`,
   },
 
   publishPopover: {

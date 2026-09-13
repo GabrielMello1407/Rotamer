@@ -8,6 +8,7 @@ import { useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
 import {
   addItem,
   archiveAssignment,
+  archiveTeacherQuest,
   moveItem,
   publishAssignment,
   publishToCatalog,
@@ -16,6 +17,8 @@ import {
   removeItem,
   renameAssignment,
   unarchiveAssignment,
+  unarchiveTeacherQuest,
+  updateTeacherQuestText,
   withdrawFromCatalog,
   type AssignmentItemView,
 } from '../../../../actions/assignment';
@@ -24,6 +27,12 @@ import { CatalogPicker } from './CatalogPicker';
 import styles from './Assignment.module.css';
 
 const TEACHER_PREFIX = 'professor:';
+
+/** Os mesmos tetos da tela de autoria; o servidor confere de novo (R-13). */
+const TITLE_MAX = 80;
+const BRIEF_MAX = 400;
+const HINT_MAX = 200;
+const HINTS_MAX = 3;
 
 const WHEN = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short' });
 
@@ -102,14 +111,29 @@ export function Assignment({
 
   const [title, setTitle] = useState(initialTitle);
   /*
-   * `readAssignments` só devolve lista com `archivedAt: null` (§5.2) — não
-   * existe leitura que ache esta página depois de arquivada. Por isso o
-   * estado vive aqui, local: arquivar não recarrega (recarregar bateria num
-   * 404, porque o servidor deixou de achar a linha), e só desarquivar volta
-   * a pedir dado novo ao servidor, quando a leitura volta a encontrá-la.
+   * O estado é local para o aviso aparecer no clique, sem esperar o servidor.
+   * A página já lê com `includeArchived`, então recarregar encontra a lista
+   * arquivada e cai de volta neste mesmo valor.
    */
   const [isArchived, setIsArchived] = useState(archived);
   const [catalogSlugs, setCatalogSlugs] = useState<ReadonlySet<string>>(new Set());
+  /**
+   * A missão que está sendo editada, com o texto já carregado. O `readAssignments`
+   * traz enunciado e dicas junto do item, então abrir o popover não custa uma
+   * viagem ao servidor.
+   */
+  const [editing, setEditing] = useState<
+    | {
+        readonly slug: string;
+        readonly anchor: HTMLElement | null;
+        title: string;
+        brief: string;
+        hints: readonly string[];
+      }
+    | null
+  >(null);
+  const [savingQuest, setSavingQuest] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [removedNotice, setRemovedNotice] = useState<
     { readonly title: string; readonly slug: string; readonly position: number } | null
@@ -288,6 +312,51 @@ export function Assignment({
     });
   };
 
+  /** Arquivar e desarquivar a missão própria — o que o teto de R-12 manda fazer. */
+  const toggleQuestArchive = (item: AssignmentItemView): void => {
+    const id = item.questSlug.slice(TEACHER_PREFIX.length);
+    const action = item.archived ? unarchiveTeacherQuest : archiveTeacherQuest;
+
+    void action({ teacherQuestId: id }).then((outcome) => {
+      if (outcome.status === 'rejected') {
+        setError(outcome.reason);
+        return;
+      }
+      setError(null);
+      setNotice(
+        item.archived
+          ? messages.editQuestPopover.unarchived(item.title)
+          : messages.editQuestPopover.archived(item.title),
+      );
+      // O estado de arquivo mora no servidor; recarregar é o que o traz de
+      // volta, junto com o texto que a próxima edição vai mostrar.
+      router.refresh();
+    });
+  };
+
+  /** Salvar título, enunciado e dicas — objetivo não entra (§3.5). */
+  const saveQuestText = (): void => {
+    if (editing === null) return;
+
+    setSavingQuest(true);
+    void updateTeacherQuestText({
+      teacherQuestId: editing.slug.slice(TEACHER_PREFIX.length),
+      title: editing.title,
+      brief: editing.brief,
+      hints: editing.hints.filter((hint) => hint.trim() !== ''),
+    }).then((outcome) => {
+      setSavingQuest(false);
+      if (outcome.status === 'rejected') {
+        setError(outcome.reason);
+        return;
+      }
+      setError(null);
+      setEditing(null);
+      setNotice(messages.editQuestPopover.saved);
+      router.refresh();
+    });
+  };
+
   const toggleCatalog = (slug: string): void => {
     const id = slug.slice(TEACHER_PREFIX.length);
     const onCatalog = catalogSlugs.has(slug);
@@ -331,6 +400,12 @@ export function Assignment({
       {enteredItem !== undefined && (
         <p className={styles.enteredNotice} data-testid="missao-entrou-na-lista">
           {messages.assignment.entered(enteredItem.title, enteredItem.position)}
+        </p>
+      )}
+
+      {notice !== null && (
+        <p className={styles.enteredNotice} role="status" data-testid="aviso-missao">
+          {notice}
         </p>
       )}
 
@@ -398,18 +473,48 @@ export function Assignment({
                 </span>
 
                 {item.origin === 'teacher' && (
-                  <button
-                    type="button"
-                    className={styles.catalogToggle}
-                    onClick={() => {
-                      toggleCatalog(item.questSlug);
-                    }}
-                    data-testid={`alternar-catalogo-${item.questSlug}`}
-                  >
-                    {catalogSlugs.has(item.questSlug)
-                      ? messages.assignment.withdrawFromCatalog
-                      : messages.assignment.publishToCatalog}
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      className={styles.catalogToggle}
+                      onClick={(event) => {
+                        setEditing({
+                          slug: item.questSlug,
+                          anchor: event.currentTarget,
+                          title: item.title,
+                          brief: item.brief,
+                          hints: item.hints,
+                        });
+                      }}
+                      data-testid={`editar-missao-${item.questSlug}`}
+                    >
+                      {messages.assignment.editQuest}
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.catalogToggle}
+                      onClick={() => {
+                        toggleQuestArchive(item);
+                      }}
+                      data-testid={`arquivar-missao-${item.questSlug}`}
+                    >
+                      {item.archived
+                        ? messages.assignment.unarchiveQuest
+                        : messages.assignment.archiveQuest}
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.catalogToggle}
+                      onClick={() => {
+                        toggleCatalog(item.questSlug);
+                      }}
+                      data-testid={`alternar-catalogo-${item.questSlug}`}
+                    >
+                      {catalogSlugs.has(item.questSlug)
+                        ? messages.assignment.withdrawFromCatalog
+                        : messages.assignment.publishToCatalog}
+                    </button>
+                  </>
                 )}
               </span>
 
@@ -534,6 +639,101 @@ export function Assignment({
         <p className={styles.afterPublish} data-testid="aviso-pos-publicacao">
           {messages.publishPopover.afterPublish}
         </p>
+      )}
+
+      {editing !== null && (
+        <Popover
+          anchor={editing.anchor}
+          label={messages.editQuestPopover.title.replace('{titulo}', editing.title)}
+          onClose={() => {
+            setEditing(null);
+          }}
+          testId="editar-missao"
+        >
+          <div className={styles.confirmBox}>
+            <p className={styles.confirmTitle}>
+              {messages.editQuestPopover.title.replace('{titulo}', editing.title)}
+            </p>
+            <p className={styles.confirmBody}>{messages.editQuestPopover.body}</p>
+
+            <label className={styles.editField}>
+              <span className={styles.editLabel}>{messages.authoring.titleLabel}</span>
+              <input
+                className={styles.editInput}
+                value={editing.title}
+                maxLength={TITLE_MAX}
+                onChange={(event) => {
+                  const { value } = event.target;
+                  setEditing((current) => (current === null ? null : { ...current, title: value }));
+                }}
+                data-testid="editar-titulo"
+              />
+            </label>
+
+            <label className={styles.editField}>
+              <span className={styles.editLabel}>{messages.authoring.briefLabel}</span>
+              <textarea
+                className={styles.editTextarea}
+                value={editing.brief}
+                maxLength={BRIEF_MAX}
+                rows={4}
+                onChange={(event) => {
+                  const { value } = event.target;
+                  setEditing((current) => (current === null ? null : { ...current, brief: value }));
+                }}
+                data-testid="editar-enunciado"
+              />
+            </label>
+
+            <span className={styles.editLabel}>{messages.authoring.hintsLabel}</span>
+            {editing.hints.map((hint, index) => (
+              <input
+                key={index}
+                className={styles.editInput}
+                value={hint}
+                maxLength={HINT_MAX}
+                onChange={(event) => {
+                  const { value } = event.target;
+                  setEditing((current) =>
+                    current === null
+                      ? null
+                      : { ...current, hints: current.hints.map((old, i) => (i === index ? value : old)) },
+                  );
+                }}
+                data-testid={`editar-dica-${String(index)}`}
+              />
+            ))}
+
+            {editing.hints.length < HINTS_MAX && (
+              <Button
+                size="small"
+                variant="ghost"
+                onClick={() => {
+                  setEditing((current) =>
+                    current === null ? null : { ...current, hints: [...current.hints, ''] },
+                  );
+                }}
+                data-testid="editar-acrescentar-dica"
+              >
+                {messages.authoring.addHint}
+              </Button>
+            )}
+
+            <div className={styles.confirmActions}>
+              <Button onClick={saveQuestText} disabled={savingQuest} data-testid="salvar-texto-missao">
+                {messages.editQuestPopover.save}
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setEditing(null);
+                }}
+              >
+                {messages.editQuestPopover.cancel}
+              </Button>
+            </div>
+          </div>
+        </Popover>
       )}
 
       {publishOpen && (

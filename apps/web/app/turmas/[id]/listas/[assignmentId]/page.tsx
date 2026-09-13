@@ -38,10 +38,14 @@ export const metadata: Metadata = {
 /**
  * A lista, do lado do professor (§6.2 de `docs/ROTEIROS.md`).
  *
- * `readAssignments` só devolve lista com `archivedAt: null` — não existe
- * leitura por `id` isolado (§5.2 não lista uma). Por isso a busca aqui é
- * "todas as listas da turma, filtre a que interessa": mais uma consulta que
+ * Não existe leitura por `id` isolado (§5.2 não lista uma), então a busca aqui
+ * é "todas as listas da turma, filtre a que interessa": mais uma consulta que
  * o ideal, mas nenhuma além das que já existem.
+ *
+ * `includeArchived` é o que faz esta página sobreviver ao arquivamento. Sem
+ * ele, arquivar e recarregar dava 404 numa lista que a tela acabara de dizer
+ * que "some das duas telas até você desarquivar" — e o botão de desarquivar
+ * só existia enquanto a aba ficasse aberta.
  */
 export default async function AssignmentPage({ params, searchParams }: PageProps): Promise<ReactElement> {
   if (!hasDatabase()) redirect('/');
@@ -54,7 +58,7 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
   const enteredAtPosition = parseEnteredAtPosition(feito, posicao);
 
   const [assignments, { teaching }] = await Promise.all([
-    readAssignments({ classroomId }),
+    readAssignments({ classroomId, includeArchived: true }),
     readClassrooms(),
   ]);
 
@@ -73,7 +77,7 @@ export default async function AssignmentPage({ params, searchParams }: PageProps
       initialTitle={assignment.title}
       initialItems={assignment.items}
       initialPublishedAt={assignment.publishedAt}
-      archived={false}
+      archived={assignment.archivedAt !== null}
       enteredAtPosition={enteredAtPosition}
     />
   );

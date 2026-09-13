@@ -270,6 +270,26 @@ test.describe('listas da turma', () => {
     await page.getByTestId('confirmar-publicar').click();
     await expect(page.getByTestId('status-da-lista')).toContainText('Publicado em', { timeout: 30_000 });
 
+    /*
+     * Editar o texto da missão própria. A tela promete, logo depois de
+     * publicar, que "título, enunciado e dicas continuam editáveis" — e por
+     * um tempo a ação existia só no servidor, sem caminho nenhum na tela.
+     */
+    await page.getByTestId(`editar-missao-${teacherQuestSlug}`).click();
+    await page.getByTestId('editar-enunciado').fill('Monte um álcool com exatamente dois carbonos.');
+    await page.getByTestId('salvar-texto-missao').click();
+    await expect(page.getByTestId('aviso-missao')).toContainText('Texto atualizado.', {
+      timeout: 30_000,
+    });
+
+    // E o texto novo é o que o aluno vai ler: recarregar traz do banco.
+    await page.reload();
+    await page.getByTestId(`editar-missao-${teacherQuestSlug}`).click();
+    await expect(page.getByTestId('editar-enunciado')).toHaveValue(
+      'Monte um álcool com exatamente dois carbonos.',
+    );
+    await page.getByRole('button', { name: 'Cancelar' }).click();
+
     // D-27 — publicar a missão própria no catálogo compartilhado.
     const catalogToggle = page.getByTestId(`alternar-catalogo-${teacherQuestSlug}`);
     await expect(catalogToggle).toContainText('Publicar no catálogo');
@@ -496,6 +516,15 @@ test.describe('listas da turma', () => {
      */
     await page.goto(`/turmas/${classroomId}/listas/${assignmentId}`);
     await page.getByTestId('alternar-arquivo-lista').click();
+    await expect(page.getByTestId('lista-arquivada')).toBeVisible({ timeout: 30_000 });
+
+    /*
+     * A tela diz que a lista "some das duas telas até você desarquivar", e
+     * recarregar precisa continuar achando a página: antes disso a leitura
+     * filtrava arquivada e o F5 caía num 404, com o botão de desarquivar
+     * existindo só enquanto a aba ficasse aberta.
+     */
+    await page.reload();
     await expect(page.getByTestId('lista-arquivada')).toBeVisible({ timeout: 30_000 });
 
     await page.goto(`/turmas/${classroomId}`);

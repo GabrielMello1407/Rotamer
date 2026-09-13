@@ -256,7 +256,16 @@ function registerQuestCheck(key: string): void {
 }
 
 /** Títulos de missão `professor:`, buscados com `select` explícito (R-3) — nunca a resposta. */
-async function teacherTitlesFor(slugs: readonly string[]): Promise<Map<string, string>> {
+/**
+ * O texto de cada missão de professor citada por estes slugs.
+ *
+ * Traz enunciado e dicas junto do título porque é o professor dono quem lê
+ * esta tela, e é nela que ele edita — a promessa de "título, enunciado e
+ * dicas continuam editáveis" some se a tela não souber o que está escrito.
+ * **R-3 continua inteira:** `answerMolblock` e `answerInchiKey` não entram
+ * neste `select`, e nenhum caminho de aluno passa por aqui.
+ */
+async function teacherTextsFor(slugs: readonly string[]): Promise<Map<string, TeacherQuestText>> {
   const ids = slugs
     .filter((slug) => slug.startsWith(TEACHER_PREFIX))
     .map((slug) => slug.slice(TEACHER_PREFIX.length));
@@ -265,21 +274,45 @@ async function teacherTitlesFor(slugs: readonly string[]): Promise<Map<string, s
 
   const rows = await db.teacherQuest.findMany({
     where: { id: { in: ids } },
-    select: { id: true, title: true },
+    select: { id: true, title: true, brief: true, hints: true, archivedAt: true },
   });
 
-  return new Map(rows.map((row) => [`${TEACHER_PREFIX}${row.id}`, row.title] as const));
+  return new Map(
+    rows.map((row) => [
+      `${TEACHER_PREFIX}${row.id}`,
+      {
+        title: row.title,
+        brief: row.brief,
+        hints: Array.isArray(row.hints) ? (row.hints as string[]) : [],
+        archived: row.archivedAt !== null,
+      },
+    ] as const),
+  );
+}
+
+interface TeacherQuestText {
+  readonly title: string;
+  readonly brief: string;
+  readonly hints: readonly string[];
+  readonly archived: boolean;
 }
 
 function itemView(
   slug: string,
-  titles: ReadonlyMap<string, string>,
-): { readonly title: string; readonly origin: 'catalog' | 'teacher' } {
+  texts: ReadonlyMap<string, TeacherQuestText>,
+): Omit<AssignmentItemView, 'id' | 'position' | 'questSlug'> {
   if (slug.startsWith(TEACHER_PREFIX)) {
-    return { title: titles.get(slug) ?? slug, origin: 'teacher' };
+    const text = texts.get(slug);
+    return {
+      title: text?.title ?? slug,
+      origin: 'teacher',
+      brief: text?.brief ?? '',
+      hints: text?.hints ?? [],
+      archived: text?.archived ?? false,
+    };
   }
 
-  return { title: findQuest(slug)?.title ?? slug, origin: 'catalog' };
+  return { title: findQuest(slug)?.title ?? slug, origin: 'catalog', brief: '', hints: [], archived: false };
 }
 
 // ================================================================== createAssignment
@@ -892,6 +925,14 @@ export interface AssignmentItemView {
   readonly questSlug: string;
   readonly title: string;
   readonly origin: 'catalog' | 'teacher';
+  /**
+   * Enunciado, dicas e estado de arquivo — só de missão de professor; de
+   * catálogo vêm vazios. É o que a tela precisa para editar sem uma segunda
+   * viagem ao servidor a cada linha.
+   */
+  readonly brief: string;
+  readonly hints: readonly string[];
+  readonly archived: boolean;
 }
 
 export interface AssignmentSummary {
@@ -941,7 +982,7 @@ export async function readAssignments(input: {
   });
 
   const allSlugs = assignments.flatMap((assignment) => assignment.items.map((item) => item.questSlug));
-  const titles = await teacherTitlesFor(allSlugs);
+  const texts = await teacherTextsFor(allSlugs);
 
   return assignments.map((assignment) => ({
     id: assignment.id,
@@ -952,7 +993,7 @@ export async function readAssignments(input: {
       id: item.id,
       position: item.position,
       questSlug: item.questSlug,
-      ...itemView(item.questSlug, titles),
+      ...itemView(item.questSlug, texts),
     })),
   }));
 }
@@ -992,12 +1033,12 @@ export async function readAssignmentBoard(input: { assignmentId: string }): Prom
   });
   if (full === null) return null;
 
-  const titles = await teacherTitlesFor(full.items.map((item) => item.questSlug));
+  const texts = await teacherTextsFor(full.items.map((item) => item.questSlug));
   const items: AssignmentItemView[] = full.items.map((item) => ({
     id: item.id,
     position: item.position,
     questSlug: item.questSlug,
-    ...itemView(item.questSlug, titles),
+    ...itemView(item.questSlug, texts),
   }));
 
   const slugs = items.map((item) => item.questSlug);
