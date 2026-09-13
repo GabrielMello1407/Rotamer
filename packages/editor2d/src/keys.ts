@@ -1,4 +1,49 @@
 /**
+ * Os atalhos do editor: quais são, e quando uma tecla vale como atalho.
+ *
+ * Este arquivo é a fonte única. A tabela de elementos já viveu em três cópias —
+ * o comportamento no `Editor2D`, o selo do botão na `Toolbar` e a folha de
+ * ajuda em `Shortcuts` — e as três precisavam ser editadas juntas, sem nada
+ * que reclamasse quando uma ficava para trás. Agora as três leem daqui.
+ */
+
+/**
+ * A letra de cada elemento, na ordem em que a folha de ajuda os mostra.
+ *
+ * São os elementos que aparecem em aula de orgânica, cada um na inicial do
+ * próprio símbolo — que é o que a pessoa já teria escrito à mão. `L` é o cloro
+ * e `B` é o bromo porque `C` já é o carbono, o mais usado de todos.
+ */
+export const ELEMENT_SHORTCUTS: readonly {
+  /** A tecla, em maiúscula, do jeito que se mostra na tela. */
+  readonly key: string;
+  readonly symbol: string;
+  /** O nome em português, para a folha de ajuda. */
+  readonly name: string;
+}[] = [
+  { key: 'C', symbol: 'C', name: 'carbono' },
+  { key: 'N', symbol: 'N', name: 'nitrogênio' },
+  { key: 'O', symbol: 'O', name: 'oxigênio' },
+  { key: 'S', symbol: 'S', name: 'enxofre' },
+  { key: 'P', symbol: 'P', name: 'fósforo' },
+  { key: 'F', symbol: 'F', name: 'flúor' },
+  { key: 'L', symbol: 'Cl', name: 'cloro' },
+  { key: 'B', symbol: 'Br', name: 'bromo' },
+  { key: 'I', symbol: 'I', name: 'iodo' },
+  { key: 'H', symbol: 'H', name: 'hidrogênio' },
+];
+
+/** O símbolo que a tecla escolhe, ou `undefined` se ela não for de elemento. */
+export function elementForKey(key: string): string | undefined {
+  return ELEMENT_SHORTCUTS.find((entry) => entry.key.toLowerCase() === key)?.symbol;
+}
+
+/** A tecla que escolhe este elemento, ou o próprio símbolo quando não há uma. */
+export function keyForElement(symbol: string): string {
+  return ELEMENT_SHORTCUTS.find((entry) => entry.symbol === symbol)?.key ?? symbol;
+}
+
+/**
  * Quando uma tecla é atalho, e quando é só uma letra.
  *
  * Os atalhos do editor valem na página inteira — teclar `O` funciona sem clicar

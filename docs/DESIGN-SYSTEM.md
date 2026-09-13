@@ -242,7 +242,7 @@ do primeiro dia larga a barra e usa a letra.
 | `0` | enquadrar a molécula |
 | `Ctrl+A` | seleciona tudo |
 | `Delete` | apaga a seleção, ou o que está sob o cursor |
-| `Ctrl+Z` / `Ctrl+Shift+Z` | desfazer e refazer |
+| `Ctrl+Z` / `Ctrl+Shift+Z` / `Ctrl+Y` | desfazer e refazer |
 | `?` | a folha com tudo isto |
 
 Três regras que vieram de defeito, não de gosto:

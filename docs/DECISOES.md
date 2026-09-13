@@ -855,7 +855,7 @@ sem missão (D-09). E o papel de professor continua sendo dado por quem administ
 autodeclarado (D-19) — o que agora importa mais, porque professor passa a publicar conteúdo para
 menores de idade.
 
-**Em aberto.** O catálogo atual — as 16 missões que qualquer pessoa abre sem conta — continua
+**Em aberto.** O catálogo atual — as 15 missões que qualquer pessoa abre sem conta — continua
 existindo como exploração livre, ou passa a ser só matéria-prima para o roteiro do professor? As
 duas leituras cabem na decisão; a diferença é o que o aluno sem professor encontra ao entrar.
 

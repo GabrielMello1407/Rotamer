@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type ReactElement, type ReactNode, type RefObject } from 'react';
 import { useStore } from 'zustand';
 import { COMMON_ELEMENTS } from './elements-table';
-import { shortcutsApply } from './keys';
+import { keyForElement, shortcutsApply } from './keys';
 import { PeriodicTable } from './PeriodicTable';
 import { Shortcuts } from './Shortcuts';
 import styles from './Toolbar.module.css';
@@ -24,25 +24,6 @@ export interface ToolbarProps {
  */
 const ELEMENTS = COMMON_ELEMENTS.slice(0, 4);
 
-/**
- * A tecla de cada elemento, para o botão dizer qual é.
- *
- * Atalho que ninguém descobre é atalho que não existe: quem passa o cursor no
- * botão vê a letra e da próxima vez não precisa do botão. Cloro e bromo fogem da
- * inicial porque `c` é do carbono, o mais usado de todos.
- */
-const ELEMENT_KEY: Readonly<Record<string, string>> = {
-  C: 'C',
-  N: 'N',
-  O: 'O',
-  S: 'S',
-  P: 'P',
-  F: 'F',
-  Cl: 'L',
-  Br: 'B',
-  I: 'I',
-  H: 'H',
-};
 
 /**
  * A barra de ferramentas, em pé na borda da tela de desenho.
@@ -210,7 +191,7 @@ export function Toolbar({ store, className, onTidy }: ToolbarProps): ReactElemen
             className={[styles.button, styles.element].join(' ')}
             data-element={symbol}
             aria-pressed={element === symbol && tool !== 'erase'}
-            title={`Desenhar ${symbol} (${ELEMENT_KEY[symbol] ?? symbol})`}
+            title={`Desenhar ${symbol} (${keyForElement(symbol)})`}
             onClick={() => {
               store.getState().setElement(symbol);
               store.getState().setTool('structure');

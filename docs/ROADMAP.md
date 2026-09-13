@@ -44,7 +44,7 @@ O produto inteiro sem conta, sem servidor, sem IA. Tudo no cliente.
 ## Fase 2 · Enredo — concluída
 
 - [x] Motor de missões com `spec` declarativa — a mesma função avalia no cliente e no servidor
-- [x] 16 missões cobrindo Estrutura, Geometria e Propriedade, com dicas escritas à mão
+- [x] 15 missões cobrindo Estrutura, Geometria e Propriedade, com dicas escritas à mão
 - [x] Colar SMILES e busca por nome via PubChem, com o terceiro estado quando o PubChem não
       responde
 - [x] Modo ferramenta livre, **sem missão, pontuação ou conquista** (D-09)

@@ -197,7 +197,7 @@ As listas da turma, a missão criada desenhando a resposta e o catálogo compart
   pressupõe, em conceitos da disciplina; a ordem sugerida derivaria do grafo em vez de ser fixada
   à mão, e `difficulty` viraria consequência. Entra como **sugestão, nunca como cadeado**. Espera
   o plano de ensino do Idelcio: a lista de conceitos e a ordem deles não deveriam sair da nossa
-  cabeça — é pedir o plano, transcrever, e comparar com as 16 missões; o que sobra e o que falta
+  cabeça — é pedir o plano, transcrever, e comparar com as 15 missões; o que sobra e o que falta
   aparece sozinho.
 - **Tour de primeira visita.** Missão verifica molécula, não gesto (D-01): "gire a molécula",
   "organize o desenho" e "veja um modo de vibração" não mudam o grafo e não podem ser objetivo.

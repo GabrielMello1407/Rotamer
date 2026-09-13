@@ -59,7 +59,9 @@ packages/
 - `quests` depende só de `core`: uma missão é uma lista de condições sobre a **molécula** que o
   RDKit analisou, nunca sobre o desenho. Por isso a mesma função avalia no navegador, para
   resposta instantânea, e no servidor, antes de gravar.
-- Nada importa `editor2d`. A interface de desenho é substituível sem tocar em nada abaixo.
+- **Nenhum pacote** depende de `editor2d` — ele é folha. Quem o importa é o app, que precisa
+  dele para desenhar a tela; o que a regra garante é que a interface de desenho seja substituível
+  sem tocar em nada abaixo dela.
 
 Quando uma dessas regras precisar ser quebrada, a resposta certa quase sempre é mover a lógica
 para `core`, não criar a dependência.
@@ -73,7 +75,7 @@ para `core`, não criar a dependência.
 | `core/geometry` | conformação e MMFF94 pelo OpenChemLib, velocity-Verlet a 300 K, Hessiana numérica e diagonalização de Jacobi para os modos normais |
 | `editor2d` | `store.ts` (Zustand, histórico, seleção), `render.ts`, `Toolbar`, `PeriodicTable`, `ContextMenu`, `Shortcuts`, `Popover`, `keys.ts`, `templates.ts` (anéis) |
 | `viewer3d` | `Viewer3D`, `Molecule` (esferas e varetas, CPK), `folding.ts`, `sticks.ts` |
-| `quests` | `catalog.ts` (16 missões), `conditions.ts`, `evaluate.ts`, `extract.ts` (objetivos a partir da molécula, D-25), `types.ts` |
+| `quests` | `catalog.ts` (15 missões), `conditions.ts`, `evaluate.ts`, `extract.ts` (objetivos a partir da molécula, D-25), `types.ts` |
 | `ui` | `tokens.css`, `cpk.css`, `base.css`, `Button`, `Card`, `Formula`, `Label`, `Logo`, `NumberValue`, `SourceBadge` |
 
 ## Stack e o porquê

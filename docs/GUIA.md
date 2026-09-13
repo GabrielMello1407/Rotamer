@@ -35,7 +35,7 @@ No celular tudo empilha: desenho em cima, painel embaixo. Nada exige mouse.
 - **Organizar o desenho:** o RDKit refaz as posições — comprimentos de ligação iguais, ângulos
   certos, anéis regulares. `Ctrl+Z` devolve o desenho como estava. Se havia cunha, uma faixa no
   alto conta o que aconteceu com ela (§ 5).
-- **Desfazer e refazer:** `Ctrl+Z` e `Ctrl+Shift+Z`, sem limite dentro da sessão.
+- **Desfazer e refazer:** `Ctrl+Z` e `Ctrl+Shift+Z` (ou `Ctrl+Y`), sem limite dentro da sessão.
 - **Nova molécula:** limpa a tela, e `Ctrl+Z` traz de volta.
 
 **Ferramentas** (tecla entre parênteses):
@@ -231,7 +231,7 @@ conta com a escola preenchida e peça a promoção. Quem tenta emitir código se
 A resposta traz o **código**: *"Turma "3º A — manhã" aberta. O código é K7M2QX."* Escreva no
 quadro. A lista mostra quantos alunos entraram.
 
-**O quadro da turma** (clique no nome): o resumo (*"12 alunos, de 16 missões no catálogo"*), as
+**O quadro da turma** (clique no nome): o resumo (*"12 alunos, de 15 missões no catálogo"*), as
 **listas da turma**, um quadro por lista publicada, **`Onde a turma travou`** — as missões em que
 mais gente tentou e não cumpriu, que é de onde sai a próxima aula — e **`Aluno a aluno`**: quem,
 cumpridas, travado em, última vez. *"Travar é ter tentado e não ter cumprido — quem nem abriu a

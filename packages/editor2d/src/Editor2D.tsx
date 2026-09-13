@@ -11,7 +11,7 @@ import type {
 import { useStore } from 'zustand';
 import { ContextMenu, type MenuEntry } from './ContextMenu';
 import styles from './Editor2D.module.css';
-import { shortcutsApply } from './keys';
+import { elementForKey, shortcutsApply } from './keys';
 import {
   hoverAt,
   selectInRegion,
@@ -506,26 +506,6 @@ function hintFor(tool: Tool, graph: MoleculeGraph, hover: Hover, selection: Sele
   return null;
 }
 
-/** Atalhos de elemento. São os que aparecem em prova de orgânica. */
-/**
- * A letra do elemento.
- *
- * São os elementos que aparecem em aula de orgânica, cada um na inicial do
- * próprio símbolo — que é o que a pessoa já teria escrito à mão. `l` é o cloro e
- * `b` é o bromo porque `c` já é o carbono e o carbono é o mais usado de todos.
- */
-const ELEMENT_KEYS: Readonly<Record<string, string>> = {
-  c: 'C',
-  n: 'N',
-  o: 'O',
-  s: 'S',
-  p: 'P',
-  f: 'F',
-  l: 'Cl',
-  b: 'Br',
-  i: 'I',
-  h: 'H',
-};
 
 /**
  * A tela de desenho.
@@ -1296,7 +1276,7 @@ export function Editor2D({ store, className, onTidy, notice }: Editor2DProps): R
         return;
       }
 
-      const element = ELEMENT_KEYS[key];
+      const element = elementForKey(key);
       if (element !== undefined && !event.ctrlKey && !event.metaKey) {
         event.preventDefault();
         state.setElement(element);

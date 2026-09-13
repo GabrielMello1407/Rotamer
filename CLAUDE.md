@@ -128,8 +128,10 @@ missão é reavaliada no servidor, toda entrada passa por schema, dono é sempre
   bloco `@media (prefers-color-scheme)` ou `[data-theme]`.
 - **Movimento:** `prefers-reduced-motion` desliga dobramento e vibração e vai direto à geometria
   final.
-- **Atalhos** valem na página inteira, menos em campo de texto e com folha modal aberta
-  (`packages/editor2d/src/keys.ts`). Letra de elemento não divide tecla com ferramenta.
+- **Atalhos** valem na página inteira, menos em campo de texto e com folha modal aberta.
+  A tabela mora em `packages/editor2d/src/keys.ts`, e é dela que saem o comportamento, o
+  selo do botão e a folha de ajuda — os três liam cópias próprias, e a ajuda já prometia
+  tecla que o teclado não fazia. Letra de elemento não divide tecla com ferramenta.
 
 ## Desempenho — restrições, não sugestões
 

@@ -1,4 +1,5 @@
 import { type ReactElement } from 'react';
+import { ELEMENT_SHORTCUTS } from './keys';
 import { Popover } from './Popover';
 import styles from './Shortcuts.module.css';
 
@@ -28,18 +29,9 @@ interface Group {
 const GROUPS: readonly Group[] = [
   {
     title: 'elementos',
-    rows: [
-      ['C', 'carbono'],
-      ['N', 'nitrogênio'],
-      ['O', 'oxigênio'],
-      ['S', 'enxofre'],
-      ['P', 'fósforo'],
-      ['F', 'flúor'],
-      ['L', 'cloro'],
-      ['B', 'bromo'],
-      ['I', 'iodo'],
-      ['H', 'hidrogênio'],
-    ],
+    // Sai da mesma lista que o editor lê para trocar o elemento: a folha não
+    // tem como prometer uma tecla que o teclado não faz.
+    rows: ELEMENT_SHORTCUTS.map((entry) => [entry.key, entry.name] as const),
   },
   {
     title: 'ferramentas',
@@ -59,6 +51,7 @@ const GROUPS: readonly Group[] = [
       ['Delete', 'apagar a seleção, ou o que está sob o cursor'],
       ['Ctrl+Z', 'desfazer'],
       ['Ctrl+Shift+Z', 'refazer'],
+      ['Ctrl+Y', 'refazer também'],
       ['Esc', 'fechar'],
     ],
   },

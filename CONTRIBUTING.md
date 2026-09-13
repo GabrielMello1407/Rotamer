@@ -60,9 +60,14 @@ packages/ui         tokens e componentes
 docs/               arquitetura, decisões, design system, listas, instalação, guia
 ```
 
-**Regra de dependência:** `core` não depende de ninguém, e ninguém depende de `editor2d`. O
-mapa completo está em [docs/ARQUITETURA.md](docs/ARQUITETURA.md); o porquê de cada escolha, em
+**Regra de dependência:** `core` não depende de ninguém, e nenhum pacote depende de `editor2d`.
+O mapa completo está em [docs/ARQUITETURA.md](docs/ARQUITETURA.md); o porquê de cada escolha, em
 [docs/DECISOES.md](docs/DECISOES.md).
+
+**`R-1`, `§4.5` e companhia.** O código das turmas cita regras por número — `R-3` num `select`,
+`§6.3` num componente. Todas moram em [docs/ROTEIROS.md](docs/ROTEIROS.md): a §5.1 tem a tabela
+de regras de servidor, a §6 os textos de tela e a §7 o teste que protege cada uma. Se você mexer
+em lista, missão de professor ou catálogo, é o documento a ler antes.
 
 ## Como uma mudança vira commit
 
