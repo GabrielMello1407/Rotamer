@@ -25,13 +25,23 @@ As que mais importam:
 
 ## Subir o ambiente
 
-Precisa de **Node 24** (20.9 ou mais novo serve), **pnpm 11** e **Docker** para o Postgres.
+Use **Node 24**, **pnpm 11.24.0** e **Docker** para o Postgres. Essa é a versão do Node usada
+no Docker e no CI; as dependências de banco exigem versões mais novas que o mínimo declarado
+na raiz do monorepo.
 
 ```
-corepack enable                        # ou: npm install --global pnpm@11
+corepack enable                        # ou: npm install --global pnpm@11.24.0
 pnpm install
 docker compose up -d postgres          # só o banco; o app roda fora do container
 cp apps/web/.env.example apps/web/.env # a DATABASE_URL já aponta para esse Postgres
+```
+
+Se você já configurou `POSTGRES_PASSWORD` no `.env` da raiz, ajuste a senha na `DATABASE_URL`
+de `apps/web/.env` para o mesmo valor.
+
+Com a conexão configurada, aplique as migrações e inicie o app:
+
+```
 pnpm --filter @rotamer/web db:migrate  # aplica as migrações
 pnpm dev
 ```

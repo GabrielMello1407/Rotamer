@@ -2,8 +2,9 @@
 
 Para quem vai subir a própria instância: a TI de uma escola, um professor com um servidor, ou
 quem quer experimentar sem depender de ninguém. O produto inteiro roda em dois containers — o
-app e o Postgres — e os dados ficam num volume seu. Nada sai da sua máquina, a não ser o que
-você ligar de propósito (§ Telemetria).
+app e o Postgres — e os dados ficam num volume seu. A busca por nome e a verificação de composto
+conhecido consultam o PubChem; o tutor Gemini e a telemetria Umami dependem de configuração.
+A seção "Onde ficam os dados" detalha essas consultas.
 
 ## O que precisa
 
@@ -13,10 +14,15 @@ você ligar de propósito (§ Telemetria).
   basta. Cerca de 1 GB de disco para a imagem.
 - **Uma porta livre** — 3000, por padrão.
 - **Internet durante a construção**, para baixar as dependências e as fontes. Depois de pronta,
-  a instância funciona sem falar com ninguém de fora.
+  o editor e os cálculos funcionam sem serviços externos; busca no PubChem, tutor e telemetria
+  precisam de rede quando utilizados.
 - Para uso fora da rede local, um **domínio** e um proxy com TLS (§ Proxy com TLS).
 
 ## Três comandos
+
+Os exemplos deste guia usam **Bash**, disponível no Linux, macOS e no WSL do Windows.
+Os scripts de backup e restauração também pedem Bash; não execute os redirecionamentos de
+arquivos binários abaixo no Windows PowerShell.
 
 ```
 git clone https://github.com/GabrielMello1407/Rotamer.git && cd Rotamer
@@ -210,7 +216,7 @@ missões, as moléculas guardadas, os apelidos e as missões que professores cri
 conta apaga tudo o que é dela (`onDelete: Cascade`).
 
 O que sai da máquina, e só quando a funcionalidade é usada: a busca por nome e a verificação de
-composto conhecido perguntam ao **PubChem** (uma estrutura ou um nome, nunca quem perguntou); o
+composto conhecido perguntam ao **PubChem** (uma InChIKey ou um nome, nunca quem perguntou); o
 tutor manda ao **Gemini** os descritores já calculados e os rótulos dos objetivos — nunca nome,
 e-mail, nem texto escrito por professor. Sem chave, nada vai ao Gemini.
 
