@@ -190,3 +190,10 @@ a.name:hover {
     overflow-x: auto;
   }
 }
+
+/* O caminho para os códigos de senha, dentro da própria área do professor:
+   a página existia sem link nenhum no produto inteiro. */
+.link {
+  color: var(--brand-ink);
+  font-weight: 600;
+}

@@ -263,3 +263,26 @@ a.name:hover {
     overflow-x: auto;
   }
 }
+
+/* O canto direito do cabeçalho: o código da turma, que o professor dita, e o
+   caminho para os códigos de senha, que antes não existia em tela nenhuma. */
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.headerLink {
+  color: var(--brand-ink);
+  font-size: var(--step-0);
+  font-weight: 600;
+  text-decoration: none;
+  min-height: var(--tap-min);
+  display: inline-flex;
+  align-items: center;
+}
+
+.headerLink:hover {
+  text-decoration: underline;
+}

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useTransition, type FormEvent, type ReactElement } from 'react';
 import { createClassroom, joinClassroom, type ClassroomSummary } from '../actions/classroom';
+import { messages } from './messages';
 import styles from './page.module.css';
 
 export interface ClassroomsProps {
@@ -122,6 +123,21 @@ export function Classrooms({ teaching, attending, teacher }: ClassroomsProps): R
             O código aparece na lista. Escreva no quadro: é com ele que o aluno entra, sem e-mail
             no caminho.
           </p>
+
+          <p className={styles.note}>
+            <Link className={styles.link} href="/codigos" data-testid="ir-para-codigos">
+              {messages.classrooms.codesLink}
+            </Link>{' '}
+            — {messages.classrooms.codesHint}
+          </p>
+        </section>
+      )}
+
+      {!teacher && (
+        <section className={styles.panel} data-testid="como-virar-professor">
+          <h2 className={styles.title}>{messages.classrooms.notTeacherTitle}</h2>
+          <p className={styles.quiet}>{messages.classrooms.notTeacherBody}</p>
+          <p className={styles.note}>{messages.classrooms.notTeacherHow}</p>
         </section>
       )}
 

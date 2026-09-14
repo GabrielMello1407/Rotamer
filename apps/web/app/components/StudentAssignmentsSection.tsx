@@ -1,6 +1,7 @@
 'use client';
 
 import { Label } from '@rotamer/ui';
+import Link from 'next/link';
 import type { ReactElement } from 'react';
 import type { StudentAssignment } from '../actions/assignment';
 import { messages } from '../turmas/messages';
@@ -38,6 +39,15 @@ export function StudentAssignmentsSection({
         <p className={styles.empty}>
           {inClassroom ? messages.empty.studentNoPublished : messages.empty.studentNoClassroom}
         </p>
+
+        {/* Sem turma, o texto diz o que falta e o link diz onde se resolve. */}
+        {!inClassroom && (
+          <p className={styles.empty}>
+            <Link href="/turmas" data-testid="ir-para-turmas">
+              {messages.empty.studentJoinLink}
+            </Link>
+          </p>
+        )}
       </div>
     );
   }

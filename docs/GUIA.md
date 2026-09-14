@@ -201,9 +201,11 @@ PubChem não responder, o batismo continua possível, dizendo que não deu para 
 
 ## 11. Turmas — para quem estuda
 
-Em `Turmas` (com conta), digite o **código de seis caracteres** que o professor escreveu no
-quadro e `Entrar na turma`. Não há convite por e-mail. *"O professor vê quais missões você
-cumpriu e onde parou. O que você desenha fora das missões é seu, e não aparece para ninguém."*
+`Turmas` fica no alto da tela, ao lado do seu nome. Digite ali o **código de seis caracteres**
+que o professor escreveu no quadro e `Entrar na turma`. Enquanto você não estiver em nenhuma
+turma, o painel de missões diz isso e traz o link `Entrar numa turma`. Não há convite por
+e-mail. *"O professor vê quais missões você cumpriu e onde parou. O que você desenha fora das
+missões é seu, e não aparece para ninguém."*
 
 Depois disso, o painel `Missões` ganha a seção **`DA SUA TURMA`**, acima do catálogo: a lista
 que o professor publicou, na ordem dele, com `0 de 5 cumpridas`. Qualquer item abre em qualquer
@@ -224,8 +226,10 @@ vale por um dia e serve uma vez; trocar a senha encerra as sessões antigas.
 
 **Virar professor.** Professor não se autodeclara: o papel é dado por quem administra a
 instância, com um comando no servidor (`docs/INSTALACAO.md`, "O primeiro professor"). Crie a
-conta com a escola preenchida e peça a promoção. Quem tenta emitir código sem ser professor lê
-*"Só conta de professor emite código."*
+conta com a escola preenchida e peça a promoção com o e-mail dela. A própria tela explica isso:
+em `Turmas`, quem ainda não é professor lê **"Dá aula e quer abrir uma turma?"** com o caminho.
+Depois da promoção, `Turmas que você dá` aparece na próxima página que você abrir — não precisa
+sair e entrar.
 
 **Abrir a turma.** Em `/turmas`, `Turmas que você dá` → nome (`3º A — manhã`) → `Abrir turma`.
 A resposta traz o **código**: *"Turma "3º A — manhã" aberta. O código é K7M2QX."* Escreva no
@@ -266,9 +270,11 @@ missão não conta aqui."* Nenhuma molécula do aluno aparece nesta tela.
 (abriu e não cumpriu) · – não abriu`, `cumpridas` (`3 / 5`) e `última vez`. Em cima, `ONDE A
 TURMA TRAVOU NESTA LISTA`.
 
-**Códigos de senha** (`/codigos`): e-mail de quem perdeu a senha → `Emitir código`. O código
-aparece **uma vez** — anote e entregue em mãos. Vale por um dia, serve uma vez, e só para alguém
-da mesma escola que a sua. Emitir outro invalida o anterior.
+**Códigos de senha.** O link `Códigos de senha` fica em dois lugares que você já visita: na
+seção `Turmas que você dá`, em `Turmas`, e no alto da página de cada turma. Lá dentro: e-mail de
+quem perdeu a senha → `Emitir código`. O código aparece **uma vez** — anote e entregue em mãos.
+Vale por um dia, serve uma vez, e só para alguém da mesma escola que a sua. Emitir outro
+invalida o anterior.
 
 ## 13. O que o Rotamer não faz
 

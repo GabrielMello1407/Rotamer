@@ -12,6 +12,29 @@ function pluralize(n: number, singular: string, plural: string): string {
 }
 
 export const messages = {
+  // ---------------------------------------------------------- /turmas, a porta de entrada
+  classrooms: {
+    /**
+     * A página de emitir código de senha não tinha link em lugar nenhum do
+     * produto: só chegava lá quem digitasse `/codigos` na barra de endereço.
+     * Ela é a ferramenta do professor no D-19, e mora onde ele já está.
+     */
+    codesLink: 'Códigos de senha',
+    codesHint: 'Aluno que esqueceu a senha troca com um código que você emite e entrega em mãos.',
+
+    /**
+     * Quem dá aula e ainda não foi promovido via a tela do aluno e nada mais.
+     * Sem esta explicação, a conclusão é que o produto está quebrado — e a
+     * resposta certa não é um botão, porque professor não se autodeclara
+     * (D-19); é dizer a quem pedir.
+     */
+    notTeacherTitle: 'Dá aula e quer abrir uma turma?',
+    notTeacherBody:
+      'Abrir turma, montar listas e emitir código de senha são de conta de professor, e esse papel é dado por quem administra o Rotamer da sua escola — nunca pela tela, porque quem emite código de senha pode entrar na conta de um aluno.',
+    notTeacherHow:
+      'Peça a promoção a quem instalou o Rotamer, com o e-mail desta conta. Leva um comando e vale na próxima página que você abrir.',
+  },
+
   // ---------------------------------------------------------- §6.1 — professor, /turmas/[id]
   classroomSection: {
     heading: 'Listas da turma',
@@ -226,6 +249,8 @@ export const messages = {
       'Seu professor ainda não publicou nenhuma lista. Enquanto isso, o catálogo aqui embaixo é todo seu.',
     studentNoClassroom:
       'Você ainda não está em nenhuma turma. Com o código que o professor passa, a lista da aula aparece aqui.',
+    /** O caminho, não só o estado: a tela diz onde se digita o código. */
+    studentJoinLink: 'Entrar numa turma',
   },
 
   // ---------------------------------------------------------- §6.6 — erros

@@ -79,8 +79,15 @@ export default async function ClassroomPage({ params }: PageProps): Promise<Reac
           <span className={styles.wordmark}>Rotamer</span>
         </Link>
 
-        <span className={styles.code} data-testid="codigo-visivel">
-          {board.code}
+        <span className={styles.headerActions}>
+          {/* O professor chega aqui pela turma e daqui precisa alcançar os
+              códigos de senha: a página não tinha link em lugar nenhum. */}
+          <Link className={styles.headerLink} href="/codigos">
+            {messages.classrooms.codesLink}
+          </Link>
+          <span className={styles.code} data-testid="codigo-visivel">
+            {board.code}
+          </span>
         </span>
       </header>
 

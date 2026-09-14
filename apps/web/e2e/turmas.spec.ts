@@ -10,6 +10,64 @@ import { desenharUmCarbono, openQuests } from './bancada';
  */
 
 
+test.describe('achar o caminho', () => {
+  /*
+   * A navegação do produto, não o que cada tela faz.
+   *
+   * `/codigos` existia sem link em lugar nenhum: chegava lá quem digitasse o
+   * endereço. E quem dá aula mas ainda não foi promovido via a tela do aluno
+   * e nada que explique por quê — a conclusão natural é que o produto está
+   * quebrado, quando na verdade o papel é dado por fora da tela (D-19).
+   */
+  test('quem ainda não é professor lê como o papel é dado, e não vê ferramenta de professor', async ({
+    page,
+  }) => {
+    await criarConta(page, { email: novoEmail('aluno'), nome: 'Aluno Bruno' });
+
+    await page.goto('/turmas');
+    await expect(page.getByTestId('como-virar-professor')).toContainText(
+      'quem administra o Rotamer da sua escola',
+    );
+    await expect(page.getByTestId('ir-para-codigos')).toBeHidden();
+  });
+
+  test('o professor alcança os códigos de senha pela turma, sem digitar endereço', async ({
+    page,
+  }) => {
+    const professora = novoEmail('professora');
+    await criarConta(page, { email: professora, nome: 'Professora Ana' });
+    promover(professora);
+
+    await page.goto('/turmas');
+    await expect(page.getByTestId('como-virar-professor')).toBeHidden();
+
+    // Da lista de turmas.
+    await page.getByTestId('ir-para-codigos').click();
+    await expect(page.getByTestId('codigo-email')).toBeVisible({ timeout: 30_000 });
+
+    // E de dentro da turma, que é onde ele está quando o aluno pede.
+    await page.goto('/turmas');
+    await page.getByTestId('nome-da-turma').fill('3º A — manhã');
+    await page.getByRole('button', { name: 'Abrir turma' }).click();
+    await expect(page.getByTestId('aviso-turma')).toContainText('aberta', { timeout: 30_000 });
+
+    await page.getByTestId('minhas-turmas').getByRole('link').first().click();
+    await page.getByRole('link', { name: 'Códigos de senha' }).click();
+    await expect(page.getByTestId('codigo-email')).toBeVisible({ timeout: 30_000 });
+  });
+
+  test('o aluno sem turma tem para onde ir a partir do painel de missões', async ({ page }) => {
+    await criarConta(page, { email: novoEmail('aluno'), nome: 'Aluno Bruno' });
+
+    await page.goto('/');
+    await openQuests(page);
+
+    await expect(page.getByTestId('da-sua-turma-vazia')).toContainText('nenhuma turma');
+    await page.getByTestId('ir-para-turmas').click();
+    await expect(page.getByTestId('codigo-da-turma')).toBeVisible({ timeout: 30_000 });
+  });
+});
+
 test.describe('turmas', () => {
   test('quem não é professor não abre turma', async ({ page }) => {
     await criarConta(page, { email: novoEmail('aluno'), nome: 'Aluno Bruno' });
