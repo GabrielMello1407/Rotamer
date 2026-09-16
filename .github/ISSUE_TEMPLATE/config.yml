@@ -1,0 +1,14 @@
+# Issue em branco continua permitida de propósito: quem mais interessa relatar aqui
+# é professor de química, não programador, e um parágrafo em prosa vale mais que um
+# formulário abandonado no meio. O link de falha de segurança aparece sozinho, porque
+# o repositório tem relato privado ligado e um SECURITY.md.
+blank_issues_enabled: true
+
+contact_links:
+  - name: Quero mexer no código
+    url: https://github.com/GabrielMello1407/Rotamer/blob/main/CONTRIBUTING.md
+    about: Como subir o ambiente, o que precisa continuar verdade, e como uma mudança vira commit.
+
+  - name: Ideia que já tem resposta escrita
+    url: https://github.com/GabrielMello1407/Rotamer/blob/main/docs/FORA-DE-ESCOPO.md
+    about: Retrossíntese, docking, DFT, app nativo, nomenclatura IUPAC e edição colaborativa já foram decididas. Leia antes de abrir.

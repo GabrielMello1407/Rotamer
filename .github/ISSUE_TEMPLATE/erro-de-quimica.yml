@@ -1,0 +1,101 @@
+name: Erro de química
+description: Um número, uma estrutura ou uma classificação que o produto mostrou errado.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **É o relato que mais importa aqui.** Um erro no app não confunde uma pessoa: confunde uma
+        sala inteira. Não precisa saber programar para abrir esta issue — precisa saber química.
+
+        Antes de escrever, dois casos que já têm resposta e **não** são erro:
+
+        - **TPSA da cafeína.** O PubChem publica 58,44 Å²; o RDKit calcula 61,82 Å². A diferença vem
+          da percepção de aromaticidade, que muda a contribuição dos nitrogênios.
+        - **Rotacionáveis da aspirina.** O PubChem conta 3; o RDKit, na definição estrita, conta 2 —
+          a ligação do éster não entra.
+
+        Nos dois, cada um está certo dentro da própria definição, a tela diz de quem é a definição, e
+        o cálculo nunca é ajustado para bater com tabela de terceiro. Se o seu caso é desse tipo e
+        você ainda acha que a tela está errada — ou que ela explica mal —, **abra mesmo assim**: a
+        forma de dizer também é conteúdo.
+
+  - type: input
+    id: smiles
+    attributes:
+      label: A estrutura, em SMILES
+      description: Se você desenhou na tela, o SMILES aparece no painel de dados. Dá para copiar.
+      placeholder: CC(=O)Oc1ccccc1C(=O)O
+    validations:
+      required: true
+
+  - type: textarea
+    id: molblock
+    attributes:
+      label: Ou o molblock, se for mais fácil
+      description: Opcional. Só se o SMILES não representar o caso — estereoquímica, por exemplo.
+      render: text
+
+  - type: textarea
+    id: mostrou
+    attributes:
+      label: O que a tela mostrou
+      description: O número, o rótulo ou a forma, como apareceu. Captura de tela ajuda.
+      placeholder: "Massa 180,16 g/mol, 2 rotacionáveis, e o anel não ficou plano."
+    validations:
+      required: true
+
+  - type: textarea
+    id: esperava
+    attributes:
+      label: O que você esperava
+      placeholder: "O anel benzênico deveria ser plano, com ângulos de 120°."
+    validations:
+      required: true
+
+  - type: input
+    id: fonte
+    attributes:
+      label: A fonte do que você esperava
+      description: >-
+        Livro e página, PubChem com o CID, outra ferramenta com a versão, ou a regra de química que
+        você está aplicando. Sem fonte não dá para separar divergência de definição de erro de conta.
+      placeholder: "Solomons, 12ª ed., cap. 15 — aromaticidade"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: onde
+    attributes:
+      label: Onde aconteceu
+      options:
+        - Painel de dados (fórmula, massa, TPSA, logP, grupos)
+        - Editor 2D (valência, aromaticidade, cunha e traço)
+        - Cena 3D (geometria, ângulo, dobramento, vibração)
+        - Modos normais (número de onda, contagem de modos)
+        - Missão (a nota, o objetivo que fechou ou não fechou)
+        - Tutor (a explicação contradiz o número calculado)
+        - Página pública de molécula
+        - Busca por nome
+    validations:
+      required: true
+
+  - type: input
+    id: onde-rodou
+    attributes:
+      label: Onde você estava usando
+      description: A instância no ar, ou uma instalação própria. Se for própria, diga a etiqueta ou o commit.
+      placeholder: "instância no ar"
+
+  - type: checkboxes
+    id: confere
+    attributes:
+      label: Antes de enviar
+      options:
+        - label: >-
+            Li os dois casos de divergência acima e continuo achando que há algo a corrigir — o
+            cálculo, ou o jeito de a tela explicá-lo.
+          required: true
+        - label: >-
+            Não colei nome, e-mail, turma nem captura de tela com aluno identificável.
+          required: true

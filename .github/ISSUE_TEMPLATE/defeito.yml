@@ -1,0 +1,86 @@
+name: Defeito
+description: Algo que não funciona como a tela promete — travou, sumiu, não responde ao toque.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Para número de química errado, use **Erro de química** — é outro formulário, com outras
+        perguntas. Para falha que deixa alguém ler ou fazer o que não deveria, **não abra issue**:
+        use o [relato privado de segurança](https://github.com/GabrielMello1407/Rotamer/security/advisories/new).
+
+  - type: textarea
+    id: passos
+    attributes:
+      label: O que você fez
+      description: Passo a passo, do começo. O detalhe que parece bobo costuma ser a causa.
+      placeholder: |
+        1. Abri a bancada
+        2. Desenhei etanol
+        3. Cliquei em Missões e escolhi «O primeiro traço»
+        4. Girei a cena 3D
+    validations:
+      required: true
+
+  - type: textarea
+    id: aconteceu
+    attributes:
+      label: O que aconteceu
+      placeholder: "A cena ficou preta e o botão de vibrar parou de responder."
+    validations:
+      required: true
+
+  - type: textarea
+    id: esperava
+    attributes:
+      label: O que você esperava
+    validations:
+      required: true
+
+  - type: dropdown
+    id: aparelho
+    attributes:
+      label: Em que aparelho
+      options:
+        - Computador
+        - Celular
+        - Tablet
+        - Nos dois, computador e celular
+    validations:
+      required: true
+
+  - type: input
+    id: navegador
+    attributes:
+      label: Navegador e versão
+      description: Se não souber a versão, o nome já ajuda.
+      placeholder: "Chrome 141 no Android"
+    validations:
+      required: true
+
+  - type: input
+    id: instancia
+    attributes:
+      label: Onde você estava usando
+      description: A instância no ar, ou uma instalação própria. Se for própria, diga a etiqueta ou o commit.
+      placeholder: "instância no ar"
+    validations:
+      required: true
+
+  - type: textarea
+    id: console
+    attributes:
+      label: O que o console do navegador disse
+      description: >-
+        Opcional, e só se for fácil para você. No computador, F12 abre; a aba é Console. Cole a
+        primeira linha em vermelho.
+      render: text
+
+  - type: checkboxes
+    id: confere
+    attributes:
+      label: Antes de enviar
+      options:
+        - label: >-
+            Não colei nome, e-mail, turma nem captura de tela com aluno identificável.
+          required: true

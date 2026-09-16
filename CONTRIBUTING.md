@@ -23,6 +23,81 @@ As que mais importam:
 - **Ideia fora de escopo vai para `docs/FORA-DE-ESCOPO.md`**, não para o código. Escopo
   estourando é o risco número um do projeto.
 
+## O caminho, de fora para dentro
+
+Ninguém tem permissão de escrita neste repositório além de quem o mantém, e é assim que funciona na
+maioria dos projetos abertos: você trabalha numa cópia sua e pede para integrar.
+
+1. **Faça um fork** — o botão fica no topo da página do repositório.
+2. **Clone o seu fork** e aponte o original como `upstream`, para conseguir atualizar depois:
+
+   ```
+   git clone https://github.com/SEU-USUARIO/Rotamer.git
+   cd Rotamer
+   git remote add upstream https://github.com/GabrielMello1407/Rotamer.git
+   ```
+
+3. **Crie um branch** a partir de `main`. Nunca trabalhe no `main` do seu fork — ele é o seu espelho
+   do original:
+
+   ```
+   git switch -c corrige-tpsa-da-cafeina
+   ```
+
+4. **Trabalhe, teste e faça commit** — o que isso exige está na seção "Como uma mudança vira commit".
+5. **Empurre para o seu fork** e abra o pull request contra o `main` daqui:
+
+   ```
+   git push -u origin corrige-tpsa-da-cafeina
+   ```
+
+   O GitHub oferece o link do pull request na saída do `push`.
+
+**O CI roda no seu pull request**, mesmo vindo de fora: lint, tipos, testes de unidade, navegador e a
+imagem Docker. O resultado aparece na própria página do PR, e não precisa de aprovação para começar.
+Um `pnpm lint && pnpm typecheck && pnpm test` antes de empurrar economiza uma ida e volta.
+
+Para atualizar o seu branch quando o `main` andar:
+
+```
+git fetch upstream
+git rebase upstream/main
+```
+
+**Abrir issue antes é bem-vindo, e nunca obrigatório.** Para correção pequena, manda o PR direto.
+Para mudança que atravessa mais de um pacote, ou que muda comportamento que alguém já usa, uma issue
+primeiro evita você escrever código que vai ser recusado por escopo — que é o risco número um daqui.
+
+## O que dá para contribuir sem subir o ambiente inteiro
+
+O ambiente completo pede Node, pnpm, Docker e Postgres. Três contribuições valiosas não pedem nada
+disso:
+
+- **Erro de química.** É o relato que mais importa neste projeto, e é issue, não código — há um
+  formulário próprio, que pergunta o SMILES, o que a tela mostrou, o que você esperava e a fonte. Um
+  professor que acha um número errado ajuda mais que muita linha de código.
+- **Documentação.** Tudo em `docs/`, mais este arquivo e o `README.md`. Documento que discorda do
+  código está errado — se você achar um, corrigi-lo é contribuição completa.
+- **Teste do núcleo.** `packages/core/` não depende de navegador nem de banco:
+  `pnpm --filter @rotamer/core test` roda sozinho. Um caso novo em `packages/core/test/`, com o valor
+  que o RDKit calcula, é a contribuição de código mais barata de fazer e a mais difícil de quebrar.
+
+**Por onde começar**, se você quer mexer no código e não sabe onde: as issues marcadas
+[`good first issue`](https://github.com/GabrielMello1407/Rotamer/labels/good%20first%20issue), e a
+lista de dívida conhecida em [docs/FORA-DE-ESCOPO.md](docs/FORA-DE-ESCOPO.md) — a seção
+"Dívida da entrega de listas" e as "Sobras da leitura" são trabalho real, já descrito, ainda sem
+ninguém.
+
+## Convivência e segurança
+
+Este produto é usado por gente de 14 a 18 anos em sala de aula, e isso muda o que se escreve numa
+issue: sem conteúdo sexual, violento ou de assédio, e **nenhum dado real de aluno** — nome, e-mail,
+turma ou captura de tela com gente identificável. O resto está em
+[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
+
+**Achou uma falha de segurança?** Não abra issue. O caminho é o relato privado do GitHub, e o que
+conta como falha aqui está em [SECURITY.md](SECURITY.md).
+
 ## Subir o ambiente
 
 Use **Node 24**, **pnpm 11.24.0** e **Docker** para o Postgres. Essa é a versão do Node usada
@@ -117,11 +192,13 @@ em lista, missão de professor ou catálogo, é o documento a ler antes.
 
 ## Achou um erro de química?
 
-É o tipo de issue que mais importa. Diga o SMILES (ou anexe o molblock), o que a tela mostrou e o
-que você esperava, com a fonte. Se a divergência for entre o RDKit e outra ferramenta, diga qual:
-muitas diferenças são de definição (TPSA com aromaticidade percebida, rotacionáveis na definição
-estrita) e a resposta certa é a tela dizer de quem é a definição — não ajustar o cálculo para
-bater com a outra tabela.
+É o tipo de issue que mais importa, e tem formulário próprio: **Erro de química**, na hora de abrir a
+issue. Ele pede o SMILES (ou o molblock), o que a tela mostrou, o que você esperava e a fonte.
+
+A fonte não é burocracia. Muitas divergências entre o RDKit e outra ferramenta são de **definição** —
+TPSA com aromaticidade percebida, rotacionáveis na definição estrita — e nesses casos a resposta certa
+é a tela dizer de quem é a definição, nunca ajustar o cálculo para bater com a outra tabela. Sem a
+fonte não dá para separar os dois casos, e é a separação que decide o que se conserta.
 
 ## O time de agentes
 

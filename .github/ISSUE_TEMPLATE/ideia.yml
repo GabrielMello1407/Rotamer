@@ -1,0 +1,60 @@
+name: Ideia
+description: Uma funcionalidade nova, ou uma mudança no jeito que algo funciona hoje.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Escopo estourando é o risco número um deste projeto**, e por isso algumas ideias já têm
+        resposta escrita antes de você chegar. Estas não entram sem conversa longa: retrossíntese ou
+        previsão de reação, docking, DFT, edição colaborativa em tempo real, app nativo e
+        nomenclatura IUPAC — o produto não nomeia composto, ele deixa batizar.
+
+        Outras dezenas estão em
+        [docs/FORA-DE-ESCOPO.md](https://github.com/GabrielMello1407/Rotamer/blob/main/docs/FORA-DE-ESCOPO.md),
+        cada uma com o que teria de mudar para ela entrar. Se a sua estiver lá, diga na issue o que
+        você acha que mudou — é o tipo de argumento que destranca uma ideia adiada.
+
+  - type: textarea
+    id: problema
+    attributes:
+      label: Que problema de ensino isso resolve
+      description: >-
+        Comece pela aula, não pela funcionalidade. O que hoje não dá para ensinar, ou custa caro
+        ensinar, com o produto como ele está?
+      placeholder: >-
+        "Para comparar dois isômeros eu preciso abrir duas abas e olhar de uma para a outra, e na
+        projeção a turma perde o fio."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: quem
+    attributes:
+      label: Quem ganha com isso
+      description: O aluno é o primeiro usuário; o professor decide o que entra na aula.
+      multiple: true
+      options:
+        - Aluno
+        - Professor
+        - Quem instala e mantém uma instância
+        - Pesquisador ou usuário avançado
+    validations:
+      required: true
+
+  - type: textarea
+    id: ideia
+    attributes:
+      label: O que você imagina
+      description: Sem precisar de solução pronta. Se tiver desenho ou referência de outra ferramenta, cole.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: confere
+    attributes:
+      label: Antes de enviar
+      options:
+        - label: >-
+            Procurei em docs/FORA-DE-ESCOPO.md e nas issues abertas, e não achei a mesma ideia.
+          required: true

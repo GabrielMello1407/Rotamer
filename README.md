@@ -137,11 +137,19 @@ recusando.
 
 ## Contribuir
 
-Comece por [CONTRIBUTING.md](CONTRIBUTING.md). As regras que não se negociam estão em
-[CLAUDE.md](CLAUDE.md), e o mapa do código em [docs/ARQUITETURA.md](docs/ARQUITETURA.md). Toda
-mudança termina com teste que falharia sem ela; química nova pede caso em `packages/core/test/`
-rodando sem navegador. Ideia fora do escopo vai para
+Comece por [CONTRIBUTING.md](CONTRIBUTING.md): o caminho é fork, branch, pull request, e o CI roda no
+seu PR. As regras que não se negociam estão em [CLAUDE.md](CLAUDE.md), e o mapa do código em
+[docs/ARQUITETURA.md](docs/ARQUITETURA.md). Toda mudança termina com teste que falharia sem ela;
+química nova pede caso em `packages/core/test/` rodando sem navegador. Ideia fora do escopo vai para
 [docs/FORA-DE-ESCOPO.md](docs/FORA-DE-ESCOPO.md) antes de virar código.
+
+**Três contribuições não pedem o ambiente inteiro:** relatar erro de química (é issue, com formulário
+próprio, e é o relato que mais importa aqui), corrigir documento que discorda do código, e
+acrescentar caso de teste em `packages/core/`, que roda sem navegador e sem banco.
+
+Convivência em [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) — o produto é usado por adolescente em sala,
+e isso muda o que se escreve numa issue. Falha de segurança **não** vai para issue pública: o caminho
+privado e o que conta como falha estão em [SECURITY.md](SECURITY.md).
 
 ```
 pnpm dev          # app em desenvolvimento
