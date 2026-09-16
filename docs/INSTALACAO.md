@@ -72,27 +72,60 @@ Ficam no `.env`, ao lado do `docker-compose.yml`. O arquivo não vai para o repo
 `.env` sozinho e repassa ao app só as variáveis acima. `DATABASE_URL` só se escreve à mão quando
 a imagem roda sem o compose (§ A imagem sozinha).
 
-## O primeiro professor
+## O primeiro administrador
 
-Professor não se autodeclara: quem emite código de troca de senha pode tomar a conta de um
-aluno, então o papel é dado por quem administra a instância — nunca pela tela. É a decisão D-19,
-e vale em qualquer instância.
+Ninguém se autodeclara professor: quem emite código de troca de senha pode tomar a conta de um
+aluno. O papel vem de fora da tela do próprio interessado — é a decisão D-19, e vale em qualquer
+instância.
 
-1. A pessoa cria a conta em `/entrar`, **com o campo "escola ou instituição" preenchido**. Sem
-   escola, professor não emite código e não publica missão no catálogo.
-2. Quem administra roda, na máquina da instância:
+**Você vai rodar um comando uma vez.** Depois disso, quem coordena a escola promove os professores
+pela tela, e você não precisa mais do terminal para isso (D-29).
+
+1. A pessoa que vai coordenar cria a conta em `/entrar`, **com o campo "escola ou instituição"
+   preenchido**. Sem escola, ninguém emite código nem publica missão no catálogo.
+2. Você roda, na máquina da instância:
 
    ```
-   docker compose exec app node scripts/promote-teacher.mjs ana@escola.br --escola "EE Dom Pedro II"
+   docker compose exec app node scripts/promote-teacher.mjs ana@escola.br --escola "EE Dom Pedro II" --administrador
    ```
 
-   A resposta é uma linha: `Ana <ana@escola.br> agora é professor na escola "EE Dom Pedro II".`
+   A resposta são duas linhas — quem virou o que, e o que essa pessoa passa a poder fazer:
+
+   ```
+   Ana <ana@escola.br> agora é administrador na escola "EE Dom Pedro II".
+   Administrador promove os professores da própria escola em /turmas, e só até professor.
+   ```
+
    O `--escola` preenche o campo se estiver vazio, e o script recusa promover sem escola.
-3. Na próxima página que abrir, a conta vê `Turmas que você dá` em `/turmas` e consegue emitir
-   códigos em `/codigos`. Não precisa sair e entrar.
+3. Na próxima página que ela abrir, `/turmas` mostra `Turmas que você dá`, a seção
+   `Professores da escola` e o caminho para `/codigos`. Não precisa sair e entrar.
 
-Para desfazer: o mesmo comando com `--rebaixar`. As listas que a pessoa publicou continuam
-funcionando para os alunos — é de propósito.
+**Daí em diante é pela tela.** Em `Professores da escola`, a administradora digita o e-mail de quem
+vai dar aula, **confere o nome** que aparece e confirma. Ela promove só até **professor**, e só contas
+da **mesma escola, já preenchida nos dois lados** — a tela nunca escreve a escola de ninguém, porque
+escrever esse campo é o mesmo que ampliar quem alcança aquela conta. Quem criou a conta sem preencher
+a escola é promovido por aqui, com `--escola`.
+
+**Outro administrador sai só daqui.** Não existe caminho pela tela para criar administrador, e é de
+propósito: é o que impede uma conta invadida de se multiplicar e o que garante que você, com acesso
+à máquina, sempre consiga recuperar a instância. Se a escola precisar de um segundo coordenador,
+rode o comando de novo com o e-mail dele.
+
+Para promover alguém direto a professor, sem passar por administrador, é o mesmo comando sem
+`--administrador`. Para desfazer qualquer um dos dois, o mesmo comando com `--rebaixar`.
+
+**O que o rebaixamento faz, pelo terminal ou pela tela.** A conta deixa de abrir turma, montar lista,
+ver o quadro e emitir código de senha, e as missões que ela publicou **saem do catálogo** — revogar o
+papel é a mitigação que esta instalação promete para conteúdo lido por menor de idade, e ela não vale
+nada se o texto continuar público. As turmas e as listas ficam guardadas e voltam inteiras se a conta
+for promovida de novo; as listas já publicadas continuam valendo para os alunos daquela turma.
+E uma conta que já deu aula passa a **recuperar a senha só por aqui**, mesmo depois de rebaixada: sem
+isso, rebaixar seria o primeiro passo para alguém da escola entrar na conta de um professor.
+
+**Quem promoveu quem fica gravado.** Toda mudança de papel deixa uma linha com quem mudou, em quem,
+de qual papel para qual e quando; mudança pelo terminal aparece sem autor, que é exatamente o que ela
+é. Ao lado de cada nome, `Professores da escola` mostra a última promoção — quem a fez e quando, ou
+"papel dado pelo terminal". O histórico completo fica no banco, na tabela `RoleChange`, e sai por SQL.
 
 ## Atualizar
 
@@ -228,7 +261,7 @@ e-mail, nem texto escrito por professor. Sem chave, nada vai ao Gemini.
 | O app reinicia sem parar; o log diz `o banco não respondeu depois de 10 tentativas` | o app não alcança o Postgres, a senha não confere, ou a senha tem caractere que não cabe numa URL (`@`, `#`, `/`, `:`) | `docker compose ps` mostra o `postgres` saudável? A senha tem só letras, números e hífen? Ela mudou depois da primeira subida? Nesse caso, troque no banco: `docker compose exec postgres psql -U rotamer -c "alter user rotamer password '<nova>';"` |
 | `ports are not available … 3000` | a porta já está em uso na máquina | `ROTAMER_PORT=3100` no `.env` |
 | A construção falha baixando fontes ou pacotes | sem internet durante o `docker compose build` | conecte e repita; a construção retoma do ponto em que parou |
-| `Só conta de professor emite código` | a conta ainda é aluno | § O primeiro professor |
+| `Só conta de professor emite código` | a conta ainda é aluno | § O primeiro administrador |
 | `O tutor está desligado neste ambiente` | sem `GEMINI_API_KEY` | preencha e `docker compose up -d` |
 | O tutor tinha chave e parou de responder | o modelo saiu de circulação | `GEMINI_MODEL` com um modelo atual, e `docker compose up -d` |
 | Busca por nome diz `O PubChem não respondeu agora` | o PubChem está fora ou limitando | espere. Colar SMILES continua funcionando |

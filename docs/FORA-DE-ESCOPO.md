@@ -297,6 +297,32 @@ que era defeito foi corrigido; o que segue é o que foi visto, medido e deixado 
   migrações por outro caminho ou esperar o Prisma separar a CLI. Entra quando alguém reclamar do
   tamanho — a imagem inteira fica abaixo de 1 GB e sobe em segundos.
 
+## Papéis da escola — o que ficou de fora (D-29)
+
+O D-29 delegou **um** degrau: um administrador, criado no terminal, promove os professores da
+própria escola. Quatro coisas ficaram deliberadamente fora, e a decisão diz por quê.
+
+- **Escola verificada.** `Profile.institution` é um texto que a própria pessoa digita no cadastro,
+  ninguém confere, e não existe tela para mudá-lo. Numa instância com mais de uma escola — a que
+  fica no ar — as escolas convivem separadas só por esse texto, e um administrador alcança quem
+  digitou o mesmo. O que segura isso hoje é uma pessoa conferindo o nome antes de confirmar, e o
+  rastro dizendo quem confirmou. Entra quando a instância no ar tiver duas escolas de verdade
+  usando; aí o recorte precisa ser uma entidade, não uma string, e o caminho provável é o professor
+  entrar na escola por código, como o aluno entra na turma.
+- **Escrever a escola de uma conta pela tela**, inclusive a que está em branco. Só o terminal faz
+  isso, com `--escola`. A primeira versão do D-29 preenchia a escola vazia na promoção, para resolver
+  o caso de quem passou o campo no cadastro; a auditoria mostrou que isso dava a qualquer
+  administrador alcance sobre toda conta em branco da instância, e a tomada de conta que vinha
+  depois. Mudar a escola de uma conta **é** mudar quem a alcança, então nenhuma tela faz. Quem
+  digitou a escola errada no cadastro depende de quem tem o servidor.
+- **Convite por código para o professor**, em vez de promoção direta. Seria consistente com os
+  outros dois fluxos do produto e a pessoa consentiria em vez de ser promovida. Custa tabela,
+  validade e uma tela de resgate para resolver o que a confirmação pelo nome já resolve. Entra no
+  dia em que o administrador não souber os e-mails de quem vai dar aula.
+- **Tela para ver o histórico de papéis.** `RoleChange` guarda toda mudança, e a lista de
+  `Professores da escola` mostra só a última de cada conta. O histórico inteiro sai por SQL, para
+  quem tem o servidor. Entra se uma escola pedir auditoria de verdade.
+
 ## Considerado e adiado
 
 - [ ] Comparar dois análogos lado a lado — é para o usuário avançado, e faz parte da trilha de

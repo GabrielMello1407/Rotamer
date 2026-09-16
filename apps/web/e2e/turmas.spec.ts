@@ -1,5 +1,14 @@
 import { expect, test } from '@playwright/test';
-import { criarConta, ESCOLA, novoEmail, promover, sair, SENHA } from './conta-de-teste';
+import {
+  criarConta,
+  entrar,
+  ESCOLA,
+  novoEmail,
+  promover,
+  promoverAdministrador,
+  sair,
+  SENHA,
+} from './conta-de-teste';
 import { desenharUmCarbono, openQuests } from './bancada';
 
 /**
@@ -51,8 +60,23 @@ test.describe('achar o caminho', () => {
     await page.getByRole('button', { name: 'Abrir turma' }).click();
     await expect(page.getByTestId('aviso-turma')).toContainText('aberta', { timeout: 30_000 });
 
-    await page.getByTestId('minhas-turmas').getByRole('link').first().click();
-    await page.getByRole('link', { name: 'Códigos de senha' }).click();
+    /*
+     * Esperar a **linha da turma**, não só o aviso de que ela foi aberta: o aviso
+     * vem do estado da tela e chega antes de a lista recarregar. Sem esta espera,
+     * `.first()` dentro da seção pegava o único link que já estava lá — o de
+     * códigos de senha — e o teste seguia como se tivesse entrado na turma.
+     */
+    const turma = page.getByTestId('minhas-turmas').getByRole('link', { name: '3º A — manhã' });
+    await expect(turma).toBeVisible({ timeout: 30_000 });
+    await turma.click();
+
+    /*
+     * E procurar o link por `testid`, não pelo nome: as duas páginas têm um link
+     * chamado `Códigos de senha`, e sem a espera acima o clique acontecia no link
+     * da página anterior, que se desprendia no meio da navegação.
+     */
+    await expect(page.getByTestId('codigo-visivel')).toBeVisible({ timeout: 30_000 });
+    await page.getByTestId('codigos-da-turma').click();
     await expect(page.getByTestId('codigo-email')).toBeVisible({ timeout: 30_000 });
   });
 
@@ -65,6 +89,96 @@ test.describe('achar o caminho', () => {
     await expect(page.getByTestId('da-sua-turma-vazia')).toContainText('nenhuma turma');
     await page.getByTestId('ir-para-turmas').click();
     await expect(page.getByTestId('codigo-da-turma')).toBeVisible({ timeout: 30_000 });
+  });
+});
+
+test.describe('professores da escola', () => {
+  /*
+   * O caminho que tira a escola da dependência do terminal (D-29): o primeiro
+   * administrador vem de quem instalou, e daí em diante é ele quem promove os
+   * professores — pela tela, conferindo o nome, e só até professor.
+   */
+  test('o administrador promove pela tela, conferindo o nome, e quem foi promovido abre turma', async ({
+    page,
+  }) => {
+    const professora = novoEmail('futura-professora');
+    await criarConta(page, { email: professora, nome: 'Professora Ana' });
+    await sair(page);
+
+    const coordenacao = novoEmail('coordenacao');
+    await criarConta(page, { email: coordenacao, nome: 'Coordenadora Célia' });
+    promoverAdministrador(coordenacao);
+
+    await page.goto('/turmas');
+    await expect(page.getByTestId('professores-da-escola')).toContainText(
+      'Promova só quem você conhece',
+    );
+
+    // Confirmar é pelo nome, não pelo e-mail digitado: é o que pega o erro de dedo.
+    await page.getByTestId('promover-email').fill(professora);
+    await page.getByTestId('conferir-conta').click();
+    await expect(page.getByTestId('confirmar-professor')).toContainText('Professora Ana', {
+      timeout: 30_000,
+    });
+
+    await page.getByTestId('promover-confirmado').click();
+    await expect(page.getByTestId('aviso-professores')).toContainText('agora é professor', {
+      timeout: 30_000,
+    });
+
+    // O papel vale para quem recebeu — e para no professor: ele não promove ninguém.
+    await sair(page);
+    await entrar(page, professora);
+    await page.goto('/turmas');
+    await expect(page.getByTestId('minhas-turmas')).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByTestId('como-virar-professor')).toBeHidden();
+    await expect(page.getByTestId('professores-da-escola')).toBeHidden();
+
+    // E o caminho de volta: a coordenação rebaixa, também conferindo quem é.
+    await sair(page);
+    await entrar(page, coordenacao);
+    await page.goto('/turmas');
+    await expect(page.getByTestId('professores-da-escola')).toContainText('Professora Ana');
+
+    await page.getByTestId(`rebaixar-${professora}`).click();
+    await expect(page.getByTestId('confirmar-rebaixamento')).toContainText('Professora Ana', {
+      timeout: 30_000,
+    });
+    await expect(page.getByTestId('confirmar-rebaixamento')).toContainText('saem do catálogo');
+
+    await page.getByTestId('rebaixar-confirmado').click();
+    await expect(page.getByTestId('aviso-professores')).toContainText('voltou a ser conta de aluno', {
+      timeout: 30_000,
+    });
+
+    await sair(page);
+    await entrar(page, professora);
+    await page.goto('/turmas');
+    await expect(page.getByTestId('como-virar-professor')).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByTestId('minhas-turmas')).toBeHidden();
+  });
+
+  test('conta de outra escola recebe a mesma recusa de conta que não existe', async ({ page }) => {
+    const deOutraEscola = novoEmail('de-outra-escola');
+    await criarConta(page, {
+      email: deOutraEscola,
+      nome: 'Aluno de Outra',
+      escola: 'EE Outra Escola',
+    });
+    await sair(page);
+
+    const coordenacao = novoEmail('coordenacao');
+    await criarConta(page, { email: coordenacao, nome: 'Coordenadora Célia' });
+    promoverAdministrador(coordenacao);
+
+    await page.goto('/turmas');
+    await page.getByTestId('promover-email').fill(deOutraEscola);
+    await page.getByTestId('conferir-conta').click();
+
+    await expect(page.getByTestId('erro-professores')).toContainText(
+      'Não encontrei essa conta na sua escola',
+      { timeout: 30_000 },
+    );
   });
 });
 

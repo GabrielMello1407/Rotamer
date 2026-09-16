@@ -170,17 +170,29 @@ export async function readClassrooms(): Promise<{
   const profile = await currentProfile();
   if (profile === null) return { teaching: [], attending: [] };
 
-  const teaching = await db.classroom.findMany({
-    where: { teacherId: profile.id, archivedAt: null },
-    orderBy: { createdAt: 'desc' },
-    select: {
-      id: true,
-      name: true,
-      code: true,
-      createdAt: true,
-      _count: { select: { enrollments: true } },
-    },
-  });
+  /*
+   * Papel também, não só dono. Estas duas leituras autorizavam por dono sozinho,
+   * e isso bastava enquanto revogar o papel era operação de terminal. Com o D-29
+   * a coordenação rebaixa por um clique, justamente quando quer cortar o acesso
+   * de alguém — e sem o papel aqui a turma continuava voltando inteira, com o
+   * código dela, para quem acabou de ser rebaixado.
+   */
+  const teacher = await requireTeacher();
+
+  const teaching =
+    teacher === null
+      ? []
+      : await db.classroom.findMany({
+          where: { teacherId: profile.id, archivedAt: null },
+          orderBy: { createdAt: 'desc' },
+          select: {
+            id: true,
+            name: true,
+            code: true,
+            createdAt: true,
+            _count: { select: { enrollments: true } },
+          },
+        });
 
   const attending = await db.enrollment.findMany({
     where: { profileId: profile.id },
@@ -244,14 +256,22 @@ export interface ClassroomBoard {
 /**
  * O quadro da turma.
  *
- * Só o professor daquela turma vê. Uma consulta por turma, não uma por aluno: a
- * lista de tentativas vem inteira e é agrupada aqui.
+ * Só o professor daquela turma vê — papel **e** dono. O papel entrou aqui por
+ * causa do D-29: quem foi rebaixado perdia a seção na tela e continuava lendo
+ * nome e progresso dos alunos por `/turmas/<id>` guardado nos favoritos, que é
+ * dado de menor de idade do outro lado (D-22).
+ *
+ * Uma consulta por turma, não uma por aluno: a lista de tentativas vem inteira e
+ * é agrupada aqui.
  */
 export async function readClassroomBoard(id: string): Promise<ClassroomBoard | null> {
   if (!hasDatabase()) return null;
 
   const profile = await currentProfile();
   if (profile === null) return null;
+
+  const teacher = await requireTeacher();
+  if (teacher === null) return null;
 
   const classroom = await db.classroom.findFirst({
     where: { id, teacherId: profile.id },

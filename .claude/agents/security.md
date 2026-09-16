@@ -36,9 +36,10 @@ Leia `CLAUDE.md`, e `docs/DECISOES.md` D-19 (recuperação de senha) e D-22 (o q
   quem redistribui obrigações que a nossa licença não impõe. Verifique antes de qualquer
   instalação, não depois.
 - **Self-host expõe o que a instância no ar escondia.** Segredo nunca entra em imagem nem em
-  arquivo versionado; o primeiro professor é promovido por script dentro do container, nunca
-  autodeclarado (D-19); telemetria é opt-in e dita em `docs/INSTALACAO.md`; e o gabarito de missão
-  (R-3) continua nunca saindo para aluno, em qualquer instância.
+  arquivo versionado; papel nunca é autodeclarado (D-19) — o primeiro administrador é promovido por
+  script dentro do container, e pela tela um administrador promove no máximo a professor, da própria
+  escola, sem nunca escrever a escola de ninguém (D-29); telemetria é opt-in e dita em `docs/INSTALACAO.md`; e o gabarito de missão (R-3)
+  continua nunca saindo para aluno, em qualquer instância.
 - Conteúdo do LLM tratado como dado, nunca como instrução; e sempre marcado como hipótese na tela.
 
 ## Como você relata

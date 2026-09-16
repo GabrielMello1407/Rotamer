@@ -121,16 +121,21 @@ de observação sem instrumento vira anedota: dá para ver uma pessoa travar, n�
 ela é a regra. Liga-se com as duas variáveis do `.env`; o que é medido, e o que nunca sai, está
 em `INSTALACAO.md`.
 
-### 6. Contas de professor
+### 6. Contas de professor e de administrador
 
 Como em qualquer instância: pelo script, dentro do container.
 
 ```
 docker compose exec app node scripts/promote-teacher.mjs ana@escola.br --escola "EE Dom Pedro II"
+docker compose exec app node scripts/promote-teacher.mjs ana@escola.br --escola "EE Dom Pedro II" --administrador
 ```
 
-Professor sem escola preenchida não emite nada — o código só vale para alguém da mesma escola, e
+Quem dá aula sem escola preenchida não emite nada — o código só vale para alguém da mesma escola, e
 o script recusa a promoção quando o campo está vazio (D-19).
+
+Na instância no ar, o comando a rodar é o **segundo**: um administrador por escola. Daí em diante
+quem coordena promove os próprios professores pela tela, sem passar por aqui — e continua sem poder
+criar outro administrador, que é o que mantém o controle da instância com quem tem a máquina (D-29).
 
 ### 7. O que olhar quando algo cai
 

@@ -1,9 +1,9 @@
 /**
- * Todo texto de tela das listas da turma (D-25) e do catálogo compartilhado
- * (D-26, D-27) vive aqui — chaves em inglês, textos em pt-BR (§2 de
- * `docs/ROTEIROS.md`). É o que impede a mesma frase divergir entre a server
- * action e o componente, e o único arquivo a editar se a resposta do
- * Idelcio mudar a palavra "lista".
+ * Todo texto de tela das listas da turma (D-25), do catálogo compartilhado
+ * (D-26, D-27) e dos papéis da escola (D-29) vive aqui — chaves em inglês,
+ * textos em pt-BR (§2 de `docs/ROTEIROS.md`). É o que impede a mesma frase
+ * divergir entre a server action e o componente, e o único arquivo a editar se a
+ * resposta do Idelcio mudar a palavra "lista".
  */
 
 /** Concorda plural em pt-BR sem inventar exceção fora daqui. */
@@ -30,9 +30,76 @@ export const messages = {
      */
     notTeacherTitle: 'Dá aula e quer abrir uma turma?',
     notTeacherBody:
-      'Abrir turma, montar listas e emitir código de senha são de conta de professor, e esse papel é dado por quem administra o Rotamer da sua escola — nunca pela tela, porque quem emite código de senha pode entrar na conta de um aluno.',
+      'Abrir turma, montar listas e emitir código de senha são de conta de professor, e esse papel é dado por quem administra o Rotamer da sua escola — nunca por autodeclaração, porque quem emite código de senha pode entrar na conta de um aluno.',
     notTeacherHow:
-      'Peça a promoção a quem instalou o Rotamer, com o e-mail desta conta. Leva um comando e vale na próxima página que você abrir.',
+      'Peça a promoção a quem administra o Rotamer da sua escola, ou a quem instalou, com o e-mail desta conta. Vale na próxima página que você abrir.',
+  },
+
+  // ------------------------------------ professores da escola, em /turmas (D-29)
+  staff: {
+    heading: 'Professores da escola',
+    /**
+     * O poder que a promoção dá, dito inteiro. Quem lê tem de saber que está
+     * entregando a chave da conta de um aluno — é isso que faz pensar antes de
+     * confirmar, e é a única proteção real contra promover a pessoa errada.
+     */
+    warning:
+      'Professor abre turma, monta listas e emite código de troca de senha. Emitir código de senha é poder entrar na conta de um aluno. Promova só quem você conhece.',
+    /** O limite do próprio administrador, dito na tela em que ele iria procurá-lo. */
+    ceiling:
+      'Outro administrador só pelo terminal, por quem cuida da instalação. É o que garante que ninguém perca o controle desta instância por uma conta invadida.',
+    emailLabel: 'e-mail de quem vai dar aula',
+    check: 'Conferir',
+    checking: 'Conferindo…',
+    /**
+     * A confirmação mostra o **nome** de quem tem aquele e-mail. O risco desta
+     * tela não é invasão, é dedo: `ana.silva@` no lugar de `ana.silvia@` entrega
+     * o papel para a conta errada, e o e-mail relido não denuncia o erro. O nome
+     * pega o dedo; ele não pega má-fé, porque também é escolhido pela própria
+     * pessoa no cadastro.
+     */
+    confirm: (name: string): string => `Promover ${name} a professor?`,
+    promote: 'Promover a professor',
+    promoting: 'Promovendo…',
+    cancel: 'Cancelar',
+    promoted: (name: string): string =>
+      `${name} agora é professor. Vale na próxima página que ela abrir.`,
+    demote: 'Rebaixar',
+    demoteConfirm: (name: string, email: string): string =>
+      `Tirar de ${name} (${email}) o papel de professor?`,
+    /**
+     * O efeito inteiro, inclusive o que sai do ar. Dizer só "deixa de abrir
+     * turma" deixava de fora a parte que faz alguém rebaixar às pressas: a missão
+     * que essa conta publicou no catálogo, lida por aluno de qualquer escola.
+     */
+    demoteBody:
+      'Ela deixa de abrir turma, montar lista, ver o quadro e emitir código de senha, e as missões que publicou saem do catálogo. As turmas e as listas ficam guardadas, e voltam se ela for promovida de novo.',
+    demoted: (name: string): string => `${name} voltou a ser conta de aluno.`,
+    administratorChip: 'administra',
+    /** Quem veio do terminal não tem nome de quem promoveu, e a tela diz isso em vez de mentir. */
+    grantedByTerminal: 'papel dado pelo terminal',
+    grantedBy: (name: string, when: string): string => `promovido por ${name} em ${when}`,
+
+    // As recusas. Todas as quatro regras do servidor têm uma frase própria aqui.
+    unavailable: 'Indisponível neste ambiente.',
+    malformed: 'Pedido mal formado.',
+    notAdministrator: 'Só conta de administrador muda o papel de alguém.',
+    /** A mesma frase para "não existe" e "é de outra escola" (a regra do D-19). */
+    notFound: 'Não encontrei essa conta na sua escola. Confira o e-mail com quem vai dar aula.',
+    notYourself:
+      'O seu próprio papel não se muda por aqui. Quem cuida da instalação muda pelo terminal.',
+    /**
+     * As recusas de escrita não repetem nome nenhum. O nome quem mostra é o passo
+     * de conferência, que é contado no teto; uma recusa com nome seria a mesma
+     * varredura de e-mails por uma porta sem contador.
+     */
+    alreadyTeaching: 'Essa conta já dá aula nesta escola.',
+    notTeaching: 'Essa conta não é professora nesta escola.',
+    notAnotherAdministrator:
+      'Administrador não rebaixa administrador. Quem cuida da instalação faz isso pelo terminal.',
+    tooManyLookups: 'Muitas consultas em pouco tempo. Espere um pouco e tente de novo.',
+    /** O papel mudou entre a conferência e a confirmação — refazer é mais honesto que insistir. */
+    changedMeanwhile: 'O papel dessa conta mudou enquanto você confirmava. Confira de novo.',
   },
 
   // ---------------------------------------------------------- §6.1 — professor, /turmas/[id]

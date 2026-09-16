@@ -3,6 +3,7 @@
 import { z } from 'zod';
 import { currentProfile, hashPassword } from '../../lib/auth';
 import { db, hasDatabase } from '../../lib/db';
+import { TEACHING_ROLES, teaches } from '../../lib/roles';
 import {
   CODE_HOURS,
   formatCode,
@@ -21,12 +22,16 @@ import {
  *
  * Três regras seguram o poder de emitir:
  *
- * 1. só quem é `professor` emite — e professor não se autodeclara: quem promove
- *    é `apps/web/scripts/promote-teacher.mjs`, rodado por quem tem acesso ao servidor;
+ * 1. só quem dá aula emite — e ninguém se autodeclara: quem promove é
+ *    `apps/web/scripts/promote-teacher.mjs`, rodado por quem tem acesso ao
+ *    servidor, ou um administrador da mesma escola (D-29);
  * 2. só para conta da **mesma instituição**, que precisa estar preenchida nos
  *    dois lados;
- * 3. nunca para outro professor — senão o caminho vira escada para tomar a
- *    conta de quem emite.
+ * 3. nunca para quem dá aula — **nem para quem já deu**. Senão o caminho vira
+ *    escada para tomar a conta de quem emite: com o D-29 um administrador
+ *    rebaixa um professor da escola dele, e sem essa terceira regra o passo
+ *    seguinte seria emitir o código de senha da conta que ele acabou de
+ *    rebaixar. Conta que já deu aula recupera a senha pelo terminal.
  *
  * O código vale uma vez e por um dia, e emitir de novo mata o anterior.
  */
@@ -66,7 +71,7 @@ export async function issueResetCode(input: { email: string }): Promise<IssueOut
     select: { role: true, institution: true },
   });
 
-  if (issuerRow?.role !== 'professor') {
+  if (issuerRow === null || !teaches(issuerRow.role)) {
     return {
       status: 'rejected',
       reason: 'Só conta de professor emite código. Fale com quem administra o Rotamer da escola.',
@@ -86,11 +91,26 @@ export async function issueResetCode(input: { email: string }): Promise<IssueOut
     select: { id: true, displayName: true, role: true, institution: true },
   });
 
-  // A mesma resposta para "não existe" e "é de outra escola": a tela de emissão
-  // não pode virar um jeito de descobrir quem tem conta no produto.
+  /*
+   * Conta que já deu aula não recebe código pela tela, mesmo depois de rebaixada.
+   * Sem isto, rebaixar (D-29) seria o primeiro passo de uma tomada de conta:
+   * tirar o papel de um professor e, com ele fora de "quem dá aula", emitir o
+   * código de senha dele. Uma linha de `RoleChange` saindo de um papel de aula é
+   * a marca disso, e ela nunca é apagada.
+   */
+  const taught =
+    target !== null &&
+    (await db.roleChange.count({
+      where: { profileId: target.id, fromRole: { in: [...TEACHING_ROLES] } },
+    })) > 0;
+
+  // A mesma resposta para "não existe", "é de outra escola" e "já deu aula": a
+  // tela de emissão não pode virar um jeito de descobrir quem tem conta no
+  // produto, nem quem já foi professor nela.
   const eligible =
     target !== null &&
-    target.role !== 'professor' &&
+    !teaches(target.role) &&
+    !taught &&
     (target.institution?.trim() ?? '') === institution;
 
   if (!eligible) {

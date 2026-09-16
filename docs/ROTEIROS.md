@@ -660,8 +660,10 @@ Respondidas pelo dono do produto em 28/08/2026 (D-26) e fechadas no mesmo dia (D
 1. **Nota de lista não sai do produto.** Sem exportar, sem CSV, sem prazo. Continua sendo
    progresso, no vocabulário do D-22.
 2. **Professor publica conteúdo lido por menor de idade, e a mitigação é o D-19** — o papel é
-   dado por quem administra a instância, nunca autodeclarado. Com o catálogo compartilhado
-   entraram autoria visível e denúncia (D-27).
+   dado por quem administra a instância ou por um administrador da própria escola (D-29), nunca
+   autodeclarado. Com o catálogo compartilhado entraram autoria visível e denúncia (D-27). E
+   revogar o papel **retira do catálogo** o que aquela conta publicou (D-29): enquanto não retirava,
+   a mitigação tirava o acesso de quem escreveu e deixava o texto no ar.
 3. **O catálogo de missões do produto continua livre**: qualquer pessoa, com conta ou sem, abre
    missão de catálogo. O catálogo **buscável** (`/catalogo`), que junta as do produto e as de
    professor publicadas, é de quem tem conta. O aluno com professor vê a lista da turma primeiro

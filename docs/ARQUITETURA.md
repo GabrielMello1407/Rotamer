@@ -108,7 +108,8 @@ validada por `zod`. Não existe rota de API pública além das páginas.
 | `naming.ts` | batizar uma estrutura (D-15), ler apelido e o estado do batismo |
 | `search.ts` | busca por nome no PubChem, com cache no banco e disjuntor |
 | `tutor.ts` | perguntar ao tutor, com cache por `(inchiKey, missão, tipo)` e teto diário |
-| `recovery.ts` | emitir código de troca de senha (professor) e trocar a senha com ele (D-19) |
+| `recovery.ts` | emitir código de troca de senha (quem dá aula) e trocar a senha com ele (D-19) |
+| `staff.ts` | ler quem dá aula na escola, promover a professor e rebaixar — só administrador (D-29) |
 | `classroom.ts` | abrir turma, entrar com código, ler o quadro da turma (D-22) |
 | `assignment.ts` | listas da turma, missão de professor, catálogo buscável e denúncia (D-25 a D-27) — ver `ROTEIROS.md` |
 
@@ -117,18 +118,20 @@ Regras que valem em toda ação:
 - **O navegador manda o desenho, nunca o veredito.** A `spec` da missão roda no navegador para
   dar resposta instantânea, e roda de novo no servidor — sobre o molblock, reanalisado pelo
   RDKit do Node — antes de gravar qualquer `Attempt`.
-- **Papel é pré-requisito; dono é a autorização.** `requireTeacher` diz que a conta é professor;
+- **Papel é pré-requisito; dono é a autorização.** `requireTeacher` diz que a conta dá aula;
   cada escrita começa por `ownedClassroom` / `ownedAssignment` / `ownedTeacherQuest`
-  (`lib/roles.ts`). Professor não se autodeclara: a promoção é o script
-  `apps/web/scripts/promote-teacher.mjs`, rodado por quem administra a instância (D-19).
+  (`lib/roles.ts`). Ninguém se autodeclara: o papel vem do script
+  `apps/web/scripts/promote-teacher.mjs`, rodado por quem administra a instância (D-19), ou de um
+  administrador da própria escola, que promove **só até professor** (D-29). Os três papéis —
+  `aluno`, `professor`, `administrador` — são lidos num lugar só, `teaches` em `lib/roles.ts`.
 - **Recusa uniforme.** Slug que não existe e slug a que a conta não tem acesso recebem a mesma
   frase, `Essa missão não existe.`; senha errada e e-mail inexistente recebem a mesma
   `E-mail ou senha não conferem.`. Ação não vira oráculo de existência.
 - **Sem banco, sem muro.** `hasDatabase()` é falso quando `DATABASE_URL` não existe: conta,
   turma, lista e estante somem da interface, e o editor funciona inteiro.
 - **Tetos.** Pedidos ao tutor por conta por dia (`TutorUsage`); conferências de missão por conta
-  por minuto, salvamentos de autoria por dia e códigos de turma errados por hora — estes em
-  memória, um processo só.
+  por minuto, salvamentos de autoria por dia, códigos de turma errados por hora e consultas de
+  papel por administrador por hora — estes em memória, um processo só.
 
 ## Modelo de dados
 

@@ -224,12 +224,32 @@ vale por um dia e serve uma vez; trocar a senha encerra as sessões antigas.
 
 ## 12. Turmas — para quem ensina
 
-**Virar professor.** Professor não se autodeclara: o papel é dado por quem administra a
-instância, com um comando no servidor (`docs/INSTALACAO.md`, "O primeiro professor"). Crie a
-conta com a escola preenchida e peça a promoção com o e-mail dela. A própria tela explica isso:
-em `Turmas`, quem ainda não é professor lê **"Dá aula e quer abrir uma turma?"** com o caminho.
-Depois da promoção, `Turmas que você dá` aparece na próxima página que você abrir — não precisa
-sair e entrar.
+**Virar professor.** Ninguém se autodeclara professor: quem emite código de troca de senha pode
+entrar na conta de um aluno. Crie a conta com a escola preenchida e peça a promoção com o e-mail
+dela — a **quem administra o Rotamer da sua escola**, que promove pela tela, ou a quem instalou a
+instância, que promove por um comando no servidor (`docs/INSTALACAO.md`, "O primeiro
+administrador"). A própria tela explica isso: em `Turmas`, quem ainda não é professor lê **"Dá
+aula e quer abrir uma turma?"** com o caminho. Depois da promoção, `Turmas que você dá` aparece na
+próxima página que você abrir — não precisa sair e entrar.
+
+**Promover os professores da escola.** Se a sua conta é de **administrador**, `Turmas` tem a seção
+**`Professores da escola`**: quem dá aula, com nome, e-mail, quem deu o papel e quando, e um campo de
+e-mail. `Conferir` mostra **o nome** de quem tem aquele e-mail, e só então aparece
+`Promover a professor` — é o passo que pega o erro de digitação, porque promover a conta errada
+entrega a alguém o poder de emitir código de senha de um aluno.
+
+O administrador promove **só até professor**, e **só contas da mesma escola, já preenchida nos dois
+lados**. Outro administrador sai apenas do terminal, por quem cuida da instalação: é o que garante
+que ninguém perca o controle da instância por uma conta invadida. A tela nunca escreve a escola de
+ninguém — quem criou a conta sem preencher o campo é promovido pelo terminal, com `--escola`. Conta
+de outra escola recebe a mesma recusa de e-mail que não existe: a tela não serve para descobrir quem
+tem conta no Rotamer.
+
+**Rebaixar.** Ao lado de cada professor, `Rebaixar` devolve a conta a aluno. O que ela perde: abrir
+turma, montar lista, ver o quadro da turma e emitir código de senha; e as missões que ela publicou
+**saem do catálogo**. O que fica guardado: as turmas e as listas, que voltam inteiras se a conta for
+promovida de novo. Uma conta que já deu aula passa a recuperar a senha só pelo terminal, mesmo depois
+de rebaixada — sem isso, rebaixar seria o primeiro passo para entrar na conta de um professor.
 
 **Abrir a turma.** Em `/turmas`, `Turmas que você dá` → nome (`3º A — manhã`) → `Abrir turma`.
 A resposta traz o **código**: *"Turma "3º A — manhã" aberta. O código é K7M2QX."* Escreva no

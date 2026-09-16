@@ -58,6 +58,10 @@ Para virar professor na sua instância de desenvolvimento, depois de criar a con
 cd apps/web && node scripts/promote-teacher.mjs voce@exemplo.br --escola "Escola de teste"
 ```
 
+Com `--administrador` no fim, a conta ganha também a seção `Professores da escola` em `/turmas`,
+que é por onde uma escola promove os próprios professores (D-29). Administrador só nasce por este
+script, e pela tela ele promove no máximo a professor.
+
 ## Onde as coisas estão
 
 ```

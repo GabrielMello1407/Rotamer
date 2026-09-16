@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import type { ReactElement } from 'react';
 import { currentProfile } from '../../lib/auth';
 import { db, hasDatabase } from '../../lib/db';
+import { teaches } from '../../lib/roles';
 import { IssueCode } from './IssueCode';
 import styles from './page.module.css';
 
@@ -32,7 +33,7 @@ export default async function CodesPage(): Promise<ReactElement> {
     select: { role: true, institution: true },
   });
 
-  const teacher = row?.role === 'professor';
+  const teacher = teaches(row?.role);
   const school = row?.institution?.trim() ?? '';
 
   return (

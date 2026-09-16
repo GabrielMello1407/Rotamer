@@ -56,7 +56,14 @@ test.describe('listas da turma', () => {
     const codigo = /[A-Z0-9]{6}/.exec((await aviso.textContent()) ?? '')?.[0] ?? '';
     expect(codigo).toHaveLength(6);
 
-    const classroomHref = await page.getByTestId('minhas-turmas').getByRole('link').first().getAttribute('href');
+    /*
+     * Pelo nome da turma, e esperando a linha aparecer. O aviso acima vem do
+     * estado da tela e chega antes de a lista recarregar; `.first()` dentro da
+     * seção pegava, nessa janela, o link de códigos de senha.
+     */
+    const turma = page.getByTestId('minhas-turmas').getByRole('link', { name: '3º A — manhã' });
+    await expect(turma).toBeVisible({ timeout: 30_000 });
+    const classroomHref = await turma.getAttribute('href');
     if (classroomHref === null) throw new Error('sem link para a turma recém-criada');
     await page.goto(classroomHref);
 
@@ -355,7 +362,20 @@ test.describe('listas da turma', () => {
       'Cumprida. Você fechou a lista «Funções oxigenadas — 3ª série».',
       { timeout: 60_000 },
     );
-    await expect.poll(async () => (await chamadasSaveAttempt()).length, { timeout: 60_000 }).toBe(1);
+    /*
+     * Dois minutos de espera para uma viagem que sozinha leva menos de um
+     * segundo, porque o que está sendo medido é **quantas** vezes o servidor foi
+     * chamado, não em quanto tempo.
+     *
+     * `saveAttempt` reanalisa o molblock com o RDKit do Node, e o app de teste é
+     * um processo só: enquanto outro trabalhador da suíte está dentro do WASM, o
+     * laço de eventos não atende ninguém. Medido nesta máquina: 7,5 s com a
+     * suíte inteira parada, e mais de 60 s com quatro trabalhadores — a chamada
+     * não se perde, ela espera a fila. Quem baixar este número vai ver o teste
+     * falhar por carga, não por regressão, e a causa está em
+     * `docs/FORA-DE-ESCOPO.md`.
+     */
+    await expect.poll(async () => (await chamadasSaveAttempt()).length, { timeout: 120_000 }).toBe(1);
     page.off('response', capturarSaveAttempt);
 
     /*

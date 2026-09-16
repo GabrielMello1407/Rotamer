@@ -91,14 +91,30 @@ export async function sair(page: Page): Promise<void> {
 /**
  * Promove uma conta a professor pelo mesmo caminho que o servidor usa.
  *
- * Não existe caminho pela tela, e é de propósito (D-19) — então o teste do
- * caminho feliz precisa rodar o script, que é como isso acontece de verdade.
+ * Professor não se autodeclara (D-19) — então o teste do caminho feliz precisa
+ * rodar o script, que é como isso acontece de verdade. Um administrador também
+ * promove professor pela tela (D-29), e é o `Staff.tsx` que esse caminho
+ * exercita.
  */
 export function promover(email: string, escola: string = ESCOLA): void {
+  runScript([email, '--escola', escola]);
+}
+
+/**
+ * Promove uma conta a administrador — e isto **só** existe pelo terminal.
+ *
+ * É a raiz da confiança do D-29: nenhuma tela cria administrador, então o teste
+ * do primeiro administrador tem de passar por aqui, como a escola passaria.
+ */
+export function promoverAdministrador(email: string, escola: string = ESCOLA): void {
+  runScript([email, '--escola', escola, '--administrador']);
+}
+
+function runScript(args: readonly string[]): void {
   const url = process.env['DATABASE_URL'] ?? urlDoEnv();
   if (url === undefined || url === '') throw new Error('sem DATABASE_URL no ambiente nem no .env');
 
-  execFileSync('node', ['scripts/promote-teacher.mjs', email, '--escola', escola], {
+  execFileSync('node', ['scripts/promote-teacher.mjs', ...args], {
     env: { ...process.env, DATABASE_URL: url },
     stdio: 'pipe',
   });

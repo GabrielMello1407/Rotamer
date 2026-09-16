@@ -609,7 +609,7 @@ destaque nunca vai ser lido como um átomo de outro elemento.
 
 ---
 
-## D-19 · Recuperar senha sem e-mail: quem emite o código é o professor
+## D-19 · Recuperar senha sem e-mail: quem emite o código é o professor — **revisada pelo D-29 em 16/09/2026**
 
 **Decisão.** Quem esqueceu a senha não recebe link por e-mail. Pede um código ao professor da
 turma, digita em `/senha` e troca ali mesmo.
@@ -622,10 +622,29 @@ externo no caminho crítico de quem já está travado.
 
 **Quem pode emitir.** Três regras, e as três valem no servidor:
 
-1. só conta com papel `professor` emite — e **professor não se autodeclara**: quem promove é
-   `apps/web/scripts/promote-teacher.mjs`, rodado por quem tem acesso ao servidor;
+1. só conta que dá aula emite — e **ninguém se autodeclara**: quem promove é
+   `apps/web/scripts/promote-teacher.mjs`, rodado por quem tem acesso ao servidor, ou um
+   administrador da mesma escola pela tela (D-29);
 2. só para conta da **mesma escola**, que precisa estar preenchida nos dois lados;
-3. **nunca para outro professor** — senão o caminho vira escada para tomar a conta de quem emite.
+3. **nunca para quem dá aula, nem para quem já deu** — senão o caminho vira escada para tomar a
+   conta de quem emite. Conta que já deu aula recupera a senha pelo terminal.
+
+**O que o D-29 revisou.** Duas coisas.
+
+O item 1, na parte de "quem promove": o papel passou a poder ser dado por um administrador da própria
+escola, criado ele mesmo pelo terminal.
+
+E o item 3, que ganhou o "nem para quem já deu". Antes, "dá aula" bastava, porque tirar o papel era
+operação de terminal — rara, deliberada, feita por quem já tinha o banco na mão e não precisava de
+código de senha para nada. Com o rebaixamento na tela, a auditoria do D-29 mostrou a escada montada:
+o administrador rebaixa um professor da escola dele e, no clique seguinte, esse professor não é mais
+"quem dá aula" — vira alvo válido, e a conta dele abre com o código que a própria coordenação emite.
+A marca de que isso aconteceu é uma linha de `RoleChange` saindo de um papel de aula, e ela nunca é
+apagada. O preço é um falso positivo raro: aluno promovido por engano e rebaixado no mesmo dia passa
+a depender do terminal para trocar a senha. Barato, comparado com o que a regra fecha.
+
+O resto desta decisão segue inteiro — não existe autodeclaração, não existe e-mail no caminho, e quem
+emite código continua sendo quem está na sala.
 
 **O código.** Oito caracteres de um alfabeto sem `0`, `O`, `1`, `I` e `L`, porque ele vai ser lido
 de um papel e ditado em voz alta numa sala com trinta pessoas. Vale por 24 horas, serve uma vez
@@ -997,3 +1016,116 @@ o documento está errado, não o código.
 
 **Revisar se.** Aparecer custo que o autor não consiga sustentar sozinho na instância no ar — aí
 a resposta é reduzir a instância, nunca fechar o código.
+
+---
+
+## D-29 · O primeiro administrador vem do terminal; ele promove os professores da escola
+
+**Decisão do dono do produto, 16 de setembro de 2026.** Existe um terceiro papel,
+**`administrador`**: é professor, mais a capacidade de promover e rebaixar **professores da própria
+escola**, por uma seção em `/turmas`. Administrador **só nasce no terminal**, por
+`scripts/promote-teacher.mjs --administrador`, rodado por quem tem acesso ao servidor.
+
+**O problema.** Quem instala o Rotamer não é quem decide quem dá aula. A TI sobe a instância e
+sai; a coordenação fica sem como promover os professores, e cada professor novo é um pedido de
+acesso ao servidor. Com o D-19 puro, uma escola de oito professores depende de shell para o seu dia
+a dia.
+
+**O que isso muda no D-19, e o que não muda.** Continua valendo que **ninguém se autodeclara**:
+não há botão de "sou professor", porque quem emite código de troca de senha pode entrar na conta de
+um aluno. O que muda é **quem** dá o papel: além de quem tem o servidor, um administrador da mesma
+escola. A raiz da confiança continua sendo o terminal, porque é lá — e só lá — que administrador se
+cria.
+
+**A contenção está em um lugar só: administrador não cria administrador.** É o que impede uma conta
+invadida de se multiplicar, e o que garante que quem tem a máquina sempre consiga recuperar a
+instância. Se um dia isso se abrir, todo o resto desta decisão perde o sentido.
+
+**As regras, todas no servidor, cada uma com teste em `apps/web/app/actions/staff.test.ts`:**
+
+| # | Regra | O que ela impede |
+|---|---|---|
+| 1 | Só conta `administrador` promove ou rebaixa | professor comum virar escada |
+| 2 | Só **até** `professor` — nunca a administrador | conta invadida se multiplicar |
+| 3 | Só conta da **mesma escola**, preenchida nos dois lados. A ação **nunca escreve a escola de ninguém** | puxar para a própria escola uma conta qualquer da instância |
+| 4 | Nunca rebaixa outro administrador | dois administradores se derrubarem, e a instância acabar sem nenhum |
+| 5 | Nunca muda o próprio papel | perder o último administrador por um clique |
+| 6 | Toda mudança grava um `RoleChange` — em quem, por quem, de qual papel para qual, quando — na mesma transação, e a escrita é um **compara-e-troca** sobre o papel lido | a escola perguntar quem deu o acesso e ninguém saber; e a regra 4 cair na janela entre a leitura e a escrita |
+| 7 | Teto de 30 por administrador por hora nas **três** ações, e recusa de escrita **sem nome** | varredura de e-mails com nome confirmado |
+| 8 | Rebaixar **retira do catálogo** as missões daquela conta | a mitigação do D-19 deixar o texto no ar, e o papel revogado tirar da própria autora a ação de retirar |
+| 9 | Rebaixar tira também a **leitura**: `readClassrooms` e `readClassroomBoard` passam a exigir papel, não só dono | quem foi cortado continuar lendo nome e progresso de aluno por `/turmas/<id>` guardado nos favoritos (D-22) |
+| 10 | Conta que **já deu aula** não recebe código de troca de senha pela tela, nem depois de rebaixada | rebaixar virar o primeiro passo para tomar a conta de um professor |
+| 11 | `requireTeacher` passa a aceitar administrador, num único lugar (`teaches`, em `lib/roles.ts`) | o administrador perder turma, lista e código de senha |
+
+A regra 11 é a armadilha discreta. O papel era lido comparando com a string `'professor'` em cinco
+lugares; um `===` esquecido teria deixado o administrador sem turma, e o erro apareceria numa aula,
+não num teste.
+
+**As regras 8, 9 e 10 não estavam no desenho — elas vieram da auditoria, e as três nascem do mesmo
+engano.** Ao delegar o rebaixamento para a tela, eu tratei "tirar o papel" como uma operação que só
+subtrai. Ela não é. Tirar o papel **move a conta para outra categoria**, e o produto tinha três
+lugares que respondiam ao papel sem esperar que ele mudasse por um clique: o código de troca de senha
+(que passou a aceitar como alvo o professor recém-rebaixado — uma tomada de conta em dois cliques), o
+catálogo público (que continuava com o texto no ar, sem ninguém que pudesse retirá-lo) e a leitura da
+turma (que autorizava por dono sozinho). Nenhuma dessas três era falha antes: o rebaixamento era
+operação de terminal, rara e deliberada. **A delegação é que as criou** — e é por isso que ela custou
+mais regras do que o desenho previa.
+
+**A tela.** Em `/turmas`, só para administrador, a seção **Professores da escola**: a lista de quem
+dá aula, com quem deu o papel e quando; um campo de e-mail; e **dois passos** — digitar confere de
+quem é o e-mail, e a confirmação mostra o **nome** antes de gravar. O risco real aqui não é invasão,
+que o servidor já recusa: é dedo. Promover `ana.silva@` no lugar de `ana.silvia@` entrega a alguém o
+poder de emitir código de senha de um aluno, e reler o e-mail digitado não denuncia o erro. Cada
+linha mostra **nome e e-mail** — só o nome deixaria duas professoras homônimas indistinguíveis na
+hora de rebaixar. A tela também diz o poder inteiro que está entregando ("emitir código de senha é
+poder entrar na conta de um aluno") e o limite do próprio administrador ("outro administrador só pelo
+terminal").
+
+**O que a conferência pelo nome faz, e o que ela não faz.** Ela pega o **dedo**: o e-mail com uma
+letra trocada deixa de passar em silêncio. Ela não pega má-fé, porque o nome também é escolhido pela
+própria pessoa no cadastro, sem verificação — quem registra `ana.silvia@` chamando-se "Ana Silva" faz
+a tela confirmar exatamente o nome que a coordenação espera ler. Contra isso, o que existe é o rastro.
+
+**O que foi tentado e desfeito no mesmo dia.** A primeira versão também alcançava conta **sem**
+escola, e a promoção estampava nela a escola de quem promoveu — para resolver o caso de quem passou o
+campo no cadastro, que é comum e não tem tela de correção. A auditoria mostrou o preço: como o campo
+é opcional, isso dava a qualquer administrador alcance sobre **toda conta em branco da instância**,
+que na instância no ar é a maior parte de quem entra sozinho. Promover marcava a escola, rebaixar
+deixava a marca, e dali a conta era alvo válido de código de senha — tomada de conta em três cliques,
+atravessando escolas. Voltou a valer o desenho original: **mesma escola, preenchida nos dois lados**,
+e a ação nunca escreve escola. Quem criou a conta sem escola é promovido pelo terminal, com
+`--escola`. A lição vale além daqui: **escrever o campo que define o alcance é o mesmo que ampliar o
+alcance**, e nenhuma tela do produto deveria poder fazer isso.
+
+**O que a decisão não resolve, e a tela não finge resolver.** A escola é um texto que a própria
+pessoa digita no cadastro; ninguém verifica, e não existe tela para mudá-lo. Numa instância com mais
+de uma escola — como a que fica no ar — duas escolas convivem separadas apenas por esse texto, e um
+administrador alcança quem digitou o mesmo. O que segura isso é uma pessoa conferindo nome e e-mail
+antes de confirmar, e o rastro dizendo quem confirmou. Escola verificada, ou professor entrando na
+escola por código, é entrega própria, e só passa a importar quando a instância no ar tiver mais de
+uma escola de verdade usando. Está em `docs/FORA-DE-ESCOPO.md`.
+
+**O que foi recusado, e por quê.**
+
+- **Qualquer professor promove.** Some o degrau, mas espalha o poder por todos — e aí não existe
+  mais ninguém de quem a escola possa dizer "esta pessoa coordena". Numa escola de oito
+  professores, os oito viram raiz.
+- **Convite por código, como o da turma.** Seria consistente com os outros dois fluxos do produto,
+  e a pessoa consentiria em vez de ser promovida. Mas custa tabela, validade e uma tela de resgate
+  para resolver o que a confirmação pelo nome já resolve. Fica anotado como caminho para o dia em
+  que o administrador não souber os e-mails.
+- **Autoatendimento na primeira instalação** — um "seja o primeiro administrador" numa instância
+  recém-subida. É uma corrida: quem achar o endereço antes do dono leva a instância.
+- **Encerrar as sessões de quem teve o papel mudado.** Não é preciso: o papel é lido do banco a cada
+  pedido, nunca do cookie. Um professor rebaixado no meio da aula perde o poder na página seguinte,
+  sem perder o que estava fazendo.
+
+**No banco.** Uma tabela nova, `RoleChange`, e nenhuma coluna alterada — a migração é aditiva, como
+toda migração aqui. `changedById` nulo é exatamente "veio do terminal": ali não há conta pedindo, há
+acesso ao servidor. A linha sobrevive à saída de quem promoveu (`onDelete: SetNull`), porque apagar
+a conta de quem deu o acesso não pode apagar o registro de que o acesso foi dado.
+
+**Revisar se.** Uma escola pedir para o administrador criar outro administrador — e a resposta
+continua sendo não, enquanto o terminal existir. Ou a instância no ar receber duas escolas de
+verdade: aí a escola digitada deixa de ser suficiente, e o recorte precisa ser uma entidade, não uma
+string.

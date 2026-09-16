@@ -4,9 +4,12 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import type { ReactElement } from 'react';
 import { readClassrooms } from '../actions/classroom';
+import { readSchoolStaff } from '../actions/staff';
 import { currentProfile } from '../../lib/auth';
 import { db, hasDatabase } from '../../lib/db';
+import { administers, teaches } from '../../lib/roles';
 import { Classrooms } from './Classrooms';
+import { Staff } from './Staff';
 import styles from './page.module.css';
 
 export const metadata: Metadata = {
@@ -34,6 +37,11 @@ export default async function ClassroomsPage(): Promise<ReactElement> {
 
   const { teaching, attending } = await readClassrooms();
 
+  // Só o administrador tem esta seção (D-29), e só para ele vale a consulta: a
+  // ação confere o papel de novo por conta dela, mas quem é aluno não precisa
+  // pagar uma ida ao banco para descobrir que não tem nada a ver com isso.
+  const staff = administers(row?.role) ? await readSchoolStaff() : null;
+
   return (
     <main className={styles.page}>
       <header className={styles.top}>
@@ -54,7 +62,9 @@ export default async function ClassroomsPage(): Promise<ReactElement> {
         </p>
       </div>
 
-      <Classrooms teaching={teaching} attending={attending} teacher={row?.role === 'professor'} />
+      <Classrooms teaching={teaching} attending={attending} teacher={teaches(row?.role)} />
+
+      {staff?.status === 'ok' && <Staff institution={staff.institution} staff={staff.staff} />}
     </main>
   );
 }

@@ -28,9 +28,12 @@ model Profile {
   displayName  String
   /// Permite ranking por turma sem criar entidade de turma cedo demais.
   institution  String?
-  /// `aluno` ou `professor`. Quem promove é o script `apps/web/scripts/promote-teacher.mjs`,
-  /// rodado por quem tem acesso ao servidor — não existe caminho pela tela, e é
-  /// de propósito: professor que se autodeclara não é professor.
+  /// `aluno`, `professor` ou `administrador`. Ninguém se autodeclara. O papel é
+  /// dado pelo script `apps/web/scripts/promote-teacher.mjs`, rodado por quem tem
+  /// acesso ao servidor, ou por um administrador da própria escola pela tela — e,
+  /// pela tela, só até `professor` (D-29). Administrador nasce sempre no
+  /// terminal: é o que impede uma conta invadida de se multiplicar e mantém a
+  /// instância recuperável por quem tem a máquina.
   role         String   @default("aluno")
   createdAt    DateTime @default(now())
 
@@ -47,6 +50,8 @@ model Profile {
   teacherQuests      TeacherQuest[]
   assignmentsCreated Assignment[]
   questReports       QuestReport[]
+  roleChanges        RoleChange[]   @relation("papelDaConta")
+  roleChangesMade    RoleChange[]   @relation("papelMudadoPor")
 }
 
 /// Missão que alguém abriu.
@@ -127,6 +132,37 @@ model ResetCode {
 
   @@index([profileId])
   @@index([expiresAt])
+}
+
+/// Uma mudança de papel: de qual para qual, em quem, por quem, quando.
+///
+/// Promover a professor deixou de ser exclusividade do terminal (D-29): um
+/// administrador promove os professores da própria escola. Quem dá acesso a
+/// quem passa a ser pergunta de escola, e é a primeira pergunta quando um
+/// código de senha é emitido para a conta errada — sem esta tabela ela não tem
+/// resposta.
+///
+/// `changedById` nulo é a mudança vinda do terminal: ali não existe conta
+/// pedindo, existe acesso ao servidor.
+///
+/// Uma linha por mudança, nunca sobrescrita. O rastro é o produto da tabela.
+model RoleChange {
+  id          String   @id @default(cuid())
+  profileId   String
+  changedById String?
+  /// `aluno`, `professor` ou `administrador` — o papel de antes.
+  fromRole    String
+  /// O papel de depois.
+  toRole      String
+  createdAt   DateTime @default(now())
+
+  profile   Profile  @relation("papelDaConta", fields: [profileId], references: [id], onDelete: Cascade)
+  /// Quem promoveu continua no rastro depois de sair: apagar a conta de quem
+  /// deu o acesso não pode apagar o registro de que o acesso foi dado.
+  changedBy Profile? @relation("papelMudadoPor", fields: [changedById], references: [id], onDelete: SetNull)
+
+  @@index([profileId])
+  @@index([changedById])
 }
 
 /// Sessão de navegador. O cookie carrega só o identificador.

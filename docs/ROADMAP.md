@@ -72,6 +72,9 @@ O produto inteiro sem conta, sem servidor, sem IA. Tudo no cliente.
       aluno (D-25, `docs/ROTEIROS.md`)
 - [x] **Catálogo buscável**, para quem tem conta, com as missões que professores publicaram —
       opt-in por missão, autoria visível, denúncia com rastro (D-26, D-27)
+- [x] **Uma escola se administra sozinha**: o primeiro administrador vem do terminal e promove os
+      professores da própria escola pela tela, conferindo o nome antes de gravar — só até
+      professor, e toda mudança de papel deixa rastro (D-29)
 - [x] Telemetria escrita e desligada — Umami auto-hospedado, sem cookie, lista fechada de
       momentos em `apps/web/lib/track.ts`; sem as duas variáveis o script nem carrega
 - [x] Backup e ensaio de restauração como scripts (`scripts/backup-db.sh`, `restore-db.sh`)

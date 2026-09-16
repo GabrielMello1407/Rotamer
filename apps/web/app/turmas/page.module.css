@@ -197,3 +197,86 @@ a.name:hover {
   color: var(--brand-ink);
   font-weight: 600;
 }
+
+/* Professores da escola (D-29). A linha tem nome, o rastro de quem deu o papel
+   e a ação — nesta ordem, porque a pergunta da escola é "quem promoveu?" antes
+   de ser "como tiro?". */
+.staffRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: baseline;
+  gap: var(--sp-3);
+  padding: var(--sp-2) 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.staffRow:last-child {
+  border-bottom: none;
+}
+
+.staffWho {
+  display: grid;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+/* O e-mail é o que distingue duas pessoas de mesmo nome na hora de rebaixar. */
+.staffEmail {
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  color: var(--ink-500);
+  overflow-wrap: anywhere;
+  margin: 0;
+}
+
+.chip {
+  margin-left: var(--sp-2);
+  padding: var(--sp-1) var(--sp-2);
+  border-radius: var(--r-full);
+  background: var(--brand-wash);
+  color: var(--brand-ink);
+  font-size: var(--step--2);
+  letter-spacing: var(--track-wide);
+  text-transform: uppercase;
+}
+
+/* Data em coluna: alinha entre linhas, como `.date`. */
+.trail {
+  font-size: var(--step--1);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-500);
+}
+
+/* A confirmação por nome é o passo que impede promover a conta errada por uma
+   letra, então ela é um bloco, não uma linha que se lê por cima. */
+.confirm {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--line-firm);
+  border-radius: var(--r-md);
+  background: var(--sunk);
+}
+
+.confirmTitle {
+  margin: 0;
+  font-size: var(--step-1);
+  color: var(--ink-900);
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+/* Tela estreita: nome e rastro empilham, e a ação vai para a linha de baixo. */
+@media (max-width: 720px) {
+  .staffRow {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .trail {
+    grid-column: 1 / -1;
+  }
+}
