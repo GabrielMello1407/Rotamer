@@ -133,10 +133,27 @@ test.describe('professores da escola', () => {
     await expect(page.getByTestId('minhas-turmas')).toBeVisible({ timeout: 30_000 });
     await expect(page.getByTestId('como-virar-professor')).toBeHidden();
     await expect(page.getByTestId('professores-da-escola')).toBeHidden();
+  });
 
-    // E o caminho de volta: a coordenação rebaixa, também conferindo quem é.
+  /*
+   * O rebaixamento é teste próprio, e não a segunda metade do de cima.
+   *
+   * Cada `criarConta` e cada `entrar` custa um bcrypt em custo 12, que disputa o
+   * mesmo núcleo com o RDKit do servidor. O caminho inteiro num teste só pedia
+   * seis dessas operações e, no runner de dois núcleos do CI, ajudou a estourar o
+   * orçamento do `listas.spec.ts` que rodava ao lado. Dois testes curtos custam
+   * menos e ainda correm em paralelo.
+   */
+  test('o administrador rebaixa pela tela, e quem foi rebaixado perde a turma', async ({ page }) => {
+    const professora = novoEmail('professora');
+    await criarConta(page, { email: professora, nome: 'Professora Ana' });
+    promover(professora);
     await sair(page);
-    await entrar(page, coordenacao);
+
+    const coordenacao = novoEmail('coordenacao');
+    await criarConta(page, { email: coordenacao, nome: 'Coordenadora Célia' });
+    promoverAdministrador(coordenacao);
+
     await page.goto('/turmas');
     await expect(page.getByTestId('professores-da-escola')).toContainText('Professora Ana');
 
@@ -144,6 +161,7 @@ test.describe('professores da escola', () => {
     await expect(page.getByTestId('confirmar-rebaixamento')).toContainText('Professora Ana', {
       timeout: 30_000,
     });
+    // O efeito inteiro na tela, inclusive o que sai do ar.
     await expect(page.getByTestId('confirmar-rebaixamento')).toContainText('saem do catálogo');
 
     await page.getByTestId('rebaixar-confirmado').click();

@@ -228,8 +228,19 @@ laço de eventos enquanto calcula. Logo, **pedido de química no servidor não c
 ele entra na fila, e enquanto ele calcula o processo não serve mais nada — nem outra ação, nem
 uma página.
 
-O que isso custou até agora foi teste: com quatro navegadores em paralelo, a fila passou de um
-minuto e derrubou o teste das listas. A suíte caiu para dois trabalhadores e voltou a passar.
+O que isso custou até agora foi teste, duas vezes. Com quatro navegadores em paralelo, a fila passou
+de um minuto e derrubou o teste das listas; a suíte caiu para dois trabalhadores e voltou a passar.
+Em **18 de setembro de 2026** o mesmo teste caiu de novo, agora só no CI: o runner tem dois núcleos,
+os dois trabalhadores rodam o mesmo caminho pesado ao mesmo tempo — desktop e celular — e ele levou
+2m12s contra 7,5 s sozinho nesta máquina. O bcrypt em custo 12 de cada login disputa o mesmo núcleo.
+As correções foram três, e nenhuma delas mexeu no produto: o orçamento do teste subiu para sete
+minutos, a espera interna da contagem voltou para um minuto (duas tornavam a falha pior, porque ela
+consumia o orçamento e o teste morria num passo posterior, longe da causa), e os caminhos de papel
+viraram testes curtos em vez de um caminho longo.
+
+**Um trabalhador só não é saída.** Medido nesta máquina: a suíte inteira em série passa de vinte
+minutos, contra 1,4 min com quatro. No CI seria bem pior que os dezoito minutos que a suíte gasta
+hoje com dois trabalhadores.
 
 O que isso pode custar numa aula: trinta alunos cumprindo a mesma missão no mesmo minuto são
 trinta análises enfileiradas. Cada uma é de dezenas a poucas centenas de milissegundos, então a

@@ -37,8 +37,20 @@ test.describe('listas da turma', () => {
      * gravado: o aviso "Progresso salvo" estava na tela do aluno, e a
      * resposta ainda não tinha voltado. Por isso o CI caiu para dois
      * trabalhadores (`playwright.config.ts`), e o teto aqui é escrito à mão.
+     *
+     * **Sete minutos desde 18/09/2026, e não cinco.** No runner do CI, que tem
+     * dois núcleos, este caminho levou 2m12s numa execução medida — e são dois
+     * deles ao mesmo tempo, desktop e celular, disputando o mesmo processo do
+     * Next. Com cinco minutos não sobrava folga para os últimos passos: o teste
+     * morria no `sair()` do fim, com o navegador já fechado, e a mensagem
+     * apontava para uma linha que não tinha culpa nenhuma.
+     *
+     * O que carrega o runner junto com o RDKit é o **bcrypt em custo 12** de cada
+     * login. Teste que precisa entrar e sair várias vezes é caro aqui, e é por
+     * isso que os caminhos de papel (`turmas.spec.ts`) ficaram em testes curtos e
+     * separados em vez de virarem um caminho longo como este.
      */
-    test.setTimeout(300_000);
+    test.setTimeout(420_000);
 
     const professora = novoEmail('professora');
     const alunoTurma = novoEmail('aluno-turma');
@@ -363,19 +375,20 @@ test.describe('listas da turma', () => {
       { timeout: 60_000 },
     );
     /*
-     * Dois minutos de espera para uma viagem que sozinha leva menos de um
-     * segundo, porque o que está sendo medido é **quantas** vezes o servidor foi
-     * chamado, não em quanto tempo.
+     * Um minuto para uma viagem que sozinha leva menos de um segundo, porque o
+     * que está sendo medido é **quantas** vezes o servidor foi chamado, não em
+     * quanto tempo. `saveAttempt` reanalisa o molblock com o RDKit do Node, e o
+     * app de teste é um processo só: enquanto outro trabalhador está dentro do
+     * WASM, o laço de eventos não atende ninguém.
      *
-     * `saveAttempt` reanalisa o molblock com o RDKit do Node, e o app de teste é
-     * um processo só: enquanto outro trabalhador da suíte está dentro do WASM, o
-     * laço de eventos não atende ninguém. Medido nesta máquina: 7,5 s com a
-     * suíte inteira parada, e mais de 60 s com quatro trabalhadores — a chamada
-     * não se perde, ela espera a fila. Quem baixar este número vai ver o teste
-     * falhar por carga, não por regressão, e a causa está em
-     * `docs/FORA-DE-ESCOPO.md`.
+     * **Um minuto, e não dois.** A espera aqui sai do orçamento do teste inteiro,
+     * que tem quinze passos depois deste. Subi para dois minutos em 16/09/2026 e
+     * o CI reprovou pior: o caminho não estourou nesta linha, estourou no passo
+     * final, com o navegador fechado no meio de um `sair()` — e a mensagem passou
+     * a apontar para longe da causa. Espera generosa aqui compra fracasso confuso
+     * lá.
      */
-    await expect.poll(async () => (await chamadasSaveAttempt()).length, { timeout: 120_000 }).toBe(1);
+    await expect.poll(async () => (await chamadasSaveAttempt()).length, { timeout: 60_000 }).toBe(1);
     page.off('response', capturarSaveAttempt);
 
     /*
