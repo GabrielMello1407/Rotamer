@@ -1,4 +1,4 @@
-<!-- source: docs/IDIOMAS.md · sha256:25531ff0248a4b484e6d92f78623e441c877f0e6c820f6442178fe992a535360 -->
+<!-- source: docs/IDIOMAS.md · sha256:4906f7a902bb1e1e2b64d2c81b07cca7a6799078681ac76c501653c8ce03d29b -->
 <p align="right"><a href="../IDIOMAS.md">Português</a> · <strong>English</strong></p>
 
 # Languages
@@ -180,7 +180,9 @@ went in on one side only. A new Portuguese document is born with its twin: an En
 source line.
 
 What has **no** twin: `CLAUDE.md`, `AGENTS.md`, and `.claude/` are instructions for a coding
-assistant, not documents for readers — and they stay in Portuguese only.
+assistant, not documents for readers — and they stay in Portuguese only. The same holds for
+`docs/divulgacao/`: it holds drafts of outreach pieces that `marketing` writes in pt-BR for a
+Brazilian audience, and a piece that changes audience changes its text, not its language.
 
 ## How the rule is enforced
 

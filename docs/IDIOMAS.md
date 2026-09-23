@@ -179,7 +179,9 @@ ordem e nos mesmos níveis — o que pega a seção nova que entrou só de um la
 português nasce com o gêmeo: nome em inglês e a linha de origem.
 
 O que **não** tem gêmeo: `CLAUDE.md`, `AGENTS.md` e `.claude/` são instrução para assistente de
-código, não documento para leitor — e continuam só em português.
+código, não documento para leitor — e continuam só em português. O mesmo vale para
+`docs/divulgacao/`: é rascunho de peça que o `marketing` escreve em pt-BR para um público
+brasileiro, e peça que muda de público muda de texto, não de idioma.
 
 ## Como a regra é cobrada
 

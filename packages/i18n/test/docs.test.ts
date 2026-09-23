@@ -23,6 +23,12 @@ const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const DOCS = join(ROOT, 'docs');
 const ENGLISH_DOCS = join(DOCS, 'en');
 
+/**
+ * Rascunho de divulgação não tem gêmeo: é peça que o `marketing` escreve em pt-BR para um público
+ * brasileiro. Peça muda de idioma quando muda de público, e aí é outra peça — não tradução.
+ */
+const OUTREACH = join(DOCS, 'divulgacao');
+
 /** Os da raiz que são para leitor. `CLAUDE.md` e `AGENTS.md` são instrução para assistente. */
 const ROOT_DOCUMENTS = ['README.md', 'CONTRIBUTING.md', 'CODE_OF_CONDUCT.md', 'SECURITY.md'];
 
@@ -33,10 +39,10 @@ const HEADER = /^<!-- source: (\S+) · sha256:([0-9a-f]{64}) -->$/;
 const FENCE = /^ {0,3}(`{3,}|~{3,})/;
 const HEADING = /^(#{1,6})\s+(.+?)\s*#*\s*$/;
 
-function markdownUnder(dir: string, skip?: string): string[] {
+function markdownUnder(dir: string, skip: readonly string[] = []): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
     const path = join(dir, entry.name);
-    if (entry.isDirectory()) return path === skip ? [] : markdownUnder(path, skip);
+    if (entry.isDirectory()) return skip.includes(path) ? [] : markdownUnder(path, skip);
     return entry.name.endsWith('.md') ? [path] : [];
   });
 }
@@ -95,7 +101,7 @@ function outline(text: string): Heading[] {
 
 const ORIGINALS = [
   ...ROOT_DOCUMENTS.map((name) => join(ROOT, name)),
-  ...markdownUnder(DOCS, ENGLISH_DOCS),
+  ...markdownUnder(DOCS, [ENGLISH_DOCS, OUTREACH]),
 ]
   .map(repoPath)
   .sort();
@@ -111,6 +117,7 @@ describe('a documentação em inglês acompanha a em português', () => {
     expect(ORIGINALS).toContain('docs/GUIA.md');
     expect(ORIGINALS).toContain('docs/pesquisa/nomenclatura.md');
     expect(ORIGINALS.filter((path) => path.startsWith('docs/en/'))).toEqual([]);
+    expect(ORIGINALS.filter((path) => path.startsWith('docs/divulgacao/'))).toEqual([]);
     expect(TWINS).toContain('README.en.md');
     expect(TWINS).toContain('docs/en/USER-GUIDE.md');
   });

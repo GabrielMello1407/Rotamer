@@ -53,7 +53,8 @@ cada `docs/…` com um gêmeo de **nome em inglês** em `docs/en/` (`GUIA.md` �
 tabela está em `docs/IDIOMAS.md`). Documento alterado atualiza o gêmeo **na mesma entrega** — o
 gêmeo começa com `<!-- source: … · sha256:… -->`, e `packages/i18n/test/docs.test.ts` falha
 enquanto o hash não bater com o original ou os títulos não tiverem a mesma estrutura. Este arquivo,
-`AGENTS.md` e `.claude/` são instrução de ferramenta e ficam só em português.
+`AGENTS.md` e `.claude/` são instrução de ferramenta e ficam só em português, como os rascunhos de
+`docs/divulgacao/`, que são peça para público brasileiro.
 
 ## A regra que não se quebra
 
