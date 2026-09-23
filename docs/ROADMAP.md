@@ -125,8 +125,8 @@ O Rotamer é código aberto, MIT, sem comercialização (D-28). O que essa decis
       descreviam intenção passaram a descrever o que existe, e o que morreu saiu
 - [x] Telemetria opt-in, dita em voz alta — desligada por padrão, e o `INSTALACAO.md` diz o que
       ela mede e o que nunca sai
-- [ ] **Primeira etiqueta `v0.1.0`**, para a imagem publicada existir e o `docker compose pull`
-      funcionar sem construir — e tornar o pacote público no GHCR, porque ele nasce privado
+- [x] **Primeira etiqueta `v0.1.0`** (19/09/2026) — a imagem publicada existe, o pacote é público
+      no GHCR, e o `docker compose pull` funciona sem construir
 - [x] **Landing page em repositório separado**, estática, que puxa `docs/` na hora de construir —
       `rotamer-site` (Astro + Starlight): a página de entrada com capturas reais do produto e a
       documentação inteira em `/docs/`, com o link de edição apontando para o arquivo de origem

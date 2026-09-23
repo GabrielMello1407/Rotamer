@@ -1,4 +1,4 @@
-<!-- source: SECURITY.md · sha256:8aa32e9518b8a4a0119d12708b1135f51035af8b354302a33fd0827547988949 -->
+<!-- source: SECURITY.md · sha256:433921065ba137279f44ac6536f92d0004402056d168a170fd5815ac3b8c943b -->
 <p align="right"><a href="SECURITY.md">Português</a> · <strong>English</strong></p>
 
 # Reporting a security flaw
@@ -86,9 +86,11 @@ the decision log, under the name they ask for.
 
 ## Versions
 
-The project does not have a tagged version yet. Until it does, **what is maintained is `main`** —
-the live instance runs it, and whoever runs their own instance builds from it or pulls the latest
-image. From the first tag on, the fix ships in a new tag, and that is the one hosts should deploy.
+Versions ship as tags — the first was `v0.1.0`, on September 19, 2026 — and each one publishes the
+`ghcr.io/gabrielmello1407/rotamer` image with its number and `latest`. **What is maintained is the
+latest version and `main`**: the live instance runs `main`, and whoever runs their own instance
+pulls the image of the latest tag or builds from `main`. The fix ships in a new tag, and that is the
+one hosts should deploy.
 
 If you maintain your own instance, [docs/en/INSTALLATION.md](docs/en/INSTALLATION.md) has the update step
 and the backup step. Update before reporting, if you can: the flaw may already be fixed.

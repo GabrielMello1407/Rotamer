@@ -80,10 +80,11 @@ decisões, pelo nome que pedir.
 
 ## Versões
 
-O projeto ainda não tem versão etiquetada. Enquanto não tiver, **o que é mantido é o `main`** — a
-instância no ar roda ele, e quem sobe a própria instância constrói dele ou puxa a imagem mais
-recente. A partir da primeira etiqueta, a correção sai numa etiqueta nova, e é ela que quem hospeda
-deve subir.
+As versões saem como etiqueta — a primeira foi a `v0.1.0`, em 19 de setembro de 2026 — e cada uma
+publica a imagem `ghcr.io/gabrielmello1407/rotamer` com o número dela e `latest`. **O que é mantido
+é a versão mais recente e o `main`**: a instância no ar roda o `main`, e quem sobe a própria
+instância puxa a imagem da etiqueta mais recente ou constrói do `main`. A correção sai numa etiqueta
+nova, e é ela que quem hospeda deve subir.
 
 Se você mantém a própria instância, [docs/INSTALACAO.md](docs/INSTALACAO.md) tem o passo de
 atualizar e o de backup. Atualize antes de relatar, se puder: a falha pode já ter conserto.

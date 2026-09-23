@@ -1,4 +1,4 @@
-<!-- source: docs/ROADMAP.md · sha256:b778d2f18b645003d9582551ed83613dfc0f05698c1a5be643c602c201a91603 -->
+<!-- source: docs/ROADMAP.md · sha256:c112e78a31fd15c7ed712e82f6d935d3eb2d5177d1b3c051605a2731ac9e62ae -->
 <p align="right"><a href="../ROADMAP.md">Português</a> · <strong>English</strong></p>
 
 # Roadmap
@@ -128,8 +128,8 @@ Rotamer is open-source, MIT, and noncommercial (D-28). What that decision requir
       described intentions now describe what exists, and obsolete material was removed
 - [x] Opt-in telemetry, stated clearly — off by default, and `INSTALLATION.md` says what
       it measures and what never leaves
-- [ ] **First `v0.1.0` tag**, so the published image exists and `docker compose pull`
-      works without building — and make the package public in GHCR, because it starts private
+- [x] **First `v0.1.0` tag** (September 19, 2026) — the published image exists, the package is
+      public in GHCR, and `docker compose pull` works without building
 - [x] **Landing page in a separate repository**, static, pulling `docs/` at build time —
       `rotamer-site` (Astro + Starlight): a landing page with real product screenshots and the
       complete documentation at `/docs/`, with edit links pointing to the source file
