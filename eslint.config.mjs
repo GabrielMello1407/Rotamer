@@ -102,6 +102,34 @@ export default tseslint.config(
     },
   },
 
+  // O idioma não se escreve à mão. 46,07 e 46.07 são o mesmo número em dois
+  // idiomas, e um `Intl` com 'pt-BR' fixo mostra vírgula decimal a quem lê
+  // inglês — número errado numa tela de química. Quem formata é `useFormatters`
+  // no cliente, ou `formatNumber`/`formatDate` com o idioma em mãos. O `i18n` é
+  // onde o idioma pode aparecer literal, porque é ele que o define; o teste
+  // pode afirmá-lo, que é o ponto do teste.
+  {
+    files: ['**/*.{ts,tsx}'],
+    ignores: ['packages/i18n/**', '**/test/**', '**/*.test.{ts,tsx}', 'apps/web/e2e/**'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            "NewExpression[callee.object.name='Intl'] > Literal[value=/^(pt-BR|pt|en|en-US|en-GB)$/]",
+          message:
+            "idioma escrito à mão no Intl: use useFormatters() no cliente, ou formatNumber/formatDate com o idioma de currentLocale(). Ver docs/IDIOMAS.md.",
+        },
+        {
+          selector:
+            "CallExpression[callee.property.name=/^toLocale(String|DateString|TimeString)$/] > Literal[value=/^(pt-BR|pt|en|en-US|en-GB)$/]",
+          message:
+            "idioma escrito à mão: use useFormatters() no cliente, ou formatNumber/formatDate com o idioma de currentLocale(). Ver docs/IDIOMAS.md.",
+        },
+      ],
+    },
+  },
+
   // Scripts e arquivos de configuração em JS puro: sem checagem de tipo.
   {
     files: ['**/*.{js,mjs,cjs}'],

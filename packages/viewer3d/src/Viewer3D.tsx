@@ -1,11 +1,13 @@
 'use client';
 
 import type { DynamicsTrajectory, Geometry } from '@rotamer/core';
+import { useFormatters, useMessages } from '@rotamer/i18n/react';
 import { OrbitControls } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
 import { readCpk, type Cpk } from './cpk';
 import { centerOf, radiusOf } from './folding';
+import { viewerMessages } from './messages';
 import { Molecule } from './Molecule';
 import styles from './Viewer3D.module.css';
 
@@ -13,8 +15,11 @@ export interface Viewer3DProps {
   readonly geometry: Geometry | null;
   /** A vibração. Chega depois da forma, quando o worker termina de simular. */
   readonly trajectory?: DynamicsTrajectory | null | undefined;
-  /** Texto mostrado quando ainda não há molécula para mostrar. */
-  readonly placeholder?: string;
+  /**
+   * Texto mostrado quando ainda não há molécula para mostrar. Omitido, sai o
+   * do dicionário, no idioma de quem está lendo.
+   */
+  readonly placeholder?: string | undefined;
   readonly className?: string | undefined;
   /** O átomo do desenho aceso agora, para a esfera correspondente ganhar halo. */
   readonly highlight?: number | null | undefined;
@@ -56,19 +61,13 @@ export interface SelectedMode {
 /** Abertura vertical da câmera, em graus. */
 const FOV = 38;
 
-/** Número de onda como a espectroscopia escreve: sem separador de milhar. */
-const WAVENUMBER = new Intl.NumberFormat('pt-BR', {
-  maximumFractionDigits: 0,
-  useGrouping: false,
-});
-
 /** Folga em torno da molécula, em ångström. */
 const PADDING = 1.2;
 
 export function Viewer3D({
   geometry,
   trajectory,
-  placeholder = 'Desenhe uma estrutura válida para ver a forma dela no espaço.',
+  placeholder,
   className,
   highlight,
   onHover,
@@ -77,6 +76,18 @@ export function Viewer3D({
   onClearMode,
   stereo,
 }: Viewer3DProps): ReactElement {
+  const messages = useMessages(viewerMessages);
+  const { locale, number } = useFormatters();
+
+  /**
+   * Número de onda como a espectroscopia escreve: sem separador de milhar.
+   * Fica dentro do componente porque o idioma pode mudar sem a página recarregar.
+   */
+  const wavenumber = useMemo(
+    () => new Intl.NumberFormat(locale, { maximumFractionDigits: 0, useGrouping: false }),
+    [locale],
+  );
+
   const stageRef = useRef<HTMLDivElement | null>(null);
   // Só o que este componente precisa do controle de órbita. Tipar por estrutura
   // evita depender do pacote interno de onde a implementação vem.
@@ -231,14 +242,16 @@ export function Viewer3D({
             />
           </Canvas>
 
-          <div className={styles.controls} role="group" aria-label="Controles da cena">
+          <div className={styles.controls} role="group" aria-label={messages.sceneControls}>
             <SceneButton
               active={vibrating && relaxed}
               disabled={!relaxed}
               label={
                 relaxed
-                  ? 'Vibrar'
-                  : `Sem vibração: o campo de força não conhece ${geometry?.unsupported.join(', ') ?? 'este elemento'}`
+                  ? messages.vibrate
+                  : messages.noVibration(
+                      geometry?.unsupported.join(', ') ?? messages.someElement,
+                    )
               }
               testId="alternar-vibracao"
               onClick={() => {
@@ -255,12 +268,12 @@ export function Viewer3D({
                   strokeLinejoin="round"
                 />
               </svg>
-              <span className={styles.label}>Vibrar</span>
+              <span className={styles.label}>{messages.vibrate}</span>
             </SceneButton>
 
             <SceneButton
               active={spaceFilling}
-              label="Preenchimento de espaço"
+              label={messages.spaceFilling}
               testId="alternar-volume"
               onClick={() => {
                 setSpaceFilling((current) => !current);
@@ -270,12 +283,12 @@ export function Viewer3D({
                 <circle cx="6" cy="8" r="4" fill="none" stroke="currentColor" strokeWidth="1.4" />
                 <circle cx="11" cy="8" r="3" fill="none" stroke="currentColor" strokeWidth="1.4" />
               </svg>
-              <span className={styles.label}>Volume</span>
+              <span className={styles.label}>{messages.spaceFillingShort}</span>
             </SceneButton>
 
             <SceneButton
               active={showHydrogens}
-              label="Mostrar hidrogênios"
+              label={messages.showHydrogens}
               testId="alternar-hidrogenios"
               onClick={() => {
                 setShowHydrogens((current) => !current);
@@ -286,7 +299,7 @@ export function Viewer3D({
 
             <SceneButton
               active={false}
-              label="Recentrar a cena"
+              label={messages.recenter}
               testId="recentrar-cena"
               onClick={() => {
                 orbitRef.current?.reset();
@@ -308,7 +321,7 @@ export function Viewer3D({
 
             <SceneButton
               active={expanded}
-              label={expanded ? 'Reduzir a cena' : 'Ampliar a cena'}
+              label={expanded ? messages.shrink : messages.expand}
               testId="ampliar-cena"
               onClick={() => {
                 const next = !expanded;
@@ -330,22 +343,22 @@ export function Viewer3D({
           </div>
         </>
       ) : (
-        <p className={styles.empty}>{placeholder}</p>
+        <p className={styles.empty}>{placeholder ?? messages.placeholder}</p>
       )}
 
       {geometry && mode && (
         <p className={styles.mode} data-testid="modo-em-exibicao">
-          <span className={styles.modeNumber}>modo {mode.number}</span>
+          <span className={styles.modeNumber}>{messages.mode(mode.number)}</span>
           <span className={styles.modeWave}>
-            {WAVENUMBER.format(mode.wavenumber)}
+            {wavenumber.format(mode.wavenumber)}
             {' cm⁻¹'}
           </span>
           <span className={styles.energyLabel}>{mode.kind}</span>
           <button
             type="button"
             className={styles.control}
-            aria-label="Voltar para a vibração térmica"
-            title="Voltar para a vibração térmica"
+            aria-label={messages.leaveMode}
+            title={messages.leaveMode}
             data-testid="sair-do-modo"
             onClick={() => {
               onClearMode?.();
@@ -366,22 +379,19 @@ export function Viewer3D({
 
       {geometry && !relaxed && (
         <p className={styles.unrelaxed} data-testid="forma-sem-campo">
-          forma aproximada — sem parâmetro de MMFF94 para {geometry.unsupported.join(', ')}
+          {messages.unrelaxed(geometry.unsupported.join(', '))}
         </p>
       )}
 
       {geometry && relaxed && energy !== null && !mode && (
         <p className={styles.energy} data-testid="energia">
           <span className={styles.energyLabel}>
-            {settled && animate && trajectory ? 'dinâmica' : 'energia'}
+            {settled && animate && trajectory ? messages.dynamics : messages.energy}
           </span>
-          {new Intl.NumberFormat('pt-BR', {
-            minimumFractionDigits: 1,
-            maximumFractionDigits: 1,
-          }).format(energy)}
+          {number(energy, 1)}
           <span className={styles.energyLabel}>kcal/mol</span>
           {!hovered && (
-            <span className={styles.energyLabel}>· {geometry.atoms.length} átomos</span>
+            <span className={styles.energyLabel}>· {messages.atoms(geometry.atoms.length)}</span>
           )}
         </p>
       )}
@@ -391,7 +401,7 @@ export function Viewer3D({
           <span className={styles.hoveredSymbol} data-element={hovered.element}>
             {hovered.element}
           </span>
-          <span className={styles.energyLabel}>· átomo {highlight + 1}</span>
+          <span className={styles.energyLabel}>· {messages.atom(highlight + 1)}</span>
         </p>
       )}
     </div>

@@ -1,14 +1,16 @@
 'use client';
 
+import { useMessages } from '@rotamer/i18n/react';
 import { useEffect, useRef, useState, type ReactElement, type ReactNode, type RefObject } from 'react';
 import { useStore } from 'zustand';
 import { COMMON_ELEMENTS } from './elements-table';
 import { keyForElement, shortcutsApply } from './keys';
 import { PeriodicTable } from './PeriodicTable';
 import { Shortcuts } from './Shortcuts';
+import { ringMessages, toolbarMessages } from './messages';
 import styles from './Toolbar.module.css';
 import type { EditorStore } from './store';
-import { RING_KINDS, ringLabel, type RingKind } from './templates';
+import { RING_KINDS, type RingKind } from './templates';
 
 export interface ToolbarProps {
   readonly store: EditorStore;
@@ -35,6 +37,8 @@ const ELEMENTS = COMMON_ELEMENTS.slice(0, 4);
  * vezes depois disso.
  */
 export function Toolbar({ store, className, onTidy }: ToolbarProps): ReactElement {
+  const messages = useMessages(toolbarMessages);
+  const ringNames = useMessages(ringMessages);
   const [tableOpen, setTableOpen] = useState(false);
   const [keysOpen, setKeysOpen] = useState(false);
 
@@ -69,13 +73,13 @@ export function Toolbar({ store, className, onTidy }: ToolbarProps): ReactElemen
     <div
       className={[styles.rail, className].filter(Boolean).join(' ')}
       role="toolbar"
-      aria-label="Ferramentas"
+      aria-label={messages.tools}
       aria-orientation="vertical"
     >
       <div className={styles.group}>
         <RailButton
-          label="Desenhar (D)"
-          name="Desenhar"
+          label={messages.drawHint}
+          name={messages.draw}
           pressed={tool === 'structure'}
           onClick={() => {
             store.getState().setTool('structure');
@@ -93,8 +97,8 @@ export function Toolbar({ store, className, onTidy }: ToolbarProps): ReactElemen
         </RailButton>
 
         <RailButton
-          label="Mover átomo ou a vista (M)"
-          name="Mover"
+          label={messages.moveHint}
+          name={messages.move}
           pressed={tool === 'move'}
           onClick={() => {
             store.getState().setTool('move');
@@ -113,8 +117,8 @@ export function Toolbar({ store, className, onTidy }: ToolbarProps): ReactElemen
         </RailButton>
 
         <RailButton
-          label="Selecionar um pedaço (V)"
-          name="Selecionar"
+          label={messages.selectHint}
+          name={messages.select}
           pressed={tool === 'select'}
           testId="selecionar"
           onClick={() => {
@@ -147,8 +151,8 @@ export function Toolbar({ store, className, onTidy }: ToolbarProps): ReactElemen
         </RailButton>
 
         <RailButton
-          label="Cunha e traço: estereoquímica (W)"
-          name="Estereoquímica"
+          label={messages.stereoHint}
+          name={messages.stereo}
           pressed={tool === 'stereo'}
           onClick={() => {
             store.getState().setTool(tool === 'stereo' ? 'structure' : 'stereo');
@@ -161,8 +165,8 @@ export function Toolbar({ store, className, onTidy }: ToolbarProps): ReactElemen
         </RailButton>
 
         <RailButton
-          label="Apagar átomo ou ligação (E)"
-          name="Apagar"
+          label={messages.eraseHint}
+          name={messages.erase}
           pressed={tool === 'erase'}
           onClick={() => {
             store.getState().setTool(tool === 'erase' ? 'structure' : 'erase');
@@ -191,7 +195,7 @@ export function Toolbar({ store, className, onTidy }: ToolbarProps): ReactElemen
             className={[styles.button, styles.element].join(' ')}
             data-element={symbol}
             aria-pressed={element === symbol && tool !== 'erase'}
-            title={`Desenhar ${symbol} (${keyForElement(symbol)})`}
+            title={messages.drawElement(symbol, keyForElement(symbol))}
             onClick={() => {
               store.getState().setElement(symbol);
               store.getState().setTool('structure');
@@ -208,8 +212,8 @@ export function Toolbar({ store, className, onTidy }: ToolbarProps): ReactElemen
             .join(' ')}
           data-element={listed ? undefined : element}
           aria-pressed={!listed}
-          title="Tabela periódica inteira"
-          aria-label="Abrir a tabela periódica"
+          title={messages.periodicTable}
+          aria-label={messages.periodicTableHint}
           data-testid="abrir-tabela"
           ref={tableButtonRef}
           onClick={() => {
@@ -226,8 +230,8 @@ export function Toolbar({ store, className, onTidy }: ToolbarProps): ReactElemen
         {RING_KINDS.map((kind) => (
           <RailButton
             key={kind}
-            label={`Inserir ${ringLabel(kind)}`}
-            name={`Inserir ${ringLabel(kind)}`}
+            label={messages.insertRing(ringNames[kind])}
+            name={messages.insertRing(ringNames[kind])}
             pressed={false}
             testId={`anel-${kind}`}
             onClick={() => {
@@ -244,8 +248,8 @@ export function Toolbar({ store, className, onTidy }: ToolbarProps): ReactElemen
       <div className={styles.group}>
         {onTidy !== undefined && (
           <RailButton
-            label="Organizar o desenho — o RDKit refaz as posições"
-            name="Organizar o desenho"
+            label={messages.tidyHint}
+            name={messages.tidy}
             pressed={false}
             disabled={!hasAtoms}
             testId="organizar"
@@ -265,8 +269,8 @@ export function Toolbar({ store, className, onTidy }: ToolbarProps): ReactElemen
         )}
 
         <RailButton
-          label="Desfazer (Ctrl+Z)"
-          name="Desfazer"
+          label={messages.undoHint}
+          name={messages.undo}
           pressed={false}
           disabled={!canUndo}
           onClick={() => {
@@ -286,8 +290,8 @@ export function Toolbar({ store, className, onTidy }: ToolbarProps): ReactElemen
         </RailButton>
 
         <RailButton
-          label="Refazer (Ctrl+Shift+Z)"
-          name="Refazer"
+          label={messages.redoHint}
+          name={messages.redo}
           pressed={false}
           disabled={!canRedo}
           onClick={() => {
@@ -307,8 +311,8 @@ export function Toolbar({ store, className, onTidy }: ToolbarProps): ReactElemen
         </RailButton>
 
         <RailButton
-          label="Enquadrar a molécula (0)"
-          name="Enquadrar"
+          label={messages.fitHint}
+          name={messages.fit}
           pressed={false}
           disabled={!hasAtoms}
           onClick={() => {
@@ -328,8 +332,8 @@ export function Toolbar({ store, className, onTidy }: ToolbarProps): ReactElemen
         </RailButton>
 
         <RailButton
-          label="Nova molécula — limpa a tela, e Ctrl+Z traz de volta"
-          name="Nova molécula"
+          label={messages.clearHint}
+          name={messages.clear}
           pressed={false}
           disabled={!hasAtoms}
           onClick={() => {
@@ -348,8 +352,8 @@ export function Toolbar({ store, className, onTidy }: ToolbarProps): ReactElemen
           </svg>
         </RailButton>
         <RailButton
-          label="Atalhos do teclado (?)"
-          name="Atalhos do teclado"
+          label={messages.shortcutsHint}
+          name={messages.shortcuts}
           pressed={keysOpen}
           testId="abrir-atalhos"
           buttonRef={keysButtonRef}

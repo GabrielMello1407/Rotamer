@@ -1,8 +1,10 @@
 'use client';
 
 import type { AnalysisResult } from '@rotamer/core';
+import { useMessages } from '@rotamer/i18n/react';
 import { Button } from '@rotamer/ui';
 import { useState, type ReactElement } from 'react';
+import { exportMenuMessages } from './messages';
 import type { ChemistryConnection } from './use-chemistry-client';
 import styles from './ExportMenu.module.css';
 
@@ -23,6 +25,7 @@ export interface ExportMenuProps {
  * traço da pessoa. Slide pede o primeiro; caderno, às vezes, o segundo.
  */
 export function ExportMenu({ analysis, connection }: ExportMenuProps): ReactElement | null {
+  const messages = useMessages(exportMenuMessages);
   const [busy, setBusy] = useState(false);
 
   if (analysis === null || !analysis.ok) return null;
@@ -56,7 +59,7 @@ export function ExportMenu({ analysis, connection }: ExportMenuProps): ReactElem
   return (
     <div className={styles.menu}>
       <Button size="small" variant="ghost" disabled={busy} onClick={saveSvg} data-testid="baixar-svg">
-        {busy ? 'Gerando…' : 'SVG'}
+        {busy ? messages.working : 'SVG'}
       </Button>
       <Button size="small" variant="ghost" onClick={savePng} data-testid="baixar-png">
         PNG

@@ -1,9 +1,11 @@
 'use client';
 
+import { useMessages } from '@rotamer/i18n/react';
 import { Button } from '@rotamer/ui';
 import Link from 'next/link';
 import type { ReactElement } from 'react';
 import { signOut } from '../actions/account';
+import { accountMenuMessages } from './messages';
 import { forgetDraft } from './use-draft';
 import styles from './AccountMenu.module.css';
 
@@ -26,10 +28,12 @@ export interface AccountMenuProps {
  * convite discreto.
  */
 export function AccountMenu({ displayName, onSignOut }: AccountMenuProps): ReactElement {
+  const messages = useMessages(accountMenuMessages);
+
   if (displayName === null) {
     return (
       <Link className={styles.link} href="/entrar" data-testid="entrar">
-        Entrar
+        {messages.signIn}
       </Link>
     );
   }
@@ -37,13 +41,13 @@ export function AccountMenu({ displayName, onSignOut }: AccountMenuProps): React
   return (
     <div className={styles.menu}>
       <Link className={styles.link} href="/turmas" data-testid="turmas">
-        Turmas
+        {messages.classrooms}
       </Link>
       <Link className={styles.link} href="/catalogo" data-testid="catalogo">
-        Catálogo
+        {messages.catalog}
       </Link>
       <Link className={styles.link} href="/minhas" data-testid="minhas">
-        Minhas moléculas
+        {messages.library}
       </Link>
       <span className={styles.name} data-testid="conta">
         {displayName}
@@ -59,7 +63,7 @@ export function AccountMenu({ displayName, onSignOut }: AccountMenuProps): React
         }}
       >
         <Button type="submit" size="small" variant="ghost">
-          Sair
+          {messages.signOut}
         </Button>
       </form>
     </div>

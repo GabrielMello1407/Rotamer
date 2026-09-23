@@ -2,13 +2,17 @@ import { Logo } from '@rotamer/ui';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { ReactElement } from 'react';
+import { serverMessages } from '../../lib/locale';
+import { passwordMessages } from './messages';
 import { PasswordReset } from './PasswordReset';
+import { LanguageSwitch } from '../components/LanguageSwitch';
 import styles from './page.module.css';
 
-export const metadata: Metadata = {
-  title: 'Trocar a senha · Rotamer',
-  description: 'Troque a senha com o código que o professor entregou.',
-};
+/** Título e descrição também são texto de produto, lidos no idioma de quem chega. */
+export async function generateMetadata(): Promise<Metadata> {
+  const m = await serverMessages(passwordMessages);
+  return { title: m.metaTitle, description: m.metaDescription };
+}
 
 /**
  * Recuperar a senha sem e-mail.
@@ -17,28 +21,30 @@ export const metadata: Metadata = {
  * link enviado por e-mail, e a tela diz isso em vez de deixar a pessoa
  * esperando uma mensagem que nunca vai chegar (D-19).
  */
-export default function PasswordPage(): ReactElement {
+export default async function PasswordPage(): Promise<ReactElement> {
+  const m = await serverMessages(passwordMessages);
+
   return (
     <main className={styles.page}>
-      <Link className={styles.identity} href="/">
-        <Logo size={32} decorative />
-        <span className={styles.wordmark}>Rotamer</span>
-      </Link>
+      <div className={styles.top}>
+        <Link className={styles.identity} href="/">
+          <Logo size={32} decorative />
+          <span className={styles.wordmark}>Rotamer</span>
+        </Link>
+        <LanguageSwitch />
+      </div>
 
       <div>
-        <h1 className={styles.title}>Trocar a senha</h1>
-        <p className={styles.intro}>
-          Peça um código ao professor da turma. Ele vale por um dia e serve uma vez só — não há
-          e-mail no caminho, então nada precisa chegar na sua caixa de entrada.
-        </p>
+        <h1 className={styles.title}>{m.heading}</h1>
+        <p className={styles.intro}>{m.intro}</p>
       </div>
 
       <PasswordReset />
 
       <p className={styles.note}>
-        Lembrou a senha?{' '}
+        {m.rememberedBefore}{' '}
         <Link className={styles.link} href="/entrar">
-          Entrar
+          {m.rememberedLink}
         </Link>
         .
       </p>

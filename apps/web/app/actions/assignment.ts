@@ -1,6 +1,7 @@
 'use server';
 
-import { CATALOG, evaluateQuest, extractGoals, findQuest } from '@rotamer/quests';
+import { chemistryErrorText, pick, type Locale } from '@rotamer/i18n';
+import { CATALOG, evaluateQuest, extractGoals, findQuest, goalLabel, localize } from '@rotamer/quests';
 import type { Condition, Goal, Track } from '@rotamer/quests';
 import { z } from 'zod';
 import type { Prisma } from '../../generated/prisma/client';
@@ -15,6 +16,8 @@ import {
   ownedTeacherQuest,
   requireTeacher,
 } from '../../lib/roles';
+import { currentLocale } from '../../lib/locale';
+import { assignmentMessages, sharedMessages } from './messages';
 import { messages } from '../turmas/messages';
 
 /**
@@ -54,10 +57,29 @@ const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
 const TEACHER_PREFIX = 'professor:';
 
-/** Mesma recusa de `saveAttempt`/`openQuest`/`askTutor` (R-8). */
-const QUEST_NOT_FOUND = messages.errors.questNotFound;
-const EMPTY_TITLE_OR_BRIEF = 'A missão precisa de um título e de um enunciado. O aluno lê isto antes de desenhar.';
-const LINK_REJECTED = messages.errors.linkRejected;
+/**
+ * O texto desta ação, no idioma de quem pediu.
+ *
+ * Toda recusa daqui sai como frase pronta — o cliente recebe algo para mostrar,
+ * não um código para traduzir. `errors` traz as recusas que a tela das turmas
+ * já escrevia (R-8: a mesma frase para "não existe" e "não é sua"), e `shared`
+ * as que se repetem entre ações.
+ */
+async function textFor(): Promise<{
+  readonly locale: Locale;
+  readonly m: ReturnType<typeof pick<(typeof assignmentMessages)['pt-BR']>>;
+  readonly shared: ReturnType<typeof pick<(typeof sharedMessages)['pt-BR']>>;
+  readonly errors: ReturnType<typeof pick<(typeof messages)['pt-BR']>>['errors'];
+}> {
+  const locale = await currentLocale();
+
+  return {
+    locale,
+    m: pick(assignmentMessages, locale),
+    shared: pick(sharedMessages, locale),
+    errors: pick(messages, locale).errors,
+  };
+}
 
 // -------------------------------------------------------------- texto (R-13/R-14)
 
@@ -93,10 +115,15 @@ function checkPlainText(raw: string, max: number): TextCheck {
   return { ok: true, value };
 }
 
-function textProblemMessage(check: TextCheck, empty: string, long: string): string {
+function textProblemMessage(
+  check: TextCheck,
+  empty: string,
+  long: string,
+  control: string,
+): string {
   if (check.reason === 'vazio') return empty;
   if (check.reason === 'longo') return long;
-  return 'O texto tem um caractere de controle que a tela não escreve. Tente de novo sem ele.';
+  return control;
 }
 
 function containsLink(text: string): boolean {
@@ -301,6 +328,7 @@ interface TeacherQuestText {
 function itemView(
   slug: string,
   texts: ReadonlyMap<string, TeacherQuestText>,
+  locale: Locale,
 ): Omit<AssignmentItemView, 'id' | 'position' | 'questSlug'> {
   if (slug.startsWith(TEACHER_PREFIX)) {
     const text = texts.get(slug);
@@ -313,7 +341,7 @@ function itemView(
     };
   }
 
-  return { title: findQuest(slug)?.title ?? slug, origin: 'catalog', brief: '', hints: [], archived: false };
+  return { title: findQuest(slug, locale)?.title ?? slug, origin: 'catalog', brief: '', hints: [], archived: false };
 }
 
 // ================================================================== createAssignment
@@ -326,22 +354,23 @@ export async function createAssignment(input: {
   classroomId: string;
   title: string;
 }): Promise<CreateAssignmentOutcome> {
-  if (!hasDatabase()) return { status: 'rejected', reason: 'Indisponível neste ambiente.' };
+  const t = await textFor();
+  if (!hasDatabase()) return { status: 'rejected', reason: t.shared.unavailable };
 
   const parsed = createAssignmentSchema.safeParse(input);
   if (!parsed.success) {
-    return { status: 'rejected', reason: parsed.error.issues[0]?.message ?? 'Pedido mal formado.' };
+    return { status: 'rejected', reason: parsed.error.issues[0]?.message ?? t.shared.malformed };
   }
 
   // R-5: papel é pré-requisito, dono é a autorização.
   const teacher = await requireTeacher();
   if (teacher === null) {
-    return { status: 'rejected', reason: 'Só conta de professor monta lista.' };
+    return { status: 'rejected', reason: t.m.onlyTeacherBuildsAssignment };
   }
 
   const classroom = await ownedClassroom(parsed.data.classroomId, teacher.id);
   if (classroom === null) {
-    return { status: 'rejected', reason: 'Essa turma não é sua.' };
+    return { status: 'rejected', reason: t.m.notYourClassroom };
   }
 
   return db.$transaction(async (tx) => {
@@ -350,7 +379,7 @@ export async function createAssignment(input: {
     if (count >= MAX_ASSIGNMENTS_PER_CLASSROOM) {
       return {
         status: 'rejected',
-        reason: `Você chegou ao limite de ${String(MAX_ASSIGNMENTS_PER_CLASSROOM)} listas nesta turma.`,
+        reason: t.m.assignmentLimitPerClassroom(MAX_ASSIGNMENTS_PER_CLASSROOM),
       } as const;
     }
 
@@ -366,18 +395,19 @@ export async function createAssignment(input: {
 // ================================================================== renameAssignment
 
 export async function renameAssignment(input: { assignmentId: string; title: string }): Promise<OkOutcome> {
-  if (!hasDatabase()) return { status: 'rejected', reason: 'Indisponível neste ambiente.' };
+  const t = await textFor();
+  if (!hasDatabase()) return { status: 'rejected', reason: t.shared.unavailable };
 
   const parsed = renameAssignmentSchema.safeParse(input);
   if (!parsed.success) {
-    return { status: 'rejected', reason: parsed.error.issues[0]?.message ?? 'Pedido mal formado.' };
+    return { status: 'rejected', reason: parsed.error.issues[0]?.message ?? t.shared.malformed };
   }
 
   const teacher = await requireTeacher();
-  if (teacher === null) return { status: 'rejected', reason: 'Só conta de professor edita lista.' };
+  if (teacher === null) return { status: 'rejected', reason: t.m.onlyTeacherEditsAssignment };
 
   const assignment = await ownedAssignment(parsed.data.assignmentId, teacher.id);
-  if (assignment === null) return { status: 'rejected', reason: 'Essa lista não é sua.' };
+  if (assignment === null) return { status: 'rejected', reason: t.m.notYourAssignment };
 
   await db.assignment.update({ where: { id: assignment.id }, data: { title: parsed.data.title } });
   return { status: 'ok' };
@@ -397,25 +427,26 @@ export async function createTeacherQuest(input: {
   molblock: string;
   goalIds: readonly string[];
 }): Promise<CreateTeacherQuestOutcome> {
-  if (!hasDatabase()) return { status: 'rejected', reason: 'Indisponível neste ambiente.' };
+  const t = await textFor();
+  if (!hasDatabase()) return { status: 'rejected', reason: t.shared.unavailable };
 
   const parsed = createTeacherQuestSchema.safeParse(input);
   if (!parsed.success) {
-    return { status: 'rejected', reason: parsed.error.issues[0]?.message ?? 'Pedido mal formado.' };
+    return { status: 'rejected', reason: parsed.error.issues[0]?.message ?? t.shared.malformed };
   }
 
   const teacher = await requireTeacher();
-  if (teacher === null) return { status: 'rejected', reason: 'Só conta de professor cria missão.' };
+  if (teacher === null) return { status: 'rejected', reason: t.m.onlyTeacherCreatesQuest };
 
   const assignment = await ownedAssignment(parsed.data.assignmentId, teacher.id);
-  if (assignment === null) return { status: 'rejected', reason: 'Essa lista não é sua.' };
+  if (assignment === null) return { status: 'rejected', reason: t.m.notYourAssignment };
 
   // R-13: título, enunciado e dicas passam pela mesma limpeza antes de qualquer outra checagem.
   const title = checkPlainText(parsed.data.title, TITLE_MAX);
   if (!title.ok) {
     return {
       status: 'rejected',
-      reason: textProblemMessage(title, EMPTY_TITLE_OR_BRIEF, `O título passa de ${String(TITLE_MAX)} caracteres.`),
+      reason: textProblemMessage(title, t.errors.emptyTitleOrBrief, t.m.titleTooLong(TITLE_MAX), t.m.controlCharacter),
     };
   }
 
@@ -423,11 +454,11 @@ export async function createTeacherQuest(input: {
   if (!brief.ok) {
     return {
       status: 'rejected',
-      reason: textProblemMessage(brief, EMPTY_TITLE_OR_BRIEF, `O enunciado passa de ${String(BRIEF_MAX)} caracteres.`),
+      reason: textProblemMessage(brief, t.errors.emptyTitleOrBrief, t.m.briefTooLong(BRIEF_MAX), t.m.controlCharacter),
     };
   }
   // R-14: enunciado e dicas são nó de texto — sem link.
-  if (containsLink(brief.value)) return { status: 'rejected', reason: LINK_REJECTED };
+  if (containsLink(brief.value)) return { status: 'rejected', reason: t.errors.linkRejected };
 
   const hints: string[] = [];
   for (const raw of parsed.data.hints) {
@@ -435,27 +466,32 @@ export async function createTeacherQuest(input: {
     if (!hint.ok) {
       return {
         status: 'rejected',
-        reason: textProblemMessage(hint, 'A dica não pode ficar vazia.', `A dica passa de ${String(HINT_MAX)} caracteres.`),
+        reason: textProblemMessage(
+          hint,
+          t.m.hintEmpty,
+          t.m.hintTooLong(HINT_MAX),
+          t.m.controlCharacter,
+        ),
       };
     }
-    if (containsLink(hint.value)) return { status: 'rejected', reason: LINK_REJECTED };
+    if (containsLink(hint.value)) return { status: 'rejected', reason: t.errors.linkRejected };
     hints.push(hint.value);
   }
 
   // A resposta nunca é digitada — é desenhada, e é o RDKit quem decide se ela existe (D-01).
   const analysis = await analyzeOnServer(parsed.data.molblock);
-  if (!analysis.ok) return { status: 'rejected', reason: analysis.error.message };
+  if (!analysis.ok) return { status: 'rejected', reason: chemistryErrorText(t.locale, analysis.error) };
 
   const { molecule } = analysis;
 
   // R-12: tamanho e átomos pesados, medidos no que o RDKit aceitou — nunca no que o cliente alegou.
   if (Buffer.byteLength(molecule.molblock, 'utf8') > MOLBLOCK_MAX_BYTES) {
-    return { status: 'rejected', reason: 'A resposta é grande demais para uma missão de aula.' };
+    return { status: 'rejected', reason: t.m.answerTooLarge };
   }
   if (molecule.descriptors.heavyAtoms > MAX_HEAVY_ATOMS) {
     return {
       status: 'rejected',
-      reason: `A resposta tem ${String(molecule.descriptors.heavyAtoms)} átomos. Uma missão de aula cabe em até ${String(MAX_HEAVY_ATOMS)} — a geometria acima disso não roda no celular do aluno.`,
+      reason: t.m.answerTooManyAtoms(molecule.descriptors.heavyAtoms, MAX_HEAVY_ATOMS),
     };
   }
 
@@ -463,7 +499,7 @@ export async function createTeacherQuest(input: {
   // candidatos a partir desta mesma molécula, aceita só `id` presente ali, e
   // confere que a própria resposta cumpre o que foi marcado.
   const candidates = new Map(extractGoals(molecule).map((candidate) => [candidate.id, candidate] as const));
-  const validated = validateAuthoredGoals(candidates, parsed.data.goalIds, molecule);
+  const validated = validateAuthoredGoals(candidates, parsed.data.goalIds, molecule, t.locale);
   if (validated.status === 'rejected') return { status: 'rejected', reason: validated.reason };
 
   const goals: Goal[] = [...validated.goals];
@@ -472,7 +508,7 @@ export async function createTeacherQuest(input: {
   // `authoringSavesToday`. Checado antes da transação porque não depende do
   // banco; o registro (`registerAuthoringSave`) só acontece depois do sucesso.
   if (authoringSavesToday(teacher.id) >= MAX_AUTHORING_SAVES_PER_DAY) {
-    return { status: 'rejected', reason: 'Você chegou ao limite de salvamentos de hoje. Volte amanhã.' };
+    return { status: 'rejected', reason: t.m.authoringDailyLimit };
   }
 
   const outcome = await db.$transaction(async (tx) => {
@@ -485,13 +521,13 @@ export async function createTeacherQuest(input: {
     if (activeQuests >= MAX_ACTIVE_TEACHER_QUESTS) {
       return {
         status: 'rejected',
-        reason: `Você chegou ao limite de ${String(MAX_ACTIVE_TEACHER_QUESTS)} missões próprias. Arquive as que não usa mais — arquivar não apaga, e as listas que já as usam continuam funcionando.`,
+        reason: t.m.activeQuestLimit(MAX_ACTIVE_TEACHER_QUESTS),
       } as const;
     }
     if (itemCount >= MAX_ITEMS_PER_ASSIGNMENT) {
       return {
         status: 'rejected',
-        reason: `Esta lista já tem ${String(MAX_ITEMS_PER_ASSIGNMENT)} missões — o máximo para uma lista.`,
+        reason: t.m.itemsPerAssignmentLimit(MAX_ITEMS_PER_ASSIGNMENT),
       } as const;
     }
 
@@ -532,24 +568,25 @@ export async function updateTeacherQuestText(input: {
   brief: string;
   hints: readonly string[];
 }): Promise<OkOutcome> {
-  if (!hasDatabase()) return { status: 'rejected', reason: 'Indisponível neste ambiente.' };
+  const t = await textFor();
+  if (!hasDatabase()) return { status: 'rejected', reason: t.shared.unavailable };
 
   const parsed = updateTeacherQuestTextSchema.safeParse(input);
   if (!parsed.success) {
-    return { status: 'rejected', reason: parsed.error.issues[0]?.message ?? 'Pedido mal formado.' };
+    return { status: 'rejected', reason: parsed.error.issues[0]?.message ?? t.shared.malformed };
   }
 
   const teacher = await requireTeacher();
-  if (teacher === null) return { status: 'rejected', reason: 'Só conta de professor edita missão.' };
+  if (teacher === null) return { status: 'rejected', reason: t.m.onlyTeacherEditsQuest };
 
   const quest = await ownedTeacherQuest(parsed.data.teacherQuestId, teacher.id);
-  if (quest === null) return { status: 'rejected', reason: 'Essa missão não é sua.' };
+  if (quest === null) return { status: 'rejected', reason: t.m.notYourQuest };
 
   const title = checkPlainText(parsed.data.title, TITLE_MAX);
   if (!title.ok) {
     return {
       status: 'rejected',
-      reason: textProblemMessage(title, EMPTY_TITLE_OR_BRIEF, `O título passa de ${String(TITLE_MAX)} caracteres.`),
+      reason: textProblemMessage(title, t.errors.emptyTitleOrBrief, t.m.titleTooLong(TITLE_MAX), t.m.controlCharacter),
     };
   }
 
@@ -557,10 +594,10 @@ export async function updateTeacherQuestText(input: {
   if (!brief.ok) {
     return {
       status: 'rejected',
-      reason: textProblemMessage(brief, EMPTY_TITLE_OR_BRIEF, `O enunciado passa de ${String(BRIEF_MAX)} caracteres.`),
+      reason: textProblemMessage(brief, t.errors.emptyTitleOrBrief, t.m.briefTooLong(BRIEF_MAX), t.m.controlCharacter),
     };
   }
-  if (containsLink(brief.value)) return { status: 'rejected', reason: LINK_REJECTED };
+  if (containsLink(brief.value)) return { status: 'rejected', reason: t.errors.linkRejected };
 
   const hints: string[] = [];
   for (const raw of parsed.data.hints) {
@@ -568,17 +605,22 @@ export async function updateTeacherQuestText(input: {
     if (!hint.ok) {
       return {
         status: 'rejected',
-        reason: textProblemMessage(hint, 'A dica não pode ficar vazia.', `A dica passa de ${String(HINT_MAX)} caracteres.`),
+        reason: textProblemMessage(
+          hint,
+          t.m.hintEmpty,
+          t.m.hintTooLong(HINT_MAX),
+          t.m.controlCharacter,
+        ),
       };
     }
-    if (containsLink(hint.value)) return { status: 'rejected', reason: LINK_REJECTED };
+    if (containsLink(hint.value)) return { status: 'rejected', reason: t.errors.linkRejected };
     hints.push(hint.value);
   }
 
   // Mesmo teto diário de `createTeacherQuest`, contado em memória —
   // editar conta tanto quanto criar.
   if (authoringSavesToday(teacher.id) >= MAX_AUTHORING_SAVES_PER_DAY) {
-    return { status: 'rejected', reason: 'Você chegou ao limite de salvamentos de hoje. Volte amanhã.' };
+    return { status: 'rejected', reason: t.m.authoringDailyLimit };
   }
 
   await db.$transaction(async (tx) => {
@@ -598,16 +640,17 @@ export async function updateTeacherQuestText(input: {
 // ================================================================== archiveTeacherQuest
 
 export async function archiveTeacherQuest(input: { teacherQuestId: string }): Promise<OkOutcome> {
-  if (!hasDatabase()) return { status: 'rejected', reason: 'Indisponível neste ambiente.' };
+  const t = await textFor();
+  if (!hasDatabase()) return { status: 'rejected', reason: t.shared.unavailable };
 
   const parsed = teacherQuestIdSchema.safeParse(input);
-  if (!parsed.success) return { status: 'rejected', reason: 'Pedido mal formado.' };
+  if (!parsed.success) return { status: 'rejected', reason: t.shared.malformed };
 
   const teacher = await requireTeacher();
-  if (teacher === null) return { status: 'rejected', reason: 'Só conta de professor arquiva missão.' };
+  if (teacher === null) return { status: 'rejected', reason: t.m.onlyTeacherArchivesQuest };
 
   const quest = await ownedTeacherQuest(parsed.data.teacherQuestId, teacher.id);
-  if (quest === null) return { status: 'rejected', reason: 'Essa missão não é sua.' };
+  if (quest === null) return { status: 'rejected', reason: t.m.notYourQuest };
 
   await db.teacherQuest.update({ where: { id: quest.id }, data: { archivedAt: new Date() } });
   return { status: 'ok' };
@@ -632,19 +675,20 @@ export async function archiveTeacherQuest(input: { teacherQuestId: string }): Pr
  * exato do `update`.
  */
 export async function unarchiveTeacherQuest(input: { teacherQuestId: string }): Promise<OkOutcome> {
-  if (!hasDatabase()) return { status: 'rejected', reason: 'Indisponível neste ambiente.' };
+  const t = await textFor();
+  if (!hasDatabase()) return { status: 'rejected', reason: t.shared.unavailable };
 
   const parsed = teacherQuestIdSchema.safeParse(input);
-  if (!parsed.success) return { status: 'rejected', reason: 'Pedido mal formado.' };
+  if (!parsed.success) return { status: 'rejected', reason: t.shared.malformed };
 
   const teacher = await requireTeacher();
-  if (teacher === null) return { status: 'rejected', reason: 'Só conta de professor desarquiva missão.' };
+  if (teacher === null) return { status: 'rejected', reason: t.m.onlyTeacherUnarchivesQuest };
 
   // `ownedTeacherQuest` não filtra por `archivedAt` (roles.ts) — precisa
   // continuar achando a missão mesmo arquivada, que é justamente o caso
   // que esta ação existe para resolver.
   const quest = await ownedTeacherQuest(parsed.data.teacherQuestId, teacher.id);
-  if (quest === null) return { status: 'rejected', reason: 'Essa missão não é sua.' };
+  if (quest === null) return { status: 'rejected', reason: t.m.notYourQuest };
 
   return db.$transaction(async (tx) => {
     // R-12: mesmo teto de `createTeacherQuest`, conferido dentro da transação.
@@ -652,7 +696,7 @@ export async function unarchiveTeacherQuest(input: { teacherQuestId: string }): 
     if (activeQuests >= MAX_ACTIVE_TEACHER_QUESTS) {
       return {
         status: 'rejected',
-        reason: `Você chegou ao limite de ${String(MAX_ACTIVE_TEACHER_QUESTS)} missões próprias. Arquive alguma antes de desarquivar esta.`,
+        reason: t.m.activeQuestLimitToUnarchive(MAX_ACTIVE_TEACHER_QUESTS),
       } as const;
     }
 
@@ -668,18 +712,19 @@ export type AddItemOutcome =
   | { readonly status: 'rejected'; readonly reason: string };
 
 export async function addItem(input: { assignmentId: string; questSlug: string }): Promise<AddItemOutcome> {
-  if (!hasDatabase()) return { status: 'rejected', reason: 'Indisponível neste ambiente.' };
+  const t = await textFor();
+  if (!hasDatabase()) return { status: 'rejected', reason: t.shared.unavailable };
 
   const parsed = addItemSchema.safeParse(input);
   if (!parsed.success) {
-    return { status: 'rejected', reason: parsed.error.issues[0]?.message ?? 'Pedido mal formado.' };
+    return { status: 'rejected', reason: parsed.error.issues[0]?.message ?? t.shared.malformed };
   }
 
   const teacher = await requireTeacher();
-  if (teacher === null) return { status: 'rejected', reason: 'Só conta de professor monta lista.' };
+  if (teacher === null) return { status: 'rejected', reason: t.m.onlyTeacherBuildsAssignment };
 
   const assignment = await ownedAssignment(parsed.data.assignmentId, teacher.id);
-  if (assignment === null) return { status: 'rejected', reason: 'Essa lista não é sua.' };
+  if (assignment === null) return { status: 'rejected', reason: t.m.notYourAssignment };
 
   const { questSlug } = parsed.data;
   let title: string;
@@ -691,11 +736,11 @@ export async function addItem(input: { assignmentId: string; questSlug: string }
       where: { id, teacherId: teacher.id },
       select: { id: true, title: true },
     });
-    if (quest === null) return { status: 'rejected', reason: 'Essa missão não é sua.' };
+    if (quest === null) return { status: 'rejected', reason: t.m.notYourQuest };
     title = quest.title;
   } else {
-    const catalogQuest = findQuest(questSlug);
-    if (!catalogQuest) return { status: 'rejected', reason: QUEST_NOT_FOUND };
+    const catalogQuest = findQuest(questSlug, t.locale);
+    if (!catalogQuest) return { status: 'rejected', reason: t.errors.questNotFound };
     title = catalogQuest.title;
   }
 
@@ -707,7 +752,7 @@ export async function addItem(input: { assignmentId: string; questSlug: string }
     if (existing !== null) {
       return {
         status: 'rejected',
-        reason: messages.errors.slugRepeated(title),
+        reason: t.errors.slugRepeated(title),
       } as const;
     }
 
@@ -716,7 +761,7 @@ export async function addItem(input: { assignmentId: string; questSlug: string }
     if (count >= MAX_ITEMS_PER_ASSIGNMENT) {
       return {
         status: 'rejected',
-        reason: `Esta lista já tem ${String(MAX_ITEMS_PER_ASSIGNMENT)} missões — o máximo para uma lista.`,
+        reason: t.m.itemsPerAssignmentLimit(MAX_ITEMS_PER_ASSIGNMENT),
       } as const;
     }
 
@@ -736,16 +781,17 @@ export async function moveItem(input: {
   itemId: string;
   direction: 'up' | 'down';
 }): Promise<OkOutcome> {
-  if (!hasDatabase()) return { status: 'rejected', reason: 'Indisponível neste ambiente.' };
+  const t = await textFor();
+  if (!hasDatabase()) return { status: 'rejected', reason: t.shared.unavailable };
 
   const parsed = moveItemSchema.safeParse(input);
-  if (!parsed.success) return { status: 'rejected', reason: 'Pedido mal formado.' };
+  if (!parsed.success) return { status: 'rejected', reason: t.shared.malformed };
 
   const teacher = await requireTeacher();
-  if (teacher === null) return { status: 'rejected', reason: 'Só conta de professor edita lista.' };
+  if (teacher === null) return { status: 'rejected', reason: t.m.onlyTeacherEditsAssignment };
 
   const assignment = await ownedAssignment(parsed.data.assignmentId, teacher.id);
-  if (assignment === null) return { status: 'rejected', reason: 'Essa lista não é sua.' };
+  if (assignment === null) return { status: 'rejected', reason: t.m.notYourAssignment };
 
   return db.$transaction(async (tx) => {
     const items = await tx.assignmentItem.findMany({
@@ -755,7 +801,7 @@ export async function moveItem(input: {
     });
 
     const index = items.findIndex((item) => item.id === parsed.data.itemId);
-    if (index === -1) return { status: 'rejected', reason: 'Esse item não existe mais nesta lista.' } as const;
+    if (index === -1) return { status: 'rejected', reason: t.m.itemNotFound } as const;
 
     const neighborIndex = parsed.data.direction === 'up' ? index - 1 : index + 1;
     if (neighborIndex < 0 || neighborIndex >= items.length) return { status: 'ok' } as const;
@@ -781,16 +827,17 @@ export async function moveItem(input: {
 // ================================================================== removeItem
 
 export async function removeItem(input: { assignmentId: string; itemId: string }): Promise<OkOutcome> {
-  if (!hasDatabase()) return { status: 'rejected', reason: 'Indisponível neste ambiente.' };
+  const t = await textFor();
+  if (!hasDatabase()) return { status: 'rejected', reason: t.shared.unavailable };
 
   const parsed = removeItemSchema.safeParse(input);
-  if (!parsed.success) return { status: 'rejected', reason: 'Pedido mal formado.' };
+  if (!parsed.success) return { status: 'rejected', reason: t.shared.malformed };
 
   const teacher = await requireTeacher();
-  if (teacher === null) return { status: 'rejected', reason: 'Só conta de professor edita lista.' };
+  if (teacher === null) return { status: 'rejected', reason: t.m.onlyTeacherEditsAssignment };
 
   const assignment = await ownedAssignment(parsed.data.assignmentId, teacher.id);
-  if (assignment === null) return { status: 'rejected', reason: 'Essa lista não é sua.' };
+  if (assignment === null) return { status: 'rejected', reason: t.m.notYourAssignment };
 
   await db.$transaction(async (tx) => {
     await tx.assignmentItem.deleteMany({ where: { id: parsed.data.itemId, assignmentId: assignment.id } });
@@ -822,20 +869,21 @@ export type PublishOutcome =
   | { readonly status: 'rejected'; readonly reason: string };
 
 export async function publishAssignment(input: { assignmentId: string }): Promise<PublishOutcome> {
-  if (!hasDatabase()) return { status: 'rejected', reason: 'Indisponível neste ambiente.' };
+  const t = await textFor();
+  if (!hasDatabase()) return { status: 'rejected', reason: t.shared.unavailable };
 
   const parsed = publishAssignmentSchema.safeParse(input);
-  if (!parsed.success) return { status: 'rejected', reason: 'Pedido mal formado.' };
+  if (!parsed.success) return { status: 'rejected', reason: t.shared.malformed };
 
   const teacher = await requireTeacher();
-  if (teacher === null) return { status: 'rejected', reason: 'Só conta de professor publica lista.' };
+  if (teacher === null) return { status: 'rejected', reason: t.m.onlyTeacherPublishesAssignment };
 
   const assignment = await ownedAssignment(parsed.data.assignmentId, teacher.id);
-  if (assignment === null) return { status: 'rejected', reason: 'Essa lista não é sua.' };
+  if (assignment === null) return { status: 'rejected', reason: t.m.notYourAssignment };
 
   const count = await db.assignmentItem.count({ where: { assignmentId: assignment.id } });
   if (count === 0) {
-    return { status: 'rejected', reason: messages.errors.publishEmpty };
+    return { status: 'rejected', reason: t.errors.publishEmpty };
   }
 
   const row = await db.assignment.update({
@@ -850,16 +898,17 @@ export async function publishAssignment(input: { assignmentId: string }): Promis
 // ================================================================== archiveAssignment
 
 export async function archiveAssignment(input: { assignmentId: string }): Promise<OkOutcome> {
-  if (!hasDatabase()) return { status: 'rejected', reason: 'Indisponível neste ambiente.' };
+  const t = await textFor();
+  if (!hasDatabase()) return { status: 'rejected', reason: t.shared.unavailable };
 
   const parsed = archiveAssignmentSchema.safeParse(input);
-  if (!parsed.success) return { status: 'rejected', reason: 'Pedido mal formado.' };
+  if (!parsed.success) return { status: 'rejected', reason: t.shared.malformed };
 
   const teacher = await requireTeacher();
-  if (teacher === null) return { status: 'rejected', reason: 'Só conta de professor arquiva lista.' };
+  if (teacher === null) return { status: 'rejected', reason: t.m.onlyTeacherArchivesAssignment };
 
   const assignment = await ownedAssignment(parsed.data.assignmentId, teacher.id);
-  if (assignment === null) return { status: 'rejected', reason: 'Essa lista não é sua.' };
+  if (assignment === null) return { status: 'rejected', reason: t.m.notYourAssignment };
 
   await db.assignment.update({ where: { id: assignment.id }, data: { archivedAt: new Date() } });
   return { status: 'ok' };
@@ -878,22 +927,23 @@ export async function archiveAssignment(input: { assignmentId: string }): Promis
  * desarquivar bota a lista de volta em "ativa" na turma.
  */
 export async function unarchiveAssignment(input: { assignmentId: string }): Promise<OkOutcome> {
-  if (!hasDatabase()) return { status: 'rejected', reason: 'Indisponível neste ambiente.' };
+  const t = await textFor();
+  if (!hasDatabase()) return { status: 'rejected', reason: t.shared.unavailable };
 
   const parsed = unarchiveAssignmentSchema.safeParse(input);
-  if (!parsed.success) return { status: 'rejected', reason: 'Pedido mal formado.' };
+  if (!parsed.success) return { status: 'rejected', reason: t.shared.malformed };
 
   const teacher = await requireTeacher();
-  if (teacher === null) return { status: 'rejected', reason: 'Só conta de professor desarquiva lista.' };
+  if (teacher === null) return { status: 'rejected', reason: t.m.onlyTeacherUnarchivesAssignment };
 
   const assignment = await ownedAssignmentAnyState(parsed.data.assignmentId, teacher.id);
-  if (assignment === null) return { status: 'rejected', reason: 'Essa lista não é sua.' };
+  if (assignment === null) return { status: 'rejected', reason: t.m.notYourAssignment };
 
   const full = await db.assignment.findUnique({
     where: { id: assignment.id },
     select: { classroomId: true },
   });
-  if (full === null) return { status: 'rejected', reason: 'Essa lista não é sua.' };
+  if (full === null) return { status: 'rejected', reason: t.m.notYourAssignment };
 
   return db.$transaction(async (tx) => {
     // R-12: mesmo teto de `createAssignment`, conferido dentro da transação.
@@ -901,7 +951,7 @@ export async function unarchiveAssignment(input: { assignmentId: string }): Prom
     if (count >= MAX_ASSIGNMENTS_PER_CLASSROOM) {
       return {
         status: 'rejected',
-        reason: `Você chegou ao limite de ${String(MAX_ASSIGNMENTS_PER_CLASSROOM)} listas nesta turma. Arquive alguma antes de desarquivar esta.`,
+        reason: t.m.assignmentLimitToUnarchive(MAX_ASSIGNMENTS_PER_CLASSROOM),
       } as const;
     }
 
@@ -959,6 +1009,7 @@ export async function readAssignments(input: {
   classroomId: string;
   includeArchived?: boolean;
 }): Promise<readonly AssignmentSummary[]> {
+  const locale = await currentLocale();
   if (!hasDatabase()) return [];
 
   const parsed = readAssignmentsSchema.safeParse(input);
@@ -994,7 +1045,7 @@ export async function readAssignments(input: {
       id: item.id,
       position: item.position,
       questSlug: item.questSlug,
-      ...itemView(item.questSlug, texts),
+      ...itemView(item.questSlug, texts, locale),
     })),
   }));
 }
@@ -1014,6 +1065,7 @@ export interface AssignmentBoard {
 
 /** D-22: molécula nenhuma aqui — só os três estados por item e aluno. */
 export async function readAssignmentBoard(input: { assignmentId: string }): Promise<AssignmentBoard | null> {
+  const locale = await currentLocale();
   if (!hasDatabase()) return null;
 
   const parsed = readAssignmentBoardSchema.safeParse(input);
@@ -1039,7 +1091,7 @@ export async function readAssignmentBoard(input: { assignmentId: string }): Prom
     id: item.id,
     position: item.position,
     questSlug: item.questSlug,
-    ...itemView(item.questSlug, texts),
+    ...itemView(item.questSlug, texts, locale),
   }));
 
   const slugs = items.map((item) => item.questSlug);
@@ -1118,9 +1170,19 @@ export interface StudentGoalView {
   readonly condition?: Condition;
 }
 
-function clientGoal(goal: Goal): StudentGoalView {
-  if (goal.condition.kind === 'inchiKey') return { id: goal.id, label: goal.label };
-  return { id: goal.id, label: goal.label, condition: goal.condition };
+/**
+ * O objetivo como o aluno o recebe.
+ *
+ * O rótulo é montado **aqui**, no servidor, porque o objetivo de InChIKey nunca
+ * manda a condição para o cliente (R-4) — sem a condição, o navegador não teria
+ * como escrever a frase. Quem sabe o idioma de quem pediu é o servidor, e é ele
+ * que a escreve.
+ */
+function clientGoal(goal: Goal, locale: Locale): StudentGoalView {
+  const label = goalLabel(locale, goal.condition);
+
+  if (goal.condition.kind === 'inchiKey') return { id: goal.id, label };
+  return { id: goal.id, label, condition: goal.condition };
 }
 
 /**
@@ -1212,6 +1274,7 @@ function studentItem(
   position: number,
   questSlug: string,
   teacherFacts: ReadonlyMap<string, TeacherQuestFacts>,
+  locale: Locale,
 ): StudentAssignmentItem {
   if (questSlug.startsWith(TEACHER_PREFIX)) {
     const facts = teacherFacts.get(questSlug);
@@ -1220,17 +1283,17 @@ function studentItem(
       questSlug,
       title: facts?.title ?? questSlug,
       byTeacher: facts?.byTeacher ?? null,
-      goals: (facts?.goals ?? []).map(clientGoal),
+      goals: (facts?.goals ?? []).map((goal) => clientGoal(goal, locale)),
     };
   }
 
-  const quest = findQuest(questSlug);
+  const quest = findQuest(questSlug, locale);
   return {
     position,
     questSlug,
     title: quest?.title ?? questSlug,
     byTeacher: null,
-    goals: (quest?.goals ?? []).map(clientGoal),
+    goals: (quest?.goals ?? []).map((goal) => clientGoal(goal, locale)),
   };
 }
 
@@ -1239,6 +1302,8 @@ const SEM_TURMA: StudentAssignments = { inClassroom: false, assignments: [] };
 
 export async function readStudentAssignments(): Promise<StudentAssignments> {
   if (!hasDatabase()) return SEM_TURMA;
+
+  const locale = await currentLocale();
 
   const profile = await currentProfile();
   if (profile === null) return SEM_TURMA;
@@ -1270,7 +1335,9 @@ export async function readStudentAssignments(): Promise<StudentAssignments> {
     assignments: assignments.map((assignment) => ({
       title: assignment.title,
       classroomName: classroomNames.get(assignment.classroomId) ?? '',
-      items: assignment.items.map((item) => studentItem(item.position, item.questSlug, teacherFacts)),
+      items: assignment.items.map((item) =>
+        studentItem(item.position, item.questSlug, teacherFacts, locale),
+      ),
     })),
   };
 }
@@ -1315,16 +1382,17 @@ const readQuestDetailSchema = z.object({ questSlug: z.string().min(1).max(80) })
  * `{id, label}` — esta tela não precisa avaliar nada, só descrever.
  */
 export async function readQuestDetail(input: { questSlug: string }): Promise<ReadQuestDetailOutcome> {
-  if (!hasDatabase()) return { status: 'rejected', reason: 'Indisponível neste ambiente.' };
+  const t = await textFor();
+  if (!hasDatabase()) return { status: 'rejected', reason: t.shared.unavailable };
 
   const parsed = readQuestDetailSchema.safeParse(input);
-  if (!parsed.success) return { status: 'rejected', reason: QUEST_NOT_FOUND };
+  if (!parsed.success) return { status: 'rejected', reason: t.errors.questNotFound };
 
   const { questSlug } = parsed.data;
 
   if (!questSlug.startsWith(TEACHER_PREFIX)) {
-    const catalogQuest = findQuest(questSlug);
-    if (!catalogQuest) return { status: 'rejected', reason: QUEST_NOT_FOUND };
+    const catalogQuest = findQuest(questSlug, t.locale);
+    if (!catalogQuest) return { status: 'rejected', reason: t.errors.questNotFound };
 
     return {
       status: 'ok',
@@ -1341,11 +1409,11 @@ export async function readQuestDetail(input: { questSlug: string }): Promise<Rea
 
   const profile = await currentProfile();
   if (profile === null) {
-    return { status: 'rejected', reason: messages.errors.anonymousTeacherQuest };
+    return { status: 'rejected', reason: t.errors.anonymousTeacherQuest };
   }
 
   if (!(await studentQuestAccess(profile.id, questSlug))) {
-    return { status: 'rejected', reason: QUEST_NOT_FOUND };
+    return { status: 'rejected', reason: t.errors.questNotFound };
   }
 
   const id = questSlug.slice(TEACHER_PREFIX.length);
@@ -1360,9 +1428,12 @@ export async function readQuestDetail(input: { questSlug: string }): Promise<Rea
       teacher: { select: { displayName: true, institution: true } },
     },
   });
-  if (row === null) return { status: 'rejected', reason: QUEST_NOT_FOUND };
+  if (row === null) return { status: 'rejected', reason: t.errors.questNotFound };
 
-  const goals = (row.goals as unknown as readonly Goal[]).map((goal) => ({ id: goal.id, label: goal.label }));
+  const goals = (row.goals as unknown as readonly Goal[]).map((goal) => ({
+    id: goal.id,
+    label: goalLabel(t.locale, goal.condition),
+  }));
 
   return {
     status: 'ok',
@@ -1394,46 +1465,54 @@ export async function readQuestDetail(input: { questSlug: string }): Promise<Rea
 export interface CheckQuestOutcome {
   readonly status: 'ok';
   readonly passed: boolean;
-  readonly goals: readonly { readonly id: string; readonly label: string; readonly met: boolean }[];
+  /** Só `id` e veredito: a frase de cada objetivo o cliente já tem, e casa por `id`. */
+  readonly goals: readonly { readonly id: string; readonly met: boolean }[];
 }
 
 export type CheckQuestResult = CheckQuestOutcome | { readonly status: 'rejected'; readonly reason: string };
 
 export async function checkQuest(input: { questSlug: string; molblock: string }): Promise<CheckQuestResult> {
-  if (!hasDatabase()) return { status: 'rejected', reason: 'Indisponível neste ambiente.' };
+  const t = await textFor();
+  if (!hasDatabase()) return { status: 'rejected', reason: t.shared.unavailable };
 
   const parsed = checkQuestSchema.safeParse(input);
-  if (!parsed.success) return { status: 'rejected', reason: 'Pedido mal formado.' };
+  if (!parsed.success) return { status: 'rejected', reason: t.shared.malformed };
 
   // Sem conta, sem conferência — e sem trabalho nenhum antes de dizer isso:
   // nem resolver a missão, nem RDKit. A recusa é a mesma frase de missão que
   // não existe (R-8), para a ação não virar oráculo de existência.
   const profile = await currentProfile();
-  if (profile === null) return { status: 'rejected', reason: QUEST_NOT_FOUND };
+  if (profile === null) return { status: 'rejected', reason: t.errors.questNotFound };
 
   // Contado ANTES de qualquer trabalho — resolver a missão, checar acesso e
   // rodar o RDKit vêm todos depois. Molblock inválido conta igual, porque
   // também pagaria o custo do RDKit.
   const key = checkQuestKey(profile.id);
   if (tooManyQuestChecks(key)) {
-    return { status: 'rejected', reason: 'Muitas conferências em pouco tempo. Espere um pouco e tente de novo.' };
+    return { status: 'rejected', reason: t.m.tooManyQuestChecks };
   }
   registerQuestCheck(key);
 
-  const quest = await resolveQuest(parsed.data.questSlug);
-  if (!quest) return { status: 'rejected', reason: QUEST_NOT_FOUND };
+  const quest = await resolveQuest(parsed.data.questSlug, t.locale);
+  if (!quest) return { status: 'rejected', reason: t.errors.questNotFound };
 
   // R-7/R-8: missão de professor exige acesso; catálogo continua livre.
   if (quest.slug.startsWith(TEACHER_PREFIX) && !(await studentQuestAccess(profile.id, quest.slug))) {
-    return { status: 'rejected', reason: QUEST_NOT_FOUND };
+    return { status: 'rejected', reason: t.errors.questNotFound };
   }
 
   const analysis = await analyzeOnServer(parsed.data.molblock);
-  if (!analysis.ok) return { status: 'rejected', reason: analysis.error.message };
+  if (!analysis.ok) return { status: 'rejected', reason: chemistryErrorText(t.locale, analysis.error) };
 
   const result = evaluateQuest(quest, analysis.molecule);
 
-  return { status: 'ok', passed: result.passed, goals: result.goals };
+  return {
+    status: 'ok',
+    passed: result.passed,
+    // Veredito é o mesmo em qualquer idioma; a frase de cada objetivo o cliente
+    // já tem, vinda da lista ou do catálogo, e casa por `id`.
+    goals: result.goals,
+  };
 }
 
 // ================================================================== publishToCatalog
@@ -1447,34 +1526,34 @@ export async function checkQuest(input: { questSlug: string; molblock: string })
  * instituição não entra no catálogo — e a missão não pode estar arquivada.
  */
 export async function publishToCatalog(input: { teacherQuestId: string }): Promise<OkOutcome> {
-  if (!hasDatabase()) return { status: 'rejected', reason: 'Indisponível neste ambiente.' };
+  const t = await textFor();
+  if (!hasDatabase()) return { status: 'rejected', reason: t.shared.unavailable };
 
   const parsed = teacherQuestIdSchema.safeParse(input);
-  if (!parsed.success) return { status: 'rejected', reason: 'Pedido mal formado.' };
+  if (!parsed.success) return { status: 'rejected', reason: t.shared.malformed };
 
   const teacher = await requireTeacher();
-  if (teacher === null) return { status: 'rejected', reason: 'Só conta de professor publica no catálogo.' };
+  if (teacher === null) return { status: 'rejected', reason: t.m.onlyTeacherPublishesToCatalog };
 
   const quest = await ownedTeacherQuest(parsed.data.teacherQuestId, teacher.id);
-  if (quest === null) return { status: 'rejected', reason: 'Essa missão não é sua.' };
+  if (quest === null) return { status: 'rejected', reason: t.m.notYourQuest };
 
   const full = await db.teacherQuest.findUnique({
     where: { id: quest.id },
     select: { archivedAt: true, teacher: { select: { institution: true } } },
   });
-  if (full === null) return { status: 'rejected', reason: 'Essa missão não é sua.' };
+  if (full === null) return { status: 'rejected', reason: t.m.notYourQuest };
 
   if (full.archivedAt !== null) {
     return {
       status: 'rejected',
-      reason: 'Missão arquivada não entra no catálogo. Desarquive antes de publicar.',
+      reason: t.m.archivedQuestCannotPublish,
     };
   }
   if (full.teacher.institution === null || full.teacher.institution.trim() === '') {
     return {
       status: 'rejected',
-      reason:
-        'Preencha a instituição no seu perfil antes de publicar no catálogo — a autoria viaja sempre junto (D-27).',
+      reason: t.m.institutionRequiredToPublish,
     };
   }
 
@@ -1494,16 +1573,17 @@ export async function publishToCatalog(input: { teacherQuestId: string }): Promi
  * própria turma continua, porque esse caminho nunca dependeu do catálogo.
  */
 export async function withdrawFromCatalog(input: { teacherQuestId: string }): Promise<OkOutcome> {
-  if (!hasDatabase()) return { status: 'rejected', reason: 'Indisponível neste ambiente.' };
+  const t = await textFor();
+  if (!hasDatabase()) return { status: 'rejected', reason: t.shared.unavailable };
 
   const parsed = teacherQuestIdSchema.safeParse(input);
-  if (!parsed.success) return { status: 'rejected', reason: 'Pedido mal formado.' };
+  if (!parsed.success) return { status: 'rejected', reason: t.shared.malformed };
 
   const teacher = await requireTeacher();
-  if (teacher === null) return { status: 'rejected', reason: 'Só conta de professor retira do catálogo.' };
+  if (teacher === null) return { status: 'rejected', reason: t.m.onlyTeacherWithdrawsFromCatalog };
 
   const quest = await ownedTeacherQuest(parsed.data.teacherQuestId, teacher.id);
-  if (quest === null) return { status: 'rejected', reason: 'Essa missão não é sua.' };
+  if (quest === null) return { status: 'rejected', reason: t.m.notYourQuest };
 
   await db.teacherQuest.update({ where: { id: quest.id }, data: { catalogedAt: null } });
   return { status: 'ok' };
@@ -1526,22 +1606,23 @@ const reportQuestSchema = z.object({
  * que existe é o rastro (quem, quando, o motivo) e o teto contra abuso.
  */
 export async function reportQuest(input: { questSlug: string; reason: string }): Promise<OkOutcome> {
-  if (!hasDatabase()) return { status: 'rejected', reason: 'Indisponível neste ambiente.' };
+  const t = await textFor();
+  if (!hasDatabase()) return { status: 'rejected', reason: t.shared.unavailable };
 
   const parsed = reportQuestSchema.safeParse(input);
-  if (!parsed.success) return { status: 'rejected', reason: 'Pedido mal formado.' };
+  if (!parsed.success) return { status: 'rejected', reason: t.shared.malformed };
 
   const profile = await currentProfile();
-  if (profile === null) return { status: 'rejected', reason: 'Entre na sua conta para denunciar uma missão.' };
+  if (profile === null) return { status: 'rejected', reason: t.m.signInToReport };
 
   const { questSlug } = parsed.data;
 
   if (questSlug.startsWith(TEACHER_PREFIX)) {
     if (!(await studentQuestAccess(profile.id, questSlug))) {
-      return { status: 'rejected', reason: QUEST_NOT_FOUND };
+      return { status: 'rejected', reason: t.errors.questNotFound };
     }
-  } else if (!findQuest(questSlug)) {
-    return { status: 'rejected', reason: QUEST_NOT_FOUND };
+  } else if (!findQuest(questSlug, t.locale)) {
+    return { status: 'rejected', reason: t.errors.questNotFound };
   }
 
   const reason = checkPlainText(parsed.data.reason, REPORT_REASON_MAX);
@@ -1550,8 +1631,9 @@ export async function reportQuest(input: { questSlug: string; reason: string }):
       status: 'rejected',
       reason: textProblemMessage(
         reason,
-        'Escreva o motivo da denúncia.',
-        `O motivo passa de ${String(REPORT_REASON_MAX)} caracteres.`,
+        t.m.reportReasonEmpty,
+        t.m.reportReasonTooLong(REPORT_REASON_MAX),
+        t.m.controlCharacter,
       ),
     };
   }
@@ -1563,7 +1645,7 @@ export async function reportQuest(input: { questSlug: string; reason: string }):
     if (countToday >= MAX_REPORTS_PER_DAY) {
       return {
         status: 'rejected',
-        reason: `Você chegou ao limite de ${String(MAX_REPORTS_PER_DAY)} denúncias hoje.`,
+        reason: t.m.reportLimitPerDay(MAX_REPORTS_PER_DAY),
       } as const;
     }
 
@@ -1605,19 +1687,25 @@ function normalizeSearch(text: string): string {
 export async function readCatalog(input: { query?: string } = {}): Promise<readonly CatalogEntry[]> {
   if (!hasDatabase()) return [];
 
+  const locale = await currentLocale();
+
   const parsed = readCatalogSchema.safeParse(input);
   if (!parsed.success) return [];
 
   const profile = await currentProfile();
   if (profile === null) return [];
 
-  const productEntries: CatalogEntry[] = CATALOG.map((quest) => ({
-    slug: quest.slug,
-    title: quest.title,
-    track: quest.track,
-    byTeacher: null,
-    labels: quest.goals.map((goal) => goal.label),
-  }));
+  const productEntries: CatalogEntry[] = CATALOG.map((spec) => {
+    const quest = localize(spec, locale);
+
+    return {
+      slug: quest.slug,
+      title: quest.title,
+      track: quest.track,
+      byTeacher: null,
+      labels: quest.goals.map((goal) => goal.label),
+    };
+  });
 
   const teacherRows = await db.teacherQuest.findMany({
     where: { catalogedAt: { not: null }, archivedAt: null },
@@ -1638,7 +1726,9 @@ export async function readCatalog(input: { query?: string } = {}): Promise<reado
       slug: `${TEACHER_PREFIX}${row.id}`,
       title: row.title,
       byTeacher: { name: row.teacher.displayName, institution: row.teacher.institution },
-      labels: (row.goals as unknown as readonly Goal[]).map((goal) => goal.label),
+      labels: (row.goals as unknown as readonly Goal[]).map((goal) =>
+        goalLabel(locale, goal.condition),
+      ),
     }));
 
   const all = [...productEntries, ...teacherEntries];

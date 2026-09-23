@@ -6,14 +6,18 @@ import type { ReactElement } from 'react';
 import { readLibrary } from '../actions/library';
 import { currentProfile } from '../../lib/auth';
 import { hasDatabase } from '../../lib/db';
+import { serverMessages } from '../../lib/locale';
 import { encodeSmiles } from '../../lib/molecule-url';
 import { LibraryList } from './LibraryList';
+import { libraryMessages } from './messages';
+import { LanguageSwitch } from '../components/LanguageSwitch';
 import styles from './page.module.css';
 
-export const metadata: Metadata = {
-  title: 'Minhas moléculas · Rotamer',
-  description: 'As estruturas que você guardou.',
-};
+/** Título e descrição também são texto de produto, lidos no idioma de quem chega. */
+export async function generateMetadata(): Promise<Metadata> {
+  const m = await serverMessages(libraryMessages);
+  return { title: m.metaTitle, description: m.metaDescription };
+}
 
 /**
  * A estante.
@@ -29,6 +33,7 @@ export default async function LibraryPage(): Promise<ReactElement> {
   if (profile === null) redirect('/entrar');
 
   const molecules = await readLibrary();
+  const m = await serverMessages(libraryMessages);
 
   return (
     <main className={styles.page}>
@@ -38,15 +43,16 @@ export default async function LibraryPage(): Promise<ReactElement> {
           <span className={styles.wordmark}>Rotamer</span>
         </Link>
 
-        <span className={styles.who}>{profile.displayName}</span>
+        <span className={styles.end}>
+          <LanguageSwitch />
+          <span className={styles.who}>{profile.displayName}</span>
+        </span>
       </header>
 
       <div>
-        <h1 className={styles.title}>Minhas moléculas</h1>
+        <h1 className={styles.title}>{m.heading}</h1>
         <p className={styles.subtitle}>
-          {molecules.length === 0
-            ? 'Nada guardado ainda. No editor, abra a análise e use "Guardar" para deixar uma estrutura aqui.'
-            : `${String(molecules.length)} ${molecules.length === 1 ? 'estrutura guardada' : 'estruturas guardadas'}. Abrir traz o desenho de volta para o editor.`}
+          {molecules.length === 0 ? m.empty : m.count(molecules.length)}
         </p>
       </div>
 
@@ -60,11 +66,7 @@ export default async function LibraryPage(): Promise<ReactElement> {
         />
       )}
 
-      <p className={styles.note}>
-        O que fica guardado é o grafo. Fórmula, massa e descritores são derivados dele pelo RDKit e
-        recalculados sempre que a molécula abre — nada aqui é um número guardado que possa
-        envelhecer sozinho.
-      </p>
+      <p className={styles.note}>{m.note}</p>
     </main>
   );
 }

@@ -13,9 +13,14 @@ As que mais importam:
   missão saem **sempre** do RDKit, do campo de força ou do motor de missões. Nunca de um modelo
   de linguagem, e nunca de um cálculo próprio "para resolver rápido". Um químico que ache um
   erro sutil encerra a confiança no produto inteiro.
-- **Código em inglês, texto em português.** Nome de arquivo, variável, função, tipo e chave de
-  dado em inglês; comentário, nome de teste, string de interface e mensagem de erro em pt-BR. O
-  erro explica a química, não o código: "O átomo de C tem 5 ligações, mas suporta no máximo 4".
+- **Código em inglês, texto nos dois idiomas.** Nome de arquivo, variável, função, tipo e chave
+  de dado em inglês; comentário e nome de teste em pt-BR. String de interface e mensagem de erro
+  em **pt-BR e inglês**, lado a lado. O erro explica a química, não o código: "O átomo de C tem
+  5 ligações, mas suporta no máximo 4".
+- **Funcionalidade nova chega traduzida, ou não chega.** Não é item de checklist: o texto se
+  declara com `dictionary({ 'pt-BR': …, en: … })` e **chave sem par não compila**. O contrato
+  inteiro está em [docs/IDIOMAS.md](docs/IDIOMAS.md) — leia antes de escrever a primeira frase
+  de tela.
 - **Cor CPK é do átomo.** Nenhum botão, borda ou estado semântico usa cor CPK. Toda cor, espaço,
   raio e duração vem de `packages/ui/src/tokens.css`. Temas claro e escuro sempre juntos.
 - **Licença compatível com o MIT.** MIT, BSD, Apache-2.0, ISC entram; GPL, LGPL e AGPL não.
@@ -142,6 +147,7 @@ script, e pela tela ele promove no máximo a professor.
 ```
 apps/web            Next.js 16 · rotas, ações de servidor, contas, turmas, listas, tutor
 packages/core       grafo · RDKit · geometria, dinâmica e modos normais — roda sem navegador
+packages/i18n       pt-BR e inglês: dicionário tipado, formatação, frase da química
 packages/editor2d   o canvas 2D: ferramentas, seleção, menu, atalhos, histórico
 packages/viewer3d   Three.js · só render
 packages/quests     missões declarativas, extração de objetivos, pontuação
@@ -180,11 +186,15 @@ em lista, missão de professor ou catálogo, é o documento a ler antes.
    migração em `apps/web/prisma/migrations/`. Coluna não se apaga nem se reescreve: quem sobe a
    própria instância atualiza com `docker compose up -d`, e a migração roda antes de o app abrir
    a porta.
-4. **Texto de tela é conteúdo.** Cada frase que o aluno lê passa pelo mesmo cuidado que o
-   código: pt-BR, sem jargão de programação, e sem afirmar o que o produto não faz — a seção
-   "Nunca afirme" do `CLAUDE.md`.
-5. **Documento descreve o que existe.** Se a mudança contraria um documento em `docs/`, o
-   documento muda no mesmo commit. Decisão nova ou revista vai para `docs/DECISOES.md`, sem
+4. **Texto de tela é conteúdo, e são duas frases.** Cada frase que o aluno lê passa pelo mesmo
+   cuidado que o código: sem jargão de programação, e sem afirmar o que o produto não faz — a
+   seção "Nunca afirme" do `CLAUDE.md`. E chega em pt-BR **e** em inglês, no `messages.ts` ao
+   lado da tela. O `pnpm typecheck` recusa a chave que só tem um lado; o que ele não pega é
+   tradução malfeita, e isso é revisão humana.
+5. **Documento descreve o que existe — nos dois idiomas.** Se a mudança contraria um documento
+   em `docs/`, o documento muda no mesmo commit, e o gêmeo em inglês também (`docs/en/`, ou o
+   `.en.md` ao lado de um documento da raiz). O `pnpm test` falha enquanto o hash no topo do gêmeo
+   não bater com o original. Decisão nova ou revista vai para `docs/DECISOES.md`, sem
    apagar a anterior. Comentário explica **por quê**, não o que a linha faz; nome de teste diz o
    que ele protege.
 6. **Mensagem de commit em português**, no formato `tipo: o que mudou` — `feat:`, `fix:`,

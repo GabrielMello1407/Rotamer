@@ -16,7 +16,6 @@ import type { Assessable, GoalResult, QuestResult } from './types';
 export function evaluateQuest(quest: Assessable, molecule: Molecule): QuestResult {
   const goals: GoalResult[] = quest.goals.map((goal) => ({
     id: goal.id,
-    label: goal.label,
     met: meets(goal.condition, molecule),
   }));
 
@@ -48,7 +47,7 @@ export function evaluateAnalysis(quest: Assessable, analysis: AnalysisResult | n
   if (analysis === null || !analysis.ok) {
     return {
       slug: quest.slug,
-      goals: quest.goals.map((goal) => ({ id: goal.id, label: goal.label, met: false })),
+      goals: quest.goals.map((goal) => ({ id: goal.id, met: false })),
       passed: false,
       met: 0,
       score: 0,

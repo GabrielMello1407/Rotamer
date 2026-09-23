@@ -1,6 +1,7 @@
 'use client';
 
 import { findAtom, findBond, isEmpty, type AtomId, type MoleculeGraph } from '@rotamer/core';
+import { useMessages } from '@rotamer/i18n/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type {
   MouseEvent as ReactMouseEvent,
@@ -9,6 +10,7 @@ import type {
   WheelEvent as ReactWheelEvent,
 } from 'react';
 import { useStore } from 'zustand';
+import { canvasMessages, contextMenuMessages } from './messages';
 import { ContextMenu, type MenuEntry } from './ContextMenu';
 import styles from './Editor2D.module.css';
 import { elementForKey, shortcutsApply } from './keys';
@@ -109,6 +111,7 @@ function entriesFor(
   graph: MoleculeGraph,
   target: Hover,
   onTidy: (() => void) | null,
+  messages: ContextMenuText,
 ): MenuEntry[] {
   const state = store.getState();
 
@@ -119,7 +122,7 @@ function entriesFor(
     (target?.kind === 'atom' && state.selection.atoms.has(target.id)) ||
     (target?.kind === 'bond' && state.selection.bonds.has(target.id))
   ) {
-    return selectionEntries(state, graph, state.selection);
+    return selectionEntries(state, graph, state.selection, messages);
   }
 
   if (target?.kind === 'atom') {
@@ -127,7 +130,7 @@ function entriesFor(
     if (!atom) return [];
 
     return [
-      { kind: 'title', label: `Átomo de ${atom.element}` },
+      { kind: 'title', label: messages.atomOf(atom.element) },
       {
         kind: 'elements',
         active: atom.element,
@@ -136,10 +139,10 @@ function entriesFor(
         },
       },
       { kind: 'divider' },
-      { kind: 'title', label: 'carga formal' },
+      { kind: 'title', label: messages.formalCharge },
       ...CHARGES.map((charge) => ({
         kind: 'item' as const,
-        label: chargeLabel(charge),
+        label: chargeLabel(charge, messages),
         active: atom.charge === charge,
         testId: `menu-carga-${String(charge)}`,
         onPick: () => {
@@ -149,7 +152,7 @@ function entriesFor(
       { kind: 'divider' },
       {
         kind: 'item',
-        label: 'Apagar o átomo',
+        label: messages.eraseAtom,
         danger: true,
         testId: 'menu-apagar-atomo',
         onPick: () => {
@@ -166,10 +169,10 @@ function entriesFor(
     const wedge = bond.wedge ?? 'none';
 
     return [
-      { kind: 'title', label: 'Ligação' },
-      ...ORDERS.map(([order, label]) => ({
+      { kind: 'title', label: messages.bond },
+      ...ORDERS.map((order) => ({
         kind: 'item' as const,
-        label,
+        label: messages[ORDER_KEYS[order]],
         active: bond.order === order,
         testId: `menu-ordem-${String(order)}`,
         onPick: () => {
@@ -177,10 +180,10 @@ function entriesFor(
         },
       })),
       { kind: 'divider' },
-      { kind: 'title', label: 'estereoquímica' },
-      ...WEDGES.map(([kind, label]) => ({
+      { kind: 'title', label: messages.stereochemistry },
+      ...WEDGES.map((kind) => ({
         kind: 'item' as const,
-        label,
+        label: messages[WEDGE_KEYS[kind]],
         active: wedge === kind,
         testId: `menu-cunha-${kind}`,
         onPick: () => {
@@ -194,7 +197,7 @@ function entriesFor(
         : [
             {
               kind: 'item' as const,
-              label: 'Inverter a ponta fina',
+              label: messages.flipWedge,
               testId: 'menu-inverter-cunha',
               onPick: () => {
                 state.flipWedge(bond.id);
@@ -204,7 +207,7 @@ function entriesFor(
       { kind: 'divider' },
       {
         kind: 'item',
-        label: 'Apagar a ligação',
+        label: messages.eraseBond,
         danger: true,
         testId: 'menu-apagar-ligacao',
         onPick: () => {
@@ -226,14 +229,14 @@ function entriesFor(
       : [
           {
             kind: 'item' as const,
-            label: 'Organizar o desenho',
+            label: messages.tidy,
             testId: 'menu-organizar',
             onPick: onTidy,
           },
         ]),
     {
       kind: 'item',
-      label: 'Enquadrar a molécula',
+      label: messages.fit,
       testId: 'menu-enquadrar',
       onPick: () => {
         state.frame();
@@ -243,7 +246,7 @@ function entriesFor(
       ? [
           {
             kind: 'item' as const,
-            label: 'Desfazer',
+            label: messages.undo,
             testId: 'menu-desfazer',
             onPick: () => {
               store.getState().undo();
@@ -255,7 +258,7 @@ function entriesFor(
       ? [
           {
             kind: 'item' as const,
-            label: 'Refazer',
+            label: messages.redo,
             testId: 'menu-refazer',
             onPick: () => {
               store.getState().redo();
@@ -266,7 +269,7 @@ function entriesFor(
     { kind: 'divider' },
     {
       kind: 'item',
-      label: 'Limpar a tela',
+      label: messages.clear,
       danger: true,
       testId: 'menu-limpar',
       onPick: () => {
@@ -290,14 +293,15 @@ function selectionEntries(
   state: EditorState,
   graph: MoleculeGraph,
   selection: Selection,
+  messages: ContextMenuText,
 ): MenuEntry[] {
   const commonElement = commonElementOf(graph, selection.atoms);
 
   return [
-    { kind: 'title', label: 'Seleção' },
+    { kind: 'title', label: messages.selection },
     ...(selection.atoms.size > 0
       ? [
-          { kind: 'title' as const, label: 'trocar o elemento' },
+          { kind: 'title' as const, label: messages.changeElement },
           {
             kind: 'elements' as const,
             active: commonElement,
@@ -310,10 +314,10 @@ function selectionEntries(
       : []),
     ...(selection.bonds.size > 0
       ? [
-          { kind: 'title' as const, label: 'ordem das ligações' },
-          ...ORDERS.map(([order, label]) => ({
+          { kind: 'title' as const, label: messages.bondOrders },
+          ...ORDERS.map((order) => ({
             kind: 'item' as const,
-            label,
+            label: messages[ORDER_KEYS[order]],
             testId: `menu-selecao-ordem-${String(order)}`,
             onPick: () => {
               state.setSelectionOrder(order);
@@ -324,7 +328,7 @@ function selectionEntries(
       : []),
     {
       kind: 'item',
-      label: 'Soltar a seleção',
+      label: messages.clearSelection,
       testId: 'menu-soltar-selecao',
       onPick: () => {
         state.clearSelection();
@@ -332,7 +336,9 @@ function selectionEntries(
     },
     {
       kind: 'item',
-      label: `Apagar ${selectionCount(selection.atoms.size, selection.bonds.size)}`,
+      label: messages.eraseSelection(
+        messages.selectionCount(selection.atoms.size, selection.bonds.size),
+      ),
       danger: true,
       testId: 'menu-apagar-selecao',
       onPick: () => {
@@ -360,39 +366,6 @@ function commonElementOf(graph: MoleculeGraph, atoms: ReadonlySet<AtomId>): stri
   return common;
 }
 
-/**
- * "7 átomos e 6 ligações" — a contagem que entra na dica e nos rótulos do
- * menu. O plural é escrito à mão porque um átomo é um átomo: "1 átomos" numa
- * tela de aula é o tipo de descuido que a turma inteira copia.
- */
-/**
- * "selecionado", "selecionada", "selecionados", "selecionadas".
- *
- * Três casos, e é a gramática que os separa. Com átomo e ligação juntos, o
- * particípio vai para o masculino plural, que é como o português concorda um
- * adjetivo posposto a substantivos de gêneros diferentes: "2 átomos e 1 ligação
- * selecionados". Sozinhos, cada um concorda consigo. Sem isto, o caso mais
- * comum da ferramenta — um átomo só — saía escrito "1 átomo selecionados".
- */
-function selectedWord(selection: Selection): string {
-  const atoms = selection.atoms.size;
-  const bonds = selection.bonds.size;
-
-  if (atoms > 0 && bonds > 0) return 'selecionados';
-  if (bonds > 0) return bonds === 1 ? 'selecionada' : 'selecionadas';
-
-  return atoms === 1 ? 'selecionado' : 'selecionados';
-}
-
-function selectionCount(atoms: number, bonds: number): string {
-  const a = `${String(atoms)} ${atoms === 1 ? 'átomo' : 'átomos'}`;
-  const b = `${String(bonds)} ${bonds === 1 ? 'ligação' : 'ligações'}`;
-
-  if (atoms === 0) return b;
-  if (bonds === 0) return a;
-  return `${a} e ${b}`;
-}
-
 /** O mesmo átomo, a mesma ligação — usado para reconhecer o duplo toque. */
 function sameHover(a: Hover, b: Hover): boolean {
   if (a === null || b === null) return false;
@@ -412,24 +385,38 @@ const DOUBLE_TAP_MS = 350;
 /** As cargas que aparecem em aula de orgânica, e nada além delas. */
 const CHARGES = [1, 0, -1] as const;
 
-function chargeLabel(charge: number): string {
-  if (charge === 0) return 'Sem carga';
-  return charge > 0 ? 'Positiva (+1)' : 'Negativa (−1)';
+function chargeLabel(charge: number, messages: ContextMenuText): string {
+  if (charge === 0) return messages.chargeNone;
+  return charge > 0 ? messages.chargePositive : messages.chargeNegative;
 }
 
-const ORDERS = [
-  [1, 'Simples'],
-  [2, 'Dupla'],
-  [3, 'Tripla'],
-] as const;
+/** As ordens de ligação que o menu oferece. A ordem é número, não palavra. */
+const ORDERS = [1, 2, 3] as const;
 
-/* O texto diz o que a notação significa: cunha e traço são projeção, e a pessoa
-   que está aprendendo ainda não lê "up" e "down" como frente e trás. */
-const WEDGES = [
-  ['none', 'No plano'],
-  ['up', 'Cunha cheia — vem para frente'],
-  ['down', 'Traço — vai para trás'],
-] as const;
+const ORDER_KEYS: Readonly<Record<(typeof ORDERS)[number], 'single' | 'double' | 'triple'>> = {
+  1: 'single',
+  2: 'double',
+  3: 'triple',
+};
+
+/*
+ * Cunha e traço são projeção, e quem está aprendendo ainda não lê "up" e "down"
+ * como frente e trás — é o dicionário que explica isso, em cada idioma. Aqui
+ * fica só a notação que o grafo guarda.
+ */
+const WEDGES = ['none', 'up', 'down'] as const;
+
+const WEDGE_KEYS: Readonly<Record<(typeof WEDGES)[number], 'inPlane' | 'wedge' | 'dash'>> = {
+  none: 'inPlane',
+  up: 'wedge',
+  down: 'dash',
+};
+
+/** O lado do dicionário do menu que está valendo agora. */
+type ContextMenuText = (typeof contextMenuMessages)['pt-BR'];
+
+/** O lado do dicionário da tela de desenho que está valendo agora. */
+type CanvasText = (typeof canvasMessages)['pt-BR'];
 
 /**
  * A dica que fica no pé da tela.
@@ -439,7 +426,13 @@ const WEDGES = [
  * porque cada ferramenta responde a arrasto de um jeito diferente e adivinhar
  * isso não é parte de aprender química.
  */
-function hintFor(tool: Tool, graph: MoleculeGraph, hover: Hover, selection: Selection): string | null {
+function hintFor(
+  tool: Tool,
+  graph: MoleculeGraph,
+  hover: Hover,
+  selection: Selection,
+  messages: CanvasText,
+): string | null {
   /*
    * A dica da seleção só aparece na ferramenta Selecionar.
    *
@@ -449,47 +442,43 @@ function hintFor(tool: Tool, graph: MoleculeGraph, hover: Hover, selection: Sele
    * estrutura.
    */
   if (tool === 'select' && (selection.atoms.size > 0 || selection.bonds.size > 0)) {
-    return `${selectionCount(selection.atoms.size, selection.bonds.size)} ${selectedWord(
-      selection,
-    )}. Arraste de dentro para mover · Delete apaga · clique no vazio solta.`;
+    return `${messages.selected(selection.atoms.size, selection.bonds.size)}. ${messages.selectionHint}`;
   }
 
   // Fora dela, a seleção continua existindo e o caminho para agir sobre ela é
   // voltar à ferramenta — é isso que a dica diz.
   if (selection.atoms.size > 0 || selection.bonds.size > 0) {
-    return `${selectionCount(selection.atoms.size, selection.bonds.size)} ${selectedWord(
-      selection,
-    )}. Tecle V para mover ou apagar em bloco · Esc solta.`;
+    return `${messages.selected(selection.atoms.size, selection.bonds.size)}. ${messages.selectionHintElsewhere}`;
   }
 
   if (tool === 'select') {
-    return 'Arraste no fundo para cercar um pedaço · dois toques pegam o fragmento inteiro · dois dedos movem a vista.';
+    return messages.selectHint;
   }
 
   // A dica mais útil é a que chega na hora da intenção: com o cursor em cima de
   // uma ligação, o que a pessoa quer saber é como transformá-la em dupla.
   if (tool === 'structure' && hover?.kind === 'bond') {
-    return 'Clique na ligação para trocar a ordem: simples → dupla → tripla.';
+    return messages.bondHint;
   }
 
   if (tool === 'move') {
-    return 'Arraste um átomo para movê-lo. Arraste o fundo para mover a vista.';
+    return messages.moveHint;
   }
 
   if (tool === 'erase') {
-    return 'Clique num átomo ou numa ligação para apagar.';
+    return messages.eraseHint;
   }
 
   if (tool === 'stereo') {
-    return 'Clique numa ligação simples: plano, cunha cheia, cunha tracejada. Com Shift, a cunha vira de lado.';
+    return messages.stereoHint;
   }
 
   if (isEmpty(graph)) {
-    return 'Clique para começar um átomo. Arraste de um átomo para puxar uma ligação, e clique na ligação para fazer dupla.';
+    return messages.emptyHint;
   }
 
   if (graph.atoms.length <= 3) {
-    return 'Clique numa ligação para trocar a ordem: simples → dupla → tripla. Para mover um átomo, use a ferramenta de mover — ou segure Shift.';
+    return messages.smallHint;
   }
 
   /*
@@ -500,7 +489,7 @@ function hintFor(tool: Tool, graph: MoleculeGraph, hover: Hover, selection: Sele
    * precisa para crescer.
    */
   if (graph.atoms.length >= 8 && graph.atoms.length <= 14) {
-    return 'Para pegar um pedaço inteiro, use Selecionar (V) — ou segure Shift e arraste no fundo.';
+    return messages.growingHint;
   }
 
   return null;
@@ -515,6 +504,8 @@ function hintFor(tool: Tool, graph: MoleculeGraph, hover: Hover, selection: Sele
  * o grafo vai para o RDKit responder se aquilo existe.
  */
 export function Editor2D({ store, className, onTidy, notice }: Editor2DProps): ReactElement {
+  const canvasText = useMessages(canvasMessages);
+  const menuText = useMessages(contextMenuMessages);
   const frameRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const paletteRef = useRef<EditorPalette | null>(null);
@@ -1305,7 +1296,7 @@ export function Editor2D({ store, className, onTidy, notice }: Editor2DProps): R
   }, []);
 
   const entries = useMemo(
-    () => (menu === null ? [] : entriesFor(store, graph, menu.target, onTidy ?? null)),
+    () => (menu === null ? [] : entriesFor(store, graph, menu.target, onTidy ?? null, menuText)),
     [menu, store, graph, onTidy],
   );
 
@@ -1316,7 +1307,7 @@ export function Editor2D({ store, className, onTidy, notice }: Editor2DProps): R
     };
   }, [handleKeyDown]);
 
-  const hint = hintFor(tool, graph, hover, selection);
+  const hint = hintFor(tool, graph, hover, selection, canvasText);
 
   /*
    * A escala da câmera fica legível no DOM.
@@ -1350,17 +1341,15 @@ export function Editor2D({ store, className, onTidy, notice }: Editor2DProps): R
       className={classes}
       tabIndex={0}
       role="application"
-      aria-label="Tela de desenho da molécula"
+      aria-label={canvasText.label}
       data-camera-scale={scaleLabel}
     >
       {/* Quem seleciona com Ctrl+A não vê o marca-texto: sem isto, nada
           anuncia para o leitor de tela que a seleção mudou. */}
       <p className={styles.announce} role="status" aria-live="polite">
         {selectionEmpty
-          ? 'Nada selecionado.'
-          : `${selectionCount(selection.atoms.size, selection.bonds.size)} ${selectedWord(
-              selection,
-            )}.`}
+          ? canvasText.nothingSelected
+          : `${canvasText.selected(selection.atoms.size, selection.bonds.size)}.`}
       </p>
 
       <canvas
@@ -1400,7 +1389,7 @@ export function Editor2D({ store, className, onTidy, notice }: Editor2DProps): R
               <button
                 type="button"
                 className={styles.noticeClose}
-                aria-label="Fechar o aviso"
+                aria-label={canvasText.dismissNotice}
                 data-testid="fechar-aviso-organizar"
                 onClick={notice.onClose}
               >

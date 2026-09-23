@@ -22,13 +22,20 @@ Primeiro o que encerra o produto, depois o que irrita, por último o que enfeita
    reavaliada no servidor.
 4. **Teste que prova.** Existe teste que **falharia sem esta mudança**? Se não existe, o achado é
    esse. Rode `pnpm lint`, `pnpm typecheck`, `pnpm test` e o `test:e2e` do fluxo tocado.
-5. **Convenções.** Código em inglês e texto em pt-BR. Erro que explica a química, não o código.
-   Nenhum hex solto; nenhuma cor CPK em elemento de interface; claro e escuro juntos;
-   `tabular-nums` em número. Missão e pontuação fora da trilha Otimização.
-6. **Dependência.** Pacote novo com licença compatível com MIT — GPL, LGPL e AGPL ficam fora. Peso novo no
+5. **Os dois idiomas.** Texto de tela novo chega em pt-BR **e** em inglês, no `messages.ts` ao
+   lado de quem o usa (D-30, `docs/IDIOMAS.md`). O tipo já recusa a chave sem par — o que você
+   procura é o que ele não vê: frase em inglês que diz outra coisa, termo do domínio traduzido de
+   dois jeitos no mesmo dicionário, `Intl.NumberFormat('pt-BR')` escrito à mão, conteúdo de quem
+   usa o produto traduzido, notação química traduzida.
+6. **Convenções.** Código em inglês; comentário e nome de teste em pt-BR. Erro que explica a
+   química, não o código. Nenhum hex solto; nenhuma cor CPK em elemento de interface; claro e
+   escuro juntos; `tabular-nums` em número. Missão e pontuação fora da trilha Otimização.
+7. **Dependência.** Pacote novo com licença compatível com MIT — GPL, LGPL e AGPL ficam fora. Peso novo no
    pacote inicial justificado.
-7. **Documento.** Decisão nova ou revista em `docs/DECISOES.md`, sem apagar a anterior. Ideia fora
-   de escopo em `docs/FORA-DE-ESCOPO.md`, não no código.
+8. **Documento.** Decisão nova ou revista em `docs/DECISOES.md`, sem apagar a anterior. Ideia fora
+   de escopo em `docs/FORA-DE-ESCOPO.md`, não no código. Documento alterado tem o gêmeo em inglês
+   alterado junto (`docs/en/`, `*.en.md`) — e o que se revisa ali é se o inglês diz a mesma coisa,
+   não só se o hash foi trocado.
 
 ## Como você relata
 

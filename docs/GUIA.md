@@ -1,10 +1,21 @@
 # Guia de uso
 
 Como usar o Rotamer, tela a tela — para quem aprende e para quem ensina. Os textos entre aspas
-são os que aparecem na tela.
+são os que aparecem na tela, em pt-BR.
 
 O editor abre **sem cadastro**: quem entra no endereço já desenha. Conta só é preciso para
 guardar progresso e moléculas, entrar numa turma e batizar estrutura.
+
+**O produto fala português e inglês.** Sem escolha guardada, vale o idioma do navegador; sem
+isso, pt-BR. **Para trocar, use o botão com o globo** na barra de cima do editor, ou no canto do
+cabeçalho de qualquer outra página: ele mostra o nome do outro idioma — `English` numa tela em
+português, `Português` numa tela em inglês. O seletor com as duas opções lado a lado também está
+no rodapé do painel `Análise`, ao lado do de tema, e na página `/marca`. A escolha vale para a
+instância inteira e sobrevive à recarga. O número acompanha: 46,07 em
+português, 46.07 em inglês. O que **não** muda de idioma é o que uma pessoa escreveu — nome de
+turma, apelido de molécula, enunciado de missão de professor — nem a notação química: fórmula,
+SMILES, InChIKey, símbolo, unidade, `R`/`S`. O endereço também não: `/turmas` é `/turmas` nos
+dois idiomas.
 
 ---
 
@@ -14,7 +25,7 @@ A tela de desenho ocupa a página; o resto se apoia nas bordas dela.
 
 | Onde | O quê |
 |---|---|
-| Faixa de cima | a marca, a **fórmula e a massa** do que está desenhado, o estado (`válida`, `estrutura impossível`, `carregando o motor`), `Guardar`, `Exemplos`, `Missões`, `Análise`, e `Entrar` ou o seu nome |
+| Faixa de cima | a marca, a **fórmula e a massa** do que está desenhado, o estado (`válida`, `estrutura impossível`, `carregando o motor`), `Guardar`, `Exemplos`, `Missões`, `Análise`, o botão de idioma (`English`), e `Entrar` ou o seu nome |
 | Barra em pé, à esquerda | as ferramentas, os elementos, os anéis prontos, organizar, desfazer e refazer, enquadrar, nova molécula, atalhos |
 | Faixa de baixo | cinco números que mudam a cada traço — massa, TPSA, rotáveis, anéis, doadores/aceitadores — e a regra dos cinco |
 | Canto inferior direito | a **cena 3D**, que dobra e vibra |
@@ -65,8 +76,9 @@ menu.
 **A faixa de cima** mostra a fórmula e a massa assim que a estrutura fecha, e o estado:
 
 - `válida` — o RDKit aceitou.
-- `estrutura impossível` — e a faixa de baixo diz por quê, em português: *"O átomo de C tem 5
-  ligações, mas suporta no máximo 4."* O átomo com problema aparece com um círculo tracejado.
+- `estrutura impossível` — e a faixa de baixo diz por quê, no idioma de quem está lendo: *"O
+  átomo de C tem 5 ligações, mas suporta no máximo 4."* O átomo com problema aparece com um
+  círculo tracejado.
   `Ver o que fazer` abre o painel com a explicação e a correção.
 - `carregando o motor` — o RDKit ainda está subindo (uma vez por visita; depois fica em cache).
 
@@ -85,7 +97,8 @@ aromaticidade); a aspirina tem 2 rotacionáveis na definição estrita (o PubChe
   PubChem, a tela avisa — colar SMILES continua funcionando.
 - **Exemplos** (na faixa de cima): etanol, ácido acético, benzeno, paracetamol, aspirina,
   cafeína.
-- **Grupos funcionais** reconhecidos, com nome em português: éster, ácido carboxílico, amida…
+- **Grupos funcionais** reconhecidos, com o nome no idioma de quem lê: éster, ácido carboxílico,
+  amida… Quem reconhece é o RDKit, casando SMARTS; o idioma só muda a palavra.
 - **Identidade:** átomos pesados, heteroátomos, anéis, rotacionáveis, doadores/aceitadores,
   TPSA, logP, refratividade molar, fração sp³, estereocentros (e quantos estão sem
   configuração), massa exata, InChIKey, SMILES.

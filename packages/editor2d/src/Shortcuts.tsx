@@ -1,5 +1,8 @@
+import { useLocale, useMessages } from '@rotamer/i18n/react';
 import { type ReactElement } from 'react';
+import { elementName } from './element-names';
 import { ELEMENT_SHORTCUTS } from './keys';
+import { shortcutsMessages } from './messages';
 import { Popover } from './Popover';
 import styles from './Shortcuts.module.css';
 
@@ -26,44 +29,52 @@ interface Group {
   readonly rows: readonly (readonly [string, string])[];
 }
 
-const GROUPS: readonly Group[] = [
-  {
-    title: 'elementos',
-    // Sai da mesma lista que o editor lê para trocar o elemento: a folha não
-    // tem como prometer uma tecla que o teclado não faz.
-    rows: ELEMENT_SHORTCUTS.map((entry) => [entry.key, entry.name] as const),
-  },
-  {
-    title: 'ferramentas',
-    rows: [
-      ['D', 'desenhar'],
-      ['M', 'mover átomo ou a vista'],
-      ['V', 'selecionar um pedaço'],
-      ['W', 'cunha e traço'],
-      ['E', 'apagar'],
-    ],
-  },
-  {
-    title: 'na tela',
-    rows: [
-      ['0', 'enquadrar a molécula'],
-      ['Ctrl+A', 'selecionar tudo'],
-      ['Delete', 'apagar a seleção, ou o que está sob o cursor'],
-      ['Ctrl+Z', 'desfazer'],
-      ['Ctrl+Shift+Z', 'refazer'],
-      ['Ctrl+Y', 'refazer também'],
-      ['Esc', 'fechar'],
-    ],
-  },
-];
-
 export function Shortcuts({ anchor, onClose }: ShortcutsProps): ReactElement {
+  const locale = useLocale();
+  const messages = useMessages(shortcutsMessages);
+
+  /*
+   * A tecla vem de `keys.ts` e o que ela faz vem do dicionário. É o que
+   * mantém a promessa da folha: tecla nova aparece aqui sozinha, e frase nova
+   * não compila sem os dois idiomas.
+   */
+  const groups: readonly Group[] = [
+    {
+      title: messages.elements,
+      rows: ELEMENT_SHORTCUTS.map(
+        (entry) => [entry.key, elementName(locale, entry.symbol).toLocaleLowerCase(locale)] as const,
+      ),
+    },
+    {
+      title: messages.tools,
+      rows: [
+        ['D', messages.draw],
+        ['M', messages.move],
+        ['V', messages.select],
+        ['W', messages.stereo],
+        ['E', messages.erase],
+      ],
+    },
+    {
+      title: messages.onScreen,
+      rows: [
+        ['0', messages.fit],
+        ['Ctrl+A', messages.selectAll],
+        ['Delete', messages.deleteSelection],
+        ['Ctrl+Z', messages.undo],
+        ['Ctrl+Shift+Z', messages.redo],
+        ['Ctrl+Y', messages.redoToo],
+        ['Esc', messages.close],
+      ],
+    },
+  ];
+
   return (
-    <Popover anchor={anchor} label="Atalhos" className={styles.sheet} onClose={onClose}>
-      <h2 className={styles.title}>Atalhos</h2>
+    <Popover anchor={anchor} label={messages.title} className={styles.sheet} onClose={onClose}>
+      <h2 className={styles.title}>{messages.title}</h2>
 
       <div className={styles.groups}>
-        {GROUPS.map((group) => (
+        {groups.map((group) => (
           <section key={group.title} className={styles.group}>
             <h3 className={styles.groupTitle}>{group.title}</h3>
 
@@ -81,10 +92,7 @@ export function Shortcuts({ anchor, onClose }: ShortcutsProps): ReactElement {
         ))}
       </div>
 
-      <p className={styles.quiet}>
-        As letras valem em qualquer lugar da página, menos enquanto você escreve num campo de
-        texto.
-      </p>
+      <p className={styles.quiet}>{messages.footnote}</p>
     </Popover>
   );
 }

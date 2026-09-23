@@ -24,6 +24,7 @@
     "@rdkit/rdkit": "2025.3.4-1.0.0",
     "@rotamer/core": "workspace:*",
     "@rotamer/editor2d": "workspace:*",
+    "@rotamer/i18n": "workspace:*",
     "@rotamer/quests": "workspace:*",
     "@rotamer/ui": "workspace:*",
     "@rotamer/viewer3d": "workspace:*",

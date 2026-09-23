@@ -167,7 +167,15 @@ export type ChemistryErrorCode =
    * continuam valendo — só a cena 3D fica de fora, e a tela precisa dizer isso
    * sem transformar uma limitação nossa em erro do aluno.
    */
-  | 'geometry_unavailable';
+  | 'geometry_unavailable'
+  /**
+   * Nem um arranjo tridimensional saiu — o gerador de conformações desistiu.
+   *
+   * Também não é erro do aluno, e é uma recusa mais estreita que
+   * `geometry_unavailable`: ali o cálculo falhou em algum ponto; aqui não houve
+   * sequer uma primeira posição para os átomos.
+   */
+  | 'conformer_unavailable';
 
 /** Átomo que causou o erro, quando foi possível apontar um. */
 export interface OffendingAtom {
@@ -182,12 +190,16 @@ export interface OffendingAtom {
 }
 
 /**
- * Erro químico em português, explicando a química e não o código.
- * "O átomo de C tem 5 ligações, mas suporta no máximo 4" — nunca "valence error".
+ * A recusa do núcleo: o código e os números que a justificam.
+ *
+ * **Não há frase aqui.** O núcleo não depende de ninguém e não fala idioma
+ * nenhum; quem transforma `valence_exceeded` em "o átomo de C tem 5 ligações,
+ * mas suporta no máximo 4" é `chemistryErrorText`, em `@rotamer/i18n`. Assim a
+ * mesma recusa sai em português para a turma e em inglês para quem não lê
+ * português, sem o núcleo saber que idiomas existem.
  */
 export interface ChemistryError {
   readonly code: ChemistryErrorCode;
-  readonly message: string;
   readonly atom?: OffendingAtom;
 }
 

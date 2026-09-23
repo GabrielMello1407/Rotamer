@@ -17,17 +17,14 @@ import type {
   StereoLabels,
 } from './types';
 
-const NOTHING_DRAWN: ChemistryError = {
-  code: 'empty',
-  message: 'Não há nenhum átomo para analisar.',
-};
+const NOTHING_DRAWN: ChemistryError = { code: 'empty' };
 
 /**
  * Analisa uma estrutura — SMILES ou molblock — e devolve a molécula sanitizada
  * ou o motivo químico de ela não existir.
  *
  * Esta função é o ponto onde o produto responde "é válido?". A resposta vem do
- * RDKit; o que fazemos aqui é traduzir a recusa dele para português que explica
+ * RDKit; o que fazemos aqui é traduzir a recusa dele para um código que explica
  * a química.
  */
 export async function analyze(input: string, options?: RDKitOptions): Promise<AnalysisResult> {
@@ -197,11 +194,7 @@ function diagnose(rdkit: RDKitModule, input: string): ChemistryError {
   const unsanitized = parseMol(rdkit, input, JSON.stringify({ sanitize: false }));
 
   if (unsanitized === null) {
-    return {
-      code: 'invalid_syntax',
-      message:
-        'Não consegui ler essa estrutura. Verifique se todos os anéis estão fechados e se os símbolos dos elementos existem.',
-    };
+    return { code: 'invalid_syntax' };
   }
 
   try {
@@ -218,25 +211,16 @@ function diagnose(rdkit: RDKitModule, input: string): ChemistryError {
       if (bonds > max) {
         return {
           code: 'valence_exceeded',
-          message: `O átomo de ${symbol} tem ${String(bonds)} ligações, mas suporta no máximo ${String(max)}.`,
           atom: { index: atom.index, symbol, bonds, max },
         };
       }
     }
 
     if (looksAromatic(input)) {
-      return {
-        code: 'impossible_aromaticity',
-        message:
-          'Há um anel marcado como aromático que não fecha: não existe alternância de ligações simples e duplas que satisfaça a valência de todos os átomos dele.',
-      };
+      return { code: 'impossible_aromaticity' };
     }
 
-    return {
-      code: 'invalid_structure',
-      message:
-        'Essa estrutura não passa na verificação química: os átomos estão legíveis, mas o arranjo entre eles não descreve uma molécula possível.',
-    };
+    return { code: 'invalid_structure' };
   } finally {
     unsanitized.delete();
   }

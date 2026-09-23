@@ -1,10 +1,13 @@
 'use client';
 
 import type { AnalysisResult } from '@rotamer/core';
-import { extractGoals, type CandidateGoal } from '@rotamer/quests';
+import { chemistryErrorText } from '@rotamer/i18n';
+import { useFormatters, useLocale, useMessages } from '@rotamer/i18n/react';
+import { extractGoals, goalLabel, type CandidateGoal } from '@rotamer/quests';
 import { Formula, Label, SourceBadge } from '@rotamer/ui';
 import { useMemo, type ReactElement } from 'react';
-import { messages } from '../turmas/messages';
+import { messages as classroomMessages } from '../turmas/messages';
+import { authoringPanelMessages } from './messages';
 import styles from './AuthoringPanel.module.css';
 
 export interface AuthoringPanelProps {
@@ -32,11 +35,18 @@ const BRIEF_MAX = 400;
 const HINT_MAX = 200;
 const HINTS_MAX = 3;
 
-const BLOCKS: readonly { readonly kind: CandidateGoal['kind']; readonly label: string }[] = [
-  { kind: 'identity', label: messages.authoring.blockIdentity },
-  { kind: 'formula', label: messages.authoring.blockFormula },
-  { kind: 'group', label: messages.authoring.blockGroups },
-  { kind: 'count', label: messages.authoring.blockCounts },
+/**
+ * As quatro caixas em que os candidatos se agrupam. O `kind` é o que o
+ * extrator devolve; o nome da caixa vem do dicionário, no idioma de quem lê.
+ */
+const BLOCKS: readonly {
+  readonly kind: CandidateGoal['kind'];
+  readonly label: 'blockIdentity' | 'blockFormula' | 'blockGroups' | 'blockCounts';
+}[] = [
+  { kind: 'identity', label: 'blockIdentity' },
+  { kind: 'formula', label: 'blockFormula' },
+  { kind: 'group', label: 'blockGroups' },
+  { kind: 'count', label: 'blockCounts' },
 ];
 
 /**
@@ -63,6 +73,11 @@ export function AuthoringPanel({
   onRemoveHint,
   error,
 }: AuthoringPanelProps): ReactElement {
+  const locale = useLocale();
+  const messages = useMessages(classroomMessages);
+  const text = useMessages(authoringPanelMessages);
+  const { number } = useFormatters();
+
   const candidates = useMemo<readonly CandidateGoal[]>(
     () => (analysis?.ok === true ? extractGoals(analysis.molecule) : []),
     [analysis],
@@ -76,7 +91,9 @@ export function AuthoringPanel({
     return (
       <section className={styles.panel} data-testid="painel-autoria">
         <p className={styles.quiet}>
-          {analysis === null ? messages.authoring.nothingDrawn : analysis.error.message}
+          {analysis === null
+            ? messages.authoring.nothingDrawn
+            : chemistryErrorText(locale, analysis.error)}
         </p>
         {analysis !== null && <p className={styles.quiet}>{messages.errors.structureCantClose}</p>}
       </section>
@@ -92,13 +109,10 @@ export function AuthoringPanel({
         <p className={styles.structureLine}>
           <Formula value={molecule.formula} />
           <span className={styles.dot}>·</span>
-          {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
-            molecule.descriptors.molarMass,
-          )}{' '}
-          g/mol
+          {number(molecule.descriptors.molarMass, 2)} g/mol
           <span className={styles.dot}>·</span>
-          {molecule.groups.length} {molecule.groups.length === 1 ? 'grupo funcional' : 'grupos funcionais'}
-          <SourceBadge source="computed" className={styles.badge} />
+          {text.groupCount(molecule.groups.length)}
+          <SourceBadge source="computed" locale={locale} className={styles.badge} />
         </p>
         <p className={styles.quiet}>{messages.authoring.keptInside}</p>
       </div>
@@ -126,7 +140,7 @@ export function AuthoringPanel({
 
           return (
             <div key={block.kind} className={styles.block}>
-              <Label>{block.label}</Label>
+              <Label>{messages.authoring[block.label]}</Label>
               <ul className={styles.goalList} aria-label={messages.a11y.goalsList}>
                 {inBlock.map((candidate) => {
                   const checked = selectedGoalIds.has(candidate.id);
@@ -149,7 +163,9 @@ export function AuthoringPanel({
                           }}
                           data-testid={`objetivo-${candidate.id}`}
                         />
-                        <span className={styles.goalLabel}>{candidate.label}</span>
+                        <span className={styles.goalLabel}>
+                          {goalLabel(locale, candidate.condition)}
+                        </span>
                         <span className={styles.goalMeasured}>{candidate.measured}</span>
                       </label>
 

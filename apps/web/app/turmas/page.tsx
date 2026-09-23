@@ -7,15 +7,18 @@ import { readClassrooms } from '../actions/classroom';
 import { readSchoolStaff } from '../actions/staff';
 import { currentProfile } from '../../lib/auth';
 import { db, hasDatabase } from '../../lib/db';
+import { serverMessages } from '../../lib/locale';
 import { administers, teaches } from '../../lib/roles';
 import { Classrooms } from './Classrooms';
+import { messages } from './messages';
 import { Staff } from './Staff';
+import { LanguageSwitch } from '../components/LanguageSwitch';
 import styles from './page.module.css';
 
-export const metadata: Metadata = {
-  title: 'Turmas · Rotamer',
-  description: 'Abrir turma, entrar numa turma e ver onde a turma parou.',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const m = await serverMessages(messages);
+  return { title: m.classrooms.pageMetaTitle, description: m.classrooms.pageMetaDescription };
+}
 
 /**
  * Turmas.
@@ -42,6 +45,8 @@ export default async function ClassroomsPage(): Promise<ReactElement> {
   // pagar uma ida ao banco para descobrir que não tem nada a ver com isso.
   const staff = administers(row?.role) ? await readSchoolStaff() : null;
 
+  const m = await serverMessages(messages);
+
   return (
     <main className={styles.page}>
       <header className={styles.top}>
@@ -50,16 +55,15 @@ export default async function ClassroomsPage(): Promise<ReactElement> {
           <span className={styles.wordmark}>Rotamer</span>
         </Link>
 
-        <span className={styles.who}>{profile.displayName}</span>
+        <span className={styles.end}>
+          <LanguageSwitch />
+          <span className={styles.who}>{profile.displayName}</span>
+        </span>
       </header>
 
       <div>
-        <h1 className={styles.heading}>Turmas</h1>
-        <p className={styles.intro}>
-          O professor abre a turma e escreve o código no quadro; quem estuda entra digitando esse
-          código. Não há convite por e-mail, pelo mesmo motivo da troca de senha: em muita escola o
-          aluno não tem caixa de entrada, e a que tem não abre na aula.
-        </p>
+        <h1 className={styles.heading}>{m.classrooms.heading}</h1>
+        <p className={styles.intro}>{m.classrooms.intro}</p>
       </div>
 
       <Classrooms teaching={teaching} attending={attending} teacher={teaches(row?.role)} />

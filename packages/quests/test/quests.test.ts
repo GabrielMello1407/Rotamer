@@ -1,6 +1,7 @@
 import { analyze, type Molecule } from '@rotamer/core';
 import { describe, expect, it } from 'vitest';
-import { CATALOG, findQuest, questsOfTrack } from '../src/catalog';
+import { LOCALES } from '@rotamer/i18n';
+import { CATALOG, findQuest, localize, questsOfTrack } from '../src/catalog';
 import { countElements } from '../src/conditions';
 import { evaluateAnalysis, evaluateQuest } from '../src/evaluate';
 
@@ -11,12 +12,12 @@ import { evaluateAnalysis, evaluateQuest } from '../src/evaluate';
  */
 async function moleculeOf(smiles: string): Promise<Molecule> {
   const result = await analyze(smiles);
-  if (!result.ok) throw new Error(`esperava molécula, veio erro: ${result.error.message}`);
+  if (!result.ok) throw new Error(`esperava molécula, veio erro: ${result.error.code}`);
   return result.molecule;
 }
 
 function quest(slug: string) {
-  const found = findQuest(slug);
+  const found = findQuest(slug, 'pt-BR');
   if (!found) throw new Error(`missão ${slug} não existe no catálogo`);
   return found;
 }
@@ -33,20 +34,35 @@ describe('catálogo', () => {
   });
 
   it('cobre as três trilhas com missão, e deixa Otimização de fora', () => {
-    expect(questsOfTrack('structure').length).toBeGreaterThan(0);
-    expect(questsOfTrack('geometry').length).toBeGreaterThan(0);
-    expect(questsOfTrack('property').length).toBeGreaterThan(0);
+    expect(questsOfTrack('structure', 'pt-BR').length).toBeGreaterThan(0);
+    expect(questsOfTrack('geometry', 'pt-BR').length).toBeGreaterThan(0);
+    expect(questsOfTrack('property', 'pt-BR').length).toBeGreaterThan(0);
 
     // A trilha Otimização é ferramenta livre: sem missão, sem pontuação (D-09).
     const trilhas = new Set(CATALOG.map((entry) => entry.track));
     expect([...trilhas].sort()).toEqual(['geometry', 'property', 'structure']);
   });
 
-  it('toda missão tem objetivo e dica escritos à mão', () => {
-    for (const entry of CATALOG) {
-      expect(entry.goals.length).toBeGreaterThan(0);
-      expect(entry.hints.length).toBeGreaterThan(0);
-      expect(entry.brief.length).toBeGreaterThan(40);
+  /**
+   * O catálogo guarda condição; o texto mora em `catalog-text.ts`. O risco é
+   * uma missão nova entrar com condição e sem enunciado — passaria em tudo e
+   * abriria na tela com o slug no lugar do título. Aqui os dois idiomas são
+   * conferidos, porque esquecer o inglês é o jeito mais fácil de fazer isso.
+   */
+  it('toda missão tem enunciado, dica e rótulo de objetivo nos dois idiomas', () => {
+    for (const locale of LOCALES) {
+      for (const entry of CATALOG) {
+        const written = localize(entry, locale);
+
+        expect(entry.goals.length, entry.slug).toBeGreaterThan(0);
+        expect(written.title, entry.slug).not.toBe(entry.slug);
+        expect(written.hints.length, entry.slug).toBeGreaterThan(0);
+        expect(written.brief.length, entry.slug).toBeGreaterThan(40);
+
+        for (const goal of written.goals) {
+          expect(goal.label.length, `${entry.slug}/${goal.id}`).toBeGreaterThan(0);
+        }
+      }
     }
   });
 });

@@ -1,12 +1,16 @@
 'use server';
 
+import { chemistryErrorText, pick } from '@rotamer/i18n';
 import { z } from 'zod';
 import { currentProfile } from '../../lib/auth';
 import { analyzeOnServer } from '../../lib/chemistry-server';
 import { db, hasDatabase } from '../../lib/db';
+import { currentLocale } from '../../lib/locale';
+import { namingMessages } from './messages';
 import { rememberMolecule } from '../../lib/molecule-store';
 import { knownCompound } from '../../lib/known-compound';
-import { checkName, normalizeName, NAME_MAX } from '../../lib/molecule-name';
+import { nicknameProblemText } from '../../lib/messages';
+import { checkName, normalizeName, NAME_MAX, NAME_MIN } from '../../lib/molecule-name';
 
 /**
  * Batizar uma estrutura.
@@ -56,21 +60,33 @@ export async function nameMolecule(input: {
   molblock: string;
   name: string;
 }): Promise<NamingOutcome> {
+  const locale = await currentLocale();
+  const m = pick(namingMessages, locale);
   const parsed = schema.safeParse(input);
   if (!parsed.success) return { status: 'rejected', reason: 'Pedido mal formado.' };
-  if (!hasDatabase()) return { status: 'rejected', reason: 'Batismo indisponível neste ambiente.' };
+  if (!hasDatabase()) return { status: 'rejected', reason: m.unavailable };
 
   const profile = await currentProfile();
   if (profile === null) return { status: 'anonymous' };
 
   const name = normalizeName(parsed.data.name);
   const check = checkName(name);
-  if (!check.ok) return { status: 'rejected', reason: check.message ?? 'Apelido inválido.' };
+  if (!check.ok) {
+    return {
+      status: 'rejected',
+      reason:
+        check.problem === undefined
+          ? m.invalidNickname
+          : nicknameProblemText(locale, check.problem, { min: NAME_MIN, max: NAME_MAX }),
+    };
+  }
 
   // Estrutura impossível não recebe apelido: o veredito é do RDKit, no servidor,
   // e não do que o navegador mandou.
   const analysis = await analyzeOnServer(parsed.data.molblock);
-  if (!analysis.ok) return { status: 'rejected', reason: analysis.error.message };
+  if (!analysis.ok) {
+    return { status: 'rejected', reason: chemistryErrorText(locale, analysis.error) };
+  }
 
   const { inchiKey, formula, smiles } = analysis.molecule;
 
@@ -116,7 +132,7 @@ export async function nameMolecule(input: {
     // de quem ganhou, que é a resposta honesta.
     const winner = await readName(inchiKey);
     if (winner !== null) return { status: 'taken', named: winner };
-    return { status: 'rejected', reason: 'Não foi possível registrar o apelido.' };
+    return { status: 'rejected', reason: m.saveFailed };
   }
 }
 

@@ -1,5 +1,6 @@
 import 'server-only';
-import { SYSTEM_RULES } from './prompt';
+import { systemRules } from './prompt';
+import type { Locale } from '@rotamer/i18n';
 import { tutorHintSchema, type TutorHint } from './schema';
 
 /**
@@ -83,7 +84,7 @@ interface GeminiResponse {
  * depois. É o que separa "o Google está ocupado agora" de "o tutor não
  * funciona".
  */
-export async function askGemini(prompt: string): Promise<GeminiResult | null> {
+export async function askGemini(prompt: string, locale: Locale): Promise<GeminiResult | null> {
   const key = process.env['GEMINI_API_KEY'];
   if (key === undefined || key === '') return null;
 
@@ -101,7 +102,7 @@ export async function askGemini(prompt: string): Promise<GeminiResult | null> {
     const left = deadline - Date.now();
     if (left <= 0) return null;
 
-    const hint = await tryModel(key, model, prompt, Math.min(left, TIMEOUT_MS));
+    const hint = await tryModel(key, model, prompt, locale, Math.min(left, TIMEOUT_MS));
     if (hint !== null) return { hint, model };
   }
 
@@ -113,6 +114,7 @@ async function tryModel(
   key: string,
   model: string,
   prompt: string,
+  locale: Locale,
   timeoutMs: number,
 ): Promise<TutorHint | null> {
   const controller = new AbortController();
@@ -129,7 +131,7 @@ async function tryModel(
         'x-goog-api-key': key,
       },
       body: JSON.stringify({
-        systemInstruction: { parts: [{ text: SYSTEM_RULES }] },
+        systemInstruction: { parts: [{ text: systemRules(locale) }] },
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         generationConfig: {
           temperature: 0.4,

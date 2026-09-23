@@ -1,3 +1,5 @@
+<p align="right"><strong>Português</strong> · <a href="README.en.md">English</a></p>
+
 <div align="center">
   <img src="brand/rotamer-mark.svg" width="88" alt="Rotamer">
   <h1>Rotamer</h1>
@@ -62,6 +64,7 @@ configurada, ele se desliga e o produto continua inteiro.
 apps/web            Next.js 16 · App Router · rotas, contas, turmas, listas, tutor
   └── packages/
       core          grafo · RDKit worker · geometria · descritores · modos normais
+      i18n          os dois idiomas: dicionário tipado, formatação, frase da química
       editor2d      canvas 2D próprio, ferramentas, seleção, histórico
       viewer3d      Three.js · dobramento e dinâmica molecular
       quests        missões declarativas, extração de objetivos e pontuação
@@ -179,6 +182,12 @@ redistribuição.
 | [docs/ROADMAP.md](docs/ROADMAP.md) | O que está feito, o que falta, riscos |
 | [docs/DEPLOY.md](docs/DEPLOY.md) | A instância mantida pelo autor |
 | [docs/FORA-DE-ESCOPO.md](docs/FORA-DE-ESCOPO.md) | Tudo que ficou fora, com o porquê |
+| [docs/IDIOMAS.md](docs/IDIOMAS.md) | Os dois idiomas do produto e da documentação |
+
+**Toda a documentação existe também em inglês**: [README.en.md](README.en.md) nesta raiz, e em
+[`docs/en/`](docs/en/) um gêmeo de nome em inglês para cada documento daqui — o `GUIA.md` é o
+`USER-GUIDE.md`. Documento que muda em português muda em inglês na mesma entrega — a tabela
+completa está em [docs/IDIOMAS.md](docs/IDIOMAS.md).
 
 A página do produto e esta documentação em forma de site vivem em outro repositório,
 `rotamer-site`, que puxa a pasta `docs/` daqui na hora de construir — o site nunca descreve uma
@@ -194,7 +203,8 @@ versão que não é a do código.
 dynamics — with formula, mass, functional groups, descriptors, normal modes and mission feedback
 alongside. Everything chemical is computed deterministically (RDKit and MMFF94); the optional
 LLM tutor only explains numbers that were already calculated, and is always labelled as a
-hypothesis. The interface is in Brazilian Portuguese. Open source under the MIT license; run your
-own instance with Docker ([docs/INSTALACAO.md](docs/INSTALACAO.md)).
+hypothesis. The interface and the documentation are in Brazilian Portuguese and English — read
+the full English README in [README.en.md](README.en.md). Open source under the MIT license; run
+your own instance with Docker ([docs/en/INSTALLATION.md](docs/en/INSTALLATION.md)).
 
 </details>

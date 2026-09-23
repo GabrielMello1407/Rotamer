@@ -1,12 +1,15 @@
 'use server';
 
 import { evaluateQuest } from '@rotamer/quests';
+import { chemistryErrorText, pick } from '@rotamer/i18n';
 import { z } from 'zod';
 import { currentProfile } from '../../lib/auth';
 import { analyzeOnServer } from '../../lib/chemistry-server';
 import { db } from '../../lib/db';
+import { currentLocale } from '../../lib/locale';
 import { rememberMolecule } from '../../lib/molecule-store';
 import { resolveQuest, studentQuestAccess } from '../../lib/quest-resolve';
+import { attemptMessages } from './messages';
 import { messages } from '../turmas/messages';
 
 /**
@@ -17,8 +20,13 @@ import { messages } from '../turmas/messages';
  * reavaliada antes de qualquer coisa ir para o banco.
  */
 
-/** Mesma recusa para os dois casos (R-8): diferenciar vira oráculo de existência. */
-const QUEST_NOT_FOUND = messages.errors.questNotFound;
+/**
+ * Mesma recusa para os dois casos (R-8): diferenciar vira oráculo de
+ * existência. A frase sai no idioma de quem pediu, como toda recusa de ação.
+ */
+async function questNotFound(): Promise<string> {
+  return pick(messages, await currentLocale()).errors.questNotFound;
+}
 
 const schema = z.object({
   // R-16: sem `.max()` o slug vinha de constante do catálogo; agora ele
@@ -39,24 +47,29 @@ export async function saveAttempt(input: {
   molblock: string;
   elapsedMs: number;
 }): Promise<AttemptOutcome> {
+  const locale = await currentLocale();
+  const m = pick(attemptMessages, locale);
+
   const parsed = schema.safeParse(input);
-  if (!parsed.success) return { status: 'rejected', reason: 'Tentativa mal formada.' };
+  if (!parsed.success) return { status: 'rejected', reason: m.malformed };
 
   const profile = await currentProfile();
   if (profile === null) return { status: 'anonymous' };
 
-  const quest = await resolveQuest(parsed.data.questSlug);
-  if (!quest) return { status: 'rejected', reason: QUEST_NOT_FOUND };
+  const quest = await resolveQuest(parsed.data.questSlug, locale);
+  if (!quest) return { status: 'rejected', reason: await questNotFound() };
 
   // R-7: a mesma recusa serve para slug inexistente e para slug de uma turma
   // em que o aluno não está matriculado (ou não publicada, ou arquivada) —
   // diferenciar contaria a existência de uma turma que não é dele (R-8).
   if (!(await studentQuestAccess(profile.id, quest.slug))) {
-    return { status: 'rejected', reason: QUEST_NOT_FOUND };
+    return { status: 'rejected', reason: await questNotFound() };
   }
 
   const analysis = await analyzeOnServer(parsed.data.molblock);
-  if (!analysis.ok) return { status: 'rejected', reason: analysis.error.message };
+  if (!analysis.ok) {
+    return { status: 'rejected', reason: chemistryErrorText(locale, analysis.error) };
+  }
 
   // A nota sai daqui, do motor de missões rodando no servidor sobre os números
   // que o RDKit acabou de calcular.
@@ -93,7 +106,7 @@ export async function openQuest(input: { questSlug: string }): Promise<void> {
   const profile = await currentProfile();
   if (profile === null) return;
 
-  const quest = await resolveQuest(parsed.data.questSlug);
+  const quest = await resolveQuest(parsed.data.questSlug, await currentLocale());
   if (!quest) return;
 
   // R-7: mesma cadeia de acesso que `saveAttempt` — abrir uma missão de outra

@@ -1,33 +1,29 @@
 import { Logo } from '@rotamer/ui';
+import { formatDate } from '@rotamer/i18n';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import type { ReactElement } from 'react';
-import { CATALOG } from '@rotamer/quests';
+import { catalogFor } from '@rotamer/quests';
 import { readAssignmentBoard, readAssignments } from '../../actions/assignment';
 import { readClassroomBoard } from '../../actions/classroom';
 import { currentProfile } from '../../../lib/auth';
 import { hasDatabase } from '../../../lib/db';
+import { currentLocale, serverMessages } from '../../../lib/locale';
 import { messages } from '../messages';
 import { AssignmentBoardSection } from './AssignmentBoardSection';
 import { AssignmentsSection } from './AssignmentsSection';
+import { LanguageSwitch } from '../../components/LanguageSwitch';
 import styles from './page.module.css';
 
 interface PageProps {
   readonly params: Promise<{ readonly id: string }>;
 }
 
-export const metadata: Metadata = {
-  title: 'Turma · Rotamer',
-  description: 'Onde a turma parou.',
-};
-
-const WHEN = new Intl.DateTimeFormat('pt-BR', {
-  day: '2-digit',
-  month: 'short',
-  hour: '2-digit',
-  minute: '2-digit',
-});
+export async function generateMetadata(): Promise<Metadata> {
+  const m = await serverMessages(messages);
+  return { title: m.classroomSummary.metaTitle, description: m.classroomSummary.metaDescription };
+}
 
 /**
  * O quadro da turma.
@@ -49,8 +45,11 @@ export default async function ClassroomPage({ params }: PageProps): Promise<Reac
   const board = await readClassroomBoard(id);
   if (board === null) notFound();
 
-  // O catálogo mora no código, não no banco (D-12): a tela lê direto dele.
-  const titles = new Map(CATALOG.map((quest) => [quest.slug, quest.title]));
+  const locale = await currentLocale();
+  const m = await serverMessages(messages);
+
+  // O catálogo mora no código, não no banco (D-12): a tela lê direto dele, já no idioma de quem lê.
+  const titles = new Map(catalogFor(locale).map((quest) => [quest.slug, quest.title]));
   const total = titles.size;
 
   /*
@@ -80,10 +79,11 @@ export default async function ClassroomPage({ params }: PageProps): Promise<Reac
         </Link>
 
         <span className={styles.headerActions}>
+          <LanguageSwitch />
           {/* O professor chega aqui pela turma e daqui precisa alcançar os
               códigos de senha: a página não tinha link em lugar nenhum. */}
           <Link className={styles.headerLink} href="/codigos" data-testid="codigos-da-turma">
-            {messages.classrooms.codesLink}
+            {m.classrooms.codesLink}
           </Link>
           <span className={styles.code} data-testid="codigo-visivel">
             {board.code}
@@ -94,9 +94,7 @@ export default async function ClassroomPage({ params }: PageProps): Promise<Reac
       <div>
         <h1 className={styles.heading}>{board.name}</h1>
         <p className={styles.intro} data-testid="resumo-turma">
-          {board.students.length === 0
-            ? messages.empty.noStudents
-            : `${String(board.students.length)} ${board.students.length === 1 ? 'aluno' : 'alunos'}, de ${String(total)} missões no catálogo.`}
+          {board.students.length === 0 ? m.empty.noStudents : m.classroomSummary.summary(board.students.length, total)}
         </p>
       </div>
 
@@ -110,35 +108,30 @@ export default async function ClassroomPage({ params }: PageProps): Promise<Reac
 
       {board.hardest.length > 0 && (
         <section className={styles.panel} data-testid="onde-travou">
-          <h2 className={styles.title}>Onde a turma travou</h2>
+          <h2 className={styles.title}>{m.classroomSummary.stuckHeading}</h2>
           <ul className={styles.stuck}>
             {board.hardest.map((entry) => (
               <li key={entry.slug} className={styles.stuckRow}>
                 <span className={styles.questName}>{entry.title}</span>
-                <span className={styles.stuckCount}>
-                  {entry.stuck === 1 ? '1 aluno' : `${String(entry.stuck)} alunos`}
-                </span>
+                <span className={styles.stuckCount}>{m.classroomSummary.stuckCount(entry.stuck)}</span>
               </li>
             ))}
           </ul>
-          <p className={styles.note}>
-            Travar é ter tentado e não ter cumprido — quem nem abriu a missão não conta aqui. É
-            desta lista que sai o assunto da próxima aula.
-          </p>
+          <p className={styles.note}>{m.classroomSummary.stuckNote}</p>
         </section>
       )}
 
       {board.students.length > 0 && (
         <section className={styles.panel} data-testid="quadro-da-turma">
-          <h2 className={styles.title}>Aluno a aluno</h2>
+          <h2 className={styles.title}>{m.classroomSummary.studentByStudentHeading}</h2>
 
           <table className={styles.table}>
             <thead>
               <tr>
-                <th className={styles.head}>quem</th>
-                <th className={styles.head}>cumpridas</th>
-                <th className={styles.head}>travado em</th>
-                <th className={styles.head}>última vez</th>
+                <th className={styles.head}>{m.classroomSummary.tableWho}</th>
+                <th className={styles.head}>{m.classroomSummary.tableMet}</th>
+                <th className={styles.head}>{m.classroomSummary.tableStuckAt}</th>
+                <th className={styles.head}>{m.classroomSummary.tableLastSeen}</th>
               </tr>
             </thead>
             <tbody>
@@ -157,9 +150,9 @@ export default async function ClassroomPage({ params }: PageProps): Promise<Reac
                   </td>
                   <td className={[styles.cell, styles.number].join(' ')}>
                     {student.lastSeen === null ? (
-                      <span className={styles.quiet}>nunca</span>
+                      <span className={styles.quiet}>{m.classroomSummary.never}</span>
                     ) : (
-                      WHEN.format(new Date(student.lastSeen))
+                      formatDate(locale, new Date(student.lastSeen))
                     )}
                   </td>
                 </tr>
@@ -169,10 +162,7 @@ export default async function ClassroomPage({ params }: PageProps): Promise<Reac
         </section>
       )}
 
-      <p className={styles.note}>
-        O que aparece aqui é progresso de missão, avaliado no servidor a cada tentativa. As
-        moléculas que a pessoa desenha fora das missões são trabalho dela e não entram nesta tela.
-      </p>
+      <p className={styles.note}>{m.classroomSummary.footer}</p>
     </main>
   );
 }

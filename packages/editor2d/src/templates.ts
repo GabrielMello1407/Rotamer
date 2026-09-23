@@ -30,8 +30,6 @@ interface RingShape {
   readonly elements: readonly string[];
   /** Ordem de cada ligação do anel, na ordem. */
   readonly orders: readonly BondOrder[];
-  /** Como aparece na barra de ferramentas. */
-  readonly label: string;
 }
 
 const SHAPES: Readonly<Record<RingKind, RingShape>> = {
@@ -40,33 +38,25 @@ const SHAPES: Readonly<Record<RingKind, RingShape>> = {
     elements: ['C', 'C', 'C', 'C', 'C', 'C'],
     // Kekulé: alternadas. Quem percebe a aromaticidade é o RDKit, depois.
     orders: [2, 1, 2, 1, 2, 1],
-    label: 'Benzeno',
   },
   cyclohexane: {
     sides: 6,
     elements: ['C', 'C', 'C', 'C', 'C', 'C'],
     orders: [1, 1, 1, 1, 1, 1],
-    label: 'Cicloexano',
   },
   cyclopentane: {
     sides: 5,
     elements: ['C', 'C', 'C', 'C', 'C'],
     orders: [1, 1, 1, 1, 1],
-    label: 'Ciclopentano',
   },
   pyridine: {
     sides: 6,
     elements: ['N', 'C', 'C', 'C', 'C', 'C'],
     orders: [2, 1, 2, 1, 2, 1],
-    label: 'Piridina',
   },
 };
 
 export const RING_KINDS = Object.keys(SHAPES) as readonly RingKind[];
-
-export function ringLabel(kind: RingKind): string {
-  return SHAPES[kind].label;
-}
 
 /** O raio do polígono regular cujo lado é uma ligação. */
 function circumradius(sides: number): number {

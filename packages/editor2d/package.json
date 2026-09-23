@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@rotamer/core": "workspace:*",
+    "@rotamer/i18n": "workspace:*",
     "@rotamer/ui": "workspace:*",
     "zustand": "5.0.15"
   },

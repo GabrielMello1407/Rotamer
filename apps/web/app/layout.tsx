@@ -1,7 +1,11 @@
+import { languageTag, pick } from '@rotamer/i18n';
+import { I18nProvider } from '@rotamer/i18n/react';
 import type { Metadata } from 'next';
 import { Archivo, IBM_Plex_Mono, IBM_Plex_Sans } from 'next/font/google';
 import type { ReactElement, ReactNode } from 'react';
+import { currentLocale } from '../lib/locale';
 import { Telemetry } from './components/Telemetry';
+import { siteMessages } from './messages';
 import '@rotamer/ui/tokens.css';
 import '@rotamer/ui/base.css';
 
@@ -29,12 +33,20 @@ const monoFont = IBM_Plex_Mono({
   display: 'swap',
 });
 
-export const metadata: Metadata = {
-  title: 'Rotamer — desenhe uma molécula em 2D, descubra o que ela é em 3D',
-  description:
-    'Química orgânica e medicinal no mesmo motor: validação determinística pelo RDKit, geometria calculada e IA como tutora, nunca como juíza.',
-  icons: { icon: '/rotamer-favicon.svg' },
-};
+/**
+ * Título e descrição também são texto de produto: quem chega pelo buscador lê
+ * isto antes de qualquer tela. Por serem lidos no servidor, saem no idioma que
+ * o cookie ou o `Accept-Language` pediu.
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const messages = pick(siteMessages, await currentLocale());
+
+  return {
+    title: messages.title,
+    description: messages.description,
+    icons: { icon: '/rotamer-favicon.svg' },
+  };
+}
 
 /**
  * Aplica o tema escolhido antes da primeira pintura. Sem isto a página pisca no
@@ -52,11 +64,12 @@ try {
 } catch (error) {}
 `;
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   readonly children: ReactNode;
-}): ReactElement {
+}): Promise<ReactElement> {
+  const locale = await currentLocale();
   const fontVariables = [
     displayFont.variable,
     uiFont.variable,
@@ -64,12 +77,14 @@ export default function RootLayout({
   ].join(' ');
 
   return (
-    <html lang="pt-BR" className={fontVariables} suppressHydrationWarning>
+    <html lang={languageTag(locale)} className={fontVariables} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_BEFORE_PAINT }} />
         <Telemetry />
       </head>
-      <body cz-shortcut-listen="true">{children}</body>
+      <body cz-shortcut-listen="true">
+        <I18nProvider locale={locale}>{children}</I18nProvider>
+      </body>
     </html>
   );
 }

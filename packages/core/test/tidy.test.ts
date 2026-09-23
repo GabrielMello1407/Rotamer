@@ -87,7 +87,7 @@ function centroComCunha(): string {
  */
 async function alanina(): Promise<string> {
   const antes = await analyze('C[C@@H](N)C(=O)O');
-  if (!antes.ok) throw new Error(antes.error.message);
+  if (!antes.ok) throw new Error(antes.error.code);
   return antes.molecule.molblock;
 }
 
@@ -180,13 +180,13 @@ describe('organizar o desenho', () => {
     const entrada = centroComCunha();
 
     const antes = await analyze(entrada);
-    if (!antes.ok) throw new Error(antes.error.message);
+    if (!antes.ok) throw new Error(antes.error.code);
 
     const arrumado = await tidy(entrada);
     if (arrumado === null) throw new Error('o RDKit não devolveu o desenho organizado');
 
     const depois = await analyze(arrumado.molblock);
-    if (!depois.ok) throw new Error(depois.error.message);
+    if (!depois.ok) throw new Error(depois.error.code);
 
     // A mesma configuração, e o mesmo SMILES — só o lado do papel mudou.
     expect(depois.molecule.stereo.atoms).toEqual(antes.molecule.stereo.atoms);
@@ -204,14 +204,14 @@ describe('organizar o desenho', () => {
     const entrada = await alanina();
 
     const antes = await analyze(entrada);
-    if (!antes.ok) throw new Error(antes.error.message);
+    if (!antes.ok) throw new Error(antes.error.code);
     expect(antes.molecule.stereo.atoms).toEqual([{ index: 1, label: 'R' }]);
 
     const arrumado = await tidy(entrada);
     if (arrumado === null) throw new Error('o RDKit não devolveu o desenho organizado');
 
     const depois = await analyze(arrumado.molblock);
-    if (!depois.ok) throw new Error(depois.error.message);
+    if (!depois.ok) throw new Error(depois.error.code);
 
     // O centro continua R — só o lado do papel em que a cunha aparece mudou.
     expect(depois.molecule.stereo.atoms).toEqual(antes.molecule.stereo.atoms);

@@ -19,7 +19,7 @@ import { analyze } from '../src/chemistry/analysis';
 
 async function modesOf(smiles: string): Promise<NormalModes> {
   const analysis = await analyze(smiles);
-  if (!analysis.ok) throw new Error(`estrutura inválida: ${analysis.error.message}`);
+  if (!analysis.ok) throw new Error(`estrutura inválida: ${analysis.error.code}`);
 
   const geometry = await generateGeometry(analysis.molecule.molblock);
   const modes = await normalModes(analysis.molecule.molblock, geometry);

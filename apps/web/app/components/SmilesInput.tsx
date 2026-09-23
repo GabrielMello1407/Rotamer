@@ -1,10 +1,13 @@
 'use client';
 
-import { fromMolblock, type ChemistryErrorCode } from '@rotamer/core';
+import { fromMolblock, type ChemistryError, type ChemistryErrorCode } from '@rotamer/core';
 import type { EditorStore } from '@rotamer/editor2d';
+import { chemistryErrorText, pick, type Locale } from '@rotamer/i18n';
+import { useLocale, useMessages } from '@rotamer/i18n/react';
 import { Button } from '@rotamer/ui';
 import { useEffect, useState, type FormEvent, type ReactElement } from 'react';
 import { findByName } from '../actions/search';
+import { smilesInputMessages } from './messages';
 import styles from './SmilesInput.module.css';
 import type { ChemistryConnection } from './use-chemistry-client';
 
@@ -42,6 +45,8 @@ const STRUCTURE_ERRORS: readonly ChemistryErrorCode[] = [
 ];
 
 export function SmilesInput({ store, connection }: SmilesInputProps): ReactElement {
+  const locale = useLocale();
+  const messages = useMessages(smilesInputMessages);
   const [text, setText] = useState('');
   const [queued, setQueued] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -73,7 +78,7 @@ export function SmilesInput({ store, connection }: SmilesInputProps): ReactEleme
       // Estrutura impossível não vira busca por nome: quem explica é a química.
       if (STRUCTURE_ERRORS.includes(asStructure.error.code)) {
         setNote(null);
-        setError(asStructure.error.message);
+        setError(chemistryErrorText(locale, asStructure.error));
         setQueued(null);
         return;
       }
@@ -92,8 +97,8 @@ export function SmilesInput({ store, connection }: SmilesInputProps): ReactEleme
           setError(null);
           setNote(
             found.compound.title === null
-              ? `Encontrado no PubChem (CID ${String(found.compound.cid)}).`
-              : `${found.compound.title} — PubChem CID ${String(found.compound.cid)}.`,
+              ? messages.foundUntitled(found.compound.cid)
+              : messages.found(found.compound.title, found.compound.cid),
           );
           setText('');
           setQueued(null);
@@ -102,7 +107,9 @@ export function SmilesInput({ store, connection }: SmilesInputProps): ReactEleme
       }
 
       setNote(null);
-      setError(messageFor(found.status, queued, asStructure.ok ? null : asStructure.error.message));
+      setError(
+        messageFor(locale, found.status, queued, asStructure.ok ? null : asStructure.error),
+      );
       setQueued(null);
     };
 
@@ -110,7 +117,7 @@ export function SmilesInput({ store, connection }: SmilesInputProps): ReactEleme
     return () => {
       alive = false;
     };
-  }, [queued, client, store]);
+  }, [queued, client, store, locale, messages]);
 
   const submit = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault();
@@ -133,14 +140,14 @@ export function SmilesInput({ store, connection }: SmilesInputProps): ReactEleme
         onChange={(event) => {
           setText(event.target.value);
         }}
-        placeholder="SMILES ou nome"
-        aria-label="Carregar molécula por SMILES ou por nome"
+        placeholder={messages.placeholder}
+        aria-label={messages.label}
         data-testid="entrada-smiles"
         spellCheck={false}
         autoComplete="off"
       />
       <Button type="submit" size="small" variant="secondary" disabled={waiting}>
-        {waiting ? 'Buscando…' : 'Carregar'}
+        {waiting ? messages.searching : messages.load}
       </Button>
 
       {note !== null && (
@@ -162,20 +169,21 @@ export function SmilesInput({ store, connection }: SmilesInputProps): ReactEleme
  * A mensagem certa para cada desfecho.
  *
  * Quando o texto parece estrutura e o RDKit recusou, quem explica é ele — a
- * mensagem já fala de química. Quando é nome, a explicação é sobre a busca.
+ * recusa do núcleo vira frase em `chemistryErrorText`, e ela já fala de
+ * química. Quando é nome, a explicação é sobre a busca.
  */
 function messageFor(
+  locale: Locale,
   status: 'not-found' | 'unavailable' | 'rejected' | 'found',
   entry: string,
-  chemistryError: string | null,
+  chemistryError: ChemistryError | null,
 ): string {
-  if (status === 'unavailable') {
-    return 'O PubChem não respondeu agora. Colar o SMILES continua funcionando.';
-  }
+  const messages = pick(smilesInputMessages, locale);
 
-  if (status === 'not-found') {
-    return `Não encontrei "${entry}" no PubChem. Confira a grafia ou cole o SMILES.`;
-  }
+  if (status === 'unavailable') return messages.pubchemQuiet;
+  if (status === 'not-found') return messages.notFound(entry);
 
-  return chemistryError ?? 'Não consegui carregar essa molécula.';
+  return chemistryError === null
+    ? messages.cantLoad
+    : chemistryErrorText(locale, chemistryError);
 }

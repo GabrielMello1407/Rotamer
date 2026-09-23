@@ -4,6 +4,9 @@ import { startSession } from '../../lib/auth';
 import { db } from '../../lib/db';
 import { isDatabaseReachable } from '../../test/db-guard';
 import { messages } from '../turmas/messages';
+
+/** As recusas do servidor saem no idioma do pedido; sem cookie, o padrão. */
+const staff = messages['pt-BR'].staff;
 import { createClassroom, readClassroomBoard, readClassrooms } from './classroom';
 import { issueResetCode } from './recovery';
 import {
@@ -178,9 +181,9 @@ maybeDescribe('D-29 — só administrador promove, e só até professor', () => 
 
     expect(promotion.status).toBe('rejected');
     expect(demotion.status).toBe('rejected');
-    if (demotion.status === 'rejected') expect(demotion.reason).toBe(messages.staff.notYourself);
+    if (demotion.status === 'rejected') expect(demotion.reason).toBe(staff.notYourself);
     // A promoção recusa antes de tudo: `notYourself` vem antes de `alreadyTeaching`.
-    if (promotion.status === 'rejected') expect(promotion.reason).toBe(messages.staff.notYourself);
+    if (promotion.status === 'rejected') expect(promotion.reason).toBe(staff.notYourself);
     expect(await roleOf(administrator.id)).toBe('administrador');
   });
 
@@ -194,7 +197,7 @@ maybeDescribe('D-29 — só administrador promove, e só até professor', () => 
 
     expect(outcome.status).toBe('rejected');
     if (outcome.status === 'rejected') {
-      expect(outcome.reason).toBe(messages.staff.notAnotherAdministrator);
+      expect(outcome.reason).toBe(staff.notAnotherAdministrator);
     }
     expect(await roleOf(peer.id)).toBe('administrador');
   });
@@ -322,7 +325,7 @@ maybeDescribe('D-29 — o teto de consultas', () => {
 
     const blocked = await findSchoolAccount({ email: student.email });
     expect(blocked.status).toBe('rejected');
-    if (blocked.status === 'rejected') expect(blocked.reason).toBe(messages.staff.tooManyLookups);
+    if (blocked.status === 'rejected') expect(blocked.reason).toBe(staff.tooManyLookups);
   });
 });
 
@@ -368,14 +371,14 @@ maybeDescribe('D-29 — o teto vale nas três ações', () => {
       const outcome = await demoteToStudent({ email: student.email });
       expect(outcome.status).toBe('rejected');
       if (outcome.status === 'rejected') {
-        expect(outcome.reason).toBe(messages.staff.notTeaching);
+        expect(outcome.reason).toBe(staff.notTeaching);
         expect(outcome.reason).not.toContain('Conta aluno');
       }
     }
 
     const blocked = await demoteToStudent({ email: student.email });
     expect(blocked.status).toBe('rejected');
-    if (blocked.status === 'rejected') expect(blocked.reason).toBe(messages.staff.tooManyLookups);
+    if (blocked.status === 'rejected') expect(blocked.reason).toBe(staff.tooManyLookups);
   });
 
   it('promover também conta no teto, e a recusa não entrega nome', async () => {
@@ -389,14 +392,14 @@ maybeDescribe('D-29 — o teto vale nas três ações', () => {
       const outcome = await promoteToTeacher({ email: teacher.email });
       expect(outcome.status).toBe('rejected');
       if (outcome.status === 'rejected') {
-        expect(outcome.reason).toBe(messages.staff.alreadyTeaching);
+        expect(outcome.reason).toBe(staff.alreadyTeaching);
         expect(outcome.reason).not.toContain('Conta professor');
       }
     }
 
     const blocked = await promoteToTeacher({ email: teacher.email });
     expect(blocked.status).toBe('rejected');
-    if (blocked.status === 'rejected') expect(blocked.reason).toBe(messages.staff.tooManyLookups);
+    if (blocked.status === 'rejected') expect(blocked.reason).toBe(staff.tooManyLookups);
   });
 });
 

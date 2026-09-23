@@ -1,7 +1,10 @@
+import { chemistryErrorText, formatNumber, functionalGroupName, pick } from '@rotamer/i18n';
 import { ImageResponse } from 'next/og';
 import { analyzeOnServer } from '../../../lib/chemistry-server';
+import { currentLocale } from '../../../lib/locale';
 import { decodeSmiles } from '../../../lib/molecule-url';
 import { OG } from '../../../lib/og-palette';
+import { moleculeMessages } from './messages';
 
 /**
  * A imagem que aparece quando o link é colado no grupo da turma.
@@ -12,7 +15,16 @@ import { OG } from '../../../lib/og-palette';
  */
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
-export const alt = 'Fórmula e descritores da molécula, calculados pelo RDKit';
+
+/**
+ * O texto alternativo da imagem.
+ *
+ * Fica em pt-BR porque é constante de módulo, avaliada antes de existir um
+ * pedido — e sem pedido não há cookie nem `Accept-Language` para consultar. O
+ * que está **dentro** da figura sai no idioma de quem pediu, que é o que chega
+ * a quem abre o link.
+ */
+export const alt = moleculeMessages['pt-BR'].cardAlt;
 
 interface ImageProps {
   readonly params: Promise<{ readonly smiles: string }>;
@@ -28,25 +40,24 @@ function formulaParts(formula: string): { text: string; sub: boolean }[] {
 
 export default async function OpenGraphImage({ params }: ImageProps): Promise<ImageResponse> {
   const { smiles } = await params;
+  const locale = await currentLocale();
+  const m = pick(moleculeMessages, locale);
   const analysis = await analyzeOnServer(decodeSmiles(smiles));
 
   const number = (value: number, decimals: number): string =>
-    new Intl.NumberFormat('pt-BR', {
-      minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals,
-    }).format(value);
+    formatNumber(locale, value, decimals);
 
   const facts = analysis.ok
     ? [
         {
-          label: 'MASSA MOLAR',
+          label: m.cardMolarMass,
           value: `${number(analysis.molecule.descriptors.molarMass, 2)} g/mol`,
         },
         { label: 'TPSA', value: `${number(analysis.molecule.descriptors.tpsa, 2)} Å²` },
         // `logP` é símbolo, não sigla: passar por caixa alta viraria outra coisa.
         { label: 'logP', value: number(analysis.molecule.descriptors.logP, 2) },
         {
-          label: 'ANÉIS AROMÁTICOS',
+          label: m.cardAromaticRings,
           value: number(analysis.molecule.descriptors.aromaticRings, 0),
         },
       ]
@@ -136,7 +147,7 @@ export default async function OpenGraphImage({ params }: ImageProps): Promise<Im
                       padding: '8px 20px',
                     }}
                   >
-                    {group.name}
+                    {functionalGroupName(locale, group.id)}
                   </span>
                 ))}
               </div>
@@ -144,13 +155,13 @@ export default async function OpenGraphImage({ params }: ImageProps): Promise<Im
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 900 }}>
-            <span style={{ fontSize: 44, lineHeight: 1.2 }}>{analysis.error.message}</span>
+            <span style={{ fontSize: 44, lineHeight: 1.2 }}>
+              {chemistryErrorText(locale, analysis.error)}
+            </span>
           </div>
         )}
 
-        <span style={{ fontSize: 22, color: OG.inkSoft }}>
-          Calculado pelo RDKit. Nada aqui passou por modelo de linguagem.
-        </span>
+        <span style={{ fontSize: 22, color: OG.inkSoft }}>{m.cardFooter}</span>
       </div>
     ),
     size,

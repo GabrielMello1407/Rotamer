@@ -13,3 +13,4 @@ export { Label, type LabelProps } from './components/Label';
 export { Logo, type LogoProps } from './components/Logo';
 export { NumberValue, type NumberValueProps } from './components/NumberValue';
 export { SourceBadge, type Source, type SourceBadgeProps } from './components/SourceBadge';
+export { sourceBadgeMessages } from './messages';

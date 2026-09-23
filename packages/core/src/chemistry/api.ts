@@ -152,11 +152,7 @@ export const chemistryApi: ChemistryApi = {
       return {
         ok: false,
         error: {
-          code: 'geometry_unavailable',
-          message:
-            cause instanceof GeometryUnavailable
-              ? cause.message
-              : 'Não consegui calcular a forma desta molécula no espaço. Os descritores continuam valendo.',
+          code: cause instanceof GeometryUnavailable ? 'conformer_unavailable' : 'geometry_unavailable',
         },
       };
     }

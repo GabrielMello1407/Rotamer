@@ -1,7 +1,10 @@
 'use client';
 
 import type { AnalysisResult, Descriptors } from '@rotamer/core';
+import { chemistryErrorText } from '@rotamer/i18n';
+import { useFormatters, useLocale, useMessages } from '@rotamer/i18n/react';
 import type { ReactElement } from 'react';
+import { metricsBarMessages } from './messages';
 import styles from './MetricsBar.module.css';
 
 export interface MetricsBarProps {
@@ -11,11 +14,6 @@ export interface MetricsBarProps {
   /** Abre o painel com a análise inteira. */
   readonly onOpen: () => void;
 }
-
-const NUMBER = new Intl.NumberFormat('pt-BR', {
-  minimumFractionDigits: 1,
-  maximumFractionDigits: 1,
-});
 
 /**
  * A faixa de baixo: cinco números e o estado da regra dos cinco.
@@ -30,13 +28,15 @@ export function MetricsBar({
   waitingForEngine,
   onOpen,
 }: MetricsBarProps): ReactElement {
+  const locale = useLocale();
+  const messages = useMessages(metricsBarMessages);
+  const { number } = useFormatters();
+
   if (analysis === null) {
     return (
       <div className={styles.bar} data-testid="metricas">
         <p className={styles.quiet}>
-          {waitingForEngine
-            ? 'Carregando o motor de química…'
-            : 'Desenhe uma estrutura para ver fórmula, massa e descritores.'}
+          {waitingForEngine ? messages.waiting : messages.empty}
         </p>
       </div>
     );
@@ -47,10 +47,10 @@ export function MetricsBar({
       <div className={[styles.bar, styles.broken].join(' ')} data-testid="metricas">
         <p className={styles.error} data-testid="erro-quimico">
           <span className={styles.errorMark} aria-hidden="true" />
-          {analysis.error.message}
+          {chemistryErrorText(locale, analysis.error)}
         </p>
         <button type="button" className={styles.more} onClick={onOpen}>
-          Ver o que fazer
+          {messages.whatToDo}
         </button>
       </div>
     );
@@ -60,28 +60,35 @@ export function MetricsBar({
 
   return (
     <div className={styles.bar} data-testid="metricas" aria-busy={pending}>
-      <Chip label="massa" value={NUMBER.format(descriptors.molarMass)} />
-      <Chip label="TPSA" value={NUMBER.format(descriptors.tpsa)} />
-      <Chip label="rotáveis" value={String(descriptors.rotatableBonds)} />
+      <Chip label={messages.mass} value={number(descriptors.molarMass)} />
+      <Chip label={messages.tpsa} value={number(descriptors.tpsa)} />
+      <Chip label={messages.rotatable} value={String(descriptors.rotatableBonds)} />
       <Chip
-        label="anéis"
+        label={messages.rings}
         value={
           descriptors.aromaticRings > 0
-            ? `${String(descriptors.rings)} · ${String(descriptors.aromaticRings)} arom.`
+            ? messages.aromaticShare(descriptors.rings, descriptors.aromaticRings)
             : String(descriptors.rings)
         }
       />
-      <Chip label="doa/ace" value={`${String(descriptors.hbDonors)}/${String(descriptors.hbAcceptors)}`} />
       <Chip
-        label="Lipinski"
-        value={lipinski(descriptors) === 0 ? 'ok' : `${String(lipinski(descriptors))} fora`}
+        label={messages.donorsAcceptors}
+        value={`${String(descriptors.hbDonors)}/${String(descriptors.hbAcceptors)}`}
+      />
+      <Chip
+        label={messages.lipinski}
+        value={
+          lipinski(descriptors) === 0
+            ? messages.lipinskiOk
+            : messages.lipinskiBroken(lipinski(descriptors))
+        }
         tone={lipinski(descriptors) === 0 ? 'ok' : 'warn'}
       />
 
       <button
         type="button"
         className={styles.more}
-        aria-label="Abrir a análise completa"
+        aria-label={messages.openAnalysis}
         data-testid="abrir-analise-faixa"
         onClick={onOpen}
       >

@@ -5,6 +5,7 @@ import {
   toMolblock,
   topologyKey,
   type AnalysisResult,
+  type ChemistryErrorCode,
   type DynamicsTrajectory,
   type Geometry,
   type MoleculeGraph,
@@ -36,7 +37,13 @@ export interface MoleculeReading {
    * não saiu — elemento fora do campo de força, por exemplo. A cena mostra este
    * texto no lugar do convite genérico.
    */
-  readonly geometryError: string | null;
+  /**
+   * O código da recusa da geometria, quando a forma no espaço não saiu.
+   *
+   * Código, não frase: o gancho sabe **que** falhou e quem sabe dizer isso no
+   * idioma de quem está lendo é a tela, por `chemistryErrorText`.
+   */
+  readonly geometryError: ChemistryErrorCode | null;
   /** Verdadeiro enquanto o worker ainda não respondeu sobre este desenho. */
   readonly pending: boolean;
 }
@@ -188,7 +195,7 @@ export function useMolecule(
             geometry: null,
             trajectory: null,
             modes: null,
-            geometryError: conformation.error.message,
+            geometryError: conformation.error.code,
             pending: false,
           });
           return;

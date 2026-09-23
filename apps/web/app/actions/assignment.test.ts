@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { analyze, configureRDKit, type Molecule } from '@rotamer/core';
 import { packageFactory } from '@rotamer/core/chemistry/node';
-import { evaluateQuest, extractGoals, type CandidateGoal } from '@rotamer/quests';
+import { evaluateQuest, extractGoals, type CandidateGoal, goalLabel } from '@rotamer/quests';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { endSession, startSession } from '../../lib/auth';
 import { db } from '../../lib/db';
@@ -453,7 +453,6 @@ describe('validateAuthoredGoals recusa direto, sem passar pela ação', () => {
 
     const objetivoImpossivel: CandidateGoal = {
       id: 'descriptor:rings:2',
-      label: 'tem exatamente 2 anéis',
       measured: '0',
       kind: 'count',
       exclusive: false,
@@ -461,16 +460,22 @@ describe('validateAuthoredGoals recusa direto, sem passar pela ação', () => {
     };
     const candidates = new Map([[objetivoImpossivel.id, objetivoImpossivel]]);
 
-    const outcome = validateAuthoredGoals(candidates, [objetivoImpossivel.id], result.molecule);
+    const outcome = validateAuthoredGoals(
+      candidates,
+      [objetivoImpossivel.id],
+      result.molecule,
+      'pt-BR',
+    );
 
     expect(outcome.status).toBe('rejected');
     if (outcome.status === 'rejected') {
-      expect(outcome.reason).toContain(objetivoImpossivel.label);
+      // A frase do objetivo é derivada da condição, não guardada junto dela.
+      expect(outcome.reason).toContain(goalLabel('pt-BR', objetivoImpossivel.condition));
       expect(outcome.reason).toContain('não é cumprida nem pela sua própria resposta');
     }
   });
 
-  it('objetivo cuja condição fecha é aceito, com o mesmo `id`, `label` e `condition`', async () => {
+  it('objetivo cuja condição fecha é aceito, com o mesmo `id` e a mesma `condition`', async () => {
     const result = await analyze('CCO');
     if (!result.ok) throw new Error('o etanol deveria ser válido');
 
@@ -478,11 +483,11 @@ describe('validateAuthoredGoals recusa direto, sem passar pela ação', () => {
     if (!formula) throw new Error('candidato de fórmula deveria existir');
     const candidates = new Map([[formula.id, formula]]);
 
-    const outcome = validateAuthoredGoals(candidates, [formula.id], result.molecule);
+    const outcome = validateAuthoredGoals(candidates, [formula.id], result.molecule, 'pt-BR');
 
     expect(outcome.status).toBe('ok');
     if (outcome.status === 'ok') {
-      expect(outcome.goals).toEqual([{ id: formula.id, label: formula.label, condition: formula.condition }]);
+      expect(outcome.goals).toEqual([{ id: formula.id, condition: formula.condition }]);
     }
   });
 });
@@ -732,15 +737,26 @@ maybeDescribe('R-9 — o prompt do tutor não recebe texto de missão de profess
     });
     if (quest.status !== 'created') throw new Error(`deveria criar a missão: ${JSON.stringify(quest)}`);
 
-    const resolved = await resolveQuest(quest.questSlug);
+    const resolved = await resolveQuest(quest.questSlug, 'pt-BR');
     if (resolved === null) throw new Error('a missão deveria resolver');
-    const goals = evaluateQuest(resolved, molecule).goals;
 
-    const prompt = buildPrompt({ molecule, quest: resolved, goals, kind: 'proximo-passo' });
+    const veredito = evaluateQuest(resolved, molecule);
+    const goals = resolved.goals.map((goal) => ({
+      met: veredito.goals.find((entry) => entry.id === goal.id)?.met === true,
+      label: goalLabel('pt-BR', goal.condition),
+    }));
+
+    const prompt = buildPrompt({
+      molecule,
+      quest: resolved,
+      goals,
+      kind: 'proximo-passo',
+      locale: 'pt-BR',
+    });
 
     expect(prompt).not.toContain(enunciadoSecreto);
     expect(prompt).not.toContain('Missão sigilosa');
-    expect(prompt).toContain(formula.label);
+    expect(prompt).toContain(goalLabel('pt-BR', formula.condition));
   });
 });
 
@@ -1418,7 +1434,7 @@ maybeDescribe('D-27 — busca do catálogo, sem acento e sem caixa', () => {
     if (!result.ok) throw new Error('o acetato de etila deveria ser válido');
     const ester = extractGoals(result.molecule).find((candidate) => candidate.id.startsWith('group:ester:'));
     if (!ester) throw new Error('candidato de éster deveria existir');
-    expect(ester.label).toBe('tem pelo menos 1 grupo éster');
+    expect(goalLabel('pt-BR', ester.condition)).toBe('tem pelo menos 1 grupo éster');
 
     const quest = await createTeacherQuest({
       assignmentId: assignment.id,

@@ -1,6 +1,7 @@
 'use client';
 
 import { Button, Label } from '@rotamer/ui';
+import { useFormatters, useMessages } from '@rotamer/i18n/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useTransition, type FormEvent, type ReactElement } from 'react';
@@ -13,8 +14,6 @@ export interface ClassroomsProps {
   readonly attending: readonly ClassroomSummary[];
   readonly teacher: boolean;
 }
-
-const DATE = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
 
 function fieldText(form: FormData, field: string): string {
   const value = form.get(field);
@@ -30,6 +29,8 @@ function fieldText(form: FormData, field: string): string {
  */
 export function Classrooms({ teaching, attending, teacher }: ClassroomsProps): ReactElement {
   const router = useRouter();
+  const m = useMessages(messages);
+  const { date } = useFormatters();
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -44,7 +45,7 @@ export function Classrooms({ teaching, attending, teacher }: ClassroomsProps): R
 
       if (outcome.status === 'created') {
         setError(null);
-        setNote(`Turma "${outcome.classroom.name}" aberta. O código é ${outcome.classroom.code}.`);
+        setNote(m.classrooms.created(outcome.classroom.name, outcome.classroom.code));
         router.refresh();
         return;
       }
@@ -69,11 +70,7 @@ export function Classrooms({ teaching, attending, teacher }: ClassroomsProps): R
       }
 
       setError(null);
-      setNote(
-        outcome.status === 'joined'
-          ? `Você entrou em "${outcome.name}".`
-          : `Você já estava em "${outcome.name}".`,
-      );
+      setNote(outcome.status === 'joined' ? m.classrooms.joined(outcome.name) : m.classrooms.alreadyJoined(outcome.name));
       router.refresh();
     });
   };
@@ -82,10 +79,10 @@ export function Classrooms({ teaching, attending, teacher }: ClassroomsProps): R
     <div className={styles.panels}>
       {teacher && (
         <section className={styles.panel} data-testid="minhas-turmas">
-          <h2 className={styles.title}>Turmas que você dá</h2>
+          <h2 className={styles.title}>{m.classrooms.teachingHeading}</h2>
 
           {teaching.length === 0 ? (
-            <p className={styles.quiet}>Nenhuma turma aberta ainda.</p>
+            <p className={styles.quiet}>{m.classrooms.teachingEmpty}</p>
           ) : (
             <ul className={styles.list}>
               {teaching.map((classroom) => (
@@ -94,10 +91,8 @@ export function Classrooms({ teaching, attending, teacher }: ClassroomsProps): R
                     {classroom.name}
                   </Link>
                   <span className={styles.code}>{classroom.code}</span>
-                  <span className={styles.count}>
-                    {classroom.students === 1 ? '1 aluno' : `${String(classroom.students)} alunos`}
-                  </span>
-                  <span className={styles.date}>{DATE.format(new Date(classroom.createdAt))}</span>
+                  <span className={styles.count}>{m.classrooms.studentCount(classroom.students)}</span>
+                  <span className={styles.date}>{date(new Date(classroom.createdAt))}</span>
                 </li>
               ))}
             </ul>
@@ -105,55 +100,50 @@ export function Classrooms({ teaching, attending, teacher }: ClassroomsProps): R
 
           <form className={styles.form} onSubmit={abrir}>
             <label className={styles.field}>
-              <Label>nome da turma</Label>
+              <Label>{m.classrooms.nameLabel}</Label>
               <input
                 className={styles.input}
                 name="name"
-                placeholder="3º A — manhã"
+                placeholder={m.classrooms.namePlaceholder}
                 required
                 data-testid="nome-da-turma"
               />
             </label>
             <Button type="submit" disabled={pending}>
-              {pending ? 'Abrindo…' : 'Abrir turma'}
+              {pending ? m.classrooms.opening : m.classrooms.openButton}
             </Button>
           </form>
 
-          <p className={styles.note}>
-            O código aparece na lista. Escreva no quadro: é com ele que o aluno entra, sem e-mail
-            no caminho.
-          </p>
+          <p className={styles.note}>{m.classrooms.codeNote}</p>
 
           <p className={styles.note}>
             <Link className={styles.link} href="/codigos" data-testid="ir-para-codigos">
-              {messages.classrooms.codesLink}
+              {m.classrooms.codesLink}
             </Link>{' '}
-            — {messages.classrooms.codesHint}
+            — {m.classrooms.codesHint}
           </p>
         </section>
       )}
 
       {!teacher && (
         <section className={styles.panel} data-testid="como-virar-professor">
-          <h2 className={styles.title}>{messages.classrooms.notTeacherTitle}</h2>
-          <p className={styles.quiet}>{messages.classrooms.notTeacherBody}</p>
-          <p className={styles.note}>{messages.classrooms.notTeacherHow}</p>
+          <h2 className={styles.title}>{m.classrooms.notTeacherTitle}</h2>
+          <p className={styles.quiet}>{m.classrooms.notTeacherBody}</p>
+          <p className={styles.note}>{m.classrooms.notTeacherHow}</p>
         </section>
       )}
 
       <section className={styles.panel} data-testid="turmas-que-frequento">
-        <h2 className={styles.title}>Turmas em que você está</h2>
+        <h2 className={styles.title}>{m.classrooms.attendingHeading}</h2>
 
         {attending.length === 0 ? (
-          <p className={styles.quiet}>Você ainda não entrou em nenhuma turma.</p>
+          <p className={styles.quiet}>{m.classrooms.attendingEmpty}</p>
         ) : (
           <ul className={styles.list}>
             {attending.map((classroom) => (
               <li key={classroom.id} className={styles.row}>
                 <span className={styles.name}>{classroom.name}</span>
-                <span className={styles.count}>
-                  {classroom.students === 1 ? '1 aluno' : `${String(classroom.students)} alunos`}
-                </span>
+                <span className={styles.count}>{m.classrooms.studentCount(classroom.students)}</span>
               </li>
             ))}
           </ul>
@@ -161,11 +151,11 @@ export function Classrooms({ teaching, attending, teacher }: ClassroomsProps): R
 
         <form className={styles.form} onSubmit={entrar}>
           <label className={styles.field}>
-            <Label>código da turma</Label>
+            <Label>{m.classrooms.codeLabel}</Label>
             <input
               className={[styles.input, styles.codeInput].join(' ')}
               name="code"
-              placeholder="XXXXXX"
+              placeholder={m.classrooms.codePlaceholder}
               autoComplete="off"
               spellCheck={false}
               required
@@ -173,14 +163,11 @@ export function Classrooms({ teaching, attending, teacher }: ClassroomsProps): R
             />
           </label>
           <Button type="submit" variant="secondary" disabled={pending}>
-            {pending ? 'Entrando…' : 'Entrar na turma'}
+            {pending ? m.classrooms.joining : m.classrooms.joinButton}
           </Button>
         </form>
 
-        <p className={styles.note}>
-          O professor vê quais missões você cumpriu e onde parou. O que você desenha fora das
-          missões é seu, e não aparece para ninguém.
-        </p>
+        <p className={styles.note}>{m.classrooms.attendingNote}</p>
       </section>
 
       {note !== null && (

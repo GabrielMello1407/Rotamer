@@ -1,0 +1,14 @@
+{
+  "$schema": "https://turborepo.com/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "test": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/docs/**/*.md",
+        "$TURBO_ROOT$/*.md",
+        "$TURBO_ROOT$/packages/core/src/chemistry/types.ts"
+      ]
+    }
+  }
+}

@@ -1,10 +1,20 @@
+import {
+  chemistryErrorText,
+  formatNumber,
+  functionalGroupName,
+  list,
+  pick,
+} from '@rotamer/i18n';
 import { Formula, Label, Logo, NumberValue, SourceBadge } from '@rotamer/ui';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { ReactElement } from 'react';
 import { readName } from '../../actions/naming';
 import { analyzeOnServer, depictOnServer } from '../../../lib/chemistry-server';
+import { currentLocale } from '../../../lib/locale';
 import { decodeSmiles } from '../../../lib/molecule-url';
+import { LanguageSwitch } from '../../components/LanguageSwitch';
+import { moleculeMessages } from './messages';
 import styles from './page.module.css';
 
 interface PageProps {
@@ -21,26 +31,30 @@ interface PageProps {
  */
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { smiles } = await params;
+  const locale = await currentLocale();
+  const m = pick(moleculeMessages, locale);
   const analysis = await analyzeOnServer(decodeSmiles(smiles));
 
   if (!analysis.ok) {
     return {
-      title: 'Estrutura inválida · Rotamer',
-      description: analysis.error.message,
+      title: m.invalidTitle,
+      description: chemistryErrorText(locale, analysis.error),
     };
   }
 
   const { molecule } = analysis;
-  const grupos = molecule.groups.map((group) => group.name).join(', ');
-  const massa = molecule.descriptors.molarMass.toFixed(2).replace('.', ',');
-
-  const description = `${molecule.formula} · ${massa} g/mol${grupos === '' ? '' : ` · ${grupos}`}. Descritores calculados pelo RDKit.`;
+  const groups = list(
+    locale,
+    molecule.groups.map((group) => functionalGroupName(locale, group.id)),
+  );
+  const mass = formatNumber(locale, molecule.descriptors.molarMass, 2);
+  const description = m.description(molecule.formula, mass, groups);
 
   return {
-    title: `${molecule.formula} · Rotamer`,
+    title: m.title(molecule.formula),
     description,
     openGraph: {
-      title: `${molecule.formula} — ${massa} g/mol`,
+      title: m.ogTitle(molecule.formula, mass),
       description,
       type: 'article',
     },
@@ -49,6 +63,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function MoleculePage({ params }: PageProps): Promise<ReactElement> {
   const { smiles } = await params;
+  const locale = await currentLocale();
+  const m = pick(moleculeMessages, locale);
   const input = decodeSmiles(smiles);
 
   const [analysis, depiction] = await Promise.all([
@@ -66,12 +82,15 @@ export default async function MoleculePage({ params }: PageProps): Promise<React
           <Logo size={32} decorative />
           <span className={styles.wordmark}>Rotamer</span>
         </Link>
-        <SourceBadge source="computed" />
+        <span className={styles.end}>
+          <LanguageSwitch />
+          <SourceBadge source="computed" locale={locale} />
+        </span>
       </header>
 
       {!analysis.ok ? (
         <p className={styles.error} data-testid="erro-quimico">
-          {analysis.error.message}
+          {chemistryErrorText(locale, analysis.error)}
         </p>
       ) : (
         <>
@@ -79,15 +98,17 @@ export default async function MoleculePage({ params }: PageProps): Promise<React
             <span data-testid="formula">
               <Formula value={analysis.molecule.formula} className={styles.formula} />
             </span>
-            <NumberValue value={analysis.molecule.descriptors.molarMass} unit="g/mol" />
+            <NumberValue
+              value={analysis.molecule.descriptors.molarMass}
+              unit="g/mol"
+              locale={locale}
+            />
           </div>
 
           {named !== null && (
             <p className={styles.named} data-testid="apelido">
               <span className={styles.namedName}>{named.name}</span>
-              <span className={styles.namedBy}>
-                apelido dado por {named.by} dentro do Rotamer — não é nomenclatura
-              </span>
+              <span className={styles.namedBy}>{m.namedBy(named.by)}</span>
             </p>
           )}
 
@@ -105,58 +126,73 @@ export default async function MoleculePage({ params }: PageProps): Promise<React
             <div>
               <div className={styles.facts}>
                 <div className={styles.fact}>
-                  <Label>TPSA</Label>
-                  <NumberValue value={analysis.molecule.descriptors.tpsa} unit="Å²" />
+                  <Label>{m.tpsa}</Label>
+                  <NumberValue
+                    value={analysis.molecule.descriptors.tpsa}
+                    unit="Å²"
+                    locale={locale}
+                  />
                 </div>
                 <div className={styles.fact}>
-                  <Label>logP</Label>
-                  <NumberValue value={analysis.molecule.descriptors.logP} />
+                  <Label>{m.logP}</Label>
+                  <NumberValue value={analysis.molecule.descriptors.logP} locale={locale} />
                 </div>
                 <div className={styles.fact}>
-                  <Label>rotacionáveis</Label>
+                  <Label>{m.rotatable}</Label>
                   <NumberValue
                     value={analysis.molecule.descriptors.rotatableBonds}
                     decimals={0}
+                    locale={locale}
                   />
                 </div>
                 <div className={styles.fact}>
-                  <Label>anéis aromáticos</Label>
+                  <Label>{m.aromaticRings}</Label>
                   <NumberValue
                     value={analysis.molecule.descriptors.aromaticRings}
                     decimals={0}
+                    locale={locale}
                   />
                 </div>
                 <div className={styles.fact}>
-                  <Label>estereocentros</Label>
+                  <Label>{m.stereocenters}</Label>
                   <span className={styles.stereo} data-testid="estereocentros">
                     <NumberValue
                       value={analysis.molecule.descriptors.stereocenters}
                       decimals={0}
+                      locale={locale}
                     />
                     {analysis.molecule.descriptors.unspecifiedStereocenters > 0 && (
-                      <span className={styles.stereoNote}>sem configuração</span>
+                      <span className={styles.stereoNote}>{m.unspecified}</span>
                     )}
                   </span>
                 </div>
 
                 <div className={styles.fact}>
-                  <Label>doadores de H</Label>
-                  <NumberValue value={analysis.molecule.descriptors.hbDonors} decimals={0} />
+                  <Label>{m.hbDonors}</Label>
+                  <NumberValue
+                    value={analysis.molecule.descriptors.hbDonors}
+                    decimals={0}
+                    locale={locale}
+                  />
                 </div>
                 <div className={styles.fact}>
-                  <Label>aceitadores de H</Label>
-                  <NumberValue value={analysis.molecule.descriptors.hbAcceptors} decimals={0} />
+                  <Label>{m.hbAcceptors}</Label>
+                  <NumberValue
+                    value={analysis.molecule.descriptors.hbAcceptors}
+                    decimals={0}
+                    locale={locale}
+                  />
                 </div>
               </div>
 
               {analysis.molecule.groups.length > 0 && (
                 <div className={styles.codes}>
                   <div>
-                    <Label>grupos funcionais</Label>
+                    <Label>{m.groups}</Label>
                     <div className={styles.groups} data-testid="grupos">
                       {analysis.molecule.groups.map((group) => (
                         <span key={group.id} className={styles.group}>
-                          {group.name}
+                          {functionalGroupName(locale, group.id)}
                           {group.count > 1 ? ` ×${String(group.count)}` : ''}
                         </span>
                       ))}
@@ -167,11 +203,11 @@ export default async function MoleculePage({ params }: PageProps): Promise<React
 
               <div className={styles.codes}>
                 <div>
-                  <Label>SMILES</Label>
+                  <Label>{m.smiles}</Label>
                   <p className={styles.code}>{analysis.molecule.smiles}</p>
                 </div>
                 <div>
-                  <Label>InChIKey</Label>
+                  <Label>{m.inchiKey}</Label>
                   <p className={styles.code}>{analysis.molecule.inchiKey}</p>
                 </div>
               </div>
@@ -181,7 +217,7 @@ export default async function MoleculePage({ params }: PageProps): Promise<React
                   className={styles.link}
                   href={`/?smiles=${encodeURIComponent(analysis.molecule.smiles)}`}
                 >
-                  Abrir esta molécula no editor →
+                  {m.openInEditor}
                 </Link>
               </p>
             </div>
@@ -190,11 +226,8 @@ export default async function MoleculePage({ params }: PageProps): Promise<React
       )}
 
       <footer className={styles.footer}>
-        <span>
-          Todos os números desta página foram calculados pelo RDKit a partir da estrutura. Nada
-          aqui passou por modelo de linguagem.
-        </span>
-        <span>Rotamer · código aberto, licença MIT. Química por RDKit (BSD-3-Clause).</span>
+        <span>{m.footerComputed}</span>
+        <span>{m.footerLicense}</span>
       </footer>
     </main>
   );

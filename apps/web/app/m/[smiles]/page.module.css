@@ -170,3 +170,10 @@
   font-size: var(--step--1);
   color: var(--warn);
 }
+
+/* A ponta direita do cabeçalho: o que já estava ali e o botão de idioma. */
+.end {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}

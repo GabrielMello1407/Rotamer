@@ -1,8 +1,11 @@
 'use client';
 
 import type { AnalysisResult } from '@rotamer/core';
+import { chemistryErrorText } from '@rotamer/i18n';
+import { useLocale, useMessages } from '@rotamer/i18n/react';
 import { Card, Formula, Label, NumberValue, SourceBadge } from '@rotamer/ui';
 import { useEffect, useState, type ReactElement } from 'react';
+import { chemistryPanelMessages } from './messages';
 import styles from './ChemistryPanel.module.css';
 import { useChemistryClient } from './use-chemistry-client';
 
@@ -19,6 +22,8 @@ export interface ChemistryPanelProps {
  * Nenhum número desta tela foi escrito à mão.
  */
 export function ChemistryPanel({ input, name }: ChemistryPanelProps): ReactElement {
+  const locale = useLocale();
+  const messages = useMessages(chemistryPanelMessages);
   const connection = useChemistryClient();
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
 
@@ -38,19 +43,19 @@ export function ChemistryPanel({ input, name }: ChemistryPanelProps): ReactEleme
   }, [connection, input]);
 
   return (
-    <Card title={name} accessory={<SourceBadge source="computed" />}>
+    <Card title={name} accessory={<SourceBadge source="computed" locale={locale} />}>
       {connection.status === 'loading' && (
         <p className={styles.waiting}>
           <span className={styles.pulse} aria-hidden="true" />
-          Carregando o RDKit no worker — a página aparece primeiro, o WebAssembly sobe depois.
+          {messages.loading}
         </p>
       )}
 
-      {connection.status === 'failed' && <p className={styles.error}>{connection.message}</p>}
+      {connection.status === 'failed' && <p className={styles.error}>{messages.engineFailed}</p>}
 
       {analysis !== null && !analysis.ok && (
         <p className={styles.error} data-testid="chemistry-error">
-          {analysis.error.message}
+          {chemistryErrorText(locale, analysis.error)}
         </p>
       )}
 
@@ -62,50 +67,58 @@ export function ChemistryPanel({ input, name }: ChemistryPanelProps): ReactEleme
 
           <div className={styles.grid}>
             <div className={styles.metric}>
-              <Label>massa molar</Label>
+              <Label>{messages.molarMass}</Label>
               <NumberValue
                 value={analysis.molecule.descriptors.molarMass}
                 unit="g/mol"
+                locale={locale}
                 className={styles.value}
               />
             </div>
             <div className={styles.metric}>
-              <Label>TPSA</Label>
+              <Label>{messages.tpsa}</Label>
               <NumberValue
                 value={analysis.molecule.descriptors.tpsa}
                 unit="Å²"
+                locale={locale}
                 className={styles.value}
               />
             </div>
             <div className={styles.metric}>
-              <Label>logP</Label>
-              <NumberValue value={analysis.molecule.descriptors.logP} className={styles.value} />
+              <Label>{messages.logP}</Label>
+              <NumberValue
+                value={analysis.molecule.descriptors.logP}
+                locale={locale}
+                className={styles.value}
+              />
             </div>
             <div className={styles.metric}>
-              <Label>rotacionáveis</Label>
+              <Label>{messages.rotatable}</Label>
               <NumberValue
                 value={analysis.molecule.descriptors.rotatableBonds}
                 decimals={0}
+                locale={locale}
                 className={styles.value}
               />
             </div>
             <div className={styles.metric}>
-              <Label>anéis aromáticos</Label>
+              <Label>{messages.aromaticRings}</Label>
               <NumberValue
                 value={analysis.molecule.descriptors.aromaticRings}
                 decimals={0}
+                locale={locale}
                 className={styles.value}
               />
             </div>
           </div>
 
           <div className={styles.metric}>
-            <Label>InChIKey</Label>
+            <Label>{messages.inchiKey}</Label>
             <span className={styles.key}>{analysis.molecule.inchiKey}</span>
           </div>
 
           <p className={styles.footer}>
-            <span>RDKit {connection.version} · WebAssembly em Web Worker</span>
+            <span>{messages.footer(connection.version)}</span>
           </p>
         </div>
       )}

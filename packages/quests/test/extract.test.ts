@@ -9,7 +9,8 @@ import {
 } from '@rotamer/core';
 import { describe, expect, it } from 'vitest';
 import { CATALOG } from '../src/catalog';
-import { extractGoals } from '../src/extract';
+import { extractGoals, type CandidateGoal } from '../src/extract';
+import { goalLabel } from '../src/messages';
 
 /**
  * `extractGoals` é a extração de objetivos do D-25: o professor desenha, o
@@ -19,8 +20,17 @@ import { extractGoals } from '../src/extract';
  */
 async function moleculeOf(smiles: string): Promise<Molecule> {
   const result = await analyze(smiles);
-  if (!result.ok) throw new Error(`esperava molécula, veio erro: ${result.error.message}`);
+  if (!result.ok) throw new Error(`esperava molécula, veio erro: ${result.error.code}`);
   return result.molecule;
+}
+
+/**
+ * O candidato não guarda frase: ela é derivada da condição, no idioma de quem
+ * lê. O que se confere aqui é o texto em pt-BR — o inglês tem teste próprio em
+ * `messages.test.ts`, sobre as mesmas condições.
+ */
+function rotulo(candidato: CandidateGoal | undefined): string | undefined {
+  return candidato === undefined ? undefined : goalLabel('pt-BR', candidato.condition);
 }
 
 /**
@@ -57,7 +67,7 @@ describe('extractGoals — etanol', () => {
 
     const identidade = candidatos.find((candidato) => candidato.id === 'inchi-key');
     expect(identidade).toBeDefined();
-    expect(identidade?.label).toBe('é exatamente esta molécula');
+    expect(rotulo(identidade)).toBe('é exatamente esta molécula');
     expect(identidade?.measured).toBe(etanol.inchiKey);
     expect(identidade?.kind).toBe('identity');
     expect(identidade?.exclusive).toBe(true);
@@ -68,7 +78,7 @@ describe('extractGoals — etanol', () => {
     const candidatos = extractGoals(await moleculeOf('CCO'));
     const formula = candidatos.find((candidato) => candidato.id === 'formula');
 
-    expect(formula?.label).toBe('a fórmula é C2H6O');
+    expect(rotulo(formula)).toBe('a fórmula é C2H6O');
     expect(formula?.measured).toBe('C2H6O');
     expect(formula?.exclusive).toBe(false);
     expect(formula?.condition).toEqual({ kind: 'formula', value: 'C2H6O' });
@@ -79,7 +89,7 @@ describe('extractGoals — etanol', () => {
     const alcool = candidatos.find((candidato) => candidato.id === 'group:alcohol:1');
 
     expect(alcool).toBeDefined();
-    expect(alcool?.label).toBe('tem pelo menos 1 grupo álcool');
+    expect(rotulo(alcool)).toBe('tem pelo menos 1 grupo álcool');
     expect(alcool?.measured).toBe('1');
     expect(alcool?.kind).toBe('group');
     expect(alcool?.condition).toEqual({ kind: 'group', group: 'alcohol', min: 1 });
@@ -89,14 +99,14 @@ describe('extractGoals — etanol', () => {
     const candidatos = extractGoals(await moleculeOf('CCO'));
 
     const carbono = candidatos.find((candidato) => candidato.id === 'atoms:C:2');
-    expect(carbono?.label).toBe('tem exatamente 2 átomos de C');
+    expect(rotulo(carbono)).toBe('tem exatamente 2 átomos de C');
     expect(carbono?.condition).toEqual({ kind: 'atoms', element: 'C', min: 2, max: 2 });
 
     const hidrogenio = candidatos.find((candidato) => candidato.id === 'atoms:H:6');
-    expect(hidrogenio?.label).toBe('tem exatamente 6 átomos de H');
+    expect(rotulo(hidrogenio)).toBe('tem exatamente 6 átomos de H');
 
     const oxigenio = candidatos.find((candidato) => candidato.id === 'atoms:O:1');
-    expect(oxigenio?.label).toBe('tem exatamente 1 átomo de O');
+    expect(rotulo(oxigenio)).toBe('tem exatamente 1 átomo de O');
   });
 
   it('não oferece o InChIKey como objetivo comum e não some com nenhum contínuo', async () => {
@@ -120,10 +130,10 @@ describe('extractGoals — aspirina', () => {
     const aspirina = await moleculeOf('CC(=O)Oc1ccccc1C(=O)O');
     const candidatos = extractGoals(aspirina);
 
-    expect(candidatos.find((candidato) => candidato.id === 'group:ester:1')?.label).toBe(
+    expect(rotulo(candidatos.find((candidato) => candidato.id === 'group:ester:1'))).toBe(
       'tem pelo menos 1 grupo éster',
     );
-    expect(candidatos.find((candidato) => candidato.id === 'group:carboxylicAcid:1')?.label).toBe(
+    expect(rotulo(candidatos.find((candidato) => candidato.id === 'group:carboxylicAcid:1'))).toBe(
       'tem pelo menos 1 grupo ácido carboxílico',
     );
   });
@@ -167,7 +177,7 @@ describe('extractGoals — aspirina', () => {
         (item) => item.id === `descriptor:${descritor}:${descriptors[descritor as keyof typeof descriptors]}`,
       );
       expect(candidato, `candidato de ${descritor} não encontrado`).toBeDefined();
-      expect(candidato?.label).toBe(label);
+      expect(rotulo(candidato)).toBe(label);
       expect(candidato?.condition).toEqual({
         kind: 'descriptor',
         descriptor: descritor,
@@ -197,14 +207,14 @@ describe('extractGoals — cafeína', () => {
 
     const candidatos = extractGoals(cafeina);
 
-    expect(candidatos.find((candidato) => candidato.id === 'atoms:N:4')?.label).toBe(
+    expect(rotulo(candidatos.find((candidato) => candidato.id === 'atoms:N:4'))).toBe(
       'tem exatamente 4 átomos de N',
     );
-    expect(candidatos.find((candidato) => candidato.id === 'descriptor:rings:2')?.label).toBe(
+    expect(rotulo(candidatos.find((candidato) => candidato.id === 'descriptor:rings:2'))).toBe(
       'tem exatamente 2 anéis',
     );
     expect(
-      candidatos.find((candidato) => candidato.id === 'descriptor:aromaticRings:2')?.label,
+      rotulo(candidatos.find((candidato) => candidato.id === 'descriptor:aromaticRings:2')),
     ).toBe('tem exatamente 2 anéis aromáticos');
   });
 
@@ -213,7 +223,7 @@ describe('extractGoals — cafeína', () => {
     const amida = candidatos.find((candidato) => candidato.id === 'group:amide:2');
 
     expect(amida).toBeDefined();
-    expect(amida?.label).toBe('tem pelo menos 2 grupos amida');
+    expect(rotulo(amida)).toBe('tem pelo menos 2 grupos amida');
     expect(amida?.condition).toEqual({ kind: 'group', group: 'amide', min: 2 });
   });
 });
@@ -233,7 +243,7 @@ describe('centro estereogênico sem configuração', () => {
     );
 
     expect(semDefinicao).toBeDefined();
-    expect(semDefinicao?.label).toBe('nenhum centro estereogênico fica sem configuração');
+    expect(rotulo(semDefinicao)).toBe('nenhum centro estereogênico fica sem configuração');
     expect(semDefinicao?.measured).toBe('0');
     expect(semDefinicao?.condition).toEqual({
       kind: 'descriptor',

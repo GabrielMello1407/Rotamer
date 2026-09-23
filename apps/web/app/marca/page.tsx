@@ -1,42 +1,71 @@
+import { pick, type Locale } from '@rotamer/i18n';
 import { Card, Label, Logo, SourceBadge } from '@rotamer/ui';
+import type { Metadata } from 'next';
 import type { ReactElement } from 'react';
+import { currentLocale } from '../../lib/locale';
 import { ChemistryPanel } from '../components/ChemistryPanel';
+import { LanguageToggle } from '../components/LanguageToggle';
 import { ThemeToggle } from '../components/ThemeToggle';
+import { brandMessages } from './messages';
 import styles from './page.module.css';
 
 /** Aspirina. É a molécula que a Fase 0 precisa sanitizar. */
 const ASPIRIN = 'CC(=O)Oc1ccccc1C(=O)O';
 
+/** O lado do dicionário da página que está valendo agora. */
+type BrandText = (typeof brandMessages)['pt-BR'];
+
+/**
+ * Lê um texto do dicionário pela chave que a vitrine guarda.
+ *
+ * As tabelas abaixo guardam a chave, não a frase — é o que permite a mesma
+ * linha servir aos dois idiomas. O acesso por chave perde a prova de que ali
+ * há texto, então a checagem acontece aqui, e falha alto: chave que deixou de
+ * ser frase é defeito, não motivo para a tela ficar em branco.
+ */
+function textOf(m: BrandText, key: keyof BrandText): string {
+  const value = m[key];
+  if (typeof value !== 'string') throw new Error(`marca: ${String(key)} não é texto`);
+  return value;
+}
+
+/**
+ * A vitrine guarda só o token; o nome vem do dicionário.
+ *
+ * Token é chave de dado e não muda de idioma — `--flame-cobre` é `--flame-cobre`
+ * em qualquer tela, porque é isso que se escreve no CSS. O que muda é a palavra
+ * ao lado dele.
+ */
 interface Swatch {
   readonly token: string;
-  readonly name: string;
+  readonly name: keyof BrandText;
 }
 
 const FLAME: readonly Swatch[] = [
-  { token: '--flame-cobre', name: 'cobre · marca' },
-  { token: '--flame-potassio', name: 'potássio' },
-  { token: '--flame-sodio', name: 'sódio' },
-  { token: '--flame-cesio', name: 'césio' },
-  { token: '--flame-estroncio', name: 'estrôncio' },
-  { token: '--flame-bario', name: 'bário' },
-  { token: '--flame-litio', name: 'lítio' },
+  { token: '--flame-cobre', name: 'flameCopper' },
+  { token: '--flame-potassio', name: 'flamePotassium' },
+  { token: '--flame-sodio', name: 'flameSodium' },
+  { token: '--flame-cesio', name: 'flameCaesium' },
+  { token: '--flame-estroncio', name: 'flameStrontium' },
+  { token: '--flame-bario', name: 'flameBarium' },
+  { token: '--flame-litio', name: 'flameLithium' },
 ];
 
-const ROLES: readonly (Swatch & { readonly usedFor: string })[] = [
-  { token: '--brand', name: 'marca e ação', usedFor: 'botão primário, link, seleção, foco' },
-  { token: '--ok', name: 'sucesso', usedFor: 'missão cumprida, estrutura válida' },
-  { token: '--warn', name: 'atenção', usedFor: 'hipótese da IA, valor aproximado' },
-  { token: '--danger', name: 'erro', usedFor: 'valência excedida, violação de Lipinski' },
-  { token: '--info', name: 'informação', usedFor: 'nota de contexto, referência' },
+const ROLES: readonly (Swatch & { readonly usedFor: keyof BrandText })[] = [
+  { token: '--brand', name: 'roleBrand', usedFor: 'roleBrandUse' },
+  { token: '--ok', name: 'roleOk', usedFor: 'roleOkUse' },
+  { token: '--warn', name: 'roleWarn', usedFor: 'roleWarnUse' },
+  { token: '--danger', name: 'roleDanger', usedFor: 'roleDangerUse' },
+  { token: '--info', name: 'roleInfo', usedFor: 'roleInfoUse' },
 ];
 
 const NEUTRALS: readonly Swatch[] = [
-  { token: '--bg', name: 'fundo' },
-  { token: '--surface', name: 'superfície' },
-  { token: '--sunk', name: 'rebaixado' },
-  { token: '--line', name: 'linha' },
-  { token: '--ink-500', name: 'texto secundário' },
-  { token: '--ink-900', name: 'texto' },
+  { token: '--bg', name: 'neutralBg' },
+  { token: '--surface', name: 'neutralSurface' },
+  { token: '--sunk', name: 'neutralSunk' },
+  { token: '--line', name: 'neutralLine' },
+  { token: '--ink-500', name: 'neutralInk500' },
+  { token: '--ink-900', name: 'neutralInk900' },
 ];
 
 const ATOMS: readonly { readonly token: string; readonly symbol: string }[] = [
@@ -54,32 +83,40 @@ const ATOMS: readonly { readonly token: string; readonly symbol: string }[] = [
 
 const TYPE_SCALE: readonly {
   readonly token: string;
-  readonly name: string;
+  readonly name: keyof BrandText;
   readonly display: boolean;
 }[] = [
-  { token: '--step-5', name: 'display', display: true },
-  { token: '--step-4', name: 'título', display: true },
-  { token: '--step-3', name: 'seção', display: true },
-  { token: '--step-1', name: 'corpo', display: false },
-  { token: '--step-0', name: 'interface', display: false },
-  { token: '--step--1', name: 'legenda', display: false },
+  { token: '--step-5', name: 'typeDisplay', display: true },
+  { token: '--step-4', name: 'typeTitle', display: true },
+  { token: '--step-3', name: 'typeSection', display: true },
+  { token: '--step-1', name: 'typeBody', display: false },
+  { token: '--step-0', name: 'typeUi', display: false },
+  { token: '--step--1', name: 'typeCaption', display: false },
 ];
 
-const RADII: readonly { readonly token: string; readonly usedFor: string }[] = [
-  { token: '--r-sm', usedFor: 'controle' },
-  { token: '--r-md', usedFor: 'cartão' },
-  { token: '--r-lg', usedFor: 'painel flutuante' },
-  { token: '--r-xl', usedFor: 'cartão 3D' },
+const RADII: readonly { readonly token: string; readonly usedFor: keyof BrandText }[] = [
+  { token: '--r-sm', usedFor: 'radiusControl' },
+  { token: '--r-md', usedFor: 'radiusCard' },
+  { token: '--r-lg', usedFor: 'radiusPanel' },
+  { token: '--r-xl', usedFor: 'radiusScene' },
 ];
 
-const DURATIONS: readonly { readonly token: string; readonly usedFor: string }[] = [
-  { token: '--t-fast', usedFor: 'estado de controle — hover, foco, pressionado' },
-  { token: '--t-base', usedFor: 'painel e gaveta' },
-  { token: '--t-slow', usedFor: 'transição de contexto' },
-  { token: '--t-fold', usedFor: 'dobramento da molécula — isto é física, não enfeite' },
+const DURATIONS: readonly { readonly token: string; readonly usedFor: keyof BrandText }[] = [
+  { token: '--t-fast', usedFor: 'durationFast' },
+  { token: '--t-base', usedFor: 'durationBase' },
+  { token: '--t-slow', usedFor: 'durationSlow' },
+  { token: '--t-fold', usedFor: 'durationFold' },
 ];
 
-export default function BrandPage(): ReactElement {
+export async function generateMetadata(): Promise<Metadata> {
+  const m = pick(brandMessages, await currentLocale());
+  return { title: m.metaTitle, description: m.metaDescription };
+}
+
+export default async function BrandPage(): Promise<ReactElement> {
+  const locale: Locale = await currentLocale();
+  const m = pick(brandMessages, locale);
+
   return (
     <main className={styles.page}>
       <header className={styles.top}>
@@ -87,54 +124,45 @@ export default function BrandPage(): ReactElement {
           <Logo size={72} />
           <div>
             <h1 className={styles.wordmark}>Rotamer</h1>
-            <p className={styles.tagline}>
-              Desenhe uma molécula em 2D. Descubra o que ela é em 3D.
-            </p>
+            <p className={styles.tagline}>{m.tagline}</p>
+            <p className={styles.quiet}>{m.bilingual}</p>
           </div>
         </div>
-        <ThemeToggle />
+        <div className={styles.toggles}>
+          <LanguageToggle />
+          <ThemeToggle />
+        </div>
       </header>
 
       <section className={styles.section}>
         <Card>
-          <p className={styles.rule}>O núcleo determinístico decide. A IA explica.</p>
-          <p className={styles.ruleText}>
-            Validade, valência, fórmula, massa, SMILES, InChIKey e descritores vêm sempre do
-            RDKit. O modelo de linguagem lê esses números e explica — sem nunca recalcular e sem
-            nunca contradizer. Todo bloco de análise na tela declara de onde veio.
-          </p>
+          <p className={styles.rule}>{m.rule}</p>
+          <p className={styles.ruleText}>{m.ruleText}</p>
           <div className={styles.badges}>
-            <SourceBadge source="computed" />
-            <SourceBadge source="generated" />
+            <SourceBadge source="computed" locale={locale} />
+            <SourceBadge source="generated" locale={locale} />
           </div>
         </Card>
       </section>
 
       <section className={styles.section}>
         <div className={styles.sectionTitle}>
-          <h2>Fase 0 · o motor de química</h2>
-          <Label>rdkit em web worker</Label>
+          <h2>{m.engineHeading}</h2>
+          <Label>{m.engineLabel}</Label>
         </div>
         <div className={styles.twoColumns}>
-          <ChemistryPanel input={ASPIRIN} name="aspirina" />
+          <ChemistryPanel input={ASPIRIN} name={m.aspirin} />
           <div>
-            <p>
-              A página pinta primeiro; os quase 7 MB de WebAssembly do RDKit sobem depois, dentro
-              de um Web Worker. A thread principal só desenha — é isso que mantém o editor a
-              60 fps enquanto a química trabalha.
-            </p>
-            <p className={`${styles.quiet} ${styles.spaced}`}>
-              Os números ao lado saíram do worker agora, nesta visita. Nenhum deles está escrito
-              no código da página.
-            </p>
+            <p>{m.engineBody}</p>
+            <p className={`${styles.quiet} ${styles.spaced}`}>{m.engineQuiet}</p>
           </div>
         </div>
       </section>
 
       <section className={styles.section}>
         <div className={styles.sectionTitle}>
-          <h2>Símbolo</h2>
-          <Label>projeção de newman</Label>
+          <h2>{m.markHeading}</h2>
+          <Label>{m.markLabel}</Label>
         </div>
         <div className={styles.twoColumns}>
           <div className={styles.marks}>
@@ -152,37 +180,25 @@ export default function BrandPage(): ReactElement {
             </div>
           </div>
           <div>
-            <p>
-              Você olha ao longo do eixo de uma ligação simples. O círculo é o átomo de trás; as
-              três hastes que saem do centro são as ligações do átomo da frente; as três que saem
-              da borda são as de trás. Os 60° de separação são a conformação escalonada — a de
-              menor energia, aquela para a qual a molécula tende.
-            </p>
-            <p className={styles.notice}>
-              A cor separa profundidade: frente em turquesa, trás na cor do texto. Inverter faz o
-              átomo de trás parecer o da frente — e aí o desenho está quimicamente errado.
-            </p>
+            <p>{m.markBody}</p>
+            <p className={styles.notice}>{m.markNotice}</p>
           </div>
         </div>
       </section>
 
       <section className={styles.section}>
         <div className={styles.sectionTitle}>
-          <h2>Cor</h2>
-          <Label>teste de chama</Label>
+          <h2>{m.colorHeading}</h2>
+          <Label>{m.colorLabel}</Label>
         </div>
 
-        <p>
-          Cada cor é a que um elemento emite ao queimar. Nenhuma foi escolhida por gosto. Os
-          neutros vêm do cone azul do bico de Bunsen: cinzas com viés azul-violeta, nunca cinza
-          puro.
-        </p>
+        <p>{m.colorBody}</p>
 
         <div className={styles.palette}>
           {FLAME.map((swatch) => (
             <div key={swatch.token} className={styles.swatch}>
               <div className={styles.chip} style={{ background: `var(${swatch.token})` }} />
-              <span className={styles.swatchCaption}>{swatch.name}</span>
+              <span className={styles.swatchCaption}>{textOf(m, swatch.name)}</span>
               <code className={styles.tokenName}>{swatch.token}</code>
             </div>
           ))}
@@ -192,8 +208,8 @@ export default function BrandPage(): ReactElement {
           {ROLES.map((role) => (
             <div key={role.token} className={styles.swatch}>
               <div className={styles.chip} style={{ background: `var(${role.token})` }} />
-              <span className={styles.swatchCaption}>{role.name}</span>
-              <span className={styles.tokenName}>{role.usedFor}</span>
+              <span className={styles.swatchCaption}>{textOf(m, role.name)}</span>
+              <span className={styles.tokenName}>{textOf(m, role.usedFor)}</span>
             </div>
           ))}
         </div>
@@ -202,14 +218,14 @@ export default function BrandPage(): ReactElement {
           {NEUTRALS.map((neutral) => (
             <div key={neutral.token} className={styles.swatch}>
               <div className={styles.chip} style={{ background: `var(${neutral.token})` }} />
-              <span className={styles.swatchCaption}>{neutral.name}</span>
+              <span className={styles.swatchCaption}>{textOf(m, neutral.name)}</span>
               <code className={styles.tokenName}>{neutral.token}</code>
             </div>
           ))}
         </div>
 
         <div>
-          <Label>cpk pertence ao átomo</Label>
+          <Label>{m.cpkLabel}</Label>
           <div className={styles.atoms}>
             {ATOMS.map((atom) => (
               <span
@@ -221,49 +237,46 @@ export default function BrandPage(): ReactElement {
               </span>
             ))}
           </div>
-          <p className={styles.notice}>
-            Nenhum botão, link, borda ou estado semântico pode usar uma cor CPK. Se a interface
-            pinta de vermelho, o vermelho deixa de significar oxigênio. É por isso que o acento da
-            marca é turquesa: nenhum elemento comum é turquesa no CPK.
-          </p>
+          <p className={styles.notice}>{m.cpkNotice}</p>
         </div>
       </section>
 
       <section className={styles.section}>
         <div className={styles.sectionTitle}>
-          <h2>Tipografia</h2>
-          <Label>archivo · ibm plex</Label>
+          <h2>{m.typeHeading}</h2>
+          <Label>{m.typeLabel}</Label>
         </div>
         <div className={styles.scale}>
           {TYPE_SCALE.map((row) => (
             <div key={row.token} className={styles.scaleRow}>
-              <code className={styles.tokenName}>{row.name}</code>
+              <code className={styles.tokenName}>{textOf(m, row.name)}</code>
               <span
                 className={row.display ? styles.displaySample : undefined}
                 style={{ fontSize: `var(${row.token})` }}
               >
-                O etano gira livre; o eteno se recusa.
+                {m.typeSample}
               </span>
             </div>
           ))}
         </div>
         <p className={styles.quiet}>
-          Todo número usa <code className={styles.tokenName}>tabular-nums</code> em IBM Plex Mono,
-          e toda fórmula leva subscrito de verdade — nunca C6H6 em texto corrido.
+          {m.typeQuietBefore}
+          <code className={styles.tokenName}>tabular-nums</code>
+          {m.typeQuietAfter}
         </p>
       </section>
 
       <section className={styles.section}>
         <div className={styles.sectionTitle}>
-          <h2>Forma e movimento</h2>
-          <Label>raio · duração</Label>
+          <h2>{m.shapeHeading}</h2>
+          <Label>{m.shapeLabel}</Label>
         </div>
         <div className={styles.twoColumns}>
           <ul className={styles.list}>
             {RADII.map((radius) => (
               <li key={radius.token} className={styles.listItem}>
                 <span className={styles.radius} style={{ borderRadius: `var(${radius.token})` }} />
-                <span>{radius.usedFor}</span>
+                <span>{textOf(m, radius.usedFor)}</span>
                 <code className={styles.tokenName}>{radius.token}</code>
               </li>
             ))}
@@ -271,24 +284,18 @@ export default function BrandPage(): ReactElement {
           <ul className={styles.list}>
             {DURATIONS.map((duration) => (
               <li key={duration.token} className={styles.listItem}>
-                <span>{duration.usedFor}</span>
+                <span>{textOf(m, duration.usedFor)}</span>
                 <code className={styles.tokenName}>{duration.token}</code>
               </li>
             ))}
           </ul>
         </div>
-        <p className={styles.quiet}>
-          Quem pede menos movimento no sistema recebe a geometria final direto, sem dobramento e
-          sem vibração.
-        </p>
+        <p className={styles.quiet}>{m.motionQuiet}</p>
       </section>
 
       <footer className={styles.footer}>
-        <span>Rotamer · código aberto, licença MIT.</span>
-        <span>
-          Química por RDKit (BSD-3-Clause). Tipografia Archivo e IBM Plex (SIL Open Font License
-          1.1).
-        </span>
+        <span>{m.footerLicense}</span>
+        <span>{m.footerCredits}</span>
       </footer>
     </main>
   );

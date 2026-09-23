@@ -1,7 +1,17 @@
 'use client';
 
 import type { AnalysisResult } from '@rotamer/core';
-import { CATALOG, evaluateAnalysis, findQuest, type Assessable, type Goal, type Track } from '@rotamer/quests';
+import { useLocale, useMessages } from '@rotamer/i18n/react';
+import {
+  CATALOG,
+  localize,
+  trackNames,
+  evaluateAnalysis,
+  findQuest,
+  type Assessable,
+  type Goal,
+  type Track,
+} from '@rotamer/quests';
 import { Button, Label, SourceBadge } from '@rotamer/ui';
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
@@ -22,7 +32,8 @@ import {
   type StudentAssignment,
   type StudentQuestDetail,
 } from '../actions/assignment';
-import { messages } from '../turmas/messages';
+import { messages as classroomMessages } from '../turmas/messages';
+import { questPanelMessages } from './messages';
 import { StudentAssignmentsSection } from './StudentAssignmentsSection';
 import styles from './QuestPanel.module.css';
 
@@ -32,12 +43,6 @@ export interface QuestPanelProps {
   readonly slug: string;
   readonly onSlug: (slug: string) => void;
 }
-
-const TRACK_NAMES: Readonly<Record<Track, string>> = {
-  structure: 'Estrutura',
-  geometry: 'Geometria',
-  property: 'Propriedade',
-};
 
 /** Sem missão: a tela vira ferramenta livre, sem tique e sem contador (D-09). */
 const FREE = '';
@@ -98,6 +103,10 @@ function findNextUp(
  * passagem não virar tentativa gravada.
  */
 export function QuestPanel({ analysis, slug, onSlug }: QuestPanelProps): ReactElement {
+  const locale = useLocale();
+  const text = useMessages(questPanelMessages);
+  const messages = useMessages(classroomMessages);
+  const trackName = useMessages(trackNames);
   const [hintsShown, setHintsShown] = useState(0);
   const [outcome, setOutcome] = useState<AttemptOutcome | null>(null);
   const [progress, setProgress] = useState<readonly QuestProgress[]>([]);
@@ -109,7 +118,7 @@ export function QuestPanel({ analysis, slug, onSlug }: QuestPanelProps): ReactEl
   const recorded = useRef<Set<string>>(new Set());
 
   const isTeacherQuest = slug.startsWith(TEACHER_PREFIX);
-  const quest = slug === FREE || isTeacherQuest ? undefined : findQuest(slug);
+  const quest = slug === FREE || isTeacherQuest ? undefined : findQuest(slug, locale);
 
   /**
    * A `condition` de uma missão de professor só chega ao cliente pela lista
@@ -128,9 +137,15 @@ export function QuestPanel({ analysis, slug, onSlug }: QuestPanelProps): ReactEl
       .find((entry) => entry.questSlug === slug);
 
     if (item === undefined) return null;
-    if (item.goals.some((goal) => goal.condition === undefined)) return null;
+    const goals: Goal[] = [];
+    for (const goal of item.goals) {
+      // Sem condição, o cliente não tem como avaliar — e fingir que tem seria
+      // dizer "por cumprir" para um objetivo que ninguém mediu (R-4).
+      if (goal.condition === undefined) return null;
+      goals.push({ id: goal.id, condition: goal.condition });
+    }
 
-    return { slug, goals: item.goals as Goal[] };
+    return { slug, goals };
   }, [isTeacherQuest, assignments, slug]);
 
   const result = useMemo(() => {
@@ -319,9 +334,11 @@ export function QuestPanel({ analysis, slug, onSlug }: QuestPanelProps): ReactEl
     const tracks: Track[] = ['structure', 'geometry', 'property'];
     return tracks.map((track) => ({
       track,
-      quests: CATALOG.filter((entry) => entry.track === track),
+      quests: CATALOG.filter((entry) => entry.track === track).map((spec) =>
+        localize(spec, locale),
+      ),
     }));
-  }, []);
+  }, [locale]);
 
   const passedNow =
     result?.passed === true ||
@@ -347,11 +364,25 @@ export function QuestPanel({ analysis, slug, onSlug }: QuestPanelProps): ReactEl
    */
   const awaitingServerCheck = usingServerCheck && analysis?.ok === true && checkResult === null;
 
+  /**
+   * O rótulo de cada objetivo, com o que já bateu marcado.
+   *
+   * O rótulo **não** viaja junto do veredito: `GoalResult` é só `{ id, met }`,
+   * porque um veredito é o mesmo em qualquer idioma. Quem tem a frase é a
+   * missão — vinda do catálogo já localizada, ou vinda do servidor, que a
+   * monta no idioma de quem pediu. É o que mantém o objetivo de InChIKey longe
+   * do cliente (R-4) e ainda assim legível nos dois idiomas.
+   */
+  const met = result ?? (checkResult?.status === 'ok' ? checkResult : null);
+  const named: readonly { readonly id: string; readonly label: string }[] =
+    quest?.goals ?? teacherQuestForSlug?.goals ?? [];
+
   const goalLabels: readonly { readonly id: string; readonly label: string; readonly met: boolean }[] =
-    result?.goals ??
-    (checkResult?.status === 'ok'
-      ? checkResult.goals
-      : (teacherQuestForSlug?.goals.map((goal) => ({ id: goal.id, label: goal.label, met: false })) ?? []));
+    named.map((goal) => ({
+      id: goal.id,
+      label: goal.label,
+      met: met?.goals.find((entry) => entry.id === goal.id)?.met === true,
+    }));
 
   /**
    * `checkQuest` recusado (sem acesso, teto de conferências) não
@@ -362,7 +393,7 @@ export function QuestPanel({ analysis, slug, onSlug }: QuestPanelProps): ReactEl
   const checkRejectedReason = checkResult?.status === 'rejected' ? checkResult.reason : null;
 
   return (
-    <section className={styles.panel} aria-label="Missão">
+    <section className={styles.panel} aria-label={text.label}>
       <StudentAssignmentsSection
         slug={slug}
         onSlug={onSlug}
@@ -377,11 +408,11 @@ export function QuestPanel({ analysis, slug, onSlug }: QuestPanelProps): ReactEl
 
       <div className={styles.header}>
         <Label>
-          {done.size === 0 ? 'missão' : `missão · ${String(done.size)} de ${String(CATALOG.length)} cumpridas`}
+          {done.size === 0 ? text.quest : text.questProgress(done.size, CATALOG.length)}
         </Label>
         {passedNow === true && (
           <span className={styles.done} data-testid="missao-cumprida">
-            cumprida
+            {text.met}
           </span>
         )}
       </div>
@@ -389,7 +420,7 @@ export function QuestPanel({ analysis, slug, onSlug }: QuestPanelProps): ReactEl
       <select
         className={styles.picker}
         value={slug}
-        aria-label="Escolher missão"
+        aria-label={text.pick}
         data-testid="escolher-missao"
         onChange={(event) => {
           onSlug(event.target.value);
@@ -397,14 +428,14 @@ export function QuestPanel({ analysis, slug, onSlug }: QuestPanelProps): ReactEl
           setOutcome(null);
         }}
       >
-        <option value={FREE}>Sem missão — ferramenta livre</option>
+        <option value={FREE}>{text.free}</option>
         {isTeacherQuest && teacherQuestForSlug !== null && (
           <option value={slug} disabled>
             {messages.studentAssignments.inProgressOption(teacherQuestForSlug.title)}
           </option>
         )}
         {byTrack.map((group) => (
-          <optgroup key={group.track} label={TRACK_NAMES[group.track]}>
+          <optgroup key={group.track} label={trackName[group.track]}>
             {group.quests.map((entry) => (
               <option key={entry.slug} value={entry.slug}>
                 {done.has(entry.slug) ? `✓ ${entry.title}` : entry.title}
@@ -417,9 +448,7 @@ export function QuestPanel({ analysis, slug, onSlug }: QuestPanelProps): ReactEl
       <p className={styles.free}>{messages.studentAssignments.catalogFreedom}</p>
 
       {slug === FREE && (
-        <p className={styles.free}>
-          Desenhe o que quiser. Os descritores continuam saindo do RDKit a cada traço.
-        </p>
+        <p className={styles.free}>{text.freeBody}</p>
       )}
 
       {title !== null && (
@@ -471,13 +500,14 @@ export function QuestPanel({ analysis, slug, onSlug }: QuestPanelProps): ReactEl
 
           {outcome?.status === 'saved' && (
             <p className={styles.hint} data-testid="progresso-salvo">
-              Progresso salvo. Nota conferida no servidor: {outcome.score} de 100.
+              {text.progressSaved(outcome.score)}
             </p>
           )}
 
           {outcome?.status === 'anonymous' && (
             <p className={styles.hint}>
-              <Link href="/entrar">{messages.errors.enterAccount}</Link> para guardar o que já cumpriu.
+              <Link href="/entrar">{messages.errors.enterAccount}</Link>
+              {text.signInToKeep}
             </p>
           )}
 
@@ -510,10 +540,10 @@ export function QuestPanel({ analysis, slug, onSlug }: QuestPanelProps): ReactEl
           <div className={styles.footer}>
             <p className={styles.score}>
               {result?.score ?? (outcome?.status === 'saved' ? outcome.score : 0)}
-              <span className={styles.scoreLabel}>de 100</span>
+              <span className={styles.scoreLabel}>{text.outOf}</span>
             </p>
 
-            <SourceBadge source="computed" />
+            <SourceBadge source="computed" locale={locale} />
 
             {hintsShown < hints.length && (
               <Button
@@ -523,7 +553,7 @@ export function QuestPanel({ analysis, slug, onSlug }: QuestPanelProps): ReactEl
                   setHintsShown((shown) => shown + 1);
                 }}
               >
-                {hintsShown === 0 ? 'Ver dica' : 'Outra dica'}
+                {hintsShown === 0 ? text.seeHint : text.anotherHint}
               </Button>
             )}
           </div>
@@ -541,6 +571,7 @@ export function QuestPanel({ analysis, slug, onSlug }: QuestPanelProps): ReactEl
  * numa missão que a pessoa nem denunciou.
  */
 function ReportBox({ slug }: { readonly slug: string }): ReactElement {
+  const messages = useMessages(classroomMessages);
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState('');
   const [sent, setSent] = useState(false);

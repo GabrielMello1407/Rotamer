@@ -12,12 +12,12 @@ import type { Assessable } from '../src/types';
  */
 async function moleculeOf(smiles: string): Promise<Molecule> {
   const result = await analyze(smiles);
-  if (!result.ok) throw new Error(`esperava molécula, veio erro: ${result.error.message}`);
+  if (!result.ok) throw new Error(`esperava molécula, veio erro: ${result.error.code}`);
   return result.molecule;
 }
 
 function quest(slug: string) {
-  const found = findQuest(slug);
+  const found = findQuest(slug, 'pt-BR');
   if (!found) throw new Error(`missão ${slug} não existe no catálogo`);
   return found;
 }
@@ -62,7 +62,6 @@ describe('evaluateAnalysis sobre Assessable puro', () => {
       goals: [
         {
           id: 'formula',
-          label: 'a fórmula é C2H6O',
           condition: { kind: 'formula', value: 'C2H6O' },
         },
       ],
@@ -78,7 +77,7 @@ describe('evaluateAnalysis sobre Assessable puro', () => {
   it('estrutura inválida não reprova nem dá nota, também para um Assessable puro', () => {
     const assessable: Assessable = {
       slug: 'professor:clxteste00000000000000000',
-      goals: [{ id: 'formula', label: 'a fórmula é C2H6O', condition: { kind: 'formula', value: 'C2H6O' } }],
+      goals: [{ id: 'formula', condition: { kind: 'formula', value: 'C2H6O' } }],
     };
 
     const resultado = evaluateAnalysis(assessable, null);

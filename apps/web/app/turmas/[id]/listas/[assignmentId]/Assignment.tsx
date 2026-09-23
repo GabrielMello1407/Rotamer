@@ -1,6 +1,7 @@
 'use client';
 
 import { Button } from '@rotamer/ui';
+import { useFormatters, useMessages } from '@rotamer/i18n/react';
 import { Popover } from '@rotamer/editor2d';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -24,6 +25,7 @@ import {
 } from '../../../../actions/assignment';
 import { messages } from '../../../messages';
 import { CatalogPicker } from './CatalogPicker';
+import { LanguageSwitch } from '../../../../components/LanguageSwitch';
 import styles from './Assignment.module.css';
 
 const TEACHER_PREFIX = 'professor:';
@@ -33,8 +35,6 @@ const TITLE_MAX = 80;
 const BRIEF_MAX = 400;
 const HINT_MAX = 200;
 const HINTS_MAX = 3;
-
-const WHEN = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short' });
 
 /** O tempo que o desfazer de "Remover" fica disponível — §6.2. */
 const UNDO_MS = 8_000;
@@ -89,6 +89,8 @@ export function Assignment({
   enteredAtPosition,
 }: AssignmentProps): ReactElement {
   const router = useRouter();
+  const m = useMessages(messages);
+  const { date } = useFormatters();
 
   /*
    * `items` precisa aceitar atualização otimista: remover some da
@@ -269,7 +271,7 @@ export function Assignment({
       }
 
       if (!restored) {
-        setError(messages.assignment.undoMoveFailed(title));
+        setError(m.assignment.undoMoveFailed(title));
       } else {
         // Reflete a posição final na lista que está na tela — de novo, sem
         // esperar o `router.refresh()` chegar do servidor.
@@ -323,11 +325,7 @@ export function Assignment({
         return;
       }
       setError(null);
-      setNotice(
-        item.archived
-          ? messages.editQuestPopover.unarchived(item.title)
-          : messages.editQuestPopover.archived(item.title),
-      );
+      setNotice(item.archived ? m.editQuestPopover.unarchived(item.title) : m.editQuestPopover.archived(item.title));
       // O estado de arquivo mora no servidor; recarregar é o que o traz de
       // volta, junto com o texto que a próxima edição vai mostrar.
       router.refresh();
@@ -352,7 +350,7 @@ export function Assignment({
       }
       setError(null);
       setEditing(null);
-      setNotice(messages.editQuestPopover.saved);
+      setNotice(m.editQuestPopover.saved);
       router.refresh();
     });
   };
@@ -395,11 +393,12 @@ export function Assignment({
         <Link className={styles.back} href={`/turmas/${classroomId}`}>
           ← {classroomName}
         </Link>
+        <LanguageSwitch />
       </header>
 
       {enteredItem !== undefined && (
         <p className={styles.enteredNotice} data-testid="missao-entrou-na-lista">
-          {messages.assignment.entered(enteredItem.title, enteredItem.position)}
+          {m.assignment.entered(enteredItem.title, enteredItem.position)}
         </p>
       )}
 
@@ -412,8 +411,8 @@ export function Assignment({
       <label className={styles.nameField}>
         <input
           className={styles.nameInput}
-          aria-label={messages.assignment.nameLabel}
-          placeholder={messages.assignment.namePlaceholder}
+          aria-label={m.assignment.nameLabel}
+          placeholder={m.assignment.namePlaceholder}
           value={title}
           onChange={(event) => {
             setTitle(event.target.value);
@@ -425,20 +424,20 @@ export function Assignment({
 
       <p className={styles.status} data-testid="status-da-lista">
         {publishedAt === null
-          ? messages.assignment.draftStatus(items.length)
-          : messages.assignment.publishedStatus(WHEN.format(new Date(publishedAt)), items.length, studentCount)}
+          ? m.assignment.draftStatus(items.length)
+          : m.assignment.publishedStatus(date(new Date(publishedAt)), items.length, studentCount)}
       </p>
 
       {isArchived && (
         <p className={styles.archivedNotice} data-testid="lista-arquivada">
-          {messages.assignment.archivedNotice}
+          {m.assignment.archivedNotice}
         </p>
       )}
 
       {items.length === 0 ? (
         <div className={styles.empty}>
-          <p className={styles.emptyTitle}>{messages.assignment.emptyTitle}</p>
-          <p className={styles.emptyBody}>{messages.assignment.emptyBody}</p>
+          <p className={styles.emptyTitle}>{m.assignment.emptyTitle}</p>
+          <p className={styles.emptyBody}>{m.assignment.emptyBody}</p>
         </div>
       ) : (
         <ul className={styles.list} data-testid="itens-da-lista">
@@ -469,7 +468,7 @@ export function Assignment({
                     .join(' ')}
                   data-testid={`origem-${item.questSlug}`}
                 >
-                  {item.origin === 'teacher' ? messages.assignment.originTeacher : messages.assignment.originCatalog}
+                  {item.origin === 'teacher' ? m.assignment.originTeacher : m.assignment.originCatalog}
                 </span>
 
                 {item.origin === 'teacher' && (
@@ -488,7 +487,7 @@ export function Assignment({
                       }}
                       data-testid={`editar-missao-${item.questSlug}`}
                     >
-                      {messages.assignment.editQuest}
+                      {m.assignment.editQuest}
                     </button>
                     <button
                       type="button"
@@ -498,9 +497,7 @@ export function Assignment({
                       }}
                       data-testid={`arquivar-missao-${item.questSlug}`}
                     >
-                      {item.archived
-                        ? messages.assignment.unarchiveQuest
-                        : messages.assignment.archiveQuest}
+                      {item.archived ? m.assignment.unarchiveQuest : m.assignment.archiveQuest}
                     </button>
                     <button
                       type="button"
@@ -510,9 +507,7 @@ export function Assignment({
                       }}
                       data-testid={`alternar-catalogo-${item.questSlug}`}
                     >
-                      {catalogSlugs.has(item.questSlug)
-                        ? messages.assignment.withdrawFromCatalog
-                        : messages.assignment.publishToCatalog}
+                      {catalogSlugs.has(item.questSlug) ? m.assignment.withdrawFromCatalog : m.assignment.publishToCatalog}
                     </button>
                   </>
                 )}
@@ -523,8 +518,8 @@ export function Assignment({
                   <button
                     type="button"
                     className={styles.action}
-                    title={`${messages.assignment.up} (Alt+↑)`}
-                    aria-label={messages.assignment.upWithKey(item.title, item.position - 1)}
+                    title={`${m.assignment.up} (Alt+↑)`}
+                    aria-label={m.assignment.upWithKey(item.title, item.position - 1)}
                     onClick={() => {
                       move(item.id, 'up');
                     }}
@@ -536,8 +531,8 @@ export function Assignment({
                   <button
                     type="button"
                     className={styles.action}
-                    title={`${messages.assignment.down} (Alt+↓)`}
-                    aria-label={messages.assignment.downWithKey(item.title, item.position + 1)}
+                    title={`${m.assignment.down} (Alt+↓)`}
+                    aria-label={m.assignment.downWithKey(item.title, item.position + 1)}
                     onClick={() => {
                       move(item.id, 'down');
                     }}
@@ -553,7 +548,7 @@ export function Assignment({
                   }}
                   data-testid={`remover-${item.questSlug}`}
                 >
-                  {messages.assignment.remove}
+                  {m.assignment.remove}
                 </button>
               </span>
             </li>
@@ -563,9 +558,9 @@ export function Assignment({
 
       {removedNotice !== null && (
         <p className={styles.undo} data-testid="desfazer-remocao">
-          {messages.assignment.removed(removedNotice.title)}{' '}
+          {m.assignment.removed(removedNotice.title)}{' '}
           <button type="button" className={styles.undoButton} onClick={undoRemoval}>
-            {messages.assignment.undo}
+            {m.assignment.undo}
           </button>
         </p>
       )}
@@ -580,12 +575,12 @@ export function Assignment({
               }}
               data-testid="escolher-do-catalogo"
             >
-              {messages.assignment.pickFromCatalog}
+              {m.assignment.pickFromCatalog}
             </Button>
           </span>
 
           <Link href={`/turmas/${classroomId}/listas/${assignmentId}/criar`} data-testid="criar-missao-desenhando">
-            <Button variant="secondary">{messages.assignment.createByDrawing}</Button>
+            <Button variant="secondary">{m.assignment.createByDrawing}</Button>
           </Link>
         </div>
       )}
@@ -617,7 +612,7 @@ export function Assignment({
           onClick={toggleArchive}
           data-testid="alternar-arquivo-lista"
         >
-          {isArchived ? messages.assignment.unarchive : messages.assignment.archive}
+          {isArchived ? m.assignment.unarchive : m.assignment.archive}
         </button>
 
         {!isArchived && (
@@ -629,7 +624,7 @@ export function Assignment({
               disabled={items.length === 0}
               data-testid="publicar-para-turma"
             >
-              {messages.assignment.publish}
+              {m.assignment.publish}
             </Button>
           </span>
         )}
@@ -637,31 +632,27 @@ export function Assignment({
 
       {publishedAt !== null && (
         <p className={styles.afterPublish} data-testid="aviso-pos-publicacao">
-          {messages.publishPopover.afterPublish}
+          {m.publishPopover.afterPublish}
         </p>
       )}
 
       {editing !== null && (
         <Popover
           anchor={editing.anchor}
-          label={messages.editQuestPopover.title.replace('{titulo}', editing.title)}
+          label={m.editQuestPopover.title.replace('{titulo}', editing.title)}
           onClose={() => {
             setEditing(null);
           }}
           testId="editar-missao"
         >
           <div className={styles.confirmBox}>
-            <p className={styles.confirmTitle}>
-              {messages.editQuestPopover.title.replace('{titulo}', editing.title)}
-            </p>
+            <p className={styles.confirmTitle}>{m.editQuestPopover.title.replace('{titulo}', editing.title)}</p>
             <p className={styles.confirmBody}>
-              {publishedAt === null
-                ? messages.editQuestPopover.body
-                : messages.errors.editAfterPublish}
+              {publishedAt === null ? m.editQuestPopover.body : m.errors.editAfterPublish}
             </p>
 
             <label className={styles.editField}>
-              <span className={styles.editLabel}>{messages.authoring.titleLabel}</span>
+              <span className={styles.editLabel}>{m.authoring.titleLabel}</span>
               <input
                 className={styles.editInput}
                 value={editing.title}
@@ -675,7 +666,7 @@ export function Assignment({
             </label>
 
             <label className={styles.editField}>
-              <span className={styles.editLabel}>{messages.authoring.briefLabel}</span>
+              <span className={styles.editLabel}>{m.authoring.briefLabel}</span>
               <textarea
                 className={styles.editTextarea}
                 value={editing.brief}
@@ -689,7 +680,7 @@ export function Assignment({
               />
             </label>
 
-            <span className={styles.editLabel}>{messages.authoring.hintsLabel}</span>
+            <span className={styles.editLabel}>{m.authoring.hintsLabel}</span>
             {editing.hints.map((hint, index) => (
               <input
                 key={index}
@@ -719,13 +710,13 @@ export function Assignment({
                 }}
                 data-testid="editar-acrescentar-dica"
               >
-                {messages.authoring.addHint}
+                {m.authoring.addHint}
               </Button>
             )}
 
             <div className={styles.confirmActions}>
               <Button onClick={saveQuestText} disabled={savingQuest} data-testid="salvar-texto-missao">
-                {messages.editQuestPopover.save}
+                {m.editQuestPopover.save}
               </Button>
               <Button
                 variant="ghost"
@@ -733,7 +724,7 @@ export function Assignment({
                   setEditing(null);
                 }}
               >
-                {messages.editQuestPopover.cancel}
+                {m.editQuestPopover.cancel}
               </Button>
             </div>
           </div>
@@ -743,18 +734,18 @@ export function Assignment({
       {publishOpen && (
         <Popover
           anchor={publishAnchor}
-          label={messages.publishPopover.title(classroomName)}
+          label={m.publishPopover.title(classroomName)}
           onClose={() => {
             setPublishOpen(false);
           }}
           testId="confirmar-publicacao"
         >
           <div className={styles.confirmBox}>
-            <p className={styles.confirmTitle}>{messages.publishPopover.title(classroomName)}</p>
-            <p className={styles.confirmBody}>{messages.publishPopover.body(items.length)}</p>
+            <p className={styles.confirmTitle}>{m.publishPopover.title(classroomName)}</p>
+            <p className={styles.confirmBody}>{m.publishPopover.body(items.length)}</p>
             <div className={styles.confirmActions}>
               <Button onClick={publish} data-testid="confirmar-publicar">
-                {messages.publishPopover.confirm}
+                {m.publishPopover.confirm}
               </Button>
               <Button
                 variant="ghost"
@@ -762,7 +753,7 @@ export function Assignment({
                   setPublishOpen(false);
                 }}
               >
-                {messages.publishPopover.cancel}
+                {m.publishPopover.cancel}
               </Button>
             </div>
           </div>

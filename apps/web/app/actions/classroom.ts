@@ -1,11 +1,14 @@
 'use server';
 
+import { pick, type Locale } from '@rotamer/i18n';
 import { z } from 'zod';
 import { findQuest } from '@rotamer/quests';
 import { currentProfile } from '../../lib/auth';
 import { generateCode, normalizeCode } from '../../lib/code';
 import { db, hasDatabase } from '../../lib/db';
+import { currentLocale } from '../../lib/locale';
 import { requireTeacher } from '../../lib/roles';
+import { classroomMessages, sharedMessages } from './messages';
 
 /**
  * Turmas.
@@ -25,13 +28,22 @@ import { requireTeacher } from '../../lib/roles';
 /** Seis caracteres: curto para ditar, e 31⁶ ≈ 887 milhões de combinações. */
 const CODE_LENGTH = 6;
 
-const createSchema = z.object({
-  name: z.string().trim().min(2, 'Dê um nome à turma.').max(80, 'Nome de turma muito longo.'),
-});
+/**
+ * Os schemas montados no idioma do pedido: a mensagem de um `min`/`max` é o
+ * texto que a tela mostra, e o módulo carrega antes de existir pedido.
+ */
+function schemasFor(locale: Locale) {
+  const m = pick(classroomMessages, locale);
 
-const joinSchema = z.object({
-  code: z.string().trim().min(1, 'Digite o código da turma.').max(20),
-});
+  return {
+    m,
+    shared: pick(sharedMessages, locale),
+    create: z.object({
+      name: z.string().trim().min(2, m.nameRequired).max(80, m.nameTooLong),
+    }),
+    join: z.object({ code: z.string().trim().min(1, m.codeRequired).max(20) }),
+  };
+}
 
 export interface ClassroomSummary {
   readonly id: string;
@@ -46,18 +58,19 @@ export type CreateOutcome =
   | { readonly status: 'rejected'; readonly reason: string };
 
 export async function createClassroom(input: { name: string }): Promise<CreateOutcome> {
-  if (!hasDatabase()) return { status: 'rejected', reason: 'Indisponível neste ambiente.' };
+  const { m, shared, create: createSchema } = schemasFor(await currentLocale());
+  if (!hasDatabase()) return { status: 'rejected', reason: shared.unavailable };
 
   const parsed = createSchema.safeParse(input);
   if (!parsed.success) {
-    return { status: 'rejected', reason: parsed.error.issues[0]?.message ?? 'Pedido mal formado.' };
+    return { status: 'rejected', reason: parsed.error.issues[0]?.message ?? shared.malformed };
   }
 
   const teacher = await requireTeacher();
   if (teacher === null) {
     return {
       status: 'rejected',
-      reason: 'Só conta de professor abre turma. Fale com quem administra o Rotamer da escola.',
+      reason: m.onlyTeacherOpensClass,
     };
   }
 
@@ -81,7 +94,7 @@ export async function createClassroom(input: { name: string }): Promise<CreateOu
     }
   }
 
-  return { status: 'rejected', reason: 'Não consegui gerar um código agora. Tente de novo.' };
+  return { status: 'rejected', reason: m.codeGenerationFailed };
 }
 
 export type JoinOutcome =
@@ -119,20 +132,21 @@ function registerWrongCode(profileId: string): void {
 
 /** Entrar numa turma com o código que o professor escreveu no quadro. */
 export async function joinClassroom(input: { code: string }): Promise<JoinOutcome> {
-  if (!hasDatabase()) return { status: 'rejected', reason: 'Indisponível neste ambiente.' };
+  const { m, shared, join: joinSchema } = schemasFor(await currentLocale());
+  if (!hasDatabase()) return { status: 'rejected', reason: shared.unavailable };
 
   const parsed = joinSchema.safeParse(input);
   if (!parsed.success) {
-    return { status: 'rejected', reason: parsed.error.issues[0]?.message ?? 'Pedido mal formado.' };
+    return { status: 'rejected', reason: parsed.error.issues[0]?.message ?? shared.malformed };
   }
 
   const profile = await currentProfile();
-  if (profile === null) return { status: 'rejected', reason: 'Entre na sua conta primeiro.' };
+  if (profile === null) return { status: 'rejected', reason: shared.signInFirst };
 
   if (tooManyWrongCodes(profile.id)) {
     return {
       status: 'rejected',
-      reason: 'Muitos códigos errados em pouco tempo. Espere um pouco e tente de novo.',
+      reason: m.tooManyWrongCodes,
     };
   }
 
@@ -143,11 +157,11 @@ export async function joinClassroom(input: { code: string }): Promise<JoinOutcom
 
   if (classroom === null || classroom.archivedAt !== null) {
     registerWrongCode(profile.id);
-    return { status: 'rejected', reason: 'Esse código não abre nenhuma turma. Confira com o professor.' };
+    return { status: 'rejected', reason: m.codeNotFound };
   }
 
   if (classroom.teacherId === profile.id) {
-    return { status: 'rejected', reason: 'Esta turma é sua — você já a vê na lista.' };
+    return { status: 'rejected', reason: m.ownClassroom };
   }
 
   const existing = await db.enrollment.findUnique({
@@ -265,6 +279,7 @@ export interface ClassroomBoard {
  * é agrupada aqui.
  */
 export async function readClassroomBoard(id: string): Promise<ClassroomBoard | null> {
+  const locale = await currentLocale();
   if (!hasDatabase()) return null;
 
   const profile = await currentProfile();
@@ -377,7 +392,9 @@ export async function readClassroomBoard(id: string): Promise<ClassroomBoard | n
   const hardest = [...stuckCount.entries()]
     .map(([slug, stuck]) => ({
       slug,
-      title: slug.startsWith('professor:') ? (teacherTitleBySlug.get(slug) ?? slug) : (findQuest(slug)?.title ?? slug),
+      title: slug.startsWith('professor:')
+        ? (teacherTitleBySlug.get(slug) ?? slug)
+        : (findQuest(slug, locale)?.title ?? slug),
       stuck,
     }))
     .sort((first, second) => second.stuck - first.stuck);

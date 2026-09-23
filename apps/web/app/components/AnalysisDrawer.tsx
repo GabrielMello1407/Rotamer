@@ -2,9 +2,13 @@
 
 import type { AnalysisResult, ChemistryError, Descriptors, NormalModes } from '@rotamer/core';
 import type { EditorStore } from '@rotamer/editor2d';
+import { chemistryErrorText, functionalGroupName, type Locale } from '@rotamer/i18n';
+import { useFormatters, useLocale, useMessages } from '@rotamer/i18n/react';
 import { SourceBadge } from '@rotamer/ui';
 import type { ReactElement } from 'react';
-import { messages } from '../turmas/messages';
+import { messages as classroomMessages } from '../turmas/messages';
+import { LanguageToggle } from './LanguageToggle';
+import { analysisDrawerMessages } from './messages';
 import styles from './AnalysisDrawer.module.css';
 import { AuthoringPanel, type AuthoringPanelProps } from './AuthoringPanel';
 import { ExportMenu } from './ExportMenu';
@@ -44,11 +48,6 @@ export interface AnalysisDrawerProps {
   readonly authoring?: AuthoringPanelProps | undefined;
 }
 
-const NUMBER = new Intl.NumberFormat('pt-BR', {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
-
 /**
  * O painel de análise.
  *
@@ -75,9 +74,13 @@ export function AnalysisDrawer({
   onQuestSlug,
   authoring,
 }: AnalysisDrawerProps): ReactElement {
+  const locale = useLocale();
+  const text = useMessages(analysisDrawerMessages);
+  const classroom = useMessages(classroomMessages);
+
   return (
-    <aside className={styles.drawer} aria-label="Análise da molécula" data-testid="painel-analise">
-      <div className={styles.tabs} role="tablist" aria-label="Seções do painel">
+    <aside className={styles.drawer} aria-label={text.label} data-testid="painel-analise">
+      <div className={styles.tabs} role="tablist" aria-label={text.tabs}>
         <button
           type="button"
           role="tab"
@@ -87,7 +90,7 @@ export function AnalysisDrawer({
             onTab('analysis');
           }}
         >
-          Análise
+          {text.analysisTab}
         </button>
         <button
           type="button"
@@ -99,7 +102,7 @@ export function AnalysisDrawer({
             onTab(authoring !== undefined ? 'authoring' : 'quests');
           }}
         >
-          {authoring !== undefined ? messages.authoring.tab : 'Missões'}
+          {authoring !== undefined ? classroom.authoring.tab : text.questsTab}
         </button>
 
         <span className={styles.spacer} />
@@ -107,7 +110,7 @@ export function AnalysisDrawer({
         <button
           type="button"
           className={styles.close}
-          aria-label="Fechar o painel"
+          aria-label={text.close}
           data-testid="fechar-analise"
           onClick={onClose}
         >
@@ -129,12 +132,10 @@ export function AnalysisDrawer({
             <SmilesInput store={store} connection={connection} />
 
             {analysis === null && (
-              <p className={styles.quiet}>
-                Desenhe uma estrutura — ou cole um SMILES — para ver a análise inteira.
-              </p>
+              <p className={styles.quiet}>{text.empty}</p>
             )}
 
-            {analysis?.ok === false && <ErrorCard error={analysis.error} />}
+            {analysis?.ok === false && <ErrorCard error={analysis.error} locale={locale} />}
 
             {analysis?.ok === true && (
               <>
@@ -142,11 +143,11 @@ export function AnalysisDrawer({
 
                 {analysis.molecule.groups.length > 0 && (
                   <section className={styles.section} data-testid="grupos-funcionais">
-                    <h3 className={styles.heading}>Grupos funcionais</h3>
+                    <h3 className={styles.heading}>{text.groups}</h3>
                     <div className={styles.chips}>
                       {analysis.molecule.groups.map((group) => (
                         <span key={group.id} className={styles.chip}>
-                          {group.name}
+                          {functionalGroupName(locale, group.id)}
                           {group.count > 1 && <span className={styles.count}>{group.count}</span>}
                         </span>
                       ))}
@@ -167,32 +168,31 @@ export function AnalysisDrawer({
                 <Lipinski descriptors={analysis.molecule.descriptors} />
 
                 <section className={styles.section}>
-                  <h3 className={styles.heading}>Levar embora</h3>
+                  <h3 className={styles.heading}>{text.takeAway}</h3>
                   <div className={styles.row}>
                     <ExportMenu analysis={analysis} connection={connection} />
                     <ShareLink analysis={analysis} />
                   </div>
-                  <p className={styles.note}>
-                    Guardar na sua estante fica na faixa de cima, ao lado da fórmula.
-                  </p>
+                  <p className={styles.note}>{text.saveNote}</p>
                 </section>
 
                 <p className={styles.footnote}>
-                  <strong>Calculado pelo RDKit:</strong> valência, fórmula, massa, anéis,
-                  aromaticidade, grupos funcionais, TPSA, logP e os descritores. A geometria e a
-                  vibração saem do campo de força MMFF94, no mesmo motor. Nenhum número desta tela
-                  passa por modelo de linguagem.
+                  <strong>{text.computedBy}</strong>
+                  {text.computedList}
                 </p>
               </>
             )}
             <div className={styles.tail}>
+              {/* Idioma e tema são a mesma espécie de coisa — preferência de
+                  quem está lendo — e por isso moram juntos, no pé do painel. */}
+              <LanguageToggle />
               <ThemeToggle />
               <span className={styles.row}>
                 <a className={styles.link} href="/escolas">
-                  Para escolas
+                  {text.forSchools}
                 </a>
                 <a className={styles.link} href="/marca">
-                  Marca e tokens
+                  {text.brand}
                 </a>
               </span>
             </div>
@@ -210,45 +210,58 @@ export function AnalysisDrawer({
   );
 }
 
-/** O erro, com o nome do problema e o que fazer a respeito. */
-function ErrorCard({ error }: { readonly error: ChemistryError }): ReactElement {
+/**
+ * O erro, com o nome do problema e o que fazer a respeito.
+ *
+ * A frase do meio é a do núcleo, montada a partir do código da recusa e dos
+ * números que a justificam. O título e o conserto são desta tela — eles falam
+ * do desenho, que é o que o aluno tem em mãos.
+ */
+function ErrorCard({
+  error,
+  locale,
+}: {
+  readonly error: ChemistryError;
+  readonly locale: Locale;
+}): ReactElement {
+  const text = useMessages(analysisDrawerMessages);
+
   return (
     <section className={styles.errorCard} data-testid="cartao-erro">
-      <h3 className={styles.errorTitle}>{titleFor(error)}</h3>
-      <p className={styles.errorMessage}>{error.message}</p>
-      <p className={styles.errorFix}>{fixFor(error)}</p>
-      <SourceBadge source="computed" />
+      <h3 className={styles.errorTitle}>{titleFor(error, text)}</h3>
+      <p className={styles.errorMessage}>{chemistryErrorText(locale, error)}</p>
+      <p className={styles.errorFix}>{fixFor(error, text)}</p>
+      <SourceBadge source="computed" locale={locale} />
     </section>
   );
 }
 
-function titleFor(error: ChemistryError): string {
+/** O lado do dicionário do painel que está valendo agora. */
+type DrawerText = (typeof analysisDrawerMessages)['pt-BR'];
+
+function titleFor(error: ChemistryError, text: DrawerText): string {
   switch (error.code) {
     case 'valence_exceeded':
-      return 'Valência excedida';
+      return text.errorValence;
     case 'impossible_aromaticity':
-      return 'Aromaticidade impossível';
+      return text.errorAromaticity;
     case 'invalid_syntax':
-      return 'Não consegui ler a estrutura';
+      return text.errorUnreadable;
     case 'empty':
-      return 'Nada desenhado ainda';
+      return text.errorEmpty;
     default:
-      return 'Estrutura impossível';
+      return text.errorOther;
   }
 }
 
-function fixFor(error: ChemistryError): string {
+function fixFor(error: ChemistryError, text: DrawerText): string {
   if (error.code === 'valence_exceeded') {
-    return error.atom
-      ? 'Reduza a ordem de uma ligação clicando na linha, ou apague uma delas. O átomo está marcado com um círculo tracejado no desenho.'
-      : 'Reduza a ordem de uma ligação clicando na linha, ou apague uma delas.';
+    return error.atom ? text.fixValenceWithAtom : text.fixValence;
   }
 
-  if (error.code === 'impossible_aromaticity') {
-    return 'Confira as duplas do anel: um anel só é aromático quando o número de elétrons π fecha a conta.';
-  }
+  if (error.code === 'impossible_aromaticity') return text.fixAromaticity;
 
-  return 'Confira as ligações do desenho — apagar a última e refazer costuma resolver.';
+  return text.fixOther;
 }
 
 /** A ficha de identidade: tudo o que o RDKit devolveu sobre esta molécula. */
@@ -257,49 +270,50 @@ function Identity({
 }: {
   readonly molecule: Extract<AnalysisResult, { ok: true }>['molecule'];
 }): ReactElement {
+  const text = useMessages(analysisDrawerMessages);
+  const { number } = useFormatters();
   const { descriptors } = molecule;
 
   return (
     <section className={styles.section} data-testid="identidade">
-      <h3 className={styles.heading}>Identidade</h3>
+      <h3 className={styles.heading}>{text.identity}</h3>
 
       <dl className={styles.list}>
-        <Row label="Átomos pesados" value={String(descriptors.heavyAtoms)} />
-        <Row label="Heteroátomos" value={String(descriptors.heteroatoms)} />
+        <Row label={text.heavyAtoms} value={String(descriptors.heavyAtoms)} />
+        <Row label={text.heteroatoms} value={String(descriptors.heteroatoms)} />
         <Row
-          label="Anéis"
+          label={text.rings}
           value={
             descriptors.aromaticRings > 0
-              ? `${String(descriptors.rings)} (${String(descriptors.aromaticRings)} aromáticos)`
+              ? text.ringsWithAromatic(descriptors.rings, descriptors.aromaticRings)
               : String(descriptors.rings)
           }
         />
-        <Row label="Ligações rotacionáveis" value={String(descriptors.rotatableBonds)} />
+        <Row label={text.rotatableBonds} value={String(descriptors.rotatableBonds)} />
         <Row
-          label="Doadores / aceitadores"
+          label={text.donorsAcceptors}
           value={`${String(descriptors.hbDonors)} / ${String(descriptors.hbAcceptors)}`}
         />
-        <Row label="TPSA" value={`${NUMBER.format(descriptors.tpsa)} Å²`} />
-        <Row label="logP" value={NUMBER.format(descriptors.logP)} />
-        <Row label="Refratividade molar" value={NUMBER.format(descriptors.molarRefractivity)} />
-        <Row label="Fração sp³" value={NUMBER.format(descriptors.fractionCsp3)} />
+        <Row label="TPSA" value={`${number(descriptors.tpsa, 2)} Å²`} />
+        <Row label="logP" value={number(descriptors.logP, 2)} />
+        <Row label={text.molarRefractivity} value={number(descriptors.molarRefractivity, 2)} />
+        <Row label={text.fractionCsp3} value={number(descriptors.fractionCsp3, 2)} />
         <Row
-          label="Estereocentros"
+          label={text.stereocenters}
           value={
             descriptors.unspecifiedStereocenters > 0
-              ? `${String(descriptors.stereocenters)} — ${String(
+              ? text.stereocentersUnspecified(
+                  descriptors.stereocenters,
                   descriptors.unspecifiedStereocenters,
-                )} sem configuração`
+                )
               : String(descriptors.stereocenters)
           }
           testId="estereocentros"
           note={
-            descriptors.unspecifiedStereocenters > 0
-              ? 'Centro sem cunha nem traço fica sem configuração no desenho. A ferramenta Estereoquímica (W) define o lado.'
-              : undefined
+            descriptors.unspecifiedStereocenters > 0 ? text.stereocentersNote : undefined
           }
         />
-        <Row label="Massa exata" value={`${NUMBER.format(descriptors.exactMass)} g/mol`} />
+        <Row label={text.exactMass} value={`${number(descriptors.exactMass, 2)} g/mol`} />
         <Row label="InChIKey" value={molecule.inchiKey} mono />
         <Row label="SMILES" value={molecule.smiles} mono />
       </dl>
@@ -334,16 +348,19 @@ function Row({ label, value, mono = false, testId, note }: RowProps): ReactEleme
  * relação a quatro limites publicados.
  */
 function Lipinski({ descriptors }: { readonly descriptors: Descriptors }): ReactElement {
+  const text = useMessages(analysisDrawerMessages);
+  const { number } = useFormatters();
+
   const limits = [
-    { label: 'Massa', value: descriptors.molarMass, limit: 500 },
+    { label: text.lipinskiMass, value: descriptors.molarMass, limit: 500 },
     { label: 'logP', value: descriptors.logP, limit: 5 },
-    { label: 'Doadores', value: descriptors.hbDonors, limit: 5 },
-    { label: 'Aceitadores', value: descriptors.hbAcceptors, limit: 10 },
+    { label: text.lipinskiDonors, value: descriptors.hbDonors, limit: 5 },
+    { label: text.lipinskiAcceptors, value: descriptors.hbAcceptors, limit: 10 },
   ];
 
   return (
     <section className={styles.section} data-testid="regra-dos-cinco">
-      <h3 className={styles.heading}>Regra dos cinco</h3>
+      <h3 className={styles.heading}>{text.lipinski}</h3>
 
       {limits.map((entry) => {
         const ratio = Math.min(1, Math.max(0, entry.value / entry.limit));
@@ -359,7 +376,7 @@ function Lipinski({ descriptors }: { readonly descriptors: Descriptors }): React
               />
             </span>
             <span className={styles.gaugeValue}>
-              {entry.value < 10 ? NUMBER.format(entry.value) : Math.round(entry.value)}
+              {entry.value < 10 ? number(entry.value, 2) : Math.round(entry.value)}
               <span className={styles.limit}>/{entry.limit}</span>
             </span>
           </div>

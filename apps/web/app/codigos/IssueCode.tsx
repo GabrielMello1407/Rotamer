@@ -1,16 +1,12 @@
 'use client';
 
+import { languageTag } from '@rotamer/i18n';
+import { useLocale, useMessages } from '@rotamer/i18n/react';
 import { Button, Label } from '@rotamer/ui';
-import { useState, useTransition, type FormEvent, type ReactElement } from 'react';
+import { useMemo, useState, useTransition, type FormEvent, type ReactElement } from 'react';
 import { issueResetCode } from '../actions/recovery';
+import { codesMessages } from './messages';
 import styles from './page.module.css';
-
-const WHEN = new Intl.DateTimeFormat('pt-BR', {
-  day: '2-digit',
-  month: 'short',
-  hour: '2-digit',
-  minute: '2-digit',
-});
 
 interface Issued {
   readonly code: string;
@@ -26,9 +22,25 @@ interface Issued {
  * anotar, emite-se outro; o anterior morre nesse momento.
  */
 export function IssueCode(): ReactElement {
+  const locale = useLocale();
+  const m = useMessages(codesMessages);
   const [issued, setIssued] = useState<Issued | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+
+  // Sem hora "curta" pronta em `@rotamer/i18n` — a data das outras telas não
+  // leva hora e minuto. `languageTag(locale)` é o que impede o `pt-BR` de
+  // ficar escrito à mão aqui (ver `docs/IDIOMAS.md`).
+  const when = useMemo(
+    () =>
+      new Intl.DateTimeFormat(languageTag(locale), {
+        day: '2-digit',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+    [locale],
+  );
 
   const submit = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault();
@@ -58,7 +70,7 @@ export function IssueCode(): ReactElement {
     <div className={styles.panel}>
       <form className={styles.form} onSubmit={submit}>
         <label className={styles.field}>
-          <Label>e-mail de quem perdeu a senha</Label>
+          <Label>{m.emailLabel}</Label>
           <input
             className={styles.input}
             name="email"
@@ -70,7 +82,7 @@ export function IssueCode(): ReactElement {
         </label>
 
         <Button type="submit" disabled={pending}>
-          {pending ? 'Emitindo…' : 'Emitir código'}
+          {pending ? m.issuing : m.issue}
         </Button>
       </form>
 
@@ -82,12 +94,9 @@ export function IssueCode(): ReactElement {
 
       {issued !== null && (
         <div className={styles.issued} data-testid="codigo-emitido">
-          <Label>código de {issued.forName}</Label>
+          <Label>{m.codeOf(issued.forName)}</Label>
           <p className={styles.code}>{issued.code}</p>
-          <p className={styles.note}>
-            Vale até {WHEN.format(new Date(issued.expiresAt))} e serve uma vez só. Anote agora:
-            esta é a única vez que ele aparece — no banco fica só o resumo dele.
-          </p>
+          <p className={styles.note}>{m.validUntil(when.format(new Date(issued.expiresAt)))}</p>
         </div>
       )}
     </div>

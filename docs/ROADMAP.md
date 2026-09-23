@@ -28,7 +28,7 @@ O produto inteiro sem conta, sem servidor, sem IA. Tudo no cliente.
       toque longo, atalhos na página inteira, tabela periódica e atalhos em popover
 - [x] Organizar o desenho pelo RDKit, com o relato do que aconteceu com cada cunha (D-24)
 - [x] Ponte com RDKit: sanitização, SMILES, InChIKey, descritores, carga na fórmula
-- [x] Grupos funcionais reconhecidos por SMARTS no RDKit, com nome em português
+- [x] Grupos funcionais reconhecidos por SMARTS no RDKit, com nome em português e em inglês
 - [x] Geometria e dobramento animado — conformação do OpenChemLib e MMFF94 (D-10); elemento fora
       do MMFF94 mostra a forma sem vibração, e diz por quê
 - [x] Vibração por dinâmica molecular — velocity-Verlet sobre o gradiente numérico do MMFF94, a
@@ -37,7 +37,7 @@ O produto inteiro sem conta, sem servidor, sem IA. Tudo no cliente.
       3N − 6 (3N − 5 se linear), cada um com número de onda e movimento próprio (D-20)
 - [x] Ligação dupla e tripla como varetas paralelas na cena; letras CIP no desenho e na cena
 - [x] Sincronia 2D↔3D — o átomo aceso é um só (D-18); temas claro e escuro; responsivo até 390px
-- [x] Mensagens de erro em português que explicam a química, não o código
+- [x] Mensagens de erro que explicam a química, não o código — em português e em inglês (D-30)
 
 ---
 
@@ -132,6 +132,13 @@ O Rotamer é código aberto, MIT, sem comercialização (D-28). O que essa decis
       documentação inteira em `/docs/`, com o link de edição apontando para o arquivo de origem
 - [ ] **Publicar o `rotamer-site`** — criar o repositório no GitHub e ligar as páginas; com o
       Rotamer privado, o workflow precisa de um token de leitura em `ROTAMER_TOKEN`
+- [x] **O produto em dois idiomas** (D-30) — pt-BR e inglês ponta a ponta: tela, recusa de
+      química, catálogo de missões, metadados e imagem de link. A escolha vive num cookie, é lida
+      no servidor, e o par pt-BR/inglês é cobrado pelo compilador, não pela revisão. Abrir o
+      código sem abrir o idioma era oferecer uma ferramenta que só uma sala de aula usa
+- [x] **A documentação em inglês** — todo documento para leitor tem gêmeo em inglês
+      (`README.en.md`, `docs/en/`), com o hash do original no topo e um teste que falha quando o
+      português muda sem o inglês acompanhar
 
 **Pergunta em aberto, anotada no `FORA-DE-ESCOPO.md`:** o roadmap inteiro serve ao ensino. Sem a
 tensão comercial que a segurava, a trilha de pesquisa volta a ser pergunta legítima — e continua

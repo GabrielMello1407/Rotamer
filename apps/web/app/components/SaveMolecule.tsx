@@ -1,10 +1,12 @@
 'use client';
 
 import type { AnalysisResult } from '@rotamer/core';
+import { useMessages } from '@rotamer/i18n/react';
 import Link from 'next/link';
 import { useState, useTransition, type ReactElement } from 'react';
 import { saveMolecule } from '../actions/library';
 import { track } from '../../lib/track';
+import { saveMoleculeMessages } from './messages';
 import styles from './SaveMolecule.module.css';
 
 export interface SaveMoleculeProps {
@@ -37,6 +39,7 @@ type State =
  * a porta de entrada.
  */
 export function SaveMolecule({ analysis, onNew }: SaveMoleculeProps): ReactElement | null {
+  const messages = useMessages(saveMoleculeMessages);
   const [state, setState] = useState<State>({ kind: 'idle' });
   const [pending, startTransition] = useTransition();
 
@@ -49,7 +52,7 @@ export function SaveMolecule({ analysis, onNew }: SaveMoleculeProps): ReactEleme
       {state.kind === 'saved' ? (
         <span className={styles.done} data-testid="molecula-guardada">
           <Link className={styles.link} href="/minhas">
-            guardada
+            {messages.saved}
           </Link>
           <button
             type="button"
@@ -60,7 +63,7 @@ export function SaveMolecule({ analysis, onNew }: SaveMoleculeProps): ReactEleme
               onNew();
             }}
           >
-            começar outra
+            {messages.startAnother}
           </button>
         </span>
       ) : (
@@ -84,15 +87,15 @@ export function SaveMolecule({ analysis, onNew }: SaveMoleculeProps): ReactEleme
             });
           }}
         >
-          {pending ? 'Guardando…' : 'Guardar'}
+          {pending ? messages.saving : messages.save}
         </button>
       )}
 
       {state.kind === 'anonymous' && (
         <span className={styles.quiet} data-testid="guardar-sem-conta">
-          precisa de conta —{' '}
+          {messages.needsAccount}{' '}
           <Link className={styles.link} href="/entrar">
-            entre
+            {messages.signIn}
           </Link>
         </span>
       )}

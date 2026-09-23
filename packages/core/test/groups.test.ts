@@ -9,7 +9,7 @@ import type { FunctionalGroupId } from '../src/chemistry/groups';
  */
 async function groupsOf(smiles: string): Promise<Map<FunctionalGroupId, number>> {
   const result = await analyze(smiles);
-  if (!result.ok) throw new Error(`esperava molécula, veio erro: ${result.error.message}`);
+  if (!result.ok) throw new Error(`esperava molécula, veio erro: ${result.error.code}`);
 
   return new Map(result.molecule.groups.map((group) => [group.id, group.count]));
 }

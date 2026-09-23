@@ -3,8 +3,10 @@ import { notFound, redirect } from 'next/navigation';
 import type { ReactElement } from 'react';
 import { currentProfile } from '../../../../../lib/auth';
 import { hasDatabase } from '../../../../../lib/db';
+import { serverMessages } from '../../../../../lib/locale';
 import { readAssignments } from '../../../../actions/assignment';
 import { readClassrooms } from '../../../../actions/classroom';
+import { messages } from '../../../messages';
 import { Assignment } from './Assignment';
 
 interface PageProps {
@@ -30,10 +32,10 @@ function parseEnteredAtPosition(feito: string | undefined, posicao: string | und
   return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined;
 }
 
-export const metadata: Metadata = {
-  title: 'Lista · Rotamer',
-  description: 'Monte a sequência de missões da aula.',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const m = await serverMessages(messages);
+  return { title: m.assignment.metaTitle, description: m.assignment.metaDescription };
+}
 
 /**
  * A lista, do lado do professor (§6.2 de `docs/ROTEIROS.md`).

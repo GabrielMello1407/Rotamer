@@ -1,10 +1,11 @@
 'use client';
 
+import { useMessages } from '@rotamer/i18n/react';
 import { Label } from '@rotamer/ui';
 import Link from 'next/link';
 import type { ReactElement } from 'react';
 import type { StudentAssignment } from '../actions/assignment';
-import { messages } from '../turmas/messages';
+import { messages as classroomMessages } from '../turmas/messages';
 import styles from './StudentAssignmentsSection.module.css';
 
 export interface StudentAssignmentsSectionProps {
@@ -28,6 +29,8 @@ export function StudentAssignmentsSection({
   assignments,
   inClassroom,
 }: StudentAssignmentsSectionProps): ReactElement | null {
+  const messages = useMessages(classroomMessages);
+
   /*
    * Sem lista, a seção explica por quê em vez de sumir. Some é o que ela
    * fazia: o aluno de uma turma cujo professor ainda não publicou via o

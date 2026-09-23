@@ -1,0 +1,53 @@
+/* A pílula dos cabeçalhos. Discreta, mas com borda: é um controle, e tem de
+   ser encontrado por quem está procurando justamente por ele. */
+.switch {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--line-firm);
+  border-radius: var(--r-full);
+  background: transparent;
+  color: var(--ink-700);
+  font-family: var(--font-ui);
+  font-size: var(--step--1);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    color var(--t-fast) var(--ease-out),
+    border-color var(--t-fast) var(--ease-out),
+    background-color var(--t-fast) var(--ease-out);
+}
+
+.switch:hover {
+  border-color: var(--brand);
+  color: var(--brand-ink);
+  background: var(--brand-wash);
+}
+
+.switch:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.switch:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+/* O globo é o sinal que se reconhece em qualquer idioma. Ele acompanha o
+   texto também na barra do editor, onde a classe do botão é a da barra. */
+.icon {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  margin-right: var(--sp-1);
+  vertical-align: -2px;
+}
+
+/* No celular o toque precisa do alvo mínimo, mesmo com o botão estreito. */
+@media (pointer: coarse) {
+  .switch {
+    min-height: var(--tap-min);
+  }
+}

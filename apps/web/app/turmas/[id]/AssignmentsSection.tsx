@@ -1,6 +1,7 @@
 'use client';
 
 import { Button } from '@rotamer/ui';
+import { useFormatters, useMessages } from '@rotamer/i18n/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent, type ReactElement } from 'react';
@@ -19,8 +20,6 @@ export interface AssignmentsSectionProps {
   readonly assignments: readonly AssignmentSummary[];
 }
 
-const WHEN = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short' });
-
 /**
  * "Listas da turma" — a porta de entrada do professor (§6.1).
  *
@@ -30,6 +29,8 @@ const WHEN = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short' }
  */
 export function AssignmentsSection({ classroomId, assignments }: AssignmentsSectionProps): ReactElement {
   const router = useRouter();
+  const m = useMessages(messages);
+  const { date } = useFormatters();
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [archivedOpen, setArchivedOpen] = useState(false);
@@ -73,27 +74,27 @@ export function AssignmentsSection({ classroomId, assignments }: AssignmentsSect
   return (
     <section className={styles.panel} data-testid="listas-da-turma">
       <div className={styles.header}>
-        <h2 className={styles.title}>{messages.classroomSection.heading}</h2>
+        <h2 className={styles.title}>{m.classroomSection.heading}</h2>
         <form className={styles.newForm} onSubmit={create}>
           <input
             className={styles.newInput}
             name="title"
-            placeholder={messages.classroomSection.namePlaceholder}
-            aria-label="Nome da nova lista"
+            placeholder={m.classroomSection.namePlaceholder}
+            aria-label={m.classroomSection.newNameAriaLabel}
             required
             minLength={2}
             data-testid="nome-nova-lista"
           />
           <Button type="submit" size="small" disabled={creating} data-testid="criar-lista">
-            {messages.classroomSection.newButton}
+            {m.classroomSection.newButton}
           </Button>
         </form>
       </div>
 
       {active.length === 0 ? (
         <div className={styles.empty}>
-          <p className={styles.emptyTitle}>{messages.classroomSection.emptyTitle}</p>
-          <p className={styles.emptyBody}>{messages.classroomSection.emptyBody}</p>
+          <p className={styles.emptyTitle}>{m.classroomSection.emptyTitle}</p>
+          <p className={styles.emptyBody}>{m.classroomSection.emptyBody}</p>
         </div>
       ) : (
         <ul className={styles.list}>
@@ -109,13 +110,11 @@ export function AssignmentsSection({ classroomId, assignments }: AssignmentsSect
                 ].join(' ')}
                 data-testid={`estado-lista-${assignment.id}`}
               >
-                {assignment.publishedAt === null
-                  ? messages.classroomSection.draftChip
-                  : messages.classroomSection.publishedChip}
+                {assignment.publishedAt === null ? m.classroomSection.draftChip : m.classroomSection.publishedChip}
               </span>
-              <span className={styles.count}>{messages.classroomSection.itemCount(assignment.items.length)}</span>
+              <span className={styles.count}>{m.classroomSection.itemCount(assignment.items.length)}</span>
               <span className={styles.date}>
-                {assignment.publishedAt === null ? '' : WHEN.format(new Date(assignment.publishedAt))}
+                {assignment.publishedAt === null ? '' : date(new Date(assignment.publishedAt))}
               </span>
             </li>
           ))}
@@ -133,7 +132,7 @@ export function AssignmentsSection({ classroomId, assignments }: AssignmentsSect
             }}
             data-testid="listas-arquivadas-toggle"
           >
-            {messages.classroomSection.archivedHeading(archived.length)}
+            {m.classroomSection.archivedHeading(archived.length)}
           </button>
 
           {archivedOpen && (
@@ -150,7 +149,7 @@ export function AssignmentsSection({ classroomId, assignments }: AssignmentsSect
                     }}
                     data-testid={`desarquivar-${assignment.id}`}
                   >
-                    {messages.classroomSection.unarchive}
+                    {m.classroomSection.unarchive}
                   </Button>
                 </li>
               ))}
@@ -165,7 +164,7 @@ export function AssignmentsSection({ classroomId, assignments }: AssignmentsSect
         </p>
       )}
 
-      <p className={styles.footer}>{messages.classroomSection.footer}</p>
+      <p className={styles.footer}>{m.classroomSection.footer}</p>
     </section>
   );
 }

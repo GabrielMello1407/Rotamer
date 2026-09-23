@@ -141,3 +141,10 @@
   margin-left: var(--sp-2);
   color: var(--ink-300);
 }
+
+/* A ponta direita do cabeçalho: o que já estava ali e o botão de idioma. */
+.end {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}

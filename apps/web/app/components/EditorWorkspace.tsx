@@ -2,12 +2,15 @@
 
 import { fromMolblock, toMolblock } from '@rotamer/core';
 import { Editor2D, Popover, Toolbar, createEditorStore, type EditorNotice } from '@rotamer/editor2d';
+import { chemistryErrorText } from '@rotamer/i18n';
+import { useLocale, useMessages } from '@rotamer/i18n/react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
 import { useStore } from 'zustand';
 import { createTeacherQuest } from '../actions/assignment';
-import { messages } from '../turmas/messages';
+import { messages as classroomMessages } from '../turmas/messages';
+import { workspaceMessages } from './messages';
 import { AnalysisDrawer, type DrawerTab } from './AnalysisDrawer';
 import styles from './EditorWorkspace.module.css';
 import { MetricsBar } from './MetricsBar';
@@ -51,7 +54,7 @@ const NOTICE_MS = 9_000;
  * para uma sala inteira é o erro que este produto não pode cometer (D-01). Por
  * isso o núcleo distingue os três, e cada um tem a sua frase.
  */
-function infoNoticeFor(stereo: TidyStereoChanges): EditorNotice | null {
+function infoNoticeFor(stereo: TidyStereoChanges, text: WorkspaceText): EditorNotice | null {
   const { removedWedges, movedWedges, flippedWedges } = stereo;
   if (removedWedges === 0 && movedWedges === 0 && flippedWedges === 0) return null;
 
@@ -60,45 +63,36 @@ function infoNoticeFor(stereo: TidyStereoChanges): EditorNotice | null {
   if (removedWedges > 0) {
     return {
       tone: 'info',
-      headline:
-        removedWedges === 1
-          ? 'A cunha saiu do desenho: naquele átomo ela não definia configuração.'
-          : `${String(removedWedges)} cunhas saíram do desenho: naqueles átomos elas não definiam configuração.`,
-      detail:
-        'Cunha só vale em centro estereogênico — átomo com quatro grupos diferentes. Ctrl+Z traz o desenho de antes.',
+      headline: text.removedWedges(removedWedges),
+      detail: text.removedWedgesDetail,
     };
   }
 
   if (movedWedges > 0 && flippedWedges > 0) {
     return {
       tone: 'info',
-      headline: 'As cunhas foram redesenhadas: mesma configuração, outro traço.',
-      detail:
-        'Com as posições novas, o RDKit escolhe de qual ligação a cunha sai e para que lado ela aponta. As letras R e S ao lado dos átomos continuam as mesmas.',
+      headline: text.redrawnWedges,
+      detail: text.redrawnWedgesDetail,
     };
   }
 
   if (movedWedges > 0) {
     return {
       tone: 'info',
-      headline:
-        movedWedges === 1
-          ? 'A cunha mudou de ligação: o centro continua ali.'
-          : `${String(movedWedges)} cunhas mudaram de ligação: os centros continuam ali.`,
-      detail:
-        'Com as posições novas, o RDKit escolhe de qual ligação do centro a cunha sai. As letras R e S continuam as mesmas.',
+      headline: text.movedWedges(movedWedges),
+      detail: text.movedWedgesDetail,
     };
   }
 
   return {
     tone: 'info',
-    headline:
-      flippedWedges === 1
-        ? 'A cunha virou traço: a mesma configuração, vista do outro lado.'
-        : `${String(flippedWedges)} cunhas trocaram de tipo: a mesma configuração, vista do outro lado.`,
-    detail: 'As letras R e S ao lado dos átomos continuam as mesmas.',
+    headline: text.flippedWedges(flippedWedges),
+    detail: text.flippedWedgesDetail,
   };
 }
+
+/** O lado do dicionário da bancada que está valendo agora. */
+type WorkspaceText = (typeof workspaceMessages)['pt-BR'];
 
 /**
  * O aviso de quando organizar erraria: algum centro (R/S/E/Z) mudaria de
@@ -107,12 +101,11 @@ function infoNoticeFor(stereo: TidyStereoChanges): EditorNotice | null {
  * devolve a responsabilidade a quem é dela, em vez de aplicar um resultado que
  * silenciosamente trocaria a molécula do desenho por outra.
  */
-function dangerNotice(onClose: () => void): EditorNotice {
+function dangerNotice(onClose: () => void, text: WorkspaceText): EditorNotice {
   return {
     tone: 'danger',
-    headline:
-      'Não organizei o desenho: nas posições novas, a configuração de um centro sairia diferente — e isso seria outra molécula.',
-    detail: 'O seu desenho está intacto na tela, nada foi trocado. Isto é um defeito do Rotamer, não do seu desenho.',
+    headline: text.tidyRefused,
+    detail: text.tidyRefusedDetail,
     onClose,
   };
 }
@@ -165,6 +158,9 @@ export function EditorWorkspace({
   showAccount = false,
   authoring,
 }: EditorWorkspaceProps): ReactElement {
+  const locale = useLocale();
+  const messages = useMessages(classroomMessages);
+  const text = useMessages(workspaceMessages);
   const store = useMemo(() => createEditorStore(), []);
   const graph = useStore(store, (state) => state.graph);
   const hover = useStore(store, (state) => state.hover);
@@ -248,7 +244,7 @@ export function EditorWorkspace({
       return;
     }
     if (!analysis.ok) {
-      setAuthoringError(analysis.error.message);
+      setAuthoringError(chemistryErrorText(locale, analysis.error));
       return;
     }
     if (selectedGoalIds.size === 0) {
@@ -295,7 +291,18 @@ export function EditorWorkspace({
     };
 
     void run();
-  }, [authoring, analysis, selectedGoalIds, authoringTitle, authoringBrief, authoringHints, graph, router]);
+  }, [
+    authoring,
+    analysis,
+    selectedGoalIds,
+    authoringTitle,
+    authoringBrief,
+    authoringHints,
+    graph,
+    router,
+    locale,
+    messages,
+  ]);
 
   /**
    * Marcar o objetivo de InChIKey desmarca qualquer outro já marcado (achado
@@ -554,7 +561,7 @@ export function EditorWorkspace({
 
       if (!result.stereo.sameConfiguration) {
         noticeGraphRef.current = graph;
-        setNotice(dangerNotice(dismissNotice));
+        setNotice(dangerNotice(dismissNotice, text));
         return;
       }
 
@@ -562,7 +569,7 @@ export function EditorWorkspace({
       store.getState().commit(arranged);
       store.getState().frame();
 
-      const next = infoNoticeFor(result.stereo);
+      const next = infoNoticeFor(result.stereo, text);
       if (next === null) return;
 
       noticeGraphRef.current = arranged;
@@ -571,7 +578,7 @@ export function EditorWorkspace({
     };
 
     void run();
-  }, [client, graph, store, dismissNotice]);
+  }, [client, graph, store, dismissNotice, text]);
 
   const openPanel = useCallback((next: DrawerTab) => {
     setTab(next);
@@ -726,7 +733,9 @@ export function EditorWorkspace({
                 });
               }}
               placeholder={
-                geometryError ?? 'A forma no espaço aparece assim que a estrutura fechar.'
+                geometryError === null
+                  ? text.scenePlaceholder
+                  : chemistryErrorText(locale, { code: geometryError })
               }
             />
           </div>

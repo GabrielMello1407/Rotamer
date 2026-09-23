@@ -33,7 +33,16 @@ export {
 } from './geometry2d';
 export { readPalette, colorOf, type EditorPalette } from './palette';
 export { atomLabel, draw, type Scene } from './render';
-export { insertRing, ringLabel, RING_KINDS, type RingKind } from './templates';
+export { insertRing, RING_KINDS, type RingKind } from './templates';
+export { elementName, elementNames } from './element-names';
+export {
+  canvasMessages,
+  contextMenuMessages,
+  periodicTableMessages,
+  ringMessages,
+  shortcutsMessages,
+  toolbarMessages,
+} from './messages';
 export { PeriodicTable, type PeriodicTableProps } from './PeriodicTable';
 export { Shortcuts, type ShortcutsProps } from './Shortcuts';
 export { Popover, type PopoverProps } from './Popover';

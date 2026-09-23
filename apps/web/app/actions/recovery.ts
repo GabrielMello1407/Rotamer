@@ -1,9 +1,12 @@
 'use server';
 
+import { pick, type Locale } from '@rotamer/i18n';
 import { z } from 'zod';
 import { currentProfile, hashPassword } from '../../lib/auth';
 import { db, hasDatabase } from '../../lib/db';
+import { currentLocale } from '../../lib/locale';
 import { TEACHING_ROLES, teaches } from '../../lib/roles';
+import { recoveryMessages, sharedMessages } from './messages';
 import {
   CODE_HOURS,
   formatCode,
@@ -36,15 +39,26 @@ import {
  * O código vale uma vez e por um dia, e emitir de novo mata o anterior.
  */
 
-const issueSchema = z.object({
-  email: z.string().trim().toLowerCase().email('Esse e-mail não parece válido.'),
-});
+/**
+ * Os schemas no idioma do pedido — a mensagem deles é o que a tela mostra, e o
+ * módulo carrega antes de existir pedido para consultar o cookie.
+ */
+function schemasFor(locale: Locale) {
+  const m = pick(recoveryMessages, locale);
+  const shared = pick(sharedMessages, locale);
+  const email = z.string().trim().toLowerCase().email(shared.invalidEmail);
 
-const resetSchema = z.object({
-  email: z.string().trim().toLowerCase().email('Esse e-mail não parece válido.'),
-  code: z.string().trim().min(1, 'Digite o código que o professor entregou.'),
-  password: z.string().min(8, 'A senha precisa de pelo menos 8 caracteres.'),
-});
+  return {
+    m,
+    shared,
+    issue: z.object({ email }),
+    reset: z.object({
+      email,
+      code: z.string().trim().min(1, m.codeRequired),
+      password: z.string().min(8, shared.passwordMinLength),
+    }),
+  };
+}
 
 export type IssueOutcome =
   | {
@@ -56,15 +70,16 @@ export type IssueOutcome =
   | { readonly status: 'rejected'; readonly reason: string };
 
 export async function issueResetCode(input: { email: string }): Promise<IssueOutcome> {
-  if (!hasDatabase()) return { status: 'rejected', reason: 'Indisponível neste ambiente.' };
+  const { m, shared, issue: issueSchema } = schemasFor(await currentLocale());
+  if (!hasDatabase()) return { status: 'rejected', reason: shared.unavailable };
 
   const parsed = issueSchema.safeParse(input);
   if (!parsed.success) {
-    return { status: 'rejected', reason: parsed.error.issues[0]?.message ?? 'Pedido mal formado.' };
+    return { status: 'rejected', reason: parsed.error.issues[0]?.message ?? shared.malformed };
   }
 
   const issuer = await currentProfile();
-  if (issuer === null) return { status: 'rejected', reason: 'Entre na sua conta primeiro.' };
+  if (issuer === null) return { status: 'rejected', reason: shared.signInFirst };
 
   const issuerRow = await db.profile.findUnique({
     where: { id: issuer.id },
@@ -74,7 +89,7 @@ export async function issueResetCode(input: { email: string }): Promise<IssueOut
   if (issuerRow === null || !teaches(issuerRow.role)) {
     return {
       status: 'rejected',
-      reason: 'Só conta de professor emite código. Fale com quem administra o Rotamer da escola.',
+      reason: m.onlyTeacherIssuesCode,
     };
   }
 
@@ -82,7 +97,7 @@ export async function issueResetCode(input: { email: string }): Promise<IssueOut
   if (institution === '') {
     return {
       status: 'rejected',
-      reason: 'Sua conta está sem escola preenchida, e o código só vale para alguém da mesma escola.',
+      reason: m.noInstitution,
     };
   }
 
@@ -116,7 +131,7 @@ export async function issueResetCode(input: { email: string }): Promise<IssueOut
   if (!eligible) {
     return {
       status: 'rejected',
-      reason: 'Não encontrei essa conta na sua escola. Confira o e-mail com quem vai usar o código.',
+      reason: m.accountNotFound,
     };
   }
 
@@ -153,11 +168,12 @@ export async function resetPassword(input: {
   code: string;
   password: string;
 }): Promise<ResetOutcome> {
-  if (!hasDatabase()) return { status: 'rejected', reason: 'Indisponível neste ambiente.' };
+  const { m, shared, reset: resetSchema } = schemasFor(await currentLocale());
+  if (!hasDatabase()) return { status: 'rejected', reason: shared.unavailable };
 
   const parsed = resetSchema.safeParse(input);
   if (!parsed.success) {
-    return { status: 'rejected', reason: parsed.error.issues[0]?.message ?? 'Pedido mal formado.' };
+    return { status: 'rejected', reason: parsed.error.issues[0]?.message ?? shared.malformed };
   }
 
   const profile = await db.profile.findUnique({
@@ -180,7 +196,7 @@ export async function resetPassword(input: {
   if (profile === null || candidate === null || !sameHash(candidate.codeHash, digest)) {
     return {
       status: 'rejected',
-      reason: 'Código não confere, ou já foi usado. Peça outro ao professor.',
+      reason: m.codeMismatch,
     };
   }
 

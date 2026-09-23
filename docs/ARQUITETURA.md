@@ -44,6 +44,7 @@ nenhuma afirmação química chega ao usuário sem ter passado pelo motor determ
 apps/web            Next.js 16 App Router — rotas, ações de servidor, contas, turmas, listas, tutor
 packages/
   core              grafo · ponte com o RDKit (worker e Node) · geometria, dinâmica e modos normais
+  i18n              pt-BR e inglês: dicionário tipado, formatação por idioma, frase da química
   editor2d          canvas 2D próprio: ferramentas, seleção, menu de contexto, atalhos, histórico
   viewer3d          Three.js + React Three Fiber: dobramento, vibração, modos — render, nenhuma química
   quests            missões declarativas, extração de objetivos e pontuação
@@ -63,6 +64,10 @@ packages/
   dele para desenhar a tela; o que a regra garante é que a interface de desenho seja substituível
   sem tocar em nada abaixo dela.
 
+- `i18n` também não depende de ninguém, e é por isso que `core` **não o usa**: a dependência
+  existiria pelo caminho de volta. O núcleo devolve código de recusa e identificador de grupo
+  funcional; é o `i18n` que os transforma em frase. Ver D-30 e `IDIOMAS.md`.
+
 Quando uma dessas regras precisar ser quebrada, a resposta certa quase sempre é mover a lógica
 para `core`, não criar a dependência.
 
@@ -75,8 +80,9 @@ para `core`, não criar a dependência.
 | `core/geometry` | conformação e MMFF94 pelo OpenChemLib, velocity-Verlet a 300 K, Hessiana numérica e diagonalização de Jacobi para os modos normais |
 | `editor2d` | `store.ts` (Zustand, histórico, seleção), `render.ts`, `Toolbar`, `PeriodicTable`, `ContextMenu`, `Shortcuts`, `Popover`, `keys.ts`, `templates.ts` (anéis) |
 | `viewer3d` | `Viewer3D`, `Molecule` (esferas e varetas, CPK), `folding.ts`, `sticks.ts` |
-| `quests` | `catalog.ts` (15 missões), `conditions.ts`, `evaluate.ts`, `extract.ts` (objetivos a partir da molécula, D-25), `types.ts` |
+| `quests` | `catalog.ts` (o que decide: slug, trilha, condições), `catalog-text.ts` (título, enunciado e dicas, nos dois idiomas), `conditions.ts`, `evaluate.ts`, `extract.ts` (objetivos a partir da molécula, D-25), `types.ts` |
 | `ui` | `tokens.css`, `cpk.css`, `base.css`, `Button`, `Card`, `Formula`, `Label`, `Logo`, `NumberValue`, `SourceBadge` |
+| `i18n` | `dictionary.ts` (o par pt-BR/inglês que o tipo cobra), `locale.ts` (cookie, `Accept-Language`), `format.ts` (número e data por idioma), `plural.ts`, `parity.ts`, `react.tsx` (provedor e ganchos), `messages/chemistry.ts` (código de recusa e grupo funcional viram frase) |
 
 ## Stack e o porquê
 
@@ -211,6 +217,7 @@ O tutor é o único trecho do produto que pode estar errado, e é o único marca
 | `packages/core/test` | os valores de referência do `CLAUDE.md`, grupos, estereo, geometria, dinâmica, modos, organizar | Vitest, RDKit do pacote npm, sem navegador |
 | `packages/quests/test` | catálogo, veredito, `Assessable`, extração de objetivos | Vitest |
 | `packages/editor2d/test` | geometria 2D, render, store, anéis | Vitest |
+| `packages/i18n/test` | idioma negociado, toda recusa do núcleo com frase nos dois idiomas, todo documento com gêmeo em inglês e hash em dia | Vitest, sem navegador |
 | `apps/web/lib/*.test.ts` | apelido, PubChem com respostas gravadas, código de troca de senha, prompt e schema do tutor | Vitest |
 | `apps/web/app/actions/assignment.test.ts` | as regras das listas e do catálogo, uma a uma, contra o Postgres | Vitest; pula avisando sem banco, falha com `REQUIRE_DATABASE=1` |
 | `apps/web/e2e/*.spec.ts` | o produto no navegador, desktop e celular, contra o build de produção | Playwright, `pnpm test:e2e` |

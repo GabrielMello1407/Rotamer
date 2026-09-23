@@ -13,24 +13,27 @@
  * São os elementos que aparecem em aula de orgânica, cada um na inicial do
  * próprio símbolo — que é o que a pessoa já teria escrito à mão. `L` é o cloro
  * e `B` é o bromo porque `C` já é o carbono, o mais usado de todos.
+ *
+ * O nome do elemento **não** mora aqui: a tecla é a mesma em qualquer idioma, e
+ * misturar as duas coisas obrigaria este arquivo — que o editor lê a cada tecla
+ * — a saber quem está lendo. Quem dá o nome é `elementName`, em
+ * `element-names.ts`.
  */
 export const ELEMENT_SHORTCUTS: readonly {
   /** A tecla, em maiúscula, do jeito que se mostra na tela. */
   readonly key: string;
   readonly symbol: string;
-  /** O nome em português, para a folha de ajuda. */
-  readonly name: string;
 }[] = [
-  { key: 'C', symbol: 'C', name: 'carbono' },
-  { key: 'N', symbol: 'N', name: 'nitrogênio' },
-  { key: 'O', symbol: 'O', name: 'oxigênio' },
-  { key: 'S', symbol: 'S', name: 'enxofre' },
-  { key: 'P', symbol: 'P', name: 'fósforo' },
-  { key: 'F', symbol: 'F', name: 'flúor' },
-  { key: 'L', symbol: 'Cl', name: 'cloro' },
-  { key: 'B', symbol: 'Br', name: 'bromo' },
-  { key: 'I', symbol: 'I', name: 'iodo' },
-  { key: 'H', symbol: 'H', name: 'hidrogênio' },
+  { key: 'C', symbol: 'C' },
+  { key: 'N', symbol: 'N' },
+  { key: 'O', symbol: 'O' },
+  { key: 'S', symbol: 'S' },
+  { key: 'P', symbol: 'P' },
+  { key: 'F', symbol: 'F' },
+  { key: 'L', symbol: 'Cl' },
+  { key: 'B', symbol: 'Br' },
+  { key: 'I', symbol: 'I' },
+  { key: 'H', symbol: 'H' },
 ];
 
 /** O símbolo que a tecla escolhe, ou `undefined` se ela não for de elemento. */

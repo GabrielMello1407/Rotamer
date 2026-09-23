@@ -1,44 +1,64 @@
 'use server';
 
+import { pick, type Locale } from '@rotamer/i18n';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { endSession, hashPassword, startSession, verifyPassword } from '../../lib/auth';
 import { db } from '../../lib/db';
+import { currentLocale } from '../../lib/locale';
+import { accountMessages, sharedMessages } from './messages';
 
 /**
  * Entrar, criar conta, sair.
  *
- * Mensagem de erro em português e sem entregar informação demais: "e-mail ou
- * senha não conferem" vale para os dois casos, senão a tela vira um jeito de
- * descobrir quais e-mails existem.
+ * Mensagem de erro sem entregar informação demais: "e-mail ou senha não
+ * conferem" vale para os dois casos, senão a tela vira um jeito de descobrir
+ * quais e-mails existem. E ela sai no idioma de quem está tentando entrar — o
+ * schema é montado por pedido, porque é a mensagem dele que a tela mostra.
  */
 
 export interface AccountState {
   readonly error: string | null;
 }
 
-const email = z.string().trim().toLowerCase().email('Esse e-mail não parece válido.');
-const password = z.string().min(8, 'A senha precisa de pelo menos 8 caracteres.');
+/**
+ * Os schemas, montados no idioma do pedido.
+ *
+ * A mensagem de um `z.string().email(...)` é o texto que a tela mostra, então
+ * ela não pode ser fixada na carga do módulo — ali ainda não existe pedido, e
+ * sem pedido não há cookie de idioma.
+ */
+function schemasFor(locale: Locale) {
+  const m = pick(accountMessages, locale);
+  const shared = pick(sharedMessages, locale);
 
-const signUpSchema = z.object({
-  displayName: z.string().trim().min(2, 'Diga como você quer ser chamado.'),
-  email,
-  password,
-  institution: z
-    .string()
-    .trim()
-    .max(120, 'Nome de instituição muito longo.')
-    .optional()
-    .transform((value) => (value === undefined || value === '' ? null : value)),
-});
+  const email = z.string().trim().toLowerCase().email(shared.invalidEmail);
+  const password = z.string().min(8, shared.passwordMinLength);
 
-const signInSchema = z.object({ email, password: z.string().min(1, 'Digite a senha.') });
+  return {
+    m,
+    signUp: z.object({
+      displayName: z.string().trim().min(2, m.nameRequired),
+      email,
+      password,
+      institution: z
+        .string()
+        .trim()
+        .max(120, m.institutionTooLong)
+        .optional()
+        .transform((value) => (value === undefined || value === '' ? null : value)),
+    }),
+    signIn: z.object({ email, password: z.string().min(1, m.passwordRequired) }),
+  };
+}
 
-function firstError(issues: readonly z.core.$ZodIssue[]): string {
-  return issues[0]?.message ?? 'Confira os dados e tente de novo.';
+function firstError(issues: readonly z.core.$ZodIssue[], fallback: string): string {
+  return issues[0]?.message ?? fallback;
 }
 
 export async function signUp(_state: AccountState, form: FormData): Promise<AccountState> {
+  const { m, signUp: signUpSchema } = schemasFor(await currentLocale());
+
   const parsed = signUpSchema.safeParse({
     displayName: form.get('displayName'),
     email: form.get('email'),
@@ -46,10 +66,10 @@ export async function signUp(_state: AccountState, form: FormData): Promise<Acco
     institution: form.get('institution'),
   });
 
-  if (!parsed.success) return { error: firstError(parsed.error.issues) };
+  if (!parsed.success) return { error: firstError(parsed.error.issues, m.genericInvalid) };
 
   const taken = await db.profile.findUnique({ where: { email: parsed.data.email } });
-  if (taken) return { error: 'Já existe uma conta com esse e-mail.' };
+  if (taken) return { error: m.emailTaken };
 
   const profile = await db.profile.create({
     data: {
@@ -65,16 +85,18 @@ export async function signUp(_state: AccountState, form: FormData): Promise<Acco
 }
 
 export async function signIn(_state: AccountState, form: FormData): Promise<AccountState> {
+  const { m, signIn: signInSchema } = schemasFor(await currentLocale());
+
   const parsed = signInSchema.safeParse({
     email: form.get('email'),
     password: form.get('password'),
   });
 
-  if (!parsed.success) return { error: firstError(parsed.error.issues) };
+  if (!parsed.success) return { error: firstError(parsed.error.issues, m.genericInvalid) };
 
   const profile = await db.profile.findUnique({ where: { email: parsed.data.email } });
   if (!profile || !(await verifyPassword(parsed.data.password, profile.passwordHash))) {
-    return { error: 'E-mail ou senha não conferem.' };
+    return { error: m.wrongCredentials };
   }
 
   await startSession(profile.id);

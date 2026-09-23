@@ -44,6 +44,9 @@ do grafo que o originou (D-18).
   chave opcional se omite, não recebe `undefined`.
 - Comentário e JSDoc em pt-BR, explicando **por que**, não o que a linha faz. Nome de variável,
   função, tipo e arquivo em inglês.
+- Nenhuma frase de tela solta no componente: ela nasce no `messages.ts` ao lado, em pt-BR **e**
+  em inglês, e o componente a lê com `useMessages()` (D-30, `docs/IDIOMAS.md`). Número e data vêm
+  de `useFormatters()`, nunca de um `Intl` com idioma escrito à mão.
 - O grafo é a única fonte de verdade. Fórmula, descritores, coordenadas 3D e nota são derivados
   dele e recalculáveis.
 - Atalho de teclado vale na página inteira, menos dentro de campo de texto e com folha modal

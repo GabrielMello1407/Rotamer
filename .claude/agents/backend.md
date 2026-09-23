@@ -37,6 +37,11 @@ banco. Dono é sempre conferido: linha de outra pessoa não abre.
 - Guardar molécula tem um lugar só: `apps/web/lib/molecule-store.ts`. Três caminhos chegam nele —
   guardar de propósito, cumprir missão e batizar.
 - Cache por InChIKey, porque conformação e descritores são função pura do grafo.
+- **A recusa da server action sai no idioma de quem pediu.** O texto vem do `messages.ts` ao lado,
+  lido com `pick(dicionario, await currentLocale())` — e existe nos dois idiomas, ou não compila
+  (D-30, `docs/IDIOMAS.md`). O núcleo devolve código de recusa, nunca frase: quem monta a frase é
+  `chemistryErrorText`. No prompt do tutor, número vai sempre com ponto decimal, qualquer que
+  seja o idioma da resposta — vírgula decimal ali é ambiguidade que vira número errado na tela.
 - Mudou `schema.prisma`? Migração é assunto de `deploy` também. Avise antes.
 - Dado de aluno não sai daqui. Telemetria mede momento do produto, nunca quem é a pessoa nem o
   que ela desenhou.

@@ -23,11 +23,11 @@ describe('api do worker de química', () => {
     expect(result.molecule.descriptors.tpsa).toBeCloseTo(63.6, 2);
   });
 
-  it('devolve erro em português quando a estrutura não existe', async () => {
+  it('devolve o código da recusa quando a estrutura não existe', async () => {
     const result = await chemistryApi.analyze('C(C)(C)(C)(C)C');
 
     expect(result.ok).toBe(false);
     if (result.ok) return;
-    expect(result.error.message).toBe('O átomo de C tem 5 ligações, mas suporta no máximo 4.');
+    expect(result.error.code).toBe('valence_exceeded');
   });
 });

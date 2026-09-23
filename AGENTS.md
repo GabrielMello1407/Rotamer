@@ -14,8 +14,9 @@ subir a sua com Docker.
 Contexto completo em `README.md`. Quando precisar de profundidade, leia sob demanda:
 `docs/ORIGEM.md` (como a ideia nasceu e o que cada erro ensinou) · `docs/PITCH.md` (por que o
 produto existe) · `docs/DECISOES.md` (o porquê de cada escolha, inclusive as revogadas) ·
-`docs/ARQUITETURA.md` · `docs/DESIGN-SYSTEM.md` · `docs/ROADMAP.md` · `docs/ROTEIROS.md` (as
-listas da turma) · `docs/GUIA.md` (o produto tela a tela) · `docs/INSTALACAO.md` (o self-host) ·
+`docs/ARQUITETURA.md` · `docs/DESIGN-SYSTEM.md` · `docs/IDIOMAS.md` (pt-BR e inglês, ponta a
+ponta) · `docs/ROADMAP.md` · `docs/ROTEIROS.md` (as listas da turma) · `docs/GUIA.md` (o produto
+tela a tela) · `docs/INSTALACAO.md` (o self-host) ·
 `CONTRIBUTING.md` (o caminho de quem mexe no código). Ideia fora de escopo vai para
 `docs/FORA-DE-ESCOPO.md`, não para o código.
 
@@ -52,6 +53,13 @@ A exceção deliberada é `docs/DECISOES.md`: é o registro do que foi decidido 
 revogada fica lá, marcada como revogada, nunca apagada — saber o que foi tentado e por que não
 deu vale mais do que o texto limpo.
 
+**Todo documento para leitor tem gêmeo em inglês** (D-30): `X.md` da raiz ao lado de `X.en.md`, e
+cada `docs/…` com um gêmeo de **nome em inglês** em `docs/en/` (`GUIA.md` → `USER-GUIDE.md`; a
+tabela está em `docs/IDIOMAS.md`). Documento alterado atualiza o gêmeo **na mesma entrega** — o
+gêmeo começa com `<!-- source: … · sha256:… -->`, e `packages/i18n/test/docs.test.ts` falha
+enquanto o hash não bater com o original ou os títulos não tiverem a mesma estrutura. Este arquivo,
+`AGENTS.md` e `.claude/` são instrução de ferramenta e ficam só em português.
+
 ## A regra que não se quebra
 
 **O núcleo determinístico decide. A IA explica.**
@@ -76,6 +84,7 @@ Monorepo Turborepo. **Regra de dependência: `core` não depende de ninguém, e 
 ```
 apps/web        Next.js 16 App Router — rotas, contas, turmas, listas, tutor
 packages/core       grafo · RDKit worker · geometria · descritores · modos normais
+packages/i18n       os dois idiomas: dicionário tipado, formatação, frase da química
 packages/editor2d   canvas 2D próprio, ferramentas, seleção, histórico
 packages/viewer3d   Three.js · dobramento e dinâmica molecular
 packages/quests     missões declarativas, extração de objetivos e pontuação
@@ -112,11 +121,20 @@ missão é reavaliada no servidor, toda entrada passa por schema, dono é sempre
 
 ## Convenções
 
-- **Idioma:** toda a interface e as mensagens de erro em pt-BR. Erro explica a química, não o
-  código: "O átomo de C tem 5 ligações, mas suporta no máximo 4", nunca "valence error".
-- **Código em inglês, texto em português.** Nome de arquivo, pasta, variável, função, tipo,
-  classe de CSS e chave de dado: **sempre em inglês**. Comentário, JSDoc, nome de teste, string
-  de interface e mensagem de erro: **sempre em pt-BR**.
+- **Idioma:** o produto fala **pt-BR e inglês**, e pt-BR é o padrão. Toda interface e toda
+  mensagem de erro existem **nos dois**. Erro explica a química, não o código: "O átomo de C tem
+  5 ligações, mas suporta no máximo 4", nunca "valence error". O contrato inteiro — onde o texto
+  mora, como se lê, o que não se traduz — está em `docs/IDIOMAS.md` (D-30).
+- **Funcionalidade nova chega traduzida, ou não chega.** Não é etiqueta de revisão: o texto se
+  declara com `dictionary({ 'pt-BR': …, en: … })`, o tipo do inglês é inferido do português, e
+  **chave sem par não compila**. Quem escreve a tela escreve as duas frases na mesma entrega.
+- **Código em inglês, texto nos dois.** Nome de arquivo, pasta, variável, função, tipo, classe de
+  CSS e chave de dado: **sempre em inglês**. Comentário, JSDoc e nome de teste: **sempre em
+  pt-BR**. String de interface e mensagem de erro: **pt-BR e inglês, lado a lado**, no
+  `messages.ts` ao lado de quem as usa.
+- **O núcleo não fala idioma nenhum.** `core` não depende de ninguém, nem de `@rotamer/i18n`:
+  ele devolve **código** de recusa (`valence_exceeded`) com os números que a justificam, e
+  `chemistryErrorText` monta a frase. Mesma regra para nome de grupo funcional.
 - **Comentário explica por quê.** Nome de teste diz o que protege. Nada de referência a rodada de
   revisão, número de achado ou conversa que gerou a mudança — quem lê daqui a um ano não estava lá.
 - **Números:** sempre `font-variant-numeric: tabular-nums`. Fórmulas moleculares em mono com
@@ -225,5 +243,10 @@ bater com tabela de terceiro.
 - Antes de instalar qualquer pacote, verifique a licença: compatível com MIT, ou não entra.
 - Toda ideia nova fora do escopo vai para `docs/FORA-DE-ESCOPO.md`, não para o código. Escopo
   estourando é o risco número um deste projeto.
+- Texto novo na tela nasce no `messages.ts` ao lado dela, nos dois idiomas. Nenhum
+  `Intl.NumberFormat('pt-BR')` escrito à mão: número e data vêm de `useFormatters()` ou de
+  `formatNumber`/`formatDate` com o idioma em mãos.
+- Não se traduz o que uma pessoa escreveu — nome de turma, enunciado de missão de professor,
+  apelido de molécula — nem notação química: fórmula, SMILES, InChIKey, símbolo, unidade, `R`/`S`.
 - Toda entrega termina com teste que falharia sem ela, e com o documento que ela tornou
   desatualizado corrigido na mesma entrega.

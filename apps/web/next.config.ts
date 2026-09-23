@@ -8,6 +8,7 @@ const config: NextConfig = {
   transpilePackages: [
     '@rotamer/core',
     '@rotamer/editor2d',
+    '@rotamer/i18n',
     '@rotamer/quests',
     '@rotamer/ui',
     '@rotamer/viewer3d',

@@ -1,14 +1,16 @@
 'use client';
 
+import { useLocale, useMessages } from '@rotamer/i18n/react';
 import { useMemo, useState, type ReactElement } from 'react';
+import { ELEMENT_SEARCH_ALIASES, elementName } from './element-names';
 import {
   blockOf,
   COMMON_ELEMENTS,
-  ELEMENT_NAMES,
   INNER_PERIODS,
   PERIODIC_TABLE,
   type TableEntry,
 } from './elements-table';
+import { periodicTableMessages } from './messages';
 import { Popover } from './Popover';
 import styles from './PeriodicTable.module.css';
 
@@ -55,8 +57,15 @@ export function PeriodicTable({
   onSelect,
   onClose,
 }: PeriodicTableProps): ReactElement {
+  const locale = useLocale();
+  const messages = useMessages(periodicTableMessages);
   const [search, setSearch] = useState('');
 
+  /**
+   * A busca acha pelo nome no idioma da tela, e também pelo do outro idioma:
+   * quem aprendeu química em inglês digita "sulfur" mesmo com a tela em
+   * português, e o contrário também acontece. Custa nada e evita tabela vazia.
+   */
   const matches = useMemo(() => {
     const term = fold(search.trim());
     if (term === '') return null;
@@ -65,7 +74,9 @@ export function PeriodicTable({
       PERIODIC_TABLE.filter(
         (entry) =>
           fold(entry.symbol).startsWith(term) ||
-          fold(ELEMENT_NAMES[entry.symbol] ?? '').includes(term) ||
+          fold(elementName('pt-BR', entry.symbol)).includes(term) ||
+          fold(elementName('en', entry.symbol)).includes(term) ||
+          (ELEMENT_SEARCH_ALIASES[entry.symbol] ?? []).some((alias) => alias.includes(term)) ||
           String(entry.z) === term,
       ).map((entry) => entry.symbol),
     );
@@ -77,7 +88,7 @@ export function PeriodicTable({
   const inner = PERIODIC_TABLE.filter((entry) => INNER.has(entry.period));
 
   const cell = (entry: TableEntry, row: number): ReactElement => {
-    const name = ELEMENT_NAMES[entry.symbol] ?? entry.symbol;
+    const name = elementName(locale, entry.symbol);
     const dimmed = matches !== null && !matches.has(entry.symbol);
 
     return (
@@ -99,7 +110,7 @@ export function PeriodicTable({
         }
         data-block={blockOf(entry)}
         aria-pressed={selected === entry.symbol}
-        aria-label={`${name}, símbolo ${entry.symbol}, número atômico ${String(entry.z)}`}
+        aria-label={messages.cell(name, entry.symbol, entry.z)}
         title={name}
         data-testid={`elemento-${entry.symbol}`}
         onClick={() => {
@@ -117,7 +128,7 @@ export function PeriodicTable({
   return (
     <Popover
       anchor={anchor}
-      label="Tabela periódica"
+      label={messages.title}
       className={styles.sheet}
       onClose={onClose}
     >
@@ -126,8 +137,8 @@ export function PeriodicTable({
           className={styles.search}
           type="search"
           value={search}
-          placeholder="Buscar por nome, símbolo ou número"
-          aria-label="Buscar elemento"
+          placeholder={messages.searchPlaceholder}
+          aria-label={messages.searchLabel}
           data-testid="buscar-elemento"
           autoFocus
           onChange={(event) => {

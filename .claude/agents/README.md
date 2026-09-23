@@ -6,7 +6,7 @@ chamar; o corpo do arquivo é a instrução que aquele agente recebe.
 | Agente | O que ele decide | Quando chamar |
 |---|---|---|
 | `pm` | escopo, ordem, o que é "pronto" | antes de qualquer trabalho que atravesse mais de um pacote |
-| `ui-ux` | layout, token, cor, texto em pt-BR | antes de o `frontend` escrever a tela |
+| `ui-ux` | layout, token, cor, texto em pt-BR e inglês | antes de o `frontend` escrever a tela |
 | `frontend` | `apps/web`, `editor2d`, `viewer3d` | componente, estado, canvas, cena 3D |
 | `backend` | server action, Prisma, `core`, worker, tutor | persistência, validação, cálculo químico |
 | `security` | conta, sessão, dado de aluno, licença | antes de mexer em qualquer um dos quatro |
@@ -63,7 +63,9 @@ O `CLAUDE.md` vale para os nove, e nenhum arquivo daqui o substitui:
 
 - **O núcleo determinístico decide; a IA explica.** Química é do RDKit, do campo de força e do
   motor de missões.
-- **Texto em pt-BR, código em inglês.** O erro explica a química, não o código.
+- **Texto em pt-BR e inglês, código em inglês.** O produto fala dois idiomas ponta a ponta, e
+  funcionalidade nova chega nos dois — o tipo não compila sem o par (D-30, `docs/IDIOMAS.md`). O
+  erro explica a química, não o código.
 - **Dependência precisa ser compatível com MIT em redistribuição.** GPL, LGPL e AGPL ficam
   fora — imporiam a quem redistribui o Rotamer obrigações que a nossa licença não impõe.
 - **Escopo estourando é o risco número um.** Ideia fora do MVP vai para `docs/FORA-DE-ESCOPO.md`.

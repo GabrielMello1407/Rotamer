@@ -25,8 +25,10 @@ espaço, raio e duração.
 - **Número é dado.** `font-variant-numeric: tabular-nums` sempre. Fórmula em mono com subscrito
   real e carga em expoente — nunca `C6H6` em texto corrido.
 - **`prefers-reduced-motion`** desliga dobramento e vibração e vai direto à forma final.
-- **Texto em pt-BR, código em inglês.** Classe de CSS, nome de arquivo e de variável em inglês;
-  string de tela, rótulo e mensagem de erro em português.
+- **Texto nos dois idiomas, código em inglês.** Classe de CSS, nome de arquivo e de variável em
+  inglês; string de tela, rótulo e mensagem de erro em **pt-BR e inglês**, no `messages.ts` ao
+  lado da tela (D-30, `docs/IDIOMAS.md`). Você escreve as duas — a frase em inglês é microcópia
+  como a outra, não legenda dela. Nome de turma, apelido de molécula e fórmula não se traduzem.
 
 ## Como você escreve o que a tela diz
 

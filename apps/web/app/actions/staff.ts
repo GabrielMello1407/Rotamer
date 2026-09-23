@@ -3,6 +3,9 @@
 import { z } from 'zod';
 import { db, hasDatabase } from '../../lib/db';
 import { requireAdministrator, teaches } from '../../lib/roles';
+import { pick, type Locale } from '@rotamer/i18n';
+import { currentLocale } from '../../lib/locale';
+import { sharedMessages } from './messages';
 import { messages } from '../turmas/messages';
 
 /**
@@ -47,9 +50,15 @@ const STUDENT_ROLE = 'aluno';
 const TEACHER_ROLE = 'professor';
 const ADMINISTRATOR_ROLE = 'administrador';
 
-const emailSchema = z.object({
-  email: z.string().trim().toLowerCase().email('Esse e-mail não parece válido.'),
-});
+/**
+ * O schema no idioma do pedido: a mensagem dele é o texto que a tela mostra, e
+ * o módulo carrega antes de existir pedido para consultar o cookie.
+ */
+function emailSchemaFor(locale: Locale) {
+  return z.object({
+    email: z.string().trim().toLowerCase().email(pick(sharedMessages, locale).invalidEmail),
+  });
+}
 
 /**
  * Teto de consultas por administrador, em memória — o mesmo desenho do teto de
@@ -99,11 +108,12 @@ export type StaffOutcome =
 
 /** Quem dá aula na escola do administrador, com o rastro de quem deu o papel. */
 export async function readSchoolStaff(): Promise<StaffOutcome> {
-  if (!hasDatabase()) return { status: 'rejected', reason: messages.staff.unavailable };
+  const m = pick(messages, await currentLocale()).staff;
+  if (!hasDatabase()) return { status: 'rejected', reason: m.unavailable };
 
   const administrator = await requireAdministrator();
   if (administrator === null) {
-    return { status: 'rejected', reason: messages.staff.notAdministrator };
+    return { status: 'rejected', reason: m.notAdministrator };
   }
 
   const rows = await db.profile.findMany({
@@ -165,27 +175,28 @@ export type FoundOutcome =
  * que não alcança.
  */
 export async function findSchoolAccount(input: { email: string }): Promise<FoundOutcome> {
-  if (!hasDatabase()) return { status: 'rejected', reason: messages.staff.unavailable };
+  const m = pick(messages, await currentLocale()).staff;
+  if (!hasDatabase()) return { status: 'rejected', reason: m.unavailable };
 
-  const parsed = emailSchema.safeParse(input);
+  const parsed = emailSchemaFor(await currentLocale()).safeParse(input);
   if (!parsed.success) {
     return {
       status: 'rejected',
-      reason: parsed.error.issues[0]?.message ?? messages.staff.malformed,
+      reason: parsed.error.issues[0]?.message ?? m.malformed,
     };
   }
 
   const administrator = await requireAdministrator();
   if (administrator === null) {
-    return { status: 'rejected', reason: messages.staff.notAdministrator };
+    return { status: 'rejected', reason: m.notAdministrator };
   }
 
   if (tooManyLookups(administrator.id)) {
-    return { status: 'rejected', reason: messages.staff.tooManyLookups };
+    return { status: 'rejected', reason: m.tooManyLookups };
   }
 
   const target = await findInSchool(parsed.data.email, administrator.institution);
-  if (target === null) return { status: 'rejected', reason: messages.staff.notFound };
+  if (target === null) return { status: 'rejected', reason: m.notFound };
 
   return { status: 'found', name: target.displayName, teaching: teaches(target.role) };
 }
@@ -196,35 +207,36 @@ export type RoleOutcome =
 
 /** Dar o papel de professor a uma conta da mesma escola. */
 export async function promoteToTeacher(input: { email: string }): Promise<RoleOutcome> {
-  if (!hasDatabase()) return { status: 'rejected', reason: messages.staff.unavailable };
+  const m = pick(messages, await currentLocale()).staff;
+  if (!hasDatabase()) return { status: 'rejected', reason: m.unavailable };
 
-  const parsed = emailSchema.safeParse(input);
+  const parsed = emailSchemaFor(await currentLocale()).safeParse(input);
   if (!parsed.success) {
     return {
       status: 'rejected',
-      reason: parsed.error.issues[0]?.message ?? messages.staff.malformed,
+      reason: parsed.error.issues[0]?.message ?? m.malformed,
     };
   }
 
   const administrator = await requireAdministrator();
   if (administrator === null) {
-    return { status: 'rejected', reason: messages.staff.notAdministrator };
+    return { status: 'rejected', reason: m.notAdministrator };
   }
 
   if (tooManyLookups(administrator.id)) {
-    return { status: 'rejected', reason: messages.staff.tooManyLookups };
+    return { status: 'rejected', reason: m.tooManyLookups };
   }
 
   const target = await findInSchool(parsed.data.email, administrator.institution);
-  if (target === null) return { status: 'rejected', reason: messages.staff.notFound };
+  if (target === null) return { status: 'rejected', reason: m.notFound };
   if (target.id === administrator.id) {
-    return { status: 'rejected', reason: messages.staff.notYourself };
+    return { status: 'rejected', reason: m.notYourself };
   }
   // Recusa sem nome: quem chegou aqui pela tela já viu o nome no passo de
   // conferência, que é contado no teto. Repeti-lo aqui abriria a mesma varredura
   // por uma porta sem contador.
   if (teaches(target.role)) {
-    return { status: 'rejected', reason: messages.staff.alreadyTeaching };
+    return { status: 'rejected', reason: m.alreadyTeaching };
   }
 
   const changed = await changeRole({
@@ -234,7 +246,7 @@ export async function promoteToTeacher(input: { email: string }): Promise<RoleOu
     toRole: TEACHER_ROLE,
   });
 
-  if (!changed) return { status: 'rejected', reason: messages.staff.changedMeanwhile };
+  if (!changed) return { status: 'rejected', reason: m.changedMeanwhile };
 
   return { status: 'changed', name: target.displayName };
 }
@@ -247,35 +259,36 @@ export async function promoteToTeacher(input: { email: string }): Promise<RoleOu
  * e a instância pode acabar sem nenhum. Quem tem a máquina desfaz.
  */
 export async function demoteToStudent(input: { email: string }): Promise<RoleOutcome> {
-  if (!hasDatabase()) return { status: 'rejected', reason: messages.staff.unavailable };
+  const m = pick(messages, await currentLocale()).staff;
+  if (!hasDatabase()) return { status: 'rejected', reason: m.unavailable };
 
-  const parsed = emailSchema.safeParse(input);
+  const parsed = emailSchemaFor(await currentLocale()).safeParse(input);
   if (!parsed.success) {
     return {
       status: 'rejected',
-      reason: parsed.error.issues[0]?.message ?? messages.staff.malformed,
+      reason: parsed.error.issues[0]?.message ?? m.malformed,
     };
   }
 
   const administrator = await requireAdministrator();
   if (administrator === null) {
-    return { status: 'rejected', reason: messages.staff.notAdministrator };
+    return { status: 'rejected', reason: m.notAdministrator };
   }
 
   if (tooManyLookups(administrator.id)) {
-    return { status: 'rejected', reason: messages.staff.tooManyLookups };
+    return { status: 'rejected', reason: m.tooManyLookups };
   }
 
   const target = await findInSchool(parsed.data.email, administrator.institution);
-  if (target === null) return { status: 'rejected', reason: messages.staff.notFound };
+  if (target === null) return { status: 'rejected', reason: m.notFound };
   if (target.id === administrator.id) {
-    return { status: 'rejected', reason: messages.staff.notYourself };
+    return { status: 'rejected', reason: m.notYourself };
   }
   if (target.role === ADMINISTRATOR_ROLE) {
-    return { status: 'rejected', reason: messages.staff.notAnotherAdministrator };
+    return { status: 'rejected', reason: m.notAnotherAdministrator };
   }
   if (target.role !== TEACHER_ROLE) {
-    return { status: 'rejected', reason: messages.staff.notTeaching };
+    return { status: 'rejected', reason: m.notTeaching };
   }
 
   const changed = await changeRole({
@@ -285,7 +298,7 @@ export async function demoteToStudent(input: { email: string }): Promise<RoleOut
     toRole: STUDENT_ROLE,
   });
 
-  if (!changed) return { status: 'rejected', reason: messages.staff.changedMeanwhile };
+  if (!changed) return { status: 'rejected', reason: m.changedMeanwhile };
 
   return { status: 'changed', name: target.displayName };
 }

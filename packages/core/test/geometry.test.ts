@@ -9,7 +9,7 @@ import type { Geometry } from '../src/geometry/types';
 
 async function geometryOf(smiles: string): Promise<Geometry> {
   const result = await chemistryApi.geometry(smiles);
-  if (!result.ok) throw new Error(`esperava geometria, veio erro: ${result.error.message}`);
+  if (!result.ok) throw new Error(`esperava geometria, veio erro: ${result.error.code}`);
   return result.geometry;
 }
 
@@ -159,7 +159,8 @@ describe('cache por InChIKey', () => {
 
     expect(resultado.ok).toBe(false);
     if (resultado.ok) return;
-    expect(resultado.error.message).toBe('O átomo de C tem 5 ligações, mas suporta no máximo 4.');
+    expect(resultado.error.code).toBe('valence_exceeded');
+    expect(resultado.error.atom).toEqual({ index: 0, symbol: 'C', bonds: 5, max: 4 });
   });
 });
 
@@ -172,7 +173,7 @@ describe('elemento fora do campo de força', () => {
     expect(analysis.ok).toBe(true);
 
     const result = await chemistryApi.geometry('C[Sn](C)(C)C');
-    if (!result.ok) throw new Error(`esperava geometria: ${result.error.message}`);
+    if (!result.ok) throw new Error(`esperava geometria: ${result.error.code}`);
 
     const { geometry } = result;
     expect(geometry.relaxed).toBe(false);

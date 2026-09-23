@@ -1,6 +1,7 @@
 'use client';
 
-import { CATALOG, type Track } from '@rotamer/quests';
+import { catalogFor, type Quest, type Track } from '@rotamer/quests';
+import { useLocale, useMessages } from '@rotamer/i18n/react';
 import { Popover } from '@rotamer/editor2d';
 import { Button } from '@rotamer/ui';
 import { useMemo, useState, type ReactElement } from 'react';
@@ -24,19 +25,12 @@ export interface CatalogPickerProps {
   readonly onAdded: () => void;
 }
 
-const TRACKS: readonly { readonly value: Track | 'all'; readonly label: string }[] = [
-  { value: 'all', label: messages.catalogPicker.trackAll },
-  { value: 'structure', label: messages.catalogPicker.trackStructure },
-  { value: 'geometry', label: messages.catalogPicker.trackGeometry },
-  { value: 'property', label: messages.catalogPicker.trackProperty },
-];
-
 /**
  * "Escolher do catálogo" — popover ancorado no botão da lista (§6.2).
  *
- * Este é o catálogo **do produto** (`CATALOG`, em `@rotamer/quests`), o mesmo
- * que o `QuestPanel` já usa fora de turma — não o catálogo buscável de D-26/
- * D-27, que também traz missão de professor. Aqui não existe filtro
+ * Este é o catálogo **do produto** (`catalogFor`, em `@rotamer/quests`), o
+ * mesmo que o `QuestPanel` já usa fora de turma — não o catálogo buscável de
+ * D-26/D-27, que também traz missão de professor. Aqui não existe filtro
  * "Otimização": aquela trilha não tem missão (D-09), e um filtro vazio
  * insinuaria que teria.
  */
@@ -47,17 +41,30 @@ export function CatalogPicker({
   onClose,
   onAdded,
 }: CatalogPickerProps): ReactElement {
+  const locale = useLocale();
+  const m = useMessages(messages);
   const [track, setTrack] = useState<Track | 'all'>('all');
   const [checked, setChecked] = useState<ReadonlySet<string>>(new Set());
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // O catálogo já no idioma de quem lê — `QuestSpec` não carrega texto (D-30);
+  // `catalogFor` é quem junta a condição com o título escrito à mão.
+  const catalog = useMemo(() => catalogFor(locale), [locale]);
+
+  const tracks: readonly { readonly value: Track | 'all'; readonly label: string }[] = [
+    { value: 'all', label: m.catalogPicker.trackAll },
+    { value: 'structure', label: m.catalogPicker.trackStructure },
+    { value: 'geometry', label: m.catalogPicker.trackGeometry },
+    { value: 'property', label: m.catalogPicker.trackProperty },
+  ];
+
   const available = useMemo(
     () =>
-      CATALOG.filter((quest) => (track === 'all' ? true : quest.track === track)).filter(
-        (quest) => !existingSlugs.has(quest.slug),
-      ),
-    [track, existingSlugs],
+      catalog
+        .filter((quest) => (track === 'all' ? true : quest.track === track))
+        .filter((quest) => !existingSlugs.has(quest.slug)),
+    [catalog, track, existingSlugs],
   );
 
   const toggle = (slug: string): void => {
@@ -75,7 +82,7 @@ export function CatalogPicker({
     setError(null);
 
     const run = async (): Promise<void> => {
-      for (const quest of CATALOG) {
+      for (const quest of catalog) {
         if (!checked.has(quest.slug)) continue;
 
         // Cada adição depende da posição que a anterior deixou — sequencial de propósito.
@@ -96,10 +103,10 @@ export function CatalogPicker({
   };
 
   return (
-    <Popover anchor={anchor} label={messages.catalogPicker.label} onClose={onClose} testId="catalogo-popover">
+    <Popover anchor={anchor} label={m.catalogPicker.label} onClose={onClose} testId="catalogo-popover">
       <div className={styles.box}>
-        <div className={styles.tracks} role="tablist" aria-label="Filtrar por trilha">
-          {TRACKS.map((entry) => (
+        <div className={styles.tracks} role="tablist" aria-label={m.catalogPicker.filterByTrackLabel}>
+          {tracks.map((entry) => (
             <button
               key={entry.value}
               type="button"
@@ -116,7 +123,7 @@ export function CatalogPicker({
         </div>
 
         <div className={styles.list} data-testid="lista-catalogo">
-          {available.length === 0 && <p className={styles.empty}>{messages.catalogPicker.emptyFiltered}</p>}
+          {available.length === 0 && <p className={styles.empty}>{m.catalogPicker.emptyFiltered}</p>}
 
           {available.map((quest) => (
             <label key={quest.slug} className={styles.item}>
@@ -133,13 +140,13 @@ export function CatalogPicker({
           ))}
 
           {[...existingSlugs]
-            .map((slug) => CATALOG.find((quest) => quest.slug === slug))
-            .filter((quest): quest is (typeof CATALOG)[number] => quest !== undefined && (track === 'all' || quest.track === track))
+            .map((slug) => catalog.find((quest) => quest.slug === slug))
+            .filter((quest): quest is Quest => quest !== undefined && (track === 'all' || quest.track === track))
             .map((quest) => (
               <div key={quest.slug} className={[styles.item, styles.itemDisabled].join(' ')}>
                 <input type="checkbox" checked disabled />
                 <span className={styles.itemTitle}>{quest.title}</span>
-                <span className={styles.tag}>{messages.catalogPicker.alreadyInList}</span>
+                <span className={styles.tag}>{m.catalogPicker.alreadyInList}</span>
               </div>
             ))}
         </div>
@@ -153,10 +160,10 @@ export function CatalogPicker({
             disabled={checked.size === 0 || pending}
             data-testid="acrescentar-catalogo"
           >
-            {messages.catalogPicker.addButton(checked.size)}
+            {m.catalogPicker.addButton(checked.size)}
           </Button>
           <Button size="small" variant="ghost" onClick={onClose}>
-            {messages.catalogPicker.cancel}
+            {m.catalogPicker.cancel}
           </Button>
         </div>
       </div>

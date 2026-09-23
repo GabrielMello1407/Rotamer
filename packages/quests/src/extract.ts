@@ -6,9 +6,12 @@ import type { Condition, MeasurableDescriptor } from './types';
  * Extração de objetivos a partir da molécula que o professor desenhou (D-25).
  *
  * A parte que decide química nunca é digitada: o professor escolhe, entre os
- * candidatos daqui, quais quer cobrar — mas cada candidato, do rótulo à
- * condição, sai do que o RDKit já calculou em `molecule`. Nada aqui lê o
- * desenho, e nada aqui inventa um número.
+ * candidatos daqui, quais quer cobrar — mas cada candidato sai do que o RDKit já
+ * calculou em `molecule`. Nada aqui lê o desenho, e nada aqui inventa um número.
+ *
+ * Nenhum candidato carrega frase: a frase é derivada da condição, no idioma de
+ * quem estiver lendo (`goalLabel`, em `messages.ts`). É o que faz a lista de um
+ * professor brasileiro abrir legível para um aluno que só lê inglês.
  */
 
 export type CandidateKind = 'identity' | 'formula' | 'group' | 'count';
@@ -17,8 +20,6 @@ export type CandidateKind = 'identity' | 'formula' | 'group' | 'count';
 export interface CandidateGoal {
   /** Determinístico: `formula`, `inchi-key`, `group:alcohol:1`, `atoms:C:2`, `descriptor:rings:1`. */
   readonly id: string;
-  /** Rótulo em pt-BR, **gerado**. Nunca digitado, nunca editável. */
-  readonly label: string;
   /** O valor medido, para a coluna da direita da lista: `2`, `C2H6O`. */
   readonly measured: string;
   readonly kind: CandidateKind;
@@ -28,71 +29,31 @@ export interface CandidateGoal {
 }
 
 /**
- * Concorda o artigo e o plural com a palavra `grupo`/`átomo`/`anel`… — nunca
- * com o nome da coisa contada. `1 grupo álcool` e `2 grupos amida` são as
- * frases certas: o nome do grupo funcional é sempre invariável aqui.
- */
-function plural(n: number, singular: string, pluralForm: string): string {
-  return n === 1 ? singular : pluralForm;
-}
-
-interface DescriptorSpec {
-  readonly key: Extract<
-    MeasurableDescriptor,
-    | 'rings'
-    | 'aromaticRings'
-    | 'rotatableBonds'
-    | 'hbDonors'
-    | 'hbAcceptors'
-    | 'heavyAtoms'
-    | 'heteroatoms'
-    | 'stereocenters'
-  >;
-  readonly label: (n: number) => string;
-}
-
-/**
  * Os oito descritores de contagem que viram candidato sempre — inclusive
  * quando o valor é zero, porque "nenhum anel" também é um objetivo
  * verificável. `molarMass`, `exactMass`, `tpsa` e `logP` ficam de fora por
  * serem contínuos: igualdade exata é armadilha, e faixa digitada é o que o
  * D-25 proíbe (§4.1).
  */
-const DESCRIPTOR_SPECS: readonly DescriptorSpec[] = [
-  {
-    key: 'rings',
-    label: (n) => `tem exatamente ${n} ${plural(n, 'anel', 'anéis')}`,
-  },
-  {
-    key: 'aromaticRings',
-    label: (n) => `tem exatamente ${n} ${plural(n, 'anel aromático', 'anéis aromáticos')}`,
-  },
-  {
-    key: 'rotatableBonds',
-    label: (n) => `tem exatamente ${n} ${plural(n, 'ligação rotacionável', 'ligações rotacionáveis')}`,
-  },
-  {
-    key: 'hbDonors',
-    label: (n) =>
-      `tem exatamente ${n} ${plural(n, 'doador de ligação de hidrogênio', 'doadores de ligação de hidrogênio')}`,
-  },
-  {
-    key: 'hbAcceptors',
-    label: (n) =>
-      `tem exatamente ${n} ${plural(n, 'aceitador de ligação de hidrogênio', 'aceitadores de ligação de hidrogênio')}`,
-  },
-  {
-    key: 'heavyAtoms',
-    label: (n) => `tem exatamente ${n} ${plural(n, 'átomo pesado', 'átomos pesados')}`,
-  },
-  {
-    key: 'heteroatoms',
-    label: (n) => `tem exatamente ${n} ${plural(n, 'heteroátomo', 'heteroátomos')}`,
-  },
-  {
-    key: 'stereocenters',
-    label: (n) => `tem exatamente ${n} ${plural(n, 'centro estereogênico', 'centros estereogênicos')}`,
-  },
+const DESCRIPTOR_KEYS: readonly Extract<
+  MeasurableDescriptor,
+  | 'rings'
+  | 'aromaticRings'
+  | 'rotatableBonds'
+  | 'hbDonors'
+  | 'hbAcceptors'
+  | 'heavyAtoms'
+  | 'heteroatoms'
+  | 'stereocenters'
+>[] = [
+  'rings',
+  'aromaticRings',
+  'rotatableBonds',
+  'hbDonors',
+  'hbAcceptors',
+  'heavyAtoms',
+  'heteroatoms',
+  'stereocenters',
 ];
 
 /**
@@ -106,7 +67,6 @@ export function extractGoals(molecule: Molecule): readonly CandidateGoal[] {
 
   candidates.push({
     id: 'inchi-key',
-    label: 'é exatamente esta molécula',
     measured: molecule.inchiKey,
     kind: 'identity',
     exclusive: true,
@@ -115,7 +75,6 @@ export function extractGoals(molecule: Molecule): readonly CandidateGoal[] {
 
   candidates.push({
     id: 'formula',
-    label: `a fórmula é ${molecule.formula}`,
     measured: molecule.formula,
     kind: 'formula',
     exclusive: false,
@@ -125,7 +84,6 @@ export function extractGoals(molecule: Molecule): readonly CandidateGoal[] {
   for (const group of molecule.groups) {
     candidates.push({
       id: `group:${group.id}:${group.count}`,
-      label: `tem pelo menos ${group.count} ${plural(group.count, 'grupo', 'grupos')} ${group.name}`,
       measured: String(group.count),
       kind: 'group',
       exclusive: false,
@@ -136,7 +94,6 @@ export function extractGoals(molecule: Molecule): readonly CandidateGoal[] {
   for (const [element, count] of countElements(molecule.formula)) {
     candidates.push({
       id: `atoms:${element}:${count}`,
-      label: `tem exatamente ${count} ${plural(count, 'átomo', 'átomos')} de ${element}`,
       measured: String(count),
       kind: 'count',
       exclusive: false,
@@ -144,15 +101,14 @@ export function extractGoals(molecule: Molecule): readonly CandidateGoal[] {
     });
   }
 
-  for (const spec of DESCRIPTOR_SPECS) {
-    const value = molecule.descriptors[spec.key];
+  for (const key of DESCRIPTOR_KEYS) {
+    const value = molecule.descriptors[key];
     candidates.push({
-      id: `descriptor:${spec.key}:${value}`,
-      label: spec.label(value),
+      id: `descriptor:${key}:${value}`,
       measured: String(value),
       kind: 'count',
       exclusive: false,
-      condition: { kind: 'descriptor', descriptor: spec.key, min: value, max: value },
+      condition: { kind: 'descriptor', descriptor: key, min: value, max: value },
     });
   }
 
@@ -163,7 +119,6 @@ export function extractGoals(molecule: Molecule): readonly CandidateGoal[] {
   if (molecule.descriptors.stereocenters > 0 && molecule.descriptors.unspecifiedStereocenters === 0) {
     candidates.push({
       id: 'descriptor:unspecifiedStereocenters:0',
-      label: 'nenhum centro estereogênico fica sem configuração',
       measured: String(molecule.descriptors.unspecifiedStereocenters),
       kind: 'count',
       exclusive: false,

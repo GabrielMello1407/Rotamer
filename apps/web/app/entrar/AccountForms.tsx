@@ -1,9 +1,11 @@
 'use client';
 
+import { useMessages } from '@rotamer/i18n/react';
 import { Button, Card, Label } from '@rotamer/ui';
 import Link from 'next/link';
 import { useActionState, type ReactElement } from 'react';
 import { signIn, signUp, type AccountState } from '../actions/account';
+import { accountMessages } from './messages';
 import styles from './page.module.css';
 
 const EMPTY: AccountState = { error: null };
@@ -15,15 +17,16 @@ const EMPTY: AccountState = { error: null };
  * sem ela. Ninguém precisa se cadastrar para desenhar.
  */
 export function AccountForms(): ReactElement {
+  const m = useMessages(accountMessages);
   const [signInState, submitSignIn, signingIn] = useActionState(signIn, EMPTY);
   const [signUpState, submitSignUp, signingUp] = useActionState(signUp, EMPTY);
 
   return (
     <div className={styles.forms}>
-      <Card title="entrar">
+      <Card title={m.signIn.cardTitle}>
         <form className={styles.form} action={submitSignIn}>
           <label className={styles.field}>
-            <Label>e-mail</Label>
+            <Label>{m.signIn.email}</Label>
             <input
               className={styles.input}
               name="email"
@@ -35,7 +38,7 @@ export function AccountForms(): ReactElement {
           </label>
 
           <label className={styles.field}>
-            <Label>senha</Label>
+            <Label>{m.signIn.password}</Label>
             <input
               className={styles.input}
               name="password"
@@ -53,25 +56,25 @@ export function AccountForms(): ReactElement {
           )}
 
           <Button type="submit" variant="primary" disabled={signingIn}>
-            {signingIn ? 'Entrando…' : 'Entrar'}
+            {signingIn ? m.signIn.submitting : m.signIn.submit}
           </Button>
 
           {/* Sem e-mail no caminho: quem esqueceu a senha pede um código ao
               professor da turma e troca na hora (D-19). */}
           <p className={styles.note}>
-            Esqueceu a senha?{' '}
+            {m.signIn.forgot}{' '}
             <Link className={styles.link} href="/senha" data-testid="esqueci-senha">
-              Trocar com o código do professor
+              {m.signIn.forgotLink}
             </Link>
             .
           </p>
         </form>
       </Card>
 
-      <Card title="criar conta">
+      <Card title={m.signUp.cardTitle}>
         <form className={styles.form} action={submitSignUp}>
           <label className={styles.field}>
-            <Label>como quer ser chamado</Label>
+            <Label>{m.signUp.displayName}</Label>
             <input
               className={styles.input}
               name="displayName"
@@ -82,7 +85,7 @@ export function AccountForms(): ReactElement {
           </label>
 
           <label className={styles.field}>
-            <Label>e-mail</Label>
+            <Label>{m.signUp.email}</Label>
             <input
               className={styles.input}
               name="email"
@@ -94,7 +97,7 @@ export function AccountForms(): ReactElement {
           </label>
 
           <label className={styles.field}>
-            <Label>senha</Label>
+            <Label>{m.signUp.password}</Label>
             <input
               className={styles.input}
               name="password"
@@ -107,14 +110,14 @@ export function AccountForms(): ReactElement {
           </label>
 
           <label className={styles.field}>
-            <Label>escola ou instituição</Label>
+            <Label>{m.signUp.institution}</Label>
             <input
               className={styles.input}
               name="institution"
               autoComplete="organization"
               data-testid="criar-instituicao"
             />
-            <span className={styles.note}>Opcional. Serve para acompanhar a turma depois.</span>
+            <span className={styles.note}>{m.signUp.institutionHint}</span>
           </label>
 
           {signUpState.error !== null && (
@@ -124,7 +127,7 @@ export function AccountForms(): ReactElement {
           )}
 
           <Button type="submit" variant="secondary" disabled={signingUp}>
-            {signingUp ? 'Criando…' : 'Criar conta'}
+            {signingUp ? m.signUp.submitting : m.signUp.submit}
           </Button>
         </form>
       </Card>

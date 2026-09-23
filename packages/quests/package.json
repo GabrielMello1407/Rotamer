@@ -13,7 +13,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@rotamer/core": "workspace:*"
+    "@rotamer/core": "workspace:*",
+    "@rotamer/i18n": "workspace:*"
   },
   "devDependencies": {
     "typescript": "5.9.3",

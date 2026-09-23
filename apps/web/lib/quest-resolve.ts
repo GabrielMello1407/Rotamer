@@ -1,8 +1,10 @@
 import 'server-only';
 import type { Molecule } from '@rotamer/core';
+import { pick, type Locale } from '@rotamer/i18n';
 import type { Assessable, CandidateGoal, Goal } from '@rotamer/quests';
-import { evaluateQuest, findQuest } from '@rotamer/quests';
+import { evaluateQuest, findQuest, goalLabel } from '@rotamer/quests';
 import { db } from './db';
+import { questResolveMessages } from './messages';
 
 /**
  * Resolução de missão pelo `slug` — catálogo ou professor (D-25, §3.4).
@@ -26,7 +28,13 @@ const TEACHER_QUEST_PREFIX = 'professor:';
 /** O formato de `cuid` que o Prisma gera — minúsculo, sem traço, sem prefixo. */
 const TEACHER_QUEST_ID = /^[a-z0-9]{20,32}$/;
 
-export async function resolveQuest(slug: string): Promise<Assessable | null> {
+/**
+ * O idioma entra aqui porque a missão de catálogo resolvida carrega título e
+ * enunciado — e eles vão parar no prompt do tutor, que responde no idioma de
+ * quem perguntou. A missão de professor não tem texto nenhum a resolver: o
+ * dela vem do banco, escrito por uma pessoa, e não se traduz.
+ */
+export async function resolveQuest(slug: string, locale: Locale): Promise<Assessable | null> {
   if (slug.startsWith(TEACHER_QUEST_PREFIX)) {
     const id = slug.slice(TEACHER_QUEST_PREFIX.length);
 
@@ -52,7 +60,7 @@ export async function resolveQuest(slug: string): Promise<Assessable | null> {
     return { slug, goals: row.goals as unknown as readonly Goal[] };
   }
 
-  return findQuest(slug) ?? null;
+  return findQuest(slug, locale) ?? null;
 }
 
 /**
@@ -156,33 +164,32 @@ export function validateAuthoredGoals(
   candidates: ReadonlyMap<string, CandidateGoal>,
   goalIds: readonly string[],
   molecule: Molecule,
+  locale: Locale,
 ): ValidateAuthoredGoalsResult {
+  const m = pick(questResolveMessages, locale);
   const goals: Goal[] = [];
 
   for (const id of goalIds) {
     const candidate = candidates.get(id);
-    if (candidate === undefined) {
-      return {
-        status: 'rejected',
-        reason: 'Um dos objetivos não veio da molécula desenhada e foi recusado.',
-      };
-    }
-    goals.push({ id: candidate.id, label: candidate.label, condition: candidate.condition });
+    if (candidate === undefined) return { status: 'rejected', reason: m.goalNotFromMolecule };
+
+    goals.push({ id: candidate.id, condition: candidate.condition });
   }
 
   if (goals.some((goal) => goal.condition.kind === 'inchiKey') && goals.length > 1) {
-    return {
-      status: 'rejected',
-      reason: 'Marcado, «é exatamente esta molécula» precisa ser o único objetivo da missão.',
-    };
+    return { status: 'rejected', reason: m.inchiKeyMustBeAlone };
   }
 
   const verdict = evaluateQuest({ slug: 'rascunho', goals }, molecule);
   if (!verdict.passed) {
+    // A recusa **nomeia** o objetivo que não fecha, e o nome é derivado da
+    // condição no idioma de quem está criando a missão.
     const failing = verdict.goals.find((goal) => !goal.met);
+    const condition = goals.find((goal) => goal.id === failing?.id)?.condition;
+
     return {
       status: 'rejected',
-      reason: `Esta missão não é cumprida nem pela sua própria resposta. O objetivo «${failing?.label ?? ''}» não fecha com a molécula que você desenhou, então ninguém conseguiria cumpri-la. Nada foi salvo: desmarque esse objetivo ou ajuste o desenho.`,
+      reason: m.answerDoesNotMeet(condition === undefined ? '' : goalLabel(locale, condition)),
     };
   }
 

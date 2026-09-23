@@ -1,9 +1,11 @@
 'use client';
 
+import { useMessages } from '@rotamer/i18n/react';
 import { Button, Label } from '@rotamer/ui';
 import Link from 'next/link';
 import { useState, useTransition, type FormEvent, type ReactElement } from 'react';
 import { resetPassword } from '../actions/recovery';
+import { passwordMessages } from './messages';
 import styles from './page.module.css';
 
 /** `FormData` devolve arquivo também; aqui só interessa o que for texto. */
@@ -19,6 +21,7 @@ function fieldText(form: FormData, field: string): string {
  * na sala, digita aqui e entra de novo (D-19).
  */
 export function PasswordReset(): ReactElement {
+  const m = useMessages(passwordMessages);
   const [error, setError] = useState<string | null>(null);
   const [changed, setChanged] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -26,9 +29,9 @@ export function PasswordReset(): ReactElement {
   if (changed) {
     return (
       <div className={styles.done} data-testid="senha-trocada">
-        <p className={styles.ok}>Senha trocada. As sessões antigas foram encerradas.</p>
+        <p className={styles.ok}>{m.done}</p>
         <Link className={styles.link} href="/entrar">
-          Entrar com a senha nova
+          {m.signInWithNew}
         </Link>
       </div>
     );
@@ -58,7 +61,7 @@ export function PasswordReset(): ReactElement {
   return (
     <form className={styles.form} onSubmit={submit}>
       <label className={styles.field}>
-        <Label>e-mail da conta</Label>
+        <Label>{m.email}</Label>
         <input
           className={styles.input}
           name="email"
@@ -70,7 +73,7 @@ export function PasswordReset(): ReactElement {
       </label>
 
       <label className={styles.field}>
-        <Label>código do professor</Label>
+        <Label>{m.code}</Label>
         <input
           className={[styles.input, styles.code].join(' ')}
           name="code"
@@ -83,7 +86,7 @@ export function PasswordReset(): ReactElement {
       </label>
 
       <label className={styles.field}>
-        <Label>senha nova</Label>
+        <Label>{m.newPassword}</Label>
         <input
           className={styles.input}
           name="password"
@@ -96,7 +99,7 @@ export function PasswordReset(): ReactElement {
       </label>
 
       <Button type="submit" disabled={pending}>
-        {pending ? 'Trocando…' : 'Trocar a senha'}
+        {pending ? m.submitting : m.submit}
       </Button>
 
       {error !== null && (

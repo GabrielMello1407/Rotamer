@@ -1129,3 +1129,128 @@ a conta de quem deu o acesso não pode apagar o registro de que o acesso foi dad
 continua sendo não, enquanto o terminal existir. Ou a instância no ar receber duas escolas de
 verdade: aí a escola digitada deixa de ser suficiente, e o recorte precisa ser uma entidade, não uma
 string.
+
+## D-30 · O produto fala dois idiomas, e o núcleo não fala nenhum
+
+**Decisão do dono do produto, 21 de setembro de 2026.** O Rotamer passa a existir em **pt-BR e
+inglês**, ponta a ponta — tela, erro de química, enunciado de missão, texto de metadados e imagem
+de link. O português continua sendo o padrão. A escolha vive num cookie, é lida no servidor, e a
+regra de entrega é: **funcionalidade nova chega nos dois idiomas, ou não chega.**
+
+**O problema.** O D-28 abriu o código e o self-host: qualquer pessoa pode subir a sua instância.
+Mas o produto inteiro estava escrito em português dentro do código — não num arquivo de tradução,
+dentro de cada componente. Uma escola fora do Brasil que quisesse usar o Rotamer teria de
+reescrever o produto, e a cada atualização reescrevê-lo de novo. Abrir o código sem abrir o idioma
+é oferecer uma ferramenta que só uma sala de aula consegue usar.
+
+**A regra que organiza tudo: o núcleo não fala idioma nenhum.** `packages/core` não depende de
+ninguém — é o que o mantém rodando em teste de linha de comando, sem navegador. Então ele não podia
+receber um dicionário, e a saída foi tirar a frase de dentro dele. Antes, `ChemistryError` trazia
+`{ code, message }`, com a frase em português montada junto do RDKit. Agora traz **`{ code, atom }`**
+— o código da recusa e os números que a justificam — e quem monta a frase é `chemistryErrorText`,
+em `@rotamer/i18n`. O mesmo valeu para grupo funcional: o núcleo devolve `carboxylicAcid`, e
+`functionalGroupName` diz "ácido carboxílico" ou "carboxylic acid".
+
+Isso não foi só arrumação. Era **a camada errada**: o núcleo é a autoridade sobre o que a molécula
+é, e a frase em que isso se conta é assunto de quem desenha a tela. Enquanto as duas coisas
+estiveram no mesmo objeto, uma mudança de redação mexia no arquivo que decide química.
+
+**Dicionário tipado, e não arquivo de tradução.** O texto se declara assim:
+
+```ts
+export const saveMoleculeMessages = dictionary({
+  'pt-BR': { save: 'Guardar na estante' },
+  en: { save: 'Save to the shelf' },
+});
+```
+
+`dictionary()` infere o formato do lado português e obriga o inglês a caber nele, sem inferência
+própria. **Chave nova sem tradução não compila.** É a razão inteira de existir dessa função: a
+regra "toda funcionalidade nova chega traduzida" é cobrada por `pnpm typecheck`, e não lembrada na
+revisão. Revisão esquece; tipo não.
+
+Duas consequências deliberadas:
+
+- **Texto com número ou nome dentro é função, não modelo com `{chave}`.** Marcador obriga a
+  inventar gramática — plural, gênero, ordem de palavra — e o que se inventa nunca cobre os dois
+  idiomas. `(n: number) => …` cobre, porque cada idioma escreve a sua.
+- **O dicionário mora junto de quem o usa**, num `messages.ts` ao lado do componente ou da rota.
+  Não há arquivo central. Tela e palavras da tela mudam na mesma entrega, e quem mexe numa esbarra
+  na outra.
+
+**A missão do catálogo se partiu em duas.** `QuestSpec` é o que decide — slug, trilha, dificuldade,
+condições — e é o que o servidor reavalia e o banco guarda. O título, o enunciado e as dicas saíram
+para o dicionário, chaveados por slug. **Slug nunca se traduz**, porque é identidade gravada em
+tentativa de aluno. O rótulo de objetivo também saiu do `Goal`: guardá-lo junto da condição prendia
+a missão ao idioma em que foi montada, e um aluno que trocasse para inglês leria os objetivos em
+português.
+
+**As rotas não mudam de idioma.** `/turmas` continua `/turmas` para quem lê inglês. Endereço é
+identidade: link que um professor mandou para a turma no ano passado precisa abrir. Um `/classes`
+paralelo dobraria a superfície de rota para não ganhar nada que o `lang` do HTML já não diga, e
+`/pt-BR/turmas` quebraria todos os links existentes de uma vez.
+
+**Cookie, não `localStorage`.** O tema mora em `localStorage` porque só o navegador precisa dele.
+O idioma não: metade do texto é renderizada no servidor, e a nota de missão é reavaliada lá. Com a
+escolha só no navegador, a página chegaria em português e trocaria depois da hidratação — a tela
+inteira piscando de idioma a cada visita. Sem cookie, vale o `Accept-Language`; sem nada, pt-BR.
+
+**O que não se traduz, e por quê.**
+
+| O quê | Por quê |
+|---|---|
+| Nome de turma, enunciado de missão de professor, apelido de molécula | é o que uma pessoa escreveu; traduzir é reescrevê-la |
+| Fórmula, SMILES, InChIKey, símbolo, unidade, `R`/`S`, `E`/`Z` | notação química é igual em toda língua; mexer aqui é erro de química |
+| Slug de missão | identidade gravada em tentativa de aluno |
+| "Português" e "English" | nome de idioma aparece no próprio idioma — quem procura o seletor é quem não entende a tela |
+
+**O número também é texto.** 46,07 e 46.07 são o mesmo número escrito em dois idiomas, e mostrar
+vírgula decimal a quem lê inglês é mostrar um número errado. Todo `Intl.NumberFormat('pt-BR')`
+escrito à mão saiu do código: número e data vêm de `useFormatters()` ou de `formatNumber`/
+`formatDate` com o idioma em mãos. A data curta em inglês usa mês por extenso, porque 09/21 e 21/09
+são a mesma data lida ao contrário.
+
+O prompt do tutor é a exceção, e é deliberada: lá os descritores vão com **ponto decimal sempre**,
+qualquer que seja o idioma da resposta. Vírgula decimal num prompt é ambiguidade, e ambiguidade
+num prompt vira número errado na tela — exatamente o que o D-01 existe para impedir. O idioma da
+resposta é instruído à parte.
+
+**O que se considerou e ficou de fora.**
+
+- **`next-intl` ou outra biblioteca de i18n.** Todas são boas e todas vivem dentro do Next. O
+  produto precisa de texto em quatro pacotes que não conhecem Next — `quests` roda em Node,
+  `editor2d` desenha em canvas fora do React, `core` não pode depender de ninguém. Um dicionário
+  tipado de cem linhas cobre os quatro e não amarra nada; é a mesma escolha do editor de desenho
+  escrito à mão.
+- **Chave em string, `t('quests.title')`.** Ninguém verifica a chave: o erro de digitação só
+  aparece na tela, em produção, como o próprio nome da chave. A leitura por propriedade é
+  verificada pelo compilador de graça.
+- **Tradução automática na hora, por modelo de linguagem.** Seria o D-01 ao contrário: o texto que
+  explica química sairia gerado, diferente a cada visita, e sem ninguém que responda por ele. O
+  erro que ensina errado é pior do que o erro que não aparece.
+- **Rota por idioma (`/en/turmas`).** Descrito acima.
+- **Um terceiro idioma agora.** Idioma a mais é manutenção a mais para sempre. O inglês entrou
+  porque abre o produto para fora do Brasil sem pedir nada de quem já usa; o terceiro precisa de um
+  motivo desse tamanho.
+
+**Onde se troca o idioma — revisto em 23/09/2026.** A primeira versão só tinha o seletor no
+rodapé do painel de análise, que começa fechado; quem testou perguntou onde se trocava o idioma.
+Agora um botão com o globo fica na barra do editor e no cabeçalho de toda página, com o nome do
+**outro** idioma escrito nele mesmo — `English` numa tela em português. É o que procura justamente
+quem não está entendendo a tela.
+
+**A documentação também — 23/09/2026.** Todo documento para leitor tem gêmeo em inglês:
+`README.en.md` ao lado do `README.md`, e em `docs/en/` um gêmeo para cada arquivo de `docs/`, **com
+nome em inglês** — `GUIA.md` vira `USER-GUIDE.md`. A primeira versão repetia o nome em português, e
+quem só lê inglês não sabia do que `ROTEIROS.md` tratava antes de abrir. O que liga os dois é a
+primeira linha do gêmeo, com o caminho e o hash do original que ele traduz, e um teste falha quando
+o original muda sem o inglês acompanhar — a mesma trava que o `rotamer-site` já usava para os guias
+publicados, trazida para o repositório onde o documento é escrito. Os 14 guias que o site já
+tinha traduzido foram a base; os que mudaram depois disso foram atualizados, e os que faltavam
+foram traduzidos. `CLAUDE.md`, `AGENTS.md` e `.claude/` ficam só em português: são instrução para
+assistente de código, não documento para leitor.
+
+**Revisar se.** Uma escola pedir espanhol — e aí a pergunta não é técnica, é de quem mantém: o
+`pnpm typecheck` lista sozinho tudo o que falta, mas alguém precisa escrever e revisar cada frase
+como conteúdo de aula. Ou o produto ganhar texto longo o bastante para que um arquivo por idioma
+passe a ser mais fácil de revisar do que os dois lados lado a lado.

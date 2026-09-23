@@ -1,6 +1,8 @@
 import type { Molecule } from '@rotamer/core';
-import type { Assessable, GoalResult, Quest } from '@rotamer/quests';
-import { REFERENCE_KEYS, type ReferenceKey } from './schema';
+import { formatNumber, functionalGroupName, pick, type Locale } from '@rotamer/i18n';
+import type { Assessable, Quest } from '@rotamer/quests';
+import { tutorPromptMessages } from './messages';
+import { type ReferenceKey } from './schema';
 
 /**
  * O prompt do tutor.
@@ -22,44 +24,70 @@ function hasTeacherFacingText(quest: Assessable | Quest): quest is Quest {
   return 'title' in quest && 'brief' in quest;
 }
 
+/**
+ * O `kind` é chave de dado — é ele que a rota recebe e que o cache guarda — e
+ * por isso continua o mesmo nos dois idiomas. O pedido que o modelo lê é que
+ * muda.
+ */
 export type HintKind = 'proximo-passo' | 'por-que-nao-fechou' | 'entender-a-molecula';
 
-const KIND_ASK: Readonly<Record<HintKind, string>> = {
-  'proximo-passo': 'Diga qual é o próximo passo concreto no desenho.',
-  'por-que-nao-fechou':
-    'Explique por que a estrutura atual ainda não cumpre o que a missão pede.',
-  'entender-a-molecula':
-    'Explique o que essa molécula é, em termos de grupos funcionais e do que os descritores dizem sobre ela.',
+const KIND_ASK: Readonly<
+  Record<HintKind, 'askNextStep' | 'askWhyNotClosed' | 'askWhatIsThis'>
+> = {
+  'proximo-passo': 'askNextStep',
+  'por-que-nao-fechou': 'askWhyNotClosed',
+  'entender-a-molecula': 'askWhatIsThis',
 };
 
-export const SYSTEM_RULES = `Você é tutor de química orgânica de um editor de moléculas brasileiro, para alunos de ensino médio e graduação.
-
-REGRAS QUE NÃO SE QUEBRAM:
-1. Os números já foram calculados pelo RDKit e estão no contexto. NUNCA recalcule, nunca corrija, nunca contradiga nenhum deles.
-2. NUNCA escreva um número. Para citar um valor, use a referência entre chaves duplas: ${REFERENCE_KEYS.map((key) => `{{${key}}}`).join(', ')}. A interface troca a referência pelo valor calculado.
-3. Quantidades pequenas podem ser escritas por extenso ("dois carbonos", "três anéis").
-4. Nunca afirme que a molécula tem atividade biológica, nem que uma reação produziria algo. Descritores são descritores.
-5. Nunca invente grupo funcional que não esteja listado no contexto.
-6. Escreva em português do Brasil, direto, sem elogio e sem enrolação. Fale com quem está aprendendo: explique a química, não a interface.
-7. Se a estrutura já cumpre a missão, diga isso e proponha uma variação para experimentar.
-
-Responda apenas com o JSON pedido.`;
+/** As regras que o modelo recebe, no idioma em que ele deve responder. */
+export function systemRules(locale: Locale): string {
+  return pick(tutorPromptMessages, locale).systemRules;
+}
 
 export interface PromptInput {
   readonly molecule: Molecule;
   readonly quest: Assessable | Quest | null;
-  readonly goals: readonly GoalResult[];
+  /**
+   * Os objetivos já com veredito e com a frase.
+   *
+   * A frase vem de fora porque `GoalResult` não a carrega — veredito é o mesmo
+   * em qualquer idioma, e o rótulo é derivado da condição por quem sabe em que
+   * idioma o modelo vai responder.
+   */
+  readonly goals: readonly { readonly met: boolean; readonly label: string }[];
   readonly kind: HintKind;
+  /** O idioma em que o modelo deve responder. */
+  readonly locale: Locale;
 }
 
-/** Os valores que a interface vai usar para trocar as referências. */
-export function referenceValues(molecule: Molecule): Record<ReferenceKey, string> {
-  const number = (value: number, decimals: number): string =>
-    new Intl.NumberFormat('pt-BR', {
-      minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals,
-    }).format(value);
+/**
+ * Os valores que a interface vai usar para trocar as referências.
+ *
+ * Estes saem no idioma de quem lê — é o que aparece na tela no lugar de
+ * `{{tpsa}}`, e 46,07 é o número certo para quem lê português. Os números que
+ * vão **dentro** do prompt são outros: ver `promptValues`.
+ */
+export function referenceValues(locale: Locale, molecule: Molecule): Record<ReferenceKey, string> {
+  return valuesWith((value, decimals) => formatNumber(locale, value, decimals), molecule);
+}
 
+/**
+ * Os mesmos valores, mas para o prompt: **sempre com ponto decimal**.
+ *
+ * Não é detalhe de estilo. `46,07` num prompt pode ser lido pelo modelo como
+ * dois números, ou como quarenta e seis e sete — e o modelo é instruído a nunca
+ * recalcular justamente porque não se pode confiar nele para isso. Ponto
+ * decimal em qualquer idioma tira a ambiguidade da entrada; a saída continua
+ * sem número nenhum, porque a regra 2 o proíbe de escrever um.
+ */
+function promptValues(molecule: Molecule): Record<ReferenceKey, string> {
+  return valuesWith((value, decimals) => value.toFixed(decimals), molecule);
+}
+
+function valuesWith(
+  number: (value: number, decimals: number) => string,
+  molecule: Molecule,
+): Record<ReferenceKey, string> {
   const d = molecule.descriptors;
 
   return {
@@ -78,52 +106,50 @@ export function referenceValues(molecule: Molecule): Record<ReferenceKey, string
 }
 
 /** O contexto que vai junto com o pedido: tudo já calculado. */
-export function buildPrompt({ molecule, quest, goals, kind }: PromptInput): string {
-  const values = referenceValues(molecule);
+export function buildPrompt({ molecule, quest, goals, kind, locale }: PromptInput): string {
+  const m = pick(tutorPromptMessages, locale);
+  const values = promptValues(molecule);
+
   const groups =
     molecule.groups.length === 0
-      ? 'nenhum grupo funcional reconhecido'
+      ? m.noGroups
       : molecule.groups
-          .map((group) => (group.count > 1 ? `${group.name} (${String(group.count)}×)` : group.name))
+          .map((group) => {
+            const name = functionalGroupName(locale, group.id);
+            return group.count > 1 ? m.groupTimes(name, group.count) : name;
+          })
           .join(', ');
 
+  const verdict = (goal: { readonly met: boolean; readonly label: string }): string =>
+    `- [${goal.met ? m.goalMet : m.goalOpen}] ${goal.label}`;
+
   const lines = [
-    'ESTRUTURA ATUAL (calculada pelo RDKit, não recalcule):',
-    `- fórmula: ${values.formula}`,
-    `- SMILES: ${molecule.smiles}`,
-    `- massa molar: ${values.molarMass}`,
-    `- TPSA: ${values.tpsa}`,
-    `- logP: ${values.logP}`,
-    `- ligações rotacionáveis: ${values.rotatableBonds}`,
-    `- anéis: ${values.rings} (aromáticos: ${values.aromaticRings})`,
-    `- doadores de ligação de hidrogênio: ${values.hbDonors}`,
-    `- aceitadores: ${values.hbAcceptors}`,
-    `- grupos funcionais: ${groups}`,
+    m.contextHeading,
+    `- ${m.contextFormula}: ${values.formula}`,
+    `- ${m.contextSmiles}: ${molecule.smiles}`,
+    `- ${m.contextMolarMass}: ${values.molarMass}`,
+    `- ${m.contextTpsa}: ${values.tpsa}`,
+    `- ${m.contextLogP}: ${values.logP}`,
+    `- ${m.contextRotatable}: ${values.rotatableBonds}`,
+    `- ${m.contextRings(values.rings, values.aromaticRings)}`,
+    `- ${m.contextDonors}: ${values.hbDonors}`,
+    `- ${m.contextAcceptors}: ${values.hbAcceptors}`,
+    `- ${m.contextGroups}: ${groups}`,
   ];
 
   if (quest !== null && hasTeacherFacingText(quest)) {
-    lines.push(
-      '',
-      `MISSÃO: ${quest.title}`,
-      `Enunciado: ${quest.brief}`,
-      'Objetivos, com o veredito que o motor de missões já deu:',
-      ...goals.map((goal) => `- [${goal.met ? 'cumprido' : 'em aberto'}] ${goal.label}`),
-    );
+    lines.push('', m.questHeading(quest.title), m.questBrief(quest.brief), m.goalsHeading,
+      ...goals.map(verdict));
   } else if (quest !== null) {
     // R-9: missão `professor:` — nem título, nem enunciado, escrito por um
     // professor, chega ao modelo. Só os rótulos gerados dos objetivos, que
     // saíram do RDKit (`extractGoals`), não de texto livre.
-    lines.push(
-      '',
-      'MISSÃO EM CURSO, de um professor — o enunciado dela é do professor e não entra aqui.',
-      'Objetivos, com o veredito que o motor de missões já deu:',
-      ...goals.map((goal) => `- [${goal.met ? 'cumprido' : 'em aberto'}] ${goal.label}`),
-    );
+    lines.push('', m.teacherQuestHeading, m.goalsHeading, ...goals.map(verdict));
   } else {
-    lines.push('', 'Não há missão em curso: a pessoa está desenhando livremente.');
+    lines.push('', m.noQuest);
   }
 
-  lines.push('', `PEDIDO: ${KIND_ASK[kind]}`);
+  lines.push('', m.ask(m[KIND_ASK[kind]]));
 
   return lines.join('\n');
 }

@@ -47,25 +47,27 @@ O `researcher` mediu como o professor brasileiro já fala: o Google Classroom ch
 bancada. **A tela diz "lista"** (D-26). O código continua em inglês, `Assignment`, como manda a
 casa.
 
-| A coisa | Na tela (pt-BR) | No código | O que nunca dizer |
-|---|---|---|---|
-| O conjunto ordenado que o professor monta | **lista** — "Nova lista", "Listas da turma" | `Assignment` | roteiro, tópico, trilha, módulo |
-| Uma posição dentro da lista | **item** (na fala do quadro: "o item 3") | `AssignmentItem` | atividade, tarefa |
-| O que o aluno resolve, dentro ou fora da lista | **missão** — a palavra que o produto já usa | `Quest` / `TeacherQuest` | exercício, questão |
-| Missão escrita pelo professor | **sua missão** (para ele), **missão do seu professor** (para o aluno) | `TeacherQuest` | missão customizada, missão personalizada |
-| A molécula que o professor desenhou para criar a missão | **a resposta** | `answerMolblock` | gabarito (é o que ela é, mas não se escreve na tela do professor: ele não está corrigindo prova) |
-| Tornar a lista visível para a turma | **publicar** | `publishedAt` | liberar, atribuir, enviar |
-| Tornar uma missão visível a qualquer conta | **publicar no catálogo** / **retirar do catálogo** | `catalogedAt` | compartilhar, tornar pública |
-| Lista não publicada | **rascunho · só você vê** | `publishedAt = null` | privado, oculto |
-| Os três estados do quadro | **cumpriu · travou · não abriu** | `met` / `stuck` / `untouched` | nota, média, melhor, ranking |
+| A coisa | Na tela (pt-BR) | Na tela (inglês) | No código | O que nunca dizer |
+|---|---|---|---|---|
+| O conjunto ordenado que o professor monta | **lista** — "Nova lista", "Listas da turma" | **assignment** | `Assignment` | roteiro, tópico, trilha, módulo |
+| Uma posição dentro da lista | **item** (na fala do quadro: "o item 3") | **item** | `AssignmentItem` | atividade, tarefa |
+| O que o aluno resolve, dentro ou fora da lista | **missão** — a palavra que o produto já usa | **mission** | `Quest` / `TeacherQuest` | exercício, questão |
+| Missão escrita pelo professor | **sua missão** (para ele), **missão do seu professor** (para o aluno) | **your mission** / **mission from your teacher** | `TeacherQuest` | missão customizada, missão personalizada |
+| A molécula que o professor desenhou para criar a missão | **a resposta** | **the answer** | `answerMolblock` | gabarito (é o que ela é, mas não se escreve na tela do professor: ele não está corrigindo prova) |
+| Tornar a lista visível para a turma | **publicar** | **publish** | `publishedAt` | liberar, atribuir, enviar |
+| Tornar uma missão visível a qualquer conta | **publicar no catálogo** / **retirar do catálogo** | **publish to the catalog** / **withdraw from the catalog** | `catalogedAt` | compartilhar, tornar pública |
+| Lista não publicada | **rascunho · só você vê** | **draft · only you see it** | `publishedAt = null` | privado, oculto |
+| Os três estados do quadro | **cumpriu · travou · não abriu** | **completed · stuck · not opened** | `met` / `stuck` / `untouched` | nota, média, melhor, ranking |
+| A coleção de quem entrou | **estante** | **shelf** | `Molecule` com `ownerId` | biblioteca (é o que o PubChem tem) |
 
 Uma palavra por coisa. "Missão" não vira "exercício" no meio do caminho, e "lista" não vira
 "roteiro" na frase seguinte.
 
 **Todo texto de tela destas telas vive num arquivo só:** `apps/web/app/turmas/messages.ts` —
-chaves em inglês, textos em pt-BR. É o que impede a mesma frase divergir entre a ação de
-servidor e o componente, e é o único arquivo a editar se a sessão de observação mostrar outra
-palavra na boca do professor.
+chaves em inglês, textos **nos dois idiomas** (D-30). É o que impede a mesma frase divergir entre
+a ação de servidor e o componente, e é o único arquivo a editar se a sessão de observação mostrar
+outra palavra na boca do professor. A coluna de inglês da tabela acima é o glossário que ele
+segue, e do qual nenhuma chave se afasta: uma palavra por coisa, nos dois idiomas.
 
 ---
 
@@ -159,8 +161,6 @@ export type CandidateKind = 'identity' | 'formula' | 'group' | 'count';
 export interface CandidateGoal {
   /** Determinístico: `formula`, `inchi-key`, `group:alcohol:1`, `atoms:C:2`, `descriptor:rings:1`. */
   readonly id: string;
-  /** Rótulo em pt-BR, **gerado**. Nunca digitado, nunca editável. */
-  readonly label: string;
   /** O valor medido, para a coluna da direita da lista: `2`, `C2H6O`. */
   readonly measured: string;
   readonly kind: CandidateKind;
@@ -215,21 +215,32 @@ tem exatamente {n} centro estereogênico  /  tem exatamente {n} centros estereog
 nenhum centro estereogênico fica sem configuração
 ```
 
-**Regra de linguagem, e ela não é estilo.** O artigo e o plural vêm sempre da palavra
-`grupo`/`átomo`, **nunca** do nome do grupo. `um álcool` e `uma amida` mudam de gênero; `álcoois`
-e `ésteres` mudam de plural; nada disso está nos dados. Um gerador que adivinhasse escreveria
-português errado na frente de uma sala. `1 grupo álcool` / `2 grupos amida` é invariável e
-continua sendo como um químico lê. O nome do grupo vem de
-`packages/core/src/chemistry/groups.ts` e não é reescrito aqui.
+**O rótulo não é guardado: é derivado.** `goalLabel(locale, condition)`, em
+`packages/quests/src/messages.ts`, escreve a frase a partir da condição, no idioma de quem está
+lendo. Guardá-la junto do objetivo prendia a missão ao idioma em que ela foi montada — um aluno
+que trocasse para inglês leria os objetivos em português, numa lista que o professor dele nunca
+poderia consertar. O objetivo de InChIKey nunca manda a condição para o cliente (R-4), então
+**quem monta a frase dele é o servidor**, que conhece o cookie de idioma.
+
+**Regra de linguagem, e ela não é estilo.** Em português, o artigo e o plural vêm sempre da
+palavra `grupo`/`átomo`, **nunca** do nome do grupo. `um álcool` e `uma amida` mudam de gênero;
+`álcoois` e `ésteres` mudam de plural; nada disso está nos dados. Um gerador que adivinhasse
+escreveria português errado na frente de uma sala. `1 grupo álcool` / `2 grupos amida` é
+invariável e continua sendo como um químico lê. Em inglês a concordância é outra, e é por isso
+que cada idioma escreve a sua função em vez de os dois compartilharem um modelo com marcador. O
+nome do grupo vem de `functionalGroupName`, em `@rotamer/i18n`, a partir do identificador que o
+`core` devolve — o núcleo não fala idioma nenhum (D-30).
 
 O símbolo do elemento, quando aparece escrito, sai em `--cpk-ink-{símbolo}` — ali a letra **é** o
 átomo (D-17). Nada mais nesta tela usa cor CPK.
 
 ### 4.3 Forma serializada
 
-O que vai para `TeacherQuest.goals` é `Goal[]` do pacote `quests` — `{ id, label, condition }`,
-sem `measured`, `kind` nem `exclusive`, que são só de tela. Guardar a mesma forma que o catálogo
-guarda é o que faz `evaluateQuest` não saber a diferença entre uma e outra.
+O que vai para `TeacherQuest.goals` é `Goal[]` do pacote `quests` — `{ id, condition }`, sem
+`measured`, `kind` nem `exclusive`, que são só de tela, e **sem `label`**, que é derivado da
+condição na hora de mostrar. Guardar a mesma forma que o catálogo guarda é o que faz
+`evaluateQuest` não saber a diferença entre uma e outra — e não guardar frase é o que faz a mesma
+missão abrir legível nos dois idiomas.
 
 ### 4.4 A interface mínima que o motor recebe
 
@@ -240,7 +251,11 @@ export interface Assessable {
   readonly goals: readonly Goal[];
 }
 
-export interface Quest extends Assessable { /* track, difficulty, title, brief, hints */ }
+/** O que o catálogo guarda: só o que decide. */
+export interface QuestSpec extends Assessable { /* track, difficulty */ }
+
+/** A mesma missão pronta para a tela, num idioma: `localize(spec, locale)`. */
+export interface Quest extends QuestSpec { /* title, brief, hints, goals com label */ }
 
 export function evaluateQuest(quest: Assessable, molecule: Molecule): QuestResult;
 ```
@@ -331,8 +346,10 @@ existe no tipo. O `typecheck` faz parte da garantia.
 
 ## 6. Telas
 
-Todo texto abaixo está em `apps/web/app/turmas/messages.ts`. Tokens de `packages/ui`, zero hex
-solto, zero cor CPK em botão, borda ou estado.
+Todo texto abaixo está em `apps/web/app/turmas/messages.ts`, nos dois idiomas — menos as recusas
+que nascem fora das telas de turma: as da R-1 e da R-2 em `apps/web/lib/messages.ts`, e as de
+teto (R-12) em `apps/web/app/actions/messages.ts`. Tokens de `packages/ui`, zero hex solto, zero
+cor CPK em botão, borda ou estado.
 
 ### 6.1 Professor — a porta de entrada, em `/turmas/[id]`
 
@@ -471,8 +488,8 @@ No último item:
 > **Cumprida. Você fechou a lista «Funções oxigenadas — 3ª série».**
 
 Missão de professor traz ainda a autoria (`missão de Professora Ana · EE Dom Pedro II`) e o
-botão `Denunciar`, que abre `Motivo da denúncia` em uma linha, `Enviar denúncia` · `Cancelar`,
-e responde `Recebido.`
+botão `Denunciar`, que abre um campo de uma linha (`Em uma linha: o que está errado nesta
+missão?`), `Enviar denúncia` · `Cancelar`, e responde `Recebido.`
 
 **Nunca aparece:** posição na turma, quantos colegas cumpriram, quem cumpriu antes, tempo
 comparado (D-22).

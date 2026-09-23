@@ -86,7 +86,7 @@ const REFERENCE: readonly ReferenceCase[] = [
 async function requireMolecule(smiles: string): Promise<Molecule> {
   const result = await analyze(smiles);
   if (!result.ok) {
-    throw new Error(`esperava molécula válida, veio erro: ${result.error.message}`);
+    throw new Error(`esperava molécula válida, veio erro: ${result.error.code}`);
   }
   return result.molecule;
 }
@@ -202,7 +202,7 @@ describe('estereoquímica', () => {
 
   it('sem cunha, o centro existe e fica sem configuração', async () => {
     const result = await analyze(bromoclorofluormetano('none'));
-    if (!result.ok) throw new Error(result.error.message);
+    if (!result.ok) throw new Error(result.error.code);
 
     expect(result.molecule.descriptors.stereocenters).toBe(1);
     expect(result.molecule.descriptors.unspecifiedStereocenters).toBe(1);
@@ -215,7 +215,7 @@ describe('estereoquímica', () => {
 
   it('com cunha cheia, o RDKit atribui a configuração', async () => {
     const result = await analyze(bromoclorofluormetano('up'));
-    if (!result.ok) throw new Error(result.error.message);
+    if (!result.ok) throw new Error(result.error.code);
 
     expect(result.molecule.descriptors.unspecifiedStereocenters).toBe(0);
     expect(result.molecule.stereo.atoms).toEqual([{ index: 0, label: 'R' }]);
@@ -271,7 +271,7 @@ describe('geometria de dupla', () => {
 
   it('dupla sem geometria definida não recebe rótulo', async () => {
     const result = await analyze('CC=CC');
-    if (!result.ok) throw new Error(result.error.message);
+    if (!result.ok) throw new Error(result.error.code);
 
     expect(result.molecule.stereo.bonds).toHaveLength(0);
   });
@@ -288,7 +288,7 @@ describe('íons', () => {
   it('o amônio traz a carga na fórmula, e o RDKit completa o quarto hidrogênio', async () => {
     const { graph, atomId } = addAtom(emptyGraph(), { element: 'N', x: 0, y: 0 });
     const result = await analyze(toMolblock(setCharge(graph, atomId, 1)));
-    if (!result.ok) throw new Error(result.error.message);
+    if (!result.ok) throw new Error(result.error.code);
 
     expect(result.molecule.formula).toBe('H4N+');
     expect(result.molecule.smiles).toBe('[NH4+]');
@@ -296,14 +296,14 @@ describe('íons', () => {
 
   it('o acetato traz a carga negativa', async () => {
     const result = await analyze('CC(=O)[O-]');
-    if (!result.ok) throw new Error(result.error.message);
+    if (!result.ok) throw new Error(result.error.code);
 
     expect(result.molecule.formula).toBe('C2H3O2−');
   });
 
   it('molécula neutra continua sem sinal nenhum', async () => {
     const result = await analyze('CCO');
-    if (!result.ok) throw new Error(result.error.message);
+    if (!result.ok) throw new Error(result.error.code);
 
     expect(result.molecule.formula).toBe('C2H6O');
   });

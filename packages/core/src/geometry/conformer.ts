@@ -110,8 +110,8 @@ function ladderFor(maxFrames: number | undefined): number[] {
  * alcança somos nós.
  */
 export class GeometryUnavailable extends Error {
-  constructor(message: string, options?: ErrorOptions) {
-    super(message, options);
+  constructor(detail: string, options?: ErrorOptions) {
+    super(detail, options);
     this.name = 'GeometryUnavailable';
   }
 }
@@ -185,10 +185,9 @@ function buildConformer(ocl: OpenChemLib, molblock: string): Conformer {
 
   const conformer = generator.getNextConformerAsMolecule();
   if (conformer === null) {
-    throw new GeometryUnavailable(
-      'Não consegui encontrar um arranjo tridimensional para esta estrutura. Ela continua ' +
-        'valendo como fórmula: o que falta é a forma no espaço.',
-    );
+    // O texto fica no registro, não na tela: quem monta a frase para quem
+    // desenhou é `chemistryErrorText`, a partir do código `conformer_unavailable`.
+    throw new GeometryUnavailable('o gerador de conformações não devolveu nenhum arranjo');
   }
 
   return { molecule: conformer, drawn };

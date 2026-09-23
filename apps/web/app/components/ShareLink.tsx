@@ -1,9 +1,11 @@
 'use client';
 
 import type { AnalysisResult } from '@rotamer/core';
+import { useMessages } from '@rotamer/i18n/react';
 import { Button } from '@rotamer/ui';
 import { useState, type ReactElement } from 'react';
 import { moleculePath } from '../../lib/molecule-url';
+import { shareLinkMessages } from './messages';
 
 export interface ShareLinkProps {
   readonly analysis: AnalysisResult | null;
@@ -17,6 +19,7 @@ export interface ShareLinkProps {
  * de jeitos diferentes chegam ao mesmo link.
  */
 export function ShareLink({ analysis }: ShareLinkProps): ReactElement | null {
+  const messages = useMessages(shareLinkMessages);
   const [copied, setCopied] = useState(false);
 
   if (analysis === null || !analysis.ok) return null;
@@ -42,7 +45,7 @@ export function ShareLink({ analysis }: ShareLinkProps): ReactElement | null {
 
   return (
     <Button size="small" variant="ghost" onClick={copy} data-testid="compartilhar">
-      {copied ? 'Link copiado' : 'Compartilhar'}
+      {copied ? messages.copied : messages.share}
     </Button>
   );
 }

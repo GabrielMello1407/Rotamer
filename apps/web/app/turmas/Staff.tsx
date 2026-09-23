@@ -1,6 +1,7 @@
 'use client';
 
 import { Button, Label } from '@rotamer/ui';
+import { useFormatters, useMessages } from '@rotamer/i18n/react';
 import { useRouter } from 'next/navigation';
 import { useState, useTransition, type FormEvent, type ReactElement } from 'react';
 import {
@@ -16,8 +17,6 @@ export interface StaffProps {
   readonly institution: string;
   readonly staff: readonly StaffMember[];
 }
-
-const DATE = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
 
 interface Candidate {
   readonly email: string;
@@ -39,6 +38,8 @@ interface Candidate {
  */
 export function Staff({ institution, staff }: StaffProps): ReactElement {
   const router = useRouter();
+  const m = useMessages(messages);
+  const { date } = useFormatters();
   const [candidate, setCandidate] = useState<Candidate | null>(null);
   const [leaving, setLeaving] = useState<StaffMember | null>(null);
   const [note, setNote] = useState<string | null>(null);
@@ -63,7 +64,7 @@ export function Staff({ institution, staff }: StaffProps): ReactElement {
       if (outcome.teaching) {
         setCandidate(null);
         setNote(null);
-        setError(messages.staff.alreadyTeaching);
+        setError(m.staff.alreadyTeaching);
         return;
       }
 
@@ -88,7 +89,7 @@ export function Staff({ institution, staff }: StaffProps): ReactElement {
       }
 
       setError(null);
-      setNote(messages.staff.promoted(outcome.name));
+      setNote(m.staff.promoted(outcome.name));
       router.refresh();
     });
   };
@@ -108,14 +109,14 @@ export function Staff({ institution, staff }: StaffProps): ReactElement {
       }
 
       setError(null);
-      setNote(messages.staff.demoted(outcome.name));
+      setNote(m.staff.demoted(outcome.name));
       router.refresh();
     });
   };
 
   return (
     <section className={styles.panel} data-testid="professores-da-escola">
-      <h2 className={styles.title}>{messages.staff.heading}</h2>
+      <h2 className={styles.title}>{m.staff.heading}</h2>
       <p className={styles.quiet}>{institution}</p>
 
       {/* Não há estado vazio: quem lê esta seção é administrador da escola, e
@@ -127,18 +128,15 @@ export function Staff({ institution, staff }: StaffProps): ReactElement {
               <span className={styles.name}>
                 {member.name}
                 {member.administrator && (
-                  <span className={styles.chip}>{messages.staff.administratorChip}</span>
+                  <span className={styles.chip}>{m.staff.administratorChip}</span>
                 )}
               </span>
               <span className={styles.staffEmail}>{member.email}</span>
             </span>
             <span className={styles.trail}>
               {member.grantedBy === null || member.grantedAt === null
-                ? messages.staff.grantedByTerminal
-                : messages.staff.grantedBy(
-                    member.grantedBy,
-                    DATE.format(new Date(member.grantedAt)),
-                  )}
+                ? m.staff.grantedByTerminal
+                : m.staff.grantedBy(member.grantedBy, date(new Date(member.grantedAt)))}
             </span>
             {/* Sem `Rebaixar` para administrador: nem para outro, nem para si
                 mesmo. As duas recusas também valem no servidor. */}
@@ -154,7 +152,7 @@ export function Staff({ institution, staff }: StaffProps): ReactElement {
                 disabled={pending}
                 data-testid={`rebaixar-${member.email}`}
               >
-                {messages.staff.demote}
+                {m.staff.demote}
               </Button>
             )}
           </li>
@@ -163,7 +161,7 @@ export function Staff({ institution, staff }: StaffProps): ReactElement {
 
       <form className={styles.form} onSubmit={check}>
         <label className={styles.field}>
-          <Label>{messages.staff.emailLabel}</Label>
+          <Label>{m.staff.emailLabel}</Label>
           <input
             className={styles.input}
             name="email"
@@ -174,17 +172,17 @@ export function Staff({ institution, staff }: StaffProps): ReactElement {
           />
         </label>
         <Button type="submit" disabled={pending} data-testid="conferir-conta">
-          {pending ? messages.staff.checking : messages.staff.check}
+          {pending ? m.staff.checking : m.staff.check}
         </Button>
       </form>
 
       {candidate !== null && (
         <div className={styles.confirm} data-testid="confirmar-professor">
-          <p className={styles.confirmTitle}>{messages.staff.confirm(candidate.name)}</p>
+          <p className={styles.confirmTitle}>{m.staff.confirm(candidate.name)}</p>
           <p className={styles.staffEmail}>{candidate.email}</p>
           <div className={styles.buttons}>
             <Button onClick={promote} disabled={pending} data-testid="promover-confirmado">
-              {pending ? messages.staff.promoting : messages.staff.promote}
+              {pending ? m.staff.promoting : m.staff.promote}
             </Button>
             <Button
               variant="secondary"
@@ -193,7 +191,7 @@ export function Staff({ institution, staff }: StaffProps): ReactElement {
               }}
               disabled={pending}
             >
-              {messages.staff.cancel}
+              {m.staff.cancel}
             </Button>
           </div>
         </div>
@@ -201,13 +199,11 @@ export function Staff({ institution, staff }: StaffProps): ReactElement {
 
       {leaving !== null && (
         <div className={styles.confirm} data-testid="confirmar-rebaixamento">
-          <p className={styles.confirmTitle}>
-            {messages.staff.demoteConfirm(leaving.name, leaving.email)}
-          </p>
-          <p className={styles.note}>{messages.staff.demoteBody}</p>
+          <p className={styles.confirmTitle}>{m.staff.demoteConfirm(leaving.name, leaving.email)}</p>
+          <p className={styles.note}>{m.staff.demoteBody}</p>
           <div className={styles.buttons}>
             <Button onClick={demote} disabled={pending} data-testid="rebaixar-confirmado">
-              {messages.staff.demote}
+              {m.staff.demote}
             </Button>
             <Button
               variant="secondary"
@@ -216,14 +212,14 @@ export function Staff({ institution, staff }: StaffProps): ReactElement {
               }}
               disabled={pending}
             >
-              {messages.staff.cancel}
+              {m.staff.cancel}
             </Button>
           </div>
         </div>
       )}
 
-      <p className={styles.note}>{messages.staff.warning}</p>
-      <p className={styles.note}>{messages.staff.ceiling}</p>
+      <p className={styles.note}>{m.staff.warning}</p>
+      <p className={styles.note}>{m.staff.ceiling}</p>
 
       {note !== null && (
         <p className={styles.ok} data-testid="aviso-professores">

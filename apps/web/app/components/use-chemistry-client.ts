@@ -3,13 +3,17 @@
 import { connectChemistry, whenChemistryReady, type ChemistryClient } from '@rotamer/core/chemistry/client';
 import { useEffect, useState } from 'react';
 
-/** Onde está o motor de química neste momento. */
+/**
+ * Onde está o motor de química neste momento.
+ *
+ * `failed` não carrega frase: o gancho sabe **que** falhou, e quem sabe dizer
+ * isso no idioma de quem está lendo é a tela. O detalhe técnico continua indo
+ * para o registro do navegador, onde serve para quem for consertar.
+ */
 export type ChemistryConnection =
   | { readonly status: 'loading'; readonly client: null }
   | { readonly status: 'ready'; readonly client: ChemistryClient; readonly version: string }
-  | { readonly status: 'failed'; readonly client: null; readonly message: string };
-
-const FAILURE_MESSAGE = 'Não foi possível carregar o motor de química neste navegador.';
+  | { readonly status: 'failed'; readonly client: null };
 
 /**
  * Quantas vezes tentar antes de desistir.
@@ -43,7 +47,7 @@ export function useChemistryClient(): ChemistryConnection {
 
     const fail = (detail: string): void => {
       console.error(`worker de química: ${detail}`);
-      if (alive) setConnection({ status: 'failed', client: null, message: FAILURE_MESSAGE });
+      if (alive) setConnection({ status: 'failed', client: null });
     };
 
     /** Uma tentativa completa: subir o worker, apresentar-se e aquecer o RDKit. */

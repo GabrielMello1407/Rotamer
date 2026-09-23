@@ -1,6 +1,9 @@
 'use server';
 
+import { pick } from '@rotamer/i18n';
 import { z } from 'zod';
+import { currentLocale } from '../../lib/locale';
+import { searchMessages } from './messages';
 import { analyzeOnServer } from '../../lib/chemistry-server';
 import { db, hasDatabase } from '../../lib/db';
 import { findCompoundByName } from '../../lib/pubchem';
@@ -63,7 +66,7 @@ export async function findByName(rawName: string): Promise<SearchOutcome> {
   // O que veio de fora passa pelo RDKit antes de virar molécula na tela.
   const analysis = await analyzeOnServer(lookup.value.smiles);
   if (!analysis.ok) {
-    return { status: 'rejected', reason: 'O PubChem devolveu uma estrutura que não sei ler.' };
+    return { status: 'rejected', reason: pick(searchMessages, await currentLocale()).unreadableStructure };
   }
 
   const compound: FoundCompound = {

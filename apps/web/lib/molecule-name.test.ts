@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { nicknameProblemText } from './messages';
 import { checkName, normalizeName } from './molecule-name';
 
 /**
@@ -140,10 +141,20 @@ describe('apelido recusado', () => {
     expect(checkName('CC(=O)O <script>').problem).toBe('caracteres');
   });
 
-  it('explica em português o que houve', () => {
+  /**
+   * A checagem devolve código; a frase é do dicionário. O que se protege aqui
+   * é que a explicação continue falando de química nos dois idiomas, e nunca
+   * de expressão regular.
+   */
+  it('explica o que houve, nos dois idiomas, sem jargão de programação', () => {
     const recusa = checkName('C6H6');
-    expect(recusa.message).toContain('fórmula');
-    expect(recusa.message).not.toMatch(/regex|invalid|error/i);
+    expect(recusa.problem).toBe('parece-formula');
+
+    for (const locale of ['pt-BR', 'en'] as const) {
+      const frase = nicknameProblemText(locale, 'parece-formula', { min: 2, max: 40 });
+      expect(frase).toMatch(locale === 'pt-BR' ? /fórmula/ : /formula/);
+      expect(frase).not.toMatch(/regex|invalid|error/i);
+    }
   });
 });
 

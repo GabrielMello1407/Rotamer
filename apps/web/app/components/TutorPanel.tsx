@@ -1,12 +1,14 @@
 'use client';
 
 import type { AnalysisResult } from '@rotamer/core';
+import { useLocale, useMessages } from '@rotamer/i18n/react';
 import { Button, Label, SourceBadge } from '@rotamer/ui';
 import { Fragment, useState, type ReactElement, type ReactNode } from 'react';
 import { track } from '../../lib/track';
 import { askTutor, type TutorOutcome } from '../actions/tutor';
 import type { HintKind } from '../../lib/tutor/prompt';
 import type { ReferenceKey } from '../../lib/tutor/schema';
+import { tutorPanelMessages } from './messages';
 import styles from './TutorPanel.module.css';
 
 export interface TutorPanelProps {
@@ -14,10 +16,17 @@ export interface TutorPanelProps {
   readonly questSlug: string | null;
 }
 
-const ASKS: readonly { readonly kind: HintKind; readonly label: string }[] = [
-  { kind: 'proximo-passo', label: 'E agora?' },
-  { kind: 'por-que-nao-fechou', label: 'Por que não fechou?' },
-  { kind: 'entender-a-molecula', label: 'O que é isto?' },
+/**
+ * As três perguntas do atalho. O `kind` é chave de dado — é ele que a rota do
+ * tutor recebe — e por isso não muda de idioma; o rótulo, sim.
+ */
+const ASKS: readonly {
+  readonly kind: HintKind;
+  readonly label: 'nextStep' | 'whyNotClosed' | 'whatIsThis';
+}[] = [
+  { kind: 'proximo-passo', label: 'nextStep' },
+  { kind: 'por-que-nao-fechou', label: 'whyNotClosed' },
+  { kind: 'entender-a-molecula', label: 'whatIsThis' },
 ];
 
 const PLACEHOLDER = /(\{\{[a-zA-Z]+\}\})/g;
@@ -30,6 +39,8 @@ const PLACEHOLDER = /(\{\{[a-zA-Z]+\}\})/g;
  * que o RDKit calculou, encaixados pela interface no lugar das referências.
  */
 export function TutorPanel({ analysis, questSlug }: TutorPanelProps): ReactElement {
+  const locale = useLocale();
+  const messages = useMessages(tutorPanelMessages);
   const [outcome, setOutcome] = useState<TutorOutcome | null>(null);
   const [asking, setAsking] = useState(false);
 
@@ -50,10 +61,10 @@ export function TutorPanel({ analysis, questSlug }: TutorPanelProps): ReactEleme
   };
 
   return (
-    <section className={styles.panel} aria-label="Tutor">
+    <section className={styles.panel} aria-label={messages.label}>
       <div className={styles.header}>
-        <Label>tutor</Label>
-        {outcome?.status === 'ok' && <SourceBadge source="generated" />}
+        <Label>{messages.heading}</Label>
+        {outcome?.status === 'ok' && <SourceBadge source="generated" locale={locale} />}
       </div>
 
       <div className={styles.actions}>
@@ -69,30 +80,26 @@ export function TutorPanel({ analysis, questSlug }: TutorPanelProps): ReactEleme
               ask(entry.kind);
             }}
           >
-            {entry.label}
+            {messages[entry.label]}
           </Button>
         ))}
       </div>
 
       {!ready && (
-        <p className={styles.quiet}>
-          Desenhe uma estrutura válida e o tutor pode comentar o que você já tem.
-        </p>
+        <p className={styles.quiet}>{messages.needsStructure}</p>
       )}
 
-      {asking && <p className={styles.quiet}>Perguntando…</p>}
+      {asking && <p className={styles.quiet}>{messages.asking}</p>}
 
       {outcome?.status === 'unavailable' && (
         <p className={styles.quiet} data-testid="tutor-indisponivel">
-          O tutor está desligado neste ambiente. As dicas da missão continuam valendo — elas são
-          escritas à mão e revisadas como conteúdo.
+          {messages.unavailable}
         </p>
       )}
 
       {outcome?.status === 'limit' && (
         <p className={styles.quiet} data-testid="tutor-limite">
-          Você chegou ao limite de perguntas de hoje. As dicas escritas à mão continuam
-          disponíveis na missão.
+          {messages.limit}
         </p>
       )}
 
@@ -112,15 +119,12 @@ export function TutorPanel({ analysis, questSlug }: TutorPanelProps): ReactEleme
 
           {outcome.answer.hint.watchOut !== undefined && (
             <p className={styles.watchOut}>
-              <span className={styles.watchOutLabel}>Cuidado: </span>
+              <span className={styles.watchOutLabel}>{messages.watchOut}</span>
               {withReferences(outcome.answer.hint.watchOut, outcome.answer.values)}
             </p>
           )}
 
-          <p className={styles.quiet}>
-            Texto gerado por modelo de linguagem a partir dos números calculados. É hipótese, não
-            medida.
-          </p>
+          <p className={styles.quiet}>{messages.generatedNote}</p>
         </div>
       )}
     </section>

@@ -1,7 +1,10 @@
+import { useLocale, useMessages } from '@rotamer/i18n/react';
 import { useEffect, useLayoutEffect, useRef, useState, type ReactElement } from 'react';
 import { createPortal } from 'react-dom';
 import styles from './ContextMenu.module.css';
-import { ELEMENT_NAMES, INNER_PERIODS, PERIODIC_TABLE, blockOf } from './elements-table';
+import { elementName } from './element-names';
+import { INNER_PERIODS, PERIODIC_TABLE, blockOf } from './elements-table';
+import { contextMenuMessages, toolbarMessages } from './messages';
 
 /**
  * O menu do botão direito.
@@ -50,6 +53,7 @@ export interface ContextMenuProps {
 const MARGIN = 8;
 
 export function ContextMenu({ x, y, entries, onClose }: ContextMenuProps): ReactElement {
+  const labels = useMessages(contextMenuMessages);
   const sheetRef = useRef<HTMLDivElement | null>(null);
   const [mounted, setMounted] = useState(false);
   const [place, setPlace] = useState({ left: x, top: y });
@@ -110,7 +114,7 @@ export function ContextMenu({ x, y, entries, onClose }: ContextMenuProps): React
       className={styles.menu}
       style={{ left: `${String(place.left)}px`, top: `${String(place.top)}px` }}
       role="menu"
-      aria-label="Opções do que está sob o cursor"
+      aria-label={labels.label}
       data-testid="menu-contexto"
     >
       {entries.map((entry, index) => {
@@ -186,6 +190,8 @@ function MiniTable({
   readonly active: string | null;
   readonly onPick: (symbol: string) => void;
 }): ReactElement {
+  const locale = useLocale();
+  const menuText = useMessages(toolbarMessages);
   const inner = new Set<number>(INNER_PERIODS);
   const main = PERIODIC_TABLE.filter((entry) => !inner.has(entry.period));
   const bottom = PERIODIC_TABLE.filter((entry) => inner.has(entry.period));
@@ -205,8 +211,8 @@ function MiniTable({
         } as Record<string, string | number>
       }
       data-block={blockOf(entry)}
-      title={`${ELEMENT_NAMES[entry.symbol] ?? entry.symbol} · ${String(entry.z)}`}
-      aria-label={`${ELEMENT_NAMES[entry.symbol] ?? entry.symbol}, símbolo ${entry.symbol}`}
+      title={`${elementName(locale, entry.symbol)} · ${String(entry.z)}`}
+      aria-label={menuText.element(elementName(locale, entry.symbol), entry.symbol)}
       data-testid={`menu-elemento-${entry.symbol}`}
       onClick={() => {
         onPick(entry.symbol);

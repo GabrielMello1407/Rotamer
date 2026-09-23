@@ -3,8 +3,10 @@ import { analyze } from '../src/chemistry/analysis';
 import type { ChemistryError } from '../src/chemistry/types';
 
 /**
- * Erro explica a química, não o código. "O átomo de C tem 5 ligações, mas
- * suporta no máximo 4" — nunca "valence error".
+ * O núcleo aponta a química que falhou, e aponta **com número**: o código da
+ * recusa e o átomo culpado. A frase que o aluno lê é montada em `@rotamer/i18n`,
+ * e é `packages/i18n/test/chemistry.test.ts` que guarda o texto — aqui se
+ * protege o que o RDKit conclui, que não muda de idioma.
  */
 async function requireError(input: string): Promise<ChemistryError> {
   const result = await analyze(input);
@@ -19,7 +21,6 @@ describe('valência excedida', () => {
     const error = await requireError('C(C)(C)(C)(C)C');
 
     expect(error.code).toBe('valence_exceeded');
-    expect(error.message).toBe('O átomo de C tem 5 ligações, mas suporta no máximo 4.');
     expect(error.atom).toEqual({ index: 0, symbol: 'C', bonds: 5, max: 4 });
   });
 
@@ -27,8 +28,7 @@ describe('valência excedida', () => {
     const error = await requireError('CN(C)(C)C');
 
     expect(error.code).toBe('valence_exceeded');
-    expect(error.message).toBe('O átomo de N tem 4 ligações, mas suporta no máximo 3.');
-    expect(error.atom?.symbol).toBe('N');
+    expect(error.atom).toEqual({ index: 1, symbol: 'N', bonds: 4, max: 3 });
   });
 
   it('não reclama do nitrogênio quaternário com carga, que existe', async () => {
@@ -41,7 +41,6 @@ describe('estrutura ilegível', () => {
   it('reclama de anel que não fecha', async () => {
     const error = await requireError('c1ccccc');
     expect(error.code).toBe('invalid_syntax');
-    expect(error.message).toContain('anéis');
   });
 
   it('reclama de elemento que não existe', async () => {
@@ -54,18 +53,24 @@ describe('nada desenhado', () => {
   it('não trata tela vazia como erro de química', async () => {
     const error = await requireError('   ');
     expect(error.code).toBe('empty');
-    expect(error.message).toBe('Não há nenhum átomo para analisar.');
+    expect(error.atom).toBeUndefined();
   });
 });
 
-describe('mensagens', () => {
-  it('nunca vazam jargão de biblioteca', async () => {
+describe('a recusa não fala idioma nenhum', () => {
+  /**
+   * O que impede o pt-BR de voltar para dentro do núcleo. Sem este teste, a
+   * primeira pressa reescreve uma frase aqui e o inglês fica para trás sem
+   * ninguém perceber — porque em português continuaria funcionando.
+   */
+  it('devolve só código e números, nunca frase', async () => {
     const inputs = ['C(C)(C)(C)(C)C', 'c1ccccc', 'Xz', ''];
 
     for (const input of inputs) {
       const error = await requireError(input);
-      expect(error.message).not.toMatch(/valence|sanitize|kekul|RDKit|error/i);
-      expect(error.message.endsWith('.')).toBe(true);
+      expect(Object.keys(error).sort()).toEqual(
+        error.atom === undefined ? ['code'] : ['atom', 'code'],
+      );
     }
   });
 });

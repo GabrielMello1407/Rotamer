@@ -1,10 +1,12 @@
 'use client';
 
+import { useFormatters, useMessages } from '@rotamer/i18n/react';
 import { Button, Formula } from '@rotamer/ui';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useTransition, type ReactElement } from 'react';
 import { forgetMolecule } from '../actions/library';
+import { libraryMessages } from './messages';
 import styles from './page.module.css';
 
 export interface LibraryRow {
@@ -25,9 +27,6 @@ export interface LibraryListProps {
   readonly molecules: readonly LibraryRow[];
 }
 
-const DATE = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
-const MASS = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
 /**
  * A lista da estante.
  *
@@ -37,6 +36,8 @@ const MASS = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumF
  */
 export function LibraryList({ molecules }: LibraryListProps): ReactElement {
   const router = useRouter();
+  const m = useMessages(libraryMessages);
+  const formatters = useFormatters();
   const [confirming, setConfirming] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -50,21 +51,21 @@ export function LibraryList({ molecules }: LibraryListProps): ReactElement {
               <span className={styles.name}>
                 {molecule.name}
                 {molecule.namedBy !== null && (
-                  <span className={styles.by}> · batizada por {molecule.namedBy}</span>
+                  <span className={styles.by}> · {m.namedBy(molecule.namedBy)}</span>
                 )}
               </span>
             )}
           </Link>
 
           <span className={styles.mass}>
-            {molecule.molarMass > 0 ? `${MASS.format(molecule.molarMass)} g/mol` : '—'}
+            {molecule.molarMass > 0 ? `${formatters.number(molecule.molarMass, 2)} g/mol` : '—'}
           </span>
 
-          <span className={styles.date}>{DATE.format(new Date(molecule.savedAt))}</span>
+          <span className={styles.date}>{formatters.date(new Date(molecule.savedAt))}</span>
 
           <span className={styles.actions}>
             <Link className={styles.link} href={molecule.publicHref}>
-              Página pública
+              {m.publicPage}
             </Link>
 
             {confirming === molecule.inchiKey ? (
@@ -82,7 +83,7 @@ export function LibraryList({ molecules }: LibraryListProps): ReactElement {
                     });
                   }}
                 >
-                  Tirar mesmo
+                  {m.removeConfirm}
                 </Button>
                 <Button
                   size="small"
@@ -92,7 +93,7 @@ export function LibraryList({ molecules }: LibraryListProps): ReactElement {
                     setConfirming(null);
                   }}
                 >
-                  Cancelar
+                  {m.cancel}
                 </Button>
               </>
             ) : (
@@ -104,7 +105,7 @@ export function LibraryList({ molecules }: LibraryListProps): ReactElement {
                   setConfirming(molecule.inchiKey);
                 }}
               >
-                Tirar da estante
+                {m.removeFromShelf}
               </Button>
             )}
           </span>

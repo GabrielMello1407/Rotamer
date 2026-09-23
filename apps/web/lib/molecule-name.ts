@@ -86,20 +86,18 @@ const SYSTEMATIC_GROUP = new RegExp(
  */
 const LOCANT = /^\d+(?:,\d+)*-/;
 
+/**
+ * O veredito da checagem: só o código do problema.
+ *
+ * **Sem frase.** A regra é a mesma em qualquer idioma — o que muda é como ela
+ * se explica, e isso é `nicknameProblemText`, em `lib/messages.ts`. É a mesma
+ * separação do núcleo: quem decide devolve código, quem desenha a tela escreve
+ * a frase.
+ */
 export interface NameCheck {
   readonly ok: boolean;
   readonly problem?: NameProblem;
-  readonly message?: string;
 }
-
-const MESSAGES: Readonly<Record<NameProblem, string>> = {
-  curto: `O apelido precisa de pelo menos ${String(NAME_MIN)} letras.`,
-  longo: `O apelido não pode passar de ${String(NAME_MAX)} caracteres.`,
-  caracteres: 'Use letras, números, espaço e hífen — nada além disso.',
-  'parece-formula': 'Isso é uma fórmula, não um apelido. A fórmula o RDKit já calcula.',
-  'parece-sistematico':
-    'Isso é nome de composto, não apelido: a palavra é uma cadeia de carbono com terminação de função química (butanol é but- de quatro carbonos mais -ol de álcool). Um nome assim passaria por nomenclatura, e o Rotamer não calcula nomenclatura. Escolha outra palavra.',
-};
 
 export function checkName(raw: string): NameCheck {
   const name = raw.trim();
@@ -137,7 +135,7 @@ function systematic(name: string): boolean {
 }
 
 function fail(problem: NameProblem): NameCheck {
-  return { ok: false, problem, message: MESSAGES[problem] };
+  return { ok: false, problem };
 }
 
 /** Espaços colapsados; o resto vem como a pessoa escreveu. */

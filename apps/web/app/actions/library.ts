@@ -1,9 +1,12 @@
 'use server';
 
+import { chemistryErrorText, pick } from '@rotamer/i18n';
 import { z } from 'zod';
 import { currentProfile } from '../../lib/auth';
 import { analyzeOnServer } from '../../lib/chemistry-server';
 import { db, hasDatabase } from '../../lib/db';
+import { currentLocale } from '../../lib/locale';
+import { libraryMessages } from './messages';
 import { rememberMolecule } from '../../lib/molecule-store';
 
 /**
@@ -49,13 +52,15 @@ export type SaveOutcome =
 export async function saveMolecule(input: { molblock: string }): Promise<SaveOutcome> {
   const parsed = saveSchema.safeParse(input);
   if (!parsed.success) return { status: 'rejected', reason: 'Pedido mal formado.' };
-  if (!hasDatabase()) return { status: 'rejected', reason: 'Guardar não está disponível aqui.' };
+  if (!hasDatabase()) return { status: 'rejected', reason: pick(libraryMessages, await currentLocale()).unavailable };
 
   const profile = await currentProfile();
   if (profile === null) return { status: 'anonymous' };
 
   const analysis = await analyzeOnServer(parsed.data.molblock);
-  if (!analysis.ok) return { status: 'rejected', reason: analysis.error.message };
+  if (!analysis.ok) {
+    return { status: 'rejected', reason: chemistryErrorText(await currentLocale(), analysis.error) };
+  }
 
   const { molecule } = analysis;
 

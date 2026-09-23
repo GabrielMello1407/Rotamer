@@ -1,21 +1,17 @@
 'use client';
 
+import { useMessages } from '@rotamer/i18n/react';
+import { trackNames } from '@rotamer/quests';
 import { Label } from '@rotamer/ui';
 import Link from 'next/link';
 import { useEffect, useState, type ReactElement } from 'react';
 import { readCatalog, type CatalogEntry } from '../actions/assignment';
-import { messages } from '../turmas/messages';
+import { messages as classroomMessages } from '../turmas/messages';
 import styles from './page.module.css';
 
 export interface CatalogSearchProps {
   readonly initialEntries: readonly CatalogEntry[];
 }
-
-const TRACK_NAMES: Readonly<Record<string, string>> = {
-  structure: 'Estrutura',
-  geometry: 'Geometria',
-  property: 'Propriedade',
-};
 
 /** Silêncio antes de perguntar de novo — a mesma ideia do debounce do editor, sem ser química. */
 const QUIET_MS = 200;
@@ -28,6 +24,8 @@ const QUIET_MS = 200;
  * etiqueta.
  */
 export function CatalogSearch({ initialEntries }: CatalogSearchProps): ReactElement {
+  const m = useMessages(classroomMessages);
+  const t = useMessages(trackNames);
   const [query, setQuery] = useState('');
   const [entries, setEntries] = useState<readonly CatalogEntry[]>(initialEntries);
 
@@ -44,11 +42,11 @@ export function CatalogSearch({ initialEntries }: CatalogSearchProps): ReactElem
   return (
     <div className={styles.wrap}>
       <label className={styles.searchField}>
-        <Label>{messages.catalog.searchLabel}</Label>
+        <Label>{m.catalog.searchLabel}</Label>
         <input
           className={styles.searchInput}
           value={query}
-          placeholder={messages.catalog.searchPlaceholder}
+          placeholder={m.catalog.searchPlaceholder}
           onChange={(event) => {
             setQuery(event.target.value);
           }}
@@ -57,7 +55,7 @@ export function CatalogSearch({ initialEntries }: CatalogSearchProps): ReactElem
       </label>
 
       {entries.length === 0 ? (
-        <p className={styles.empty}>{messages.catalog.empty}</p>
+        <p className={styles.empty}>{m.catalog.empty}</p>
       ) : (
         <ul className={styles.list} data-testid="resultado-catalogo">
           {entries.map((entry) => (
@@ -67,10 +65,10 @@ export function CatalogSearch({ initialEntries }: CatalogSearchProps): ReactElem
               </Link>
 
               <div className={styles.meta}>
-                {entry.track !== undefined && <span className={styles.track}>{TRACK_NAMES[entry.track]}</span>}
+                {entry.track !== undefined && <span className={styles.track}>{t[entry.track]}</span>}
                 {entry.byTeacher !== null && (
                   <span className={styles.author}>
-                    {messages.catalog.byTeacher(entry.byTeacher.name, entry.byTeacher.institution)}
+                    {m.catalog.byTeacher(entry.byTeacher.name, entry.byTeacher.institution)}
                   </span>
                 )}
               </div>

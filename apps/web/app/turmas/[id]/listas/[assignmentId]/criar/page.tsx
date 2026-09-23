@@ -3,17 +3,19 @@ import { notFound, redirect } from 'next/navigation';
 import type { ReactElement } from 'react';
 import { currentProfile } from '../../../../../../lib/auth';
 import { hasDatabase } from '../../../../../../lib/db';
+import { serverMessages } from '../../../../../../lib/locale';
 import { readAssignments } from '../../../../../actions/assignment';
 import { EditorWorkspace } from '../../../../../components/EditorWorkspace';
+import { messages } from '../../../../messages';
 
 interface PageProps {
   readonly params: Promise<{ readonly id: string; readonly assignmentId: string }>;
 }
 
-export const metadata: Metadata = {
-  title: 'Criar missão · Rotamer',
-  description: 'Desenhe a resposta — os objetivos saem dela.',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const m = await serverMessages(messages);
+  return { title: m.authoring.metaTitle, description: m.authoring.metaDescription };
+}
 
 /**
  * "Criar missão desenhando" (§6.3) — a mesma bancada do aluno, só que quem

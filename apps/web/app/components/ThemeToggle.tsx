@@ -1,17 +1,15 @@
 'use client';
 
+import { useMessages } from '@rotamer/i18n/react';
 import { Button } from '@rotamer/ui';
 import { useSyncExternalStore, type ReactElement } from 'react';
+import { themeToggleMessages } from './messages';
 import styles from './ThemeToggle.module.css';
 
 /** Três estados: o sistema decide, ou a pessoa decide. */
 type Theme = 'system' | 'light' | 'dark';
 
-const OPTIONS: readonly { readonly theme: Theme; readonly text: string }[] = [
-  { theme: 'system', text: 'Sistema' },
-  { theme: 'light', text: 'Claro' },
-  { theme: 'dark', text: 'Escuro' },
-];
+const OPTIONS: readonly Theme[] = ['system', 'light', 'dark'];
 
 const STORAGE_KEY = 'rotamer-theme';
 
@@ -62,22 +60,23 @@ function apply(theme: Theme): void {
  * deixa o `prefers-color-scheme` responder.
  */
 export function ThemeToggle(): ReactElement {
+  const messages = useMessages(themeToggleMessages);
   const theme = useSyncExternalStore(subscribe, readTheme, readThemeOnServer);
 
   return (
-    <div className={styles.toggle} role="group" aria-label="Tema">
+    <div className={styles.toggle} role="group" aria-label={messages.label}>
       {OPTIONS.map((option) => (
         <Button
-          key={option.theme}
+          key={option}
           variant="ghost"
           size="small"
           className={styles.option}
-          aria-pressed={theme === option.theme}
+          aria-pressed={theme === option}
           onClick={() => {
-            apply(option.theme);
+            apply(option);
           }}
         >
-          {option.text}
+          {messages[option]}
         </Button>
       ))}
     </div>

@@ -242,6 +242,21 @@ viraram testes curtos em vez de um caminho longo.
 minutos, contra 1,4 min com quatro. No CI seria bem pior que os dezoito minutos que a suíte gasta
 hoje com dois trabalhadores.
 
+**Em 23 de setembro de 2026 a medição apontou outra coisa: a falha do teste das listas é trava, não
+lentidão.** A suíte inteira rodou seis vezes nesta máquina, com quatro trabalhadores. Nas quatro sem
+`--trace`, o caminho longo falhou — duas vezes preso no `page.goto('/')` do `sair()` até estourar os
+sete minutos, duas vezes sem ver a resposta do `saveAttempt` dentro do minuto; nas duas com
+`--trace=retain-on-failure`, a suíte passou inteira em 1,5 min e o caminho levou 13 s. Sozinho, ou
+com o gêmeo do outro projeto em paralelo, ele leva de 8 a 10 s. Durante a trava o servidor respondia
+em 8 ms e o Postgres não tinha nenhuma conexão do app aberta — ninguém esperava banco nem RDKit. A
+cada falha o servidor registra `The destination stream closed early`, do render de HTML do React: um
+documento começou a sair e não terminou até o navegador fechar. O CI de 16 de setembro falhou com a
+mesma assinatura, antes de qualquer mudança de orçamento, e os orçamentos maiores só adiaram o
+estouro. As server actions do cliente saem em fila, uma por vez; uma ação que não volta segura o
+`saveAttempt` que vem atrás. Se a mesma trava acontece fora do teste, numa aula ela é tentativa
+cumprida que não fica gravada — por isso ela pede causa, não orçamento. A causa ainda não foi achada,
+e o trace não serve para achá-la, porque com ele a trava não aparece.
+
 O que isso pode custar numa aula: trinta alunos cumprindo a mesma missão no mesmo minuto são
 trinta análises enfileiradas. Cada uma é de dezenas a poucas centenas de milissegundos, então a
 espera é de segundos, não de minutos — mas ela existe, e cresce com o tamanho da molécula.

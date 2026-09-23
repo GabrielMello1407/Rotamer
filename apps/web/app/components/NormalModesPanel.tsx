@@ -1,8 +1,10 @@
 'use client';
 
 import type { NormalModes } from '@rotamer/core';
+import { useFormatters, useLocale, useMessages } from '@rotamer/i18n/react';
 import { SourceBadge } from '@rotamer/ui';
-import type { ReactElement } from 'react';
+import { useMemo, type ReactElement } from 'react';
+import { normalModesMessages } from './messages';
 import styles from './NormalModesPanel.module.css';
 
 export interface NormalModesPanelProps {
@@ -15,16 +17,6 @@ export interface NormalModesPanelProps {
   /** Verdadeiro enquanto o worker ainda está calculando. */
   readonly pending: boolean;
 }
-
-/**
- * Número de onda sem separador de milhar.
- *
- * Espectroscopia escreve `1042 cm⁻¹`, nunca `1.042` — e em português o ponto de
- * milhar é justamente o que se lê como vírgula decimal em outros lugares. Aqui a
- * convenção da área ganha da convenção tipográfica.
- */
-const WAVE = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0, useGrouping: false });
-const PERCENT = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 });
 
 /**
  * Os modos normais de vibração.
@@ -44,16 +36,32 @@ export function NormalModesPanel({
   onSelect,
   pending,
 }: NormalModesPanelProps): ReactElement | null {
+  const locale = useLocale();
+  const messages = useMessages(normalModesMessages);
+  const { integer } = useFormatters();
+
+  /**
+   * Número de onda sem separador de milhar.
+   *
+   * Espectroscopia escreve `1042 cm⁻¹`, nunca `1.042` — e em português o ponto
+   * de milhar é justamente o que se lê como vírgula decimal em outros lugares.
+   * Aqui a convenção da área ganha da convenção tipográfica, nos dois idiomas.
+   */
+  const wave = useMemo(
+    () => new Intl.NumberFormat(locale, { maximumFractionDigits: 0, useGrouping: false }),
+    [locale],
+  );
+
   if (modes === null) {
     return (
       <section className={styles.section} data-testid="modos-normais">
-        <h3 className={styles.heading}>Modos normais</h3>
+        <h3 className={styles.heading}>{messages.heading}</h3>
         <p className={styles.quiet}>
           {unsupported.length > 0
-            ? `O campo de força MMFF94 não tem parâmetros para ${unsupported.join(', ')}. A forma no espaço aparece assim mesmo, montada com comprimentos e ângulos de ligação — o que não existe é a energia, e sem energia não há frequência de vibração.`
+            ? messages.unsupported(unsupported.join(', '))
             : pending
-              ? 'Calculando a Hessiana do campo de força…'
-              : 'Os modos aparecem quando a estrutura fecha. Molécula muito grande fica de fora: a conta trava a máquina antes de terminar.'}
+              ? messages.computing
+              : messages.empty}
         </p>
       </section>
     );
@@ -64,17 +72,16 @@ export function NormalModesPanel({
 
   return (
     <section className={styles.section} data-testid="modos-normais">
-      <h3 className={styles.heading}>Modos normais</h3>
+      <h3 className={styles.heading}>{messages.heading}</h3>
 
       <p className={styles.count} data-testid="conta-de-modos">
-        <strong>{modes.modes.length}</strong> modos ={' '}
-        <span className={styles.formula}>{formula}</span>, com N = {modes.atomCount}
-        {modes.linear ? ' — a molécula é linear' : ''}.
+        <strong>{modes.modes.length}</strong>
+        {messages.countTail(formula, modes.atomCount, modes.linear)}
       </p>
 
       <ul className={styles.list}>
         {modes.modes.map((mode, index) => {
-          const kind = mode.stretch >= mode.bend ? 'estiramento' : 'dobramento';
+          const kind = mode.stretch >= mode.bend ? messages.stretch : messages.bend;
           const share = Math.round(Math.max(mode.stretch, mode.bend) * 100);
 
           return (
@@ -94,12 +101,12 @@ export function NormalModesPanel({
                     .filter(Boolean)
                     .join(' ')}
                 >
-                  {WAVE.format(mode.wavenumber)}
+                  {wave.format(mode.wavenumber)}
                   <span className={styles.unit}>cm⁻¹</span>
                 </span>
                 <span className={styles.kind}>
                   {kind}
-                  <span className={styles.share}>{PERCENT.format(share)}%</span>
+                  <span className={styles.share}>{integer(share)}%</span>
                 </span>
               </button>
             </li>
@@ -109,26 +116,15 @@ export function NormalModesPanel({
 
       {imaginary > 0 && (
         <p className={styles.warn} data-testid="modo-imaginario">
-          {imaginary === 1 ? 'Um modo tem' : `${String(imaginary)} modos têm`} frequência
-          imaginária (número negativo): nesta geometria o campo de força não vê um mínimo, e a
-          molécula desceria de energia se se deformasse nesse sentido. Acontece com estruturas em
-          que o MMFF94 é mal parametrizado — o CO₂ é o exemplo clássico.
+          {messages.imaginary(imaginary)}
         </p>
       )}
 
-      <p className={styles.note}>
-        Frequências do campo de força MMFF94, calculadas aqui — não são medidas de espectro. Campo
-        de força clássico costuma superestimar estiramento em torno de 5% a 10%: o número serve
-        para comparar modos entre si e ver a forma do movimento.
-      </p>
+      <p className={styles.note}>{messages.forceFieldNote}</p>
 
-      <p className={styles.note}>
-        Na cena, amplitude e velocidade são exageradas para caber no olho: um estiramento C–H
-        completa um ciclo a cada 11 femtossegundos, e a amplitude real é uma fração de ångström. O
-        que está certo é a forma do movimento — quem anda, para onde e em que proporção.
-      </p>
+      <p className={styles.note}>{messages.sceneNote}</p>
 
-      <SourceBadge source="computed" />
+      <SourceBadge source="computed" locale={locale} />
     </section>
   );
 }

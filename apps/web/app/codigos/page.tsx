@@ -5,14 +5,18 @@ import { redirect } from 'next/navigation';
 import type { ReactElement } from 'react';
 import { currentProfile } from '../../lib/auth';
 import { db, hasDatabase } from '../../lib/db';
+import { serverMessages } from '../../lib/locale';
 import { teaches } from '../../lib/roles';
 import { IssueCode } from './IssueCode';
+import { codesMessages } from './messages';
+import { LanguageSwitch } from '../components/LanguageSwitch';
 import styles from './page.module.css';
 
-export const metadata: Metadata = {
-  title: 'Códigos de senha · Rotamer',
-  description: 'Emitir código de troca de senha para alguém da turma.',
-};
+/** Título e descrição também são texto de produto, lidos no idioma de quem chega. */
+export async function generateMetadata(): Promise<Metadata> {
+  const m = await serverMessages(codesMessages);
+  return { title: m.metaTitle, description: m.metaDescription };
+}
 
 /**
  * A página do professor.
@@ -35,20 +39,22 @@ export default async function CodesPage(): Promise<ReactElement> {
 
   const teacher = teaches(row?.role);
   const school = row?.institution?.trim() ?? '';
+  const m = await serverMessages(codesMessages);
 
   return (
     <main className={styles.page}>
-      <Link className={styles.identity} href="/">
-        <Logo size={32} decorative />
-        <span className={styles.wordmark}>Rotamer</span>
-      </Link>
+      <div className={styles.top}>
+        <Link className={styles.identity} href="/">
+          <Logo size={32} decorative />
+          <span className={styles.wordmark}>Rotamer</span>
+        </Link>
+        <LanguageSwitch />
+      </div>
 
       <div>
-        <h1 className={styles.title}>Códigos de senha</h1>
+        <h1 className={styles.title}>{m.heading}</h1>
         <p className={styles.intro}>
-          Quem esqueceu a senha troca em <code>/senha</code> com um código entregue em mãos. Não há
-          e-mail no caminho — em muita escola o aluno não tem caixa de entrada própria, e a que tem
-          não abre na aula.
+          {m.introBefore} <code>/senha</code> {m.introAfter}
         </p>
       </div>
 
@@ -56,22 +62,17 @@ export default async function CodesPage(): Promise<ReactElement> {
 
       {teacher && school === '' && (
         <p className={styles.aviso} data-testid="sem-escola">
-          Sua conta está sem escola preenchida, e o código só vale para alguém da mesma escola.
-          Peça a quem administra o Rotamer da sua escola para preencher esse campo na sua conta.
+          {m.noSchool}
         </p>
       )}
 
       {!teacher && (
         <p className={styles.aviso} data-testid="sem-permissao">
-          Só conta de professor emite código. Se você dá aula e precisa disso, fale com quem
-          administra o Rotamer da sua escola — a promoção é feita no servidor, de propósito.
+          {m.noPermission}
         </p>
       )}
 
-      <p className={styles.note}>
-        O código vale por um dia, serve uma vez só e aparece uma vez só. Emitir um novo para a
-        mesma pessoa invalida o anterior, e trocar a senha encerra as sessões abertas dela.
-      </p>
+      <p className={styles.note}>{m.note}</p>
     </main>
   );
 }

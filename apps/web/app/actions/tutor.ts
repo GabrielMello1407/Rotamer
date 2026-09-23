@@ -1,15 +1,18 @@
 'use server';
 
-import { evaluateQuest } from '@rotamer/quests';
+import { chemistryErrorText, pick } from '@rotamer/i18n';
+import { evaluateQuest, goalLabel } from '@rotamer/quests';
 import { z } from 'zod';
 import { currentProfile } from '../../lib/auth';
 import { analyzeOnServer } from '../../lib/chemistry-server';
 import { db, hasDatabase } from '../../lib/db';
+import { currentLocale } from '../../lib/locale';
 import { resolveQuest, studentQuestAccess } from '../../lib/quest-resolve';
 import { askGemini, tutorAvailable, tutorModel } from '../../lib/tutor/gemini';
 import { buildPrompt, referenceValues, type HintKind } from '../../lib/tutor/prompt';
 import { tutorHintSchema, type TutorHint } from '../../lib/tutor/schema';
 import type { ReferenceKey } from '../../lib/tutor/schema';
+import { sharedMessages } from './messages';
 import { messages } from '../turmas/messages';
 
 /**
@@ -26,8 +29,7 @@ import { messages } from '../turmas/messages';
 
 const DEFAULT_LIMIT = 30;
 
-/** Mesma recusa de `saveAttempt`/`openQuest` (R-8): existência não se entrega em pista. */
-const QUEST_NOT_FOUND = messages.errors.questNotFound;
+
 
 const schema = z.object({
   molblock: z.string().min(1).max(200_000),
@@ -56,8 +58,15 @@ export async function askTutor(input: {
   questSlug: string | null;
   kind: HintKind;
 }): Promise<TutorOutcome> {
+  const locale = await currentLocale();
+  const m = pick(messages, locale).errors;
+  const shared = pick(sharedMessages, locale);
+
+  /** Mesma recusa de `saveAttempt`/`openQuest` (R-8): existência não se entrega em pista. */
+  const questNotFound = m.questNotFound;
+
   const parsed = schema.safeParse(input);
-  if (!parsed.success) return { status: 'rejected', reason: 'Pedido mal formado.' };
+  if (!parsed.success) return { status: 'rejected', reason: shared.malformed };
   if (!tutorAvailable()) return { status: 'unavailable' };
 
   const profile = await currentProfile();
@@ -73,17 +82,18 @@ export async function askTutor(input: {
   // conta. Aqui o teste é só sintático (o prefixo do slug), então a resposta
   // para uma conta anônima é sempre a mesma, exista ou não a missão.
   if (parsed.data.questSlug !== null && parsed.data.questSlug.startsWith('professor:') && profile === null) {
-    return { status: 'rejected', reason: messages.errors.anonymousTeacherQuest };
+    return { status: 'rejected', reason: m.anonymousTeacherQuest };
   }
 
-  const quest = parsed.data.questSlug === null ? null : await resolveQuest(parsed.data.questSlug);
+  const quest =
+    parsed.data.questSlug === null ? null : await resolveQuest(parsed.data.questSlug, locale);
   if (parsed.data.questSlug !== null && quest === null) {
-    return { status: 'rejected', reason: QUEST_NOT_FOUND };
+    return { status: 'rejected', reason: questNotFound };
   }
 
   if (quest !== null && quest.slug.startsWith('professor:') && profile !== null) {
     if (!(await studentQuestAccess(profile.id, quest.slug))) {
-      return { status: 'rejected', reason: QUEST_NOT_FOUND };
+      return { status: 'rejected', reason: questNotFound };
     }
   }
 
@@ -91,12 +101,28 @@ export async function askTutor(input: {
   if (!analysis.ok) {
     // Estrutura inválida não vai para o modelo: o erro de química já foi
     // explicado pelo motor determinístico, e explicar de novo só confunde.
-    return { status: 'rejected', reason: analysis.error.message };
+    return { status: 'rejected', reason: chemistryErrorText(locale, analysis.error) };
   }
 
   const { molecule } = analysis;
-  const goals = quest === null ? [] : evaluateQuest(quest, molecule).goals;
-  const values = referenceValues(molecule);
+
+  /**
+   * O veredito vem do motor de missões; a frase de cada objetivo é derivada da
+   * condição, no idioma em que o modelo vai responder. `GoalResult` não carrega
+   * texto — um veredito é o mesmo em qualquer idioma.
+   */
+  const goals =
+    quest === null
+      ? []
+      : (() => {
+          const verdict = evaluateQuest(quest, molecule);
+          return quest.goals.map((goal) => ({
+            met: verdict.goals.find((entry) => entry.id === goal.id)?.met === true,
+            label: goalLabel(locale, goal.condition),
+          }));
+        })();
+
+  const values = referenceValues(locale, molecule);
   const slug = quest?.slug ?? 'livre';
 
   const cached = await readCache(molecule.inchiKey, slug, parsed.data.kind);
@@ -108,7 +134,10 @@ export async function askTutor(input: {
     return { status: 'limit' };
   }
 
-  const generated = await askGemini(buildPrompt({ molecule, quest, goals, kind: parsed.data.kind }));
+  const generated = await askGemini(
+    buildPrompt({ molecule, quest, goals, kind: parsed.data.kind, locale }),
+    locale,
+  );
   if (generated === null) return { status: 'unavailable' };
 
   await writeCache(molecule.inchiKey, slug, parsed.data.kind, generated.hint);

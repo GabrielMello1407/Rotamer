@@ -1,12 +1,15 @@
 'use client';
 
 import type { AnalysisResult } from '@rotamer/core';
+import { useFormatters, useMessages } from '@rotamer/i18n/react';
 import { Formula, Logo } from '@rotamer/ui';
 import { useEffect, useRef, useState, type ReactElement } from 'react';
 import { AccountMenu } from './AccountMenu';
+import { LanguageSwitch } from './LanguageSwitch';
 import type { DrawerTab } from './AnalysisDrawer';
 import { SaveMolecule } from './SaveMolecule';
-import { messages } from '../turmas/messages';
+import { messages as classroomMessages } from '../turmas/messages';
+import { topBarMessages } from './messages';
 import styles from './TopBar.module.css';
 
 /**
@@ -54,15 +57,20 @@ export interface TopBarProps {
  * Moléculas de referência, à mão.
  *
  * São as mesmas da bateria de testes do núcleo: se alguma delas sair diferente
- * aqui, o erro aparece antes de qualquer aluno encontrar.
+ * aqui, o erro aparece antes de qualquer aluno encontrar. O SMILES é a
+ * identidade — é ele que vai no `data-testid` e que o editor carrega; o nome
+ * vem do dicionário.
  */
-const EXAMPLES: readonly { readonly name: string; readonly smiles: string }[] = [
-  { name: 'Etanol', smiles: 'CCO' },
-  { name: 'Ácido acético', smiles: 'CC(=O)O' },
-  { name: 'Benzeno', smiles: 'c1ccccc1' },
-  { name: 'Paracetamol', smiles: 'CC(=O)Nc1ccc(O)cc1' },
-  { name: 'Aspirina', smiles: 'CC(=O)Oc1ccccc1C(=O)O' },
-  { name: 'Cafeína', smiles: 'Cn1cnc2c1c(=O)n(C)c(=O)n2C' },
+const EXAMPLES: readonly {
+  readonly name: 'ethanol' | 'aceticAcid' | 'benzene' | 'paracetamol' | 'aspirin' | 'caffeine';
+  readonly smiles: string;
+}[] = [
+  { name: 'ethanol', smiles: 'CCO' },
+  { name: 'aceticAcid', smiles: 'CC(=O)O' },
+  { name: 'benzene', smiles: 'c1ccccc1' },
+  { name: 'paracetamol', smiles: 'CC(=O)Nc1ccc(O)cc1' },
+  { name: 'aspirin', smiles: 'CC(=O)Oc1ccccc1C(=O)O' },
+  { name: 'caffeine', smiles: 'Cn1cnc2c1c(=O)n(C)c(=O)n2C' },
 ];
 
 /**
@@ -85,6 +93,9 @@ export function TopBar({
   onSignOut,
   authoring,
 }: TopBarProps): ReactElement {
+  const text = useMessages(topBarMessages);
+  const classroom = useMessages(classroomMessages);
+  const { number } = useFormatters();
   const [examplesOpen, setExamplesOpen] = useState(false);
   const examplesRef = useRef<HTMLDivElement | null>(null);
 
@@ -122,13 +133,7 @@ export function TopBar({
     };
   }, [examplesOpen]);
 
-  const mass =
-    analysis?.ok === true
-      ? new Intl.NumberFormat('pt-BR', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        }).format(analysis.molecule.descriptors.molarMass)
-      : null;
+  const mass = analysis?.ok === true ? number(analysis.molecule.descriptors.molarMass, 2) : null;
 
   return (
     <header className={styles.bar}>
@@ -167,7 +172,7 @@ export function TopBar({
               onPanel('authoring');
             }}
           >
-            {messages.authoring.tab}
+            {classroom.authoring.tab}
           </button>
 
           <button
@@ -212,11 +217,11 @@ export function TopBar({
                 setExamplesOpen((current) => !current);
               }}
             >
-              Exemplos
+              {text.examples}
             </button>
 
             {examplesOpen && (
-              <div className={styles.menu} role="menu" aria-label="Moléculas de exemplo">
+              <div className={styles.menu} role="menu" aria-label={text.examplesMenu}>
                 {EXAMPLES.map((example) => (
                   <button
                     key={example.smiles}
@@ -229,7 +234,7 @@ export function TopBar({
                       setExamplesOpen(false);
                     }}
                   >
-                    {example.name}
+                    {text[example.name]}
                   </button>
                 ))}
               </div>
@@ -244,7 +249,7 @@ export function TopBar({
               onPanel('quests');
             }}
           >
-            Missões
+            {text.quests}
           </button>
 
           <button
@@ -256,8 +261,12 @@ export function TopBar({
               onPanel('analysis');
             }}
           >
-            Análise
+            {text.analysis}
           </button>
+
+          {/* O idioma à vista, na barra que está sempre na tela — antes ele só
+              existia no rodapé do painel de análise, que começa fechado. */}
+          <LanguageSwitch className={styles.action} />
 
           {showAccount && <AccountMenu displayName={accountName} onSignOut={onSignOut} />}
         </>
@@ -274,11 +283,13 @@ function Status({
   readonly analysis: AnalysisResult | null;
   readonly waitingForEngine: boolean;
 }): ReactElement | null {
+  const text = useMessages(topBarMessages);
+
   if (waitingForEngine) {
     return (
       <span className={[styles.status, styles.neutral].join(' ')} data-testid="estado-molecula">
         <span className={styles.dot} aria-hidden="true" />
-        carregando o motor
+        {text.loadingEngine}
       </span>
     );
   }
@@ -289,7 +300,7 @@ function Status({
     return (
       <span className={[styles.status, styles.invalid].join(' ')} data-testid="estado-molecula">
         <span className={styles.dot} aria-hidden="true" />
-        estrutura impossível
+        {text.invalid}
       </span>
     );
   }
@@ -297,7 +308,7 @@ function Status({
   return (
     <span className={[styles.status, styles.valid].join(' ')} data-testid="estado-molecula">
       <span className={styles.dot} aria-hidden="true" />
-      válida
+      {text.valid}
     </span>
   );
 }
